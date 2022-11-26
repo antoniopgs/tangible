@@ -20,6 +20,13 @@ contract Savings {
         return totalLoaned / totalSupplied;
     }
 
+    // this might be wrong.
+    // due to interest, suppliers will withdraw more than they initially supply.
+    // totalSupplied might underflow
+    function availableToBorrow() private view returns (uint) {
+        totalSupplied - totalLoaned;
+    }
+
     // called by supplier
     function supply(uint deposit) external {
 
