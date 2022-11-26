@@ -2,62 +2,43 @@
 pragma solidity ^0.8.15;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./Math.sol";
 type eResidencyId is uint256;
 
-contract Savings {
+contract Savings is Math {
 
     mapping(eResidencyId => address) public borrowers;
-    mapping(address => uint) public supplied;
+    mapping(address => PRBMath.UD60x18) public supplied;
 
     IERC20 DAI;
     address prospera;
-    uint totalSupplied;
-    uint totalLoaned;
 
     using SafeERC20 for IERC20;
-
-    function utilization() private view returns(uint) {
-        return totalLoaned / totalSupplied;
-    }
-
-    // this might be wrong.
-    // due to interest, suppliers will withdraw more than they initially supply.
-    // totalSupplied might underflow
-    function availableToBorrow() private view returns (uint) {
-        totalSupplied - totalLoaned;
-    }
+    using PRBMathUD60x18Typed for PRBMath.UD60x18;
 
     // called by supplier
-    function supply(uint deposit) external {
+    function supply(PRBMath.UD60x18 memory deposit) external {
 
         // Pull deposit from supplier
-        DAI.safeTransferFrom(msg.sender, address(this), deposit);
+        DAI.safeTransferFrom(msg.sender, address(this), deposit.toUint());
 
         // Increase caller supplied // should I use receipt tokens instead to reward early suppliers?
-        supplied[msg.sender] += deposit;
+        supplied[msg.sender] = supplied[msg.sender].add(deposit);
 
         // Increase totalSupplied
-        totalSupplied += deposit;
+        totalSupplied = totalSupplied.add(deposit);
     }
 
     // called by supplier
-    function withdraw(uint withdrawal) external {
+    function withdraw(PRBMath.UD60x18 memory withdrawal) external {
 
         // Decrease totalSupplied
-        totalSupplied -= withdrawal;
+        totalSupplied = totalSupplied.sub(withdrawal);
     }
 
     // called by GSP
     function mint(eResidencyId propertyOwner, bytes calldata propertyInfo) external onlyProspera {
         
-    }
-
-    function takeoutLoan() external {
-
-    }
-
-    function repay() external {
-
     }
 
     modifier onlyProspera {
