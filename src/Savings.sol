@@ -11,7 +11,7 @@ contract Savings is Math {
     mapping(address => PRBMath.UD60x18) public supplied;
 
     IERC20 DAI;
-    address prospera;
+    address prosperaGsp;
 
     using SafeERC20 for IERC20;
     using PRBMathUD60x18Typed for PRBMath.UD60x18;
@@ -37,12 +37,12 @@ contract Savings is Math {
     }
 
     // called by GSP
-    function mint(eResidencyId propertyOwner, bytes calldata propertyInfo) external onlyProspera {
+    function mint(eResidencyId propertyOwner, bytes calldata propertyInfo) external onlyProsperaGsp {
         
     }
 
-    modifier onlyProspera {
-        require(msg.sender == prospera, "caller not prospera");
+    modifier onlyProsperaGsp {
+        require(msg.sender == prosperaGsp, "caller not prospera");
         _;
     }
 }
