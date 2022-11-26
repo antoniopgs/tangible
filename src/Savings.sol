@@ -6,13 +6,19 @@ type eResidencyId is uint256;
 
 contract Savings {
 
-    IERC20 DAI;
-    address prospera;
-
     mapping(eResidencyId => address) public borrowers;
     mapping(address => uint) public supplied;
 
+    IERC20 DAI;
+    address prospera;
+    uint totalSupplied;
+    uint totalLoaned;
+
     using SafeERC20 for IERC20;
+
+    function utilization() private view returns(uint) {
+        return totalLoaned / totalSupplied;
+    }
 
     // called by supplier
     function supply(uint deposit) external {
@@ -20,12 +26,18 @@ contract Savings {
         // Pull deposit from supplier
         DAI.safeTransferFrom(msg.sender, address(this), deposit);
 
-        // Increment caller supplied // should I use receipt tokens instead to reward early suppliers?
+        // Increase caller supplied // should I use receipt tokens instead to reward early suppliers?
         supplied[msg.sender] += deposit;
+
+        // Increase totalSupplied
+        totalSupplied += deposit;
     }
 
     // called by supplier
     function withdraw() external {
+
+        // Decrease totalSupplied
+        totalSupplied -= deposit;
 
     }
 
