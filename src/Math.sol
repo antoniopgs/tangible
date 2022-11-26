@@ -22,7 +22,8 @@ contract Math {
     function loanSeconds(Loan memory loan) private view returns (PRBMath.UD60x18 memory) {
         return (block.timestamp - loan.takeoutTime).fromUint();
     }
-
+    
+    // y = p(1 + rt)
     function borrowerDebt(Loan memory loan) private view returns (PRBMath.UD60x18 memory) {
         return loan.principal.mul(uint(1).fromUint().add(ratePerSecond.mul(loanSeconds(loan)))).sub(loan.totalRepaid);
     }
