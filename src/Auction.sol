@@ -43,7 +43,7 @@ contract Auctions is ERC721Holder {
         DAI.safeTransferFrom(msg.sender, auction.seller, auction.buyoutPrice);
 
         // Start Loan
-        startLoan();
+        // startLoan();
     }
 
     // called by borrower
@@ -75,10 +75,16 @@ contract Auctions is ERC721Holder {
         DAI.safeTransferFrom(address(this), auction.seller, auction.highestBidder.bid);
 
         // Start Loan
-        startLoan();
+        // startLoan();
     }
 
-    function startLoan() private {
+    function startLoan(address seller, uint salePrice, uint principal, address borrower) private {
 
+        // Pull principal from protocol to seller
+        DAI.safeTransferFrom(address(this), seller, principal);
+
+        // Pull downPayment from borrower to seller
+        uint downPayment = salePrice - principal;
+        DAI.safeTransferFrom(borrower, seller, downPayment);
     }
 }

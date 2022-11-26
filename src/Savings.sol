@@ -34,11 +34,10 @@ contract Savings {
     }
 
     // called by supplier
-    function withdraw() external {
+    function withdraw(uint withdrawal) external {
 
         // Decrease totalSupplied
-        totalSupplied -= deposit;
-
+        totalSupplied -= withdrawal;
     }
 
     // called by GSP
