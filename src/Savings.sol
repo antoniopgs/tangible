@@ -7,30 +7,32 @@ contract Savings {
 
     address prospera;
 
-    struct Bidder {
-        address addr;
+    struct Bid {
+        address bidder;
         uint bid;
     }
 
     struct Auction {
-        Bidder highestBidder;
         uint buyoutPrice;
+        Bid highestBid;
         uint propertyTokenId;
     }
 
     mapping(eResidencyId => address) public borrowers;
 
+    // called by supplier
     function supply() external {
 
     }
 
-    function mint(eResidencyId propertyOwner, bytes calldata propertyInfo) external onlyProspera {
-        
+    // called by supplier
+    function withdraw() external {
+
     }
 
-    function verifyLender(eResidencyId id, address borrowerAddr) external onlyProspera {
-        require(borrowers[id] == address(0), "eResidencyId already associated to address");
-        borrowers[id] = borrowerAddr;
+    // called by GSP
+    function mint(eResidencyId propertyOwner, bytes calldata propertyInfo) external onlyProspera {
+        
     }
 
     function takeoutLoan() external {
