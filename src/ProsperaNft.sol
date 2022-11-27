@@ -63,27 +63,16 @@ contract ProsperaNft is ERC721URIStorage, AccessControl {
         return super.supportsInterface(interfaceId);
     }
 
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256, /* firstTokenId */
-        uint256 batchSize
-    ) internal override {
+    function _beforeTokenTransfer(address from, address to, uint256, /* firstTokenId */ uint256 batchSize) internal override {
         require(isEResident[to], "receiver not eResident");
-        if (batchSize > 1) {
-            if (from != address(0)) {
-                _balances[from] -= batchSize;
-            }
-            if (to != address(0)) {
-                _balances[to] += batchSize;
-            }
-        }
+        super._beforeTokenTransfer(from, to, 0, batchSize); // is it fine to pass 0 here?
     }
 
+    // maybe just replace the "eResidentAddr" param with msg.sender, and allow the caller to verify himself?
     function verifyEResident(uint eResidentId, address eResidentAddr) external onlyRole(PAC) { // is it the PAC that verifies eResidents?
         require(!isEResident[eResidentAddr], "address already associated to an eResident");
-        require(eResidentAddr[eResidentId], "eResidentId already associated to an address");
+        require(eResidentAddress[eResidentId] == address(0), "eResidentId already associated to an address");
         isEResident[eResidentAddr] = true;
-        eResidentAddr[eResidentId] = eResidentAddr;
+        eResidentAddress[eResidentId] = eResidentAddr;
     }
 }

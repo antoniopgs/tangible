@@ -55,6 +55,6 @@ contract Math {
         PRBMath.UD60x18 storage totalRepaid = loans[propertyId].totalRepaid;
 
         // Increase totalRepaid
-        totalRepaid = totalRepaid.add(repayment);
+        totalRepaid.value = totalRepaid.add(repayment).value;
     }
 }
