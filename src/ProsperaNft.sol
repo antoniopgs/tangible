@@ -2,8 +2,8 @@
 pragma solidity ^0.8.15;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "lib/openzeppelin-contracts/contracts/utils/Counters.sol";
 import "lib/openzeppelin-contracts/contracts/access/AccessControl.sol";
+import "lib/openzeppelin-contracts/contracts/utils/Counters.sol";
 
 contract ProsperaNft is ERC721URIStorage, AccessControl {
 
@@ -80,7 +80,7 @@ contract ProsperaNft is ERC721URIStorage, AccessControl {
         }
     }
 
-    function verifyEResident(uint eResidentId, address eResidentAddr) external onlyRole() {
+    function verifyEResident(uint eResidentId, address eResidentAddr) external onlyRole(PAC) { // is it the PAC that verifies eResidents?
         require(!isEResident[eResidentAddr], "address already associated to an eResident");
         require(eResidentAddr[eResidentId], "eResidentId already associated to an address");
         isEResident[eResidentAddr] = true;
