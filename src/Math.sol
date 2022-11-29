@@ -35,7 +35,7 @@ contract Math {
     }
 
     function utilization() private view returns(PRBMath.UD60x18 memory) {
-        return totalLoaned.div(totalSupplied);
+        return totalLoaned.div(totalSupplied); // should the numerator be "totalLoaned" or "systemDebt"?
     }
 
     // this might be wrong.
