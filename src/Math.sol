@@ -15,7 +15,7 @@ contract Math {
     }
 
     PRBMath.UD60x18 internal totalSupplied;
-    PRBMath.UD60x18 internal totalLoaned;
+    PRBMath.UD60x18 internal totalBorrowed;
 
     mapping(PropertyId => Loan) private loans;
 
@@ -35,14 +35,14 @@ contract Math {
     }
 
     function utilization() private view returns(PRBMath.UD60x18 memory) {
-        return totalLoaned.div(totalSupplied); // should the numerator be "totalLoaned" or "systemDebt"?
+        return totalBorrowed.div(totalSupplied); // should the numerator be "totalBorrowed" or "systemDebt"?
     }
 
     // this might be wrong.
     // due to interest, suppliers will withdraw more than they initially supply.
     // totalSupplied might underflow
     function availableToBorrow() private view returns (PRBMath.UD60x18 memory) {
-        return totalSupplied.sub(totalLoaned);
+        return totalSupplied.sub(totalBorrowed);
     }
 
     function takeoutLoan() external {

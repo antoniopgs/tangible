@@ -5,12 +5,15 @@ type Time is uint;
 
 contract AuctionClosing {
 
-    Time public optionPeriodDuration = Time.wrap(10 days);
-    Time public closingPeriodDuration = Time.wrap(30 days);
+    // Time public optionPeriodDuration = Time.wrap(10 days);
+    uint optionPeriodDuration = 10 days;
+    // Time public closingPeriodDuration = Time.wrap(30 days);
+    uint closingPeriodDuration = 30 days;
 
-    Time public auctionOptionPeriodStart;
+    // Time public auctionOptionPeriodStart;
+    uint public auctionOptionPeriodStart;
 
-    function backout() external {
+    function backout() external view {
 
         if (block.timestamp < auctionOptionPeriodStart) {
             revert("can't back out before option period starts");

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./Math.sol";
 
 contract Suppliers is Math {
 
