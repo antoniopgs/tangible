@@ -57,4 +57,29 @@ contract Math {
         // Increase totalRepaid
         totalRepaid.value = totalRepaid.add(repayment).value;
     }
+
+
+    uint totalDebt;
+    uint totalSupply;
+
+    function utilization() private view returns (uint) {
+        return totalDebt / totalSupply;
+    }
+
+    function deposit(uint deposit) {
+        totalSupply += deposit;
+    }
+
+    function withdraw(uint withdrawal) {
+        totalSupply -= withdrawal;
+    }
+
+    function borrow(uint principal) {
+        totalDebt += principal * (1 + interest);
+        totalSupply += principal * (1 + interest);
+    }
+
+    function repay(uint repayment) {
+        totalDebt -= repayment;
+    }
 }
