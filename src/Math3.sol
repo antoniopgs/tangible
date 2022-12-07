@@ -14,12 +14,21 @@ contract Math3 {
         PRBMath.UD60x18 balance;
     }
 
+    // System Vars
     PRBMath.UD60x18 private totalDebt; // maybe rename to totalBorrowed?
     PRBMath.UD60x18 private totalSupply;
     PRBMath.UD60x18 public maxLtv;
 
+    // Interest Rate Vars
+    PRBMath.UD60x18 public optimalUtilization;
+    PRBMath.UD60x18 public baseRate;
+    PRBMath.UD60x18 public slope1;
+    PRBMath.UD60x18 public slope2;
+
+    // Loan Storage
     mapping(PropertyId => Loan) public loans;
 
+    // Libs
     using PRBMathUD60x18Typed for PRBMath.UD60x18;
     using PRBMathUD60x18Typed for uint;
 
@@ -29,6 +38,21 @@ contract Math3 {
 
     function utilization() public view returns (PRBMath.UD60x18 memory) {
         return totalDebt.div(totalSupply);
+    }
+
+    function currentYearlyRate() public view returns (PRBMath.UD60x18 memory) {
+
+        // Get utilization
+        PRBMath.UD60x18 memory _utilization = utilization();
+
+        // If utilization <= optimalUtilization
+        if (_utilization.value <= optimalUtilization.value) {
+            return baseRate.add(_utilization.div(optimalUtilization).mul(slope1));
+
+        // If utilization > optimalUtilization
+        } else {
+            return baseRate.add(slope1).add(_utilization.sub(optimalUtilization).div(uint(1).fromUint().sub(optimalUtilization)).mul(slope2));
+        }
     }
 
     function loanEquity(PropertyId propertyId) public view returns (PRBMath.UD60x18 memory equity) {
@@ -49,11 +73,11 @@ contract Math3 {
         monthlyPayment = principal.fromUint().mul(uint(1).fromUint().sub(r).div(r.sub(r.powu(monthsCount + 1))));
     }
 
-    function borrow(PropertyId propertyId, uint propertyValue, uint principal, PRBMath.UD60x18 calldata yearlyRate, uint yearsCount) external {
+    function borrow(PropertyId propertyId, uint propertyValue, uint principal, uint yearsCount) external {
         require(principal.fromUint().div(propertyValue.fromUint()).value <= maxLtv.value, "cannot exceed maxLtv");
 
         // Calculate monthlyRate
-        PRBMath.UD60x18 memory monthlyRate = yearlyRate.div(uint(12).fromUint());
+        PRBMath.UD60x18 memory monthlyRate = currentYearlyRate().div(uint(12).fromUint());
 
         // Calculate monthsCount
         uint monthsCount = yearsCount * 12;
@@ -67,7 +91,7 @@ contract Math3 {
         });
 
         // Add principal to totalDebt
-        totalDebt = totalDebt.add(principal);
+        totalDebt = totalDebt.add(principal.fromUint());
     }
     
     // do we allow multiple repayments within the month? if so, what updates are needed to the math?
