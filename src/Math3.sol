@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import "lib/prb-math/contracts/PRBMathUD60x18Typed.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./tUSDC.sol";
+import "./tUsdc.sol";
 
 type PropertyId is uint;
 
@@ -17,7 +17,7 @@ contract Math3 {
     }
 
     IERC20 public USDC;
-    tUSDC public tUSDC;
+    tUsdc public tUSDC;
 
     // System Vars
     PRBMath.UD60x18 private totalDebt; // maybe rename to totalBorrowed?
@@ -112,7 +112,7 @@ contract Math3 {
         uint tusdc = usdcToTusdc(usdc);
 
         // Mint tusdc to depositor
-        // tUSDC.mint(msg.sender, tusdc); // FIX LATER
+        tUSDC.mint(msg.sender, tusdc);
     }
 
     function withdraw(uint usdc) external {

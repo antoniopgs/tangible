@@ -3,14 +3,14 @@ pragma solidity ^0.8.15;
 
 import "lib/openzeppelin-contracts/contracts/token/ERC777/ERC777.sol";
 
-contract tUSDC is ERC777("Tangible USDC", "tUSDC", []) {
+contract tUsdc is ERC777 {
 
-    function operatorBurn(address account, XLiqType.XLiq calldata amount) external {
-        operatorBurn(account, amount.XLiqToUint(), "", "");
+    constructor(address[] memory defaultOperators_) ERC777("Tangible USDC", "tUSDC", defaultOperators_) {
+        require(defaultOperators_.length == 0); // IMPROVE LATER
     }
 
-    function mint(address account, XLiqType.XLiq calldata amount) external {
-        require(isDefaultOperator(msg.sender), "caller not default operator");
-        _mint(account, amount.XLiqToUint(), "", "");
+    function mint(address account, uint amount) external { // RESTRICT ACCESS LATER
+        bytes memory emptyBytes;
+        _mint(account, amount, emptyBytes, emptyBytes);
     }
 }
