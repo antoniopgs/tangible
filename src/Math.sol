@@ -38,6 +38,10 @@ contract Math {
         return totalBorrowed.div(totalSupplied); // should the numerator be "totalBorrowed" or "systemDebt"?
     }
 
+    // function utilization() private view returns (uint) {
+    //     return totalDebt / totalSupply;
+    // }
+
     // this might be wrong.
     // due to interest, suppliers will withdraw more than they initially supply.
     // totalSupplied might underflow
@@ -62,24 +66,20 @@ contract Math {
     uint totalDebt;
     uint totalSupply;
 
-    function utilization() private view returns (uint) {
-        return totalDebt / totalSupply;
+    function deposit(uint _deposit) external {
+        totalSupply += _deposit;
     }
 
-    function deposit(uint deposit) {
-        totalSupply += deposit;
-    }
-
-    function withdraw(uint withdrawal) {
+    function withdraw(uint withdrawal) external {
         totalSupply -= withdrawal;
     }
 
-    function borrow(uint principal) {
-        totalDebt += principal * (1 + interest);
-        totalSupply += principal * (1 + interest);
+    function borrow(uint principal) external {
+        // totalDebt += principal * (1 + interest);
+        // totalSupply += principal * (1 + interest);
     }
 
-    function repay(uint repayment) {
+    function repay(uint repayment) external {
         totalDebt -= repayment;
     }
 }
