@@ -29,7 +29,8 @@ contract Math3 {
             equity: propertyValue - principal
         });
     }
-
+    
+    // do we allow multiple repayments within the month? if so, what updates are needed to the math?
     function repay(PropertyId propertyId, uint repayment) external {
 
         // Get Loan
