@@ -2,6 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "lib/prb-math/contracts/PRBMathUD60x18Typed.sol";
+import "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
 type PropertyId is uint;
 
@@ -13,6 +14,9 @@ contract Math3 {
         PRBMath.UD60x18 monthlyPayment;
         PRBMath.UD60x18 balance;
     }
+
+    IERC20 public USDC;
+    IERC20 public tUSDC;
 
     // System Vars
     PRBMath.UD60x18 private totalDebt; // maybe rename to totalBorrowed?
@@ -31,6 +35,7 @@ contract Math3 {
     // Libs
     using PRBMathUD60x18Typed for PRBMath.UD60x18;
     using PRBMathUD60x18Typed for uint;
+    using SafeERC20 for IERC20;
 
     constructor() {
         maxLtv = uint(50).fromUint().div(uint(100).fromUint()); // 0.5
@@ -68,6 +73,23 @@ contract Math3 {
         equity = loan.propertyValue.sub(loan.balance);
     }
 
+    function usdcToTusdcRatio() private view returns(PRBMath.UD60x18 memory) {
+        
+        // Get tusdcSupply
+        uint tusdcSupply = tUSDC.totalSupply();
+
+        if (tusdcSupply == 0 || totalSupply.value == 0) {
+            return uint(1).fromUint();
+
+        } else {
+            return tusdcSupply.fromUint().div(totalSupply);
+        }
+    }
+
+    function usdcToTusdc(uint usdc) private view returns(uint tusdc) {
+        tusdc = usdc.fromUint().mul(usdcToTusdcRatio()).toUint();
+    }
+
     function calculateMonthlyPayment(uint principal, PRBMath.UD60x18 memory monthlyRate, uint monthsCount) private pure returns(PRBMath.UD60x18 memory monthlyPayment) {
 
         // Calculate r
@@ -75,6 +97,37 @@ contract Math3 {
 
         // Calculate monthlyPayment
         monthlyPayment = principal.fromUint().mul(uint(1).fromUint().sub(r).div(r.sub(r.powu(monthsCount + 1))));
+    }
+
+    function deposit(uint usdc) external {
+
+        // Pull LIQ from staker
+        USDC.safeTransferFrom(msg.sender, address(this), usdc);
+
+        // Add usdc to totalSupply
+        totalSupply = totalSupply.add(usdc.fromUint());
+
+        // Calculate tusdc
+        uint tusdc = usdcToTusdc(usdc);
+
+        // Mint tusdc to depositor
+        // tUSDC.mint(msg.sender, tusdc); // FIX LATER
+    }
+
+    function withdraw(uint usdc) external {
+
+        // Calculate tusdc
+        uint tusdc = usdcToTusdc(usdc);
+
+        // Burn tusdc from withdrawer
+        // tUSDC.burn(msg.sender, tusdc); // FIX LATER
+
+        // Send LIQ to unstaker
+        USDC.safeTransfer(msg.sender, usdc); // reentrancy possible?
+
+        // Remove usdc from totalSupply
+        totalSupply = totalSupply.sub(usdc.fromUint());
+        require(totalSupply.value >= totalDebt.value, "utilzation can't exceed 100%");
     }
 
     function borrow(PropertyId propertyId, uint propertyValue, uint principal, uint yearsCount) external {
@@ -119,14 +172,5 @@ contract Math3 {
 
         // Add accrued to totalSupply
         totalSupply = totalSupply.add(accrued);
-    }
-
-    function deposit(uint _deposit) external {
-        totalSupply = totalSupply.add(_deposit.fromUint());
-    }
-
-    function withdraw(uint _withdrawal) external {
-        totalSupply = totalSupply.sub(_withdrawal.fromUint());
-        require(totalSupply.value >= totalDebt.value, "utilzation can't exceed 100%");
     }
 }
