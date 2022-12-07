@@ -13,13 +13,21 @@ contract Math3 {
     }
 
     mapping(PropertyId => Loan) public loans;
+    uint maxLtv = 50 / 100;
 
     function calculateMonthlyPayment(uint principal, uint monthlyRate, uint monthsCount) private pure returns(uint monthlyPayment) {
         uint r = 1 / (1 + monthlyRate);
         monthlyPayment = principal * ((1 - r) / (r - r ** (monthsCount + 1)));
     }
 
-    function borrow(PropertyId propertyId, uint propertyValue, uint principal, uint monthlyRate, uint monthsCount) external {
+    function borrow(PropertyId propertyId, uint propertyValue, uint principal, uint yearlyRate, uint yearsCount) external {
+        require(principal / propertyValue <= maxLtv, "cannot exceed maxLtv");
+
+        // Calculate monthlyRate
+        uint monthlyRate = yearlyRate / 12;
+
+        // Calculate monthsCount
+        uint monthsCount = yearsCount * 12;
 
         // Store Loan
         loans[propertyId] = Loan({
