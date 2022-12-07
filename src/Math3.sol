@@ -21,9 +21,9 @@ contract Math3 {
 
     // Interest Rate Vars
     PRBMath.UD60x18 public optimalUtilization;
-    PRBMath.UD60x18 public baseRate;
-    PRBMath.UD60x18 public slope1;
-    PRBMath.UD60x18 public slope2;
+    PRBMath.UD60x18 public m1;
+    PRBMath.UD60x18 public b1;
+    PRBMath.UD60x18 public m2;
 
     // Loan Storage
     mapping(PropertyId => Loan) public loans;
@@ -34,6 +34,10 @@ contract Math3 {
 
     constructor() {
         maxLtv = uint(50).fromUint().div(uint(100).fromUint()); // 0.5
+    }
+
+    function b2() private view returns (PRBMath.UD60x18 memory) {
+        return optimalUtilization.mul(m1.sub(m2)).add(b1);
     }
 
     function utilization() public view returns (PRBMath.UD60x18 memory) {
@@ -47,11 +51,11 @@ contract Math3 {
 
         // If utilization <= optimalUtilization
         if (_utilization.value <= optimalUtilization.value) {
-            return baseRate.add(_utilization.div(optimalUtilization).mul(slope1));
+            return m1.mul(_utilization).add(b1);
 
         // If utilization > optimalUtilization
         } else {
-            return baseRate.add(slope1).add(_utilization.sub(optimalUtilization).div(uint(1).fromUint().sub(optimalUtilization)).mul(slope2));
+            return m2.mul(_utilization).add(b2());
         }
     }
 
