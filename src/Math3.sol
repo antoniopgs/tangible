@@ -8,10 +8,10 @@ type PropertyId is uint;
 contract Math3 {
 
     struct Loan {
+        PRBMath.UD60x18 propertyValue;
         PRBMath.UD60x18 monthlyRate;
         PRBMath.UD60x18 monthlyPayment;
         PRBMath.UD60x18 balance;
-        PRBMath.UD60x18 equity;
     }
 
     using PRBMathUD60x18Typed for PRBMath.UD60x18;
@@ -44,10 +44,10 @@ contract Math3 {
 
         // Store Loan
         loans[propertyId] = Loan({
+            propertyValue: propertyValue.fromUint(),
             monthlyRate: monthlyRate,
             monthlyPayment: calculateMonthlyPayment(principal, monthlyRate, monthsCount),
-            balance: principal.fromUint(),
-            equity: (propertyValue - principal).fromUint()
+            balance: principal.fromUint()
         });
     }
     
@@ -57,16 +57,15 @@ contract Math3 {
         // Get Loan
         Loan storage loan = loans[propertyId];
 
-        // Calculate accruedInterest
-        PRBMath.UD60x18 memory accruedInterest = loan.monthlyRate.mul(loan.balance);
-        
-        // Add accruedInterest to loanBalance
-        loan.balance = loan.balance.add(accruedInterest);
+        // Calculate accrued
+        PRBMath.UD60x18 memory accrued = loan.monthlyRate.mul(loan.balance);
+        require(repayment.fromUint().value >= accrued.value, "repayment must >= accrued interest"); // might change later due to multiple repayments within the month
 
-        // Decrease loan.balance by repayment
-        loan.balance = loan.balance.sub(repayment.fromUint());
+        // Decrease balance by repayment - accrued
+        loan.balance = loan.balance.sub(repayment.fromUint().sub(accrued));
+    }
 
-        // Update loan.equity
-        loan.equity = loan.equity.add(repayment.fromUint().sub(accruedInterest)); // there might be something wrong here
+    function loanEquity(Loan calldata loan) public pure returns (PRBMath.UD60x18 memory equity) {
+        equity = loan.propertyValue.sub(loan.balance);
     }
 }
