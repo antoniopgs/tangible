@@ -14,17 +14,33 @@ contract Math3 {
         PRBMath.UD60x18 balance;
     }
 
+    PRBMath.UD60x18 private totalDebt; // maybe rename to totalBorrowed?
+    PRBMath.UD60x18 private totalSupply;
+    PRBMath.UD60x18 public maxLtv;
+
+    mapping(PropertyId => Loan) public loans;
+
     using PRBMathUD60x18Typed for PRBMath.UD60x18;
     using PRBMathUD60x18Typed for uint;
 
-    mapping(PropertyId => Loan) public loans;
-    PRBMath.UD60x18 public maxLtv = uint(50).fromUint().div(uint(100).fromUint()); // 0.5
+    constructor() {
+        maxLtv = uint(50).fromUint().div(uint(100).fromUint()); // 0.5
+    }
 
-    function calculateMonthlyPayment(
-        uint principal,
-        PRBMath.UD60x18 memory monthlyRate,
-        uint monthsCount
-    ) private pure returns(PRBMath.UD60x18 memory monthlyPayment) {
+    function utilization() public view returns (PRBMath.UD60x18 memory) {
+        return totalDebt.div(totalSupply);
+    }
+
+    function loanEquity(PropertyId propertyId) public view returns (PRBMath.UD60x18 memory equity) {
+
+        // Get Loan
+        Loan memory loan = loans[propertyId];
+
+        // Calculate equity
+        equity = loan.propertyValue.sub(loan.balance);
+    }
+
+    function calculateMonthlyPayment(uint principal, PRBMath.UD60x18 memory monthlyRate, uint monthsCount) private pure returns(PRBMath.UD60x18 memory monthlyPayment) {
 
         // Calculate r
         PRBMath.UD60x18 memory r = uint(1).fromUint().div(uint(1).fromUint().add(monthlyRate));
@@ -49,6 +65,9 @@ contract Math3 {
             monthlyPayment: calculateMonthlyPayment(principal, monthlyRate, monthsCount),
             balance: principal.fromUint()
         });
+
+        // Add principal to totalDebt
+        totalDebt = totalDebt.add(principal);
     }
     
     // do we allow multiple repayments within the month? if so, what updates are needed to the math?
@@ -61,16 +80,25 @@ contract Math3 {
         PRBMath.UD60x18 memory accrued = loan.monthlyRate.mul(loan.balance);
         require(repayment.fromUint().value >= accrued.value, "repayment must >= accrued interest"); // might change later due to multiple repayments within the month
 
-        // Decrease balance by repayment - accrued
-        loan.balance = loan.balance.sub(repayment.fromUint().sub(accrued));
+        // Calculate balanceRepayment
+        PRBMath.UD60x18 memory balanceRepayment = repayment.fromUint().sub(accrued);
+
+        // Remove balanceRepayment from balance
+        loan.balance = loan.balance.sub(balanceRepayment);
+
+        // Remove balanceRepayment from totalDebt
+        totalDebt = totalDebt.sub(balanceRepayment);
+
+        // Add accrued to totalSupply
+        totalSupply = totalSupply.add(accrued);
     }
 
-    function loanEquity(PropertyId propertyId) public view returns (PRBMath.UD60x18 memory equity) {
+    function deposit(uint _deposit) external {
+        totalSupply = totalSupply.add(_deposit.fromUint());
+    }
 
-        // Get Loan
-        Loan memory loan = loans[propertyId];
-
-        // Calculate equity
-        equity = loan.propertyValue.sub(loan.balance);
+    function withdraw(uint _withdrawal) external {
+        totalSupply = totalSupply.sub(_withdrawal.fromUint());
+        require(totalSupply.value >= totalDebt.value, "utilzation can't exceed 100%");
     }
 }
