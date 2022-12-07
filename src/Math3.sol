@@ -14,6 +14,7 @@ contract Math3 {
         PRBMath.UD60x18 monthlyRate;
         PRBMath.UD60x18 monthlyPayment;
         PRBMath.UD60x18 balance;
+        address borrower;
     }
 
     IERC20 public USDC;
@@ -134,6 +135,8 @@ contract Math3 {
     function borrow(PropertyId propertyId, uint propertyValue, uint principal, uint yearsCount) external {
         require(principal.fromUint().div(propertyValue.fromUint()).value <= maxLtv.value, "cannot exceed maxLtv");
 
+        // change property nft state
+
         // Calculate monthlyRate
         PRBMath.UD60x18 memory monthlyRate = currentYearlyRate().div(uint(12).fromUint());
 
@@ -145,7 +148,8 @@ contract Math3 {
             propertyValue: propertyValue.fromUint(),
             monthlyRate: monthlyRate,
             monthlyPayment: calculateMonthlyPayment(principal, monthlyRate, monthsCount),
-            balance: principal.fromUint()
+            balance: principal.fromUint(),
+            borrower: msg.sender
         });
 
         // Add principal to totalDebt
@@ -173,5 +177,10 @@ contract Math3 {
 
         // Add accrued to totalSupply
         totalSupply = totalSupply.add(accrued);
+
+        // If loan fully repaid
+        if (loan.balance.value == 0) {
+            // transfer property nft to borrower
+        }
     }
 }
