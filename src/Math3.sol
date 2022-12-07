@@ -65,7 +65,12 @@ contract Math3 {
         loan.balance = loan.balance.sub(repayment.fromUint().sub(accrued));
     }
 
-    function loanEquity(Loan calldata loan) public pure returns (PRBMath.UD60x18 memory equity) {
+    function loanEquity(PropertyId propertyId) public view returns (PRBMath.UD60x18 memory equity) {
+
+        // Get Loan
+        Loan memory loan = loans[propertyId];
+
+        // Calculate equity
         equity = loan.propertyValue.sub(loan.balance);
     }
 }
