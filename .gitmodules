@@ -7,3 +7,4 @@
 [submodule "lib/prb-math"]
 	path = lib/prb-math
 	url = https://github.com/paulrberg/prb-math
+	branch = v2.5.0
