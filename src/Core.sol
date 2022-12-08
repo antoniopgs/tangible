@@ -13,11 +13,9 @@ contract Core is Math, ILoan {
     mapping(PropertyId => Loan) public loans;
 
     // Libs
-    using PRBMathUD60x18Typed for PRBMath.UD60x18;
-    using PRBMathUD60x18Typed for uint;
     using SafeERC20 for IERC20;
 
-    function loanEquity(PropertyId propertyId) public view returns (PRBMath.UD60x18 memory equity) {
+    function loanEquity(PropertyId propertyId) public view returns (UD60x18  equity) {
 
         // Get Loan
         Loan memory loan = loans[propertyId];
@@ -63,7 +61,7 @@ contract Core is Math, ILoan {
         // change property nft state
 
         // Calculate monthlyRate
-        PRBMath.UD60x18 memory monthlyRate = currentYearlyRate().div(uint(12).fromUint());
+        UD60x18  monthlyRate = currentYearlyRate().div(uint(12).fromUint());
 
         // Calculate monthsCount
         uint monthsCount = yearsCount * 12;
@@ -88,11 +86,11 @@ contract Core is Math, ILoan {
         Loan storage loan = loans[propertyId];
 
         // Calculate accrued
-        PRBMath.UD60x18 memory accrued = loan.monthlyRate.mul(loan.balance);
+        UD60x18  accrued = loan.monthlyRate.mul(loan.balance);
         require(repayment.fromUint().value >= accrued.value, "repayment must >= accrued interest"); // might change later due to multiple repayments within the month
 
         // Calculate balanceRepayment
-        PRBMath.UD60x18 memory balanceRepayment = repayment.fromUint().sub(accrued);
+        UD60x18  balanceRepayment = repayment.fromUint().sub(accrued);
 
         // Remove balanceRepayment from balance
         loan.balance = loan.balance.sub(balanceRepayment);

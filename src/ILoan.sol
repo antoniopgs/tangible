@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "lib/prb-math/contracts/PRBMathUD60x18Typed.sol";
+import "@prb/math/UD60x18.sol";
 
 interface ILoan {
 
     struct Loan {
-        PRBMath.UD60x18 propertyValue;
-        PRBMath.UD60x18 monthlyRate;
-        PRBMath.UD60x18 monthlyPayment;
-        PRBMath.UD60x18 balance;
+        UD60x18 propertyValue;
+        UD60x18 monthlyRate;
+        UD60x18 monthlyPayment;
+        UD60x18 balance;
         address borrower;
     }    
 }

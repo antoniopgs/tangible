@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "lib/prb-math/contracts/PRBMathUD60x18Typed.sol";
+import "@prb/math/UD60x18.sol";
 import "./tUsdc.sol";
 
 abstract contract Math {
@@ -10,32 +10,28 @@ abstract contract Math {
     tUsdc public tUSDC;
 
     // System Vars
-    PRBMath.UD60x18 internal totalDebt; // maybe rename to totalBorrowed?
-    PRBMath.UD60x18 internal totalSupply;
-    PRBMath.UD60x18 public maxLtv = uint(50).fromUint().div(uint(100).fromUint()); // 0.5
+    UD60x18 internal totalDebt; // maybe rename to totalBorrowed?
+    UD60x18 internal totalSupply;
+    UD60x18 public maxLtv = uint(50).fromUint().div(uint(100).fromUint()); // 0.5
 
     // Interest Rate Vars
-    PRBMath.UD60x18 public optimalUtilization;
-    PRBMath.UD60x18 public m1;
-    PRBMath.UD60x18 public b1;
-    PRBMath.UD60x18 public m2;
+    UD60x18 public optimalUtilization;
+    UD60x18 public m1;
+    UD60x18 public b1;
+    UD60x18 public m2;
 
-    // Libs
-    using PRBMathUD60x18Typed for PRBMath.UD60x18;
-    using PRBMathUD60x18Typed for uint;
-
-    function b2() private view returns (PRBMath.UD60x18 memory) {
+    function b2() private view returns (UD60x18 ) {
         return optimalUtilization.mul(m1.sub(m2)).add(b1);
     }
 
-    function utilization() public view returns (PRBMath.UD60x18 memory) {
+    function utilization() public view returns (UD60x18 ) {
         return totalDebt.div(totalSupply);
     }
 
-    function currentYearlyRate() public view returns (PRBMath.UD60x18 memory) {
+    function currentYearlyRate() public view returns (UD60x18 ) {
 
         // Get utilization
-        PRBMath.UD60x18 memory _utilization = utilization();
+        UD60x18  _utilization = utilization();
 
         // If utilization <= optimalUtilization
         if (_utilization.value <= optimalUtilization.value) {
@@ -47,7 +43,7 @@ abstract contract Math {
         }
     }
 
-    function usdcToTusdcRatio() private view returns(PRBMath.UD60x18 memory) {
+    function usdcToTusdcRatio() private view returns(UD60x18 ) {
         
         // Get tusdcSupply
         uint tusdcSupply = tUSDC.totalSupply();
@@ -64,10 +60,10 @@ abstract contract Math {
         tusdc = usdc.fromUint().mul(usdcToTusdcRatio()).toUint();
     }
 
-    function calculateMonthlyPayment(uint principal, PRBMath.UD60x18 memory monthlyRate, uint monthsCount) internal pure returns(PRBMath.UD60x18 memory monthlyPayment) {
+    function calculateMonthlyPayment(uint principal, UD60x18  monthlyRate, uint monthsCount) internal pure returns(UD60x18  monthlyPayment) {
 
         // Calculate r
-        PRBMath.UD60x18 memory r = uint(1).fromUint().div(uint(1).fromUint().add(monthlyRate));
+        UD60x18  r = uint(1).fromUint().div(uint(1).fromUint().add(monthlyRate));
 
         // Calculate monthlyPayment
         monthlyPayment = principal.fromUint().mul(uint(1).fromUint().sub(r).div(r.sub(r.powu(monthsCount + 1))));
