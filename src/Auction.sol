@@ -5,9 +5,9 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./Math.sol";
-import "./Core.sol";
+// import "./Core.sol";
 
-contract Auctions is Math, Core, ERC721Holder {
+contract Auctions is Math, /*Core,*/ ERC721Holder {
 
     struct Bidder {
         address addr;

@@ -1,46 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
+import "./Base.sol";
 import "@prb/math/UD60x18.sol";
-import "./tUsdc.sol";
 
-abstract contract Math {
-
-    // Tokens
-    IERC20 public USDC;
-    tUsdc public tUSDC;
+abstract contract Math is Base {
 
     // System Vars
     UD60x18 internal totalDebt; // maybe rename to totalBorrowed?
     UD60x18 internal totalSupply;
 
-    // Interest Rate Vars
-    UD60x18 public optimalUtilization;
-    UD60x18 public m1;
-    UD60x18 public b1;
-    UD60x18 public m2;
-
-    function b2() private view returns (UD60x18 ) {
-        return optimalUtilization.mul(m1.sub(m2)).add(b1);
-    }
-
     function utilization() public view returns (UD60x18 ) {
         return totalDebt.div(totalSupply);
-    }
-
-    function currentYearlyRate() public view returns (UD60x18 ) {
-
-        // Get utilization
-        UD60x18 _utilization = utilization();
-
-        // If utilization <= optimalUtilization
-        if (_utilization.lte(optimalUtilization)) {
-            return m1.mul(_utilization).add(b1);
-
-        // If utilization > optimalUtilization
-        } else {
-            return m2.mul(_utilization).add(b2());
-        }
     }
 
     function usdcToTusdcRatio() private view returns(UD60x18 ) {
