@@ -12,7 +12,7 @@ abstract contract Math {
     // System Vars
     UD60x18 internal totalDebt; // maybe rename to totalBorrowed?
     UD60x18 internal totalSupply;
-    UD60x18 public maxLtv = uint(50).fromUint().div(uint(100).fromUint()); // 0.5
+    UD60x18 public maxLtv = toUD60x18(50).div(toUD60x18(100)); // 0.5
 
     // Interest Rate Vars
     UD60x18 public optimalUtilization;
@@ -31,10 +31,10 @@ abstract contract Math {
     function currentYearlyRate() public view returns (UD60x18 ) {
 
         // Get utilization
-        UD60x18  _utilization = utilization();
+        UD60x18 _utilization = utilization();
 
         // If utilization <= optimalUtilization
-        if (_utilization.value <= optimalUtilization.value) {
+        if (_utilization.lte(optimalUtilization)) {
             return m1.mul(_utilization).add(b1);
 
         // If utilization > optimalUtilization
@@ -48,24 +48,24 @@ abstract contract Math {
         // Get tusdcSupply
         uint tusdcSupply = tUSDC.totalSupply();
 
-        if (tusdcSupply == 0 || totalSupply.value == 0) {
-            return uint(1).fromUint();
+        if (tusdcSupply == 0 || totalSupply.eq(ud(0))) {
+            return toUD60x18(1);
 
         } else {
-            return tusdcSupply.fromUint().div(totalSupply);
+            return toUD60x18(tusdcSupply).div(totalSupply);
         }
     }
 
     function usdcToTusdc(uint usdc) internal view returns(uint tusdc) {
-        tusdc = usdc.fromUint().mul(usdcToTusdcRatio()).toUint();
+        tusdc = fromUD60x18(toUD60x18(usdc).mul(usdcToTusdcRatio()));
     }
 
-    function calculateMonthlyPayment(uint principal, UD60x18  monthlyRate, uint monthsCount) internal pure returns(UD60x18  monthlyPayment) {
+    function calculateMonthlyPayment(uint principal, UD60x18 monthlyRate, uint monthsCount) internal pure returns(UD60x18 monthlyPayment) {
 
         // Calculate r
-        UD60x18  r = uint(1).fromUint().div(uint(1).fromUint().add(monthlyRate));
+        UD60x18 r = toUD60x18(1).div(toUD60x18(1).add(monthlyRate));
 
         // Calculate monthlyPayment
-        monthlyPayment = principal.fromUint().mul(uint(1).fromUint().sub(r).div(r.sub(r.powu(monthsCount + 1))));
+        monthlyPayment = toUD60x18(principal).mul(toUD60x18(1).sub(r).div(r.sub(r.powu(monthsCount + 1))));
     }
 }

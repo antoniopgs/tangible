@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC777/ERC777.sol";
+import "@openzeppelin/contracts/token/ERC777/ERC777.sol";
 
 contract tUsdc is ERC777 {
 
