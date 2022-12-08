@@ -24,7 +24,7 @@ contract Auctions is ERC721Holder {
 
     using SafeERC20 for IERC20;
 
-    function auction(uint tokenId, uint buyoutPrice) external {
+    function startAuction(uint tokenId, uint buyoutPrice) external {
 
         // Pull NFT from seller
         prosperaNftContract.safeTransferFrom(msg.sender, address(this), tokenId);
