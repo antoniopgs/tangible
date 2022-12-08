@@ -1,35 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "lib/prb-math/contracts/PRBMathUD60x18Typed.sol";
+import "./Math.sol";
+import "./ILoan.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./tUsdc.sol";
 
 type PropertyId is uint;
 
-contract Math3 {
-
-    struct Loan {
-        PRBMath.UD60x18 propertyValue;
-        PRBMath.UD60x18 monthlyRate;
-        PRBMath.UD60x18 monthlyPayment;
-        PRBMath.UD60x18 balance;
-        address borrower;
-    }
-
-    IERC20 public USDC;
-    tUsdc public tUSDC;
-
-    // System Vars
-    PRBMath.UD60x18 private totalDebt; // maybe rename to totalBorrowed?
-    PRBMath.UD60x18 private totalSupply;
-    PRBMath.UD60x18 public maxLtv;
-
-    // Interest Rate Vars
-    PRBMath.UD60x18 public optimalUtilization;
-    PRBMath.UD60x18 public m1;
-    PRBMath.UD60x18 public b1;
-    PRBMath.UD60x18 public m2;
+contract Core is Math, ILoan {
 
     // Loan Storage
     mapping(PropertyId => Loan) public loans;
@@ -39,33 +17,6 @@ contract Math3 {
     using PRBMathUD60x18Typed for uint;
     using SafeERC20 for IERC20;
 
-    constructor() {
-        maxLtv = uint(50).fromUint().div(uint(100).fromUint()); // 0.5
-    }
-
-    function b2() private view returns (PRBMath.UD60x18 memory) {
-        return optimalUtilization.mul(m1.sub(m2)).add(b1);
-    }
-
-    function utilization() public view returns (PRBMath.UD60x18 memory) {
-        return totalDebt.div(totalSupply);
-    }
-
-    function currentYearlyRate() public view returns (PRBMath.UD60x18 memory) {
-
-        // Get utilization
-        PRBMath.UD60x18 memory _utilization = utilization();
-
-        // If utilization <= optimalUtilization
-        if (_utilization.value <= optimalUtilization.value) {
-            return m1.mul(_utilization).add(b1);
-
-        // If utilization > optimalUtilization
-        } else {
-            return m2.mul(_utilization).add(b2());
-        }
-    }
-
     function loanEquity(PropertyId propertyId) public view returns (PRBMath.UD60x18 memory equity) {
 
         // Get Loan
@@ -73,32 +24,6 @@ contract Math3 {
 
         // Calculate equity
         equity = loan.propertyValue.sub(loan.balance);
-    }
-
-    function usdcToTusdcRatio() private view returns(PRBMath.UD60x18 memory) {
-        
-        // Get tusdcSupply
-        uint tusdcSupply = tUSDC.totalSupply();
-
-        if (tusdcSupply == 0 || totalSupply.value == 0) {
-            return uint(1).fromUint();
-
-        } else {
-            return tusdcSupply.fromUint().div(totalSupply);
-        }
-    }
-
-    function usdcToTusdc(uint usdc) private view returns(uint tusdc) {
-        tusdc = usdc.fromUint().mul(usdcToTusdcRatio()).toUint();
-    }
-
-    function calculateMonthlyPayment(uint principal, PRBMath.UD60x18 memory monthlyRate, uint monthsCount) private pure returns(PRBMath.UD60x18 memory monthlyPayment) {
-
-        // Calculate r
-        PRBMath.UD60x18 memory r = uint(1).fromUint().div(uint(1).fromUint().add(monthlyRate));
-
-        // Calculate monthlyPayment
-        monthlyPayment = principal.fromUint().mul(uint(1).fromUint().sub(r).div(r.sub(r.powu(monthsCount + 1))));
     }
 
     function deposit(uint usdc) external {
