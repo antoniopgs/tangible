@@ -100,14 +100,18 @@ contract Auctions is Math, ERC721Holder {
         highestBidder.bid = newBid;
     }
 
-    function acceptBid(Auction calldata auction) external { // called by seller
+    function acceptBid(uint tokenId) external { // called by seller
+
+        // Get auction
+        Auction memory auction = auctions[tokenId];
+
         require(msg.sender == auction.seller, "only seller can accept bids");
 
-        if (/* loanBid */) {
+        if (/* loanBid */true) {
             _acceptLoanBid();
 
         } else {
-            _acceptBid();
+            _acceptBid(tokenId, auction);
         }
 
         // Pull bid from protocol to seller
@@ -115,16 +119,13 @@ contract Auctions is Math, ERC721Holder {
 
     }
 
-    function _acceptBid(uint tokenId) private {
+    function _acceptBid(uint tokenId, Auction memory auction) private {
 
-        // Get auction
-        Auction memory auction = auctions[tokenId];
-
-        // Pull bid from protocol to seller
+        // Send bid from protocol to seller
         USDC.safeTransferFrom(address(this), auction.seller, auction.highestBidder.bid);
 
         // Send NFT from protocol to bidder
-        prosperaNftContract.safeTransferFrom(address(this), auction.higherBidder.addr, tokenId);
+        prosperaNftContract.safeTransferFrom(address(this), auction.highestBidder.addr, tokenId);
     }
 
     function _acceptLoanBid() private {
