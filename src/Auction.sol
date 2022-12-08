@@ -21,7 +21,6 @@ contract Auctions is Math, Core, ERC721Holder {
     }
 
     IERC721 prosperaNftContract;
-    uint mortgageYears;
     mapping(uint => Auction) public auctions;
 
     using SafeERC20 for IERC20;

@@ -12,7 +12,10 @@ abstract contract Math {
     // System Vars
     UD60x18 internal totalDebt; // maybe rename to totalBorrowed?
     UD60x18 internal totalSupply;
+
+    // Loan Term vars
     UD60x18 public maxLtv = toUD60x18(50).div(toUD60x18(100)); // 0.5
+    uint mortgageYears = 30;
 
     // Interest Rate Vars
     UD60x18 public optimalUtilization;
