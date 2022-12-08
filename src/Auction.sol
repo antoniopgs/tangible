@@ -5,8 +5,9 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./Math.sol";
+import "./Core.sol";
 
-contract Auctions is Math, ERC721Holder {
+contract Auctions is Math, Core, ERC721Holder {
 
     struct Bidder {
         address addr;
@@ -20,6 +21,7 @@ contract Auctions is Math, ERC721Holder {
     }
 
     IERC721 prosperaNftContract;
+    uint mortgageYears;
     mapping(uint => Auction) public auctions;
 
     using SafeERC20 for IERC20;
@@ -52,14 +54,18 @@ contract Auctions is Math, ERC721Holder {
         // Get auction
         Auction memory auction = auctions[tokenId];
         
-        // Pull down payment from msg.sender/buyer to seller
-
-        // Send principal from protocol to seller
-
-        // Collateralize NFT
+        // Pull downPayment from msg.sender/buyer to seller
+        USDC.safeTransferFrom(msg.sender, auction.seller, downPayment);
 
         // Start Loan
-        // startLoan();
+        startLoan({
+            propertyId: ,
+            propertyValue: auction.buyoutPrice,
+            principal: ,
+            yearsCount: mortgageYears,
+            borrower: msg.sender,
+            seller: auction.seller
+        });
     }
 
     function bid(uint tokenId, uint newBid) external { // called by borrower // should we block seller from calling this?
@@ -108,7 +114,7 @@ contract Auctions is Math, ERC721Holder {
         require(msg.sender == auction.seller, "only seller can accept bids");
 
         if (/* loanBid */true) {
-            _acceptLoanBid();
+            _acceptLoanBid(auction);
 
         } else {
             _acceptBid(tokenId, auction);
@@ -128,25 +134,19 @@ contract Auctions is Math, ERC721Holder {
         prosperaNftContract.safeTransferFrom(address(this), auction.highestBidder.addr, tokenId);
     }
 
-    function _acceptLoanBid() private {
+    function _acceptLoanBid(Auction memory auction) private {
 
-        // Send highest bid from protocol to seller
-
-        // Send principal from protocol to seller
-
-        // Collateralize NFT
+        // Send highestBid/downPayment from protocol to seller
+        USDC.safeTransferFrom(msg.sender, auction.seller, downPayment);
 
         // Start Loan
-        // startLoan();
-    }
-
-    function startLoan(address seller, uint salePrice, uint principal, address borrower) private {
-
-        // Pull principal from protocol to seller
-        USDC.safeTransferFrom(address(this), seller, principal);
-
-        // Pull downPayment from borrower to seller
-        uint downPayment = salePrice - principal;
-        USDC.safeTransferFrom(borrower, seller, downPayment);
+        startLoan({
+            propertyId: ,
+            propertyValue: auction.highestBidder.bid,
+            principal: ,
+            yearsCount: mortgageYears,
+            borrower: auction.highestBidder.addr
+            seller: auction.seller // replace with msg.sender?
+        });
     }
 }

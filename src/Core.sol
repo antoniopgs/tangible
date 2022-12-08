@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 type PropertyId is uint;
 
-contract Core is Math, ILoan {
+abstract contract Core is Math, ILoan {
 
     // Loan Storage
     mapping(PropertyId => Loan) public loans;
@@ -55,8 +55,13 @@ contract Core is Math, ILoan {
         require(totalSupply.gte(totalDebt), "utilzation can't exceed 100%");
     }
 
-    function borrow(PropertyId propertyId, uint propertyValue, uint principal, uint yearsCount) external {
+    function startLoan(PropertyId propertyId, uint propertyValue, uint principal, uint yearsCount, address borrower, address seller) internal {
         require(toUD60x18(principal).div(toUD60x18(propertyValue)).lte(maxLtv), "cannot exceed maxLtv");
+
+        // Collateralize NFT
+
+        // Send principal from protocol to seller
+        USDC.safeTransferFrom(address(this), seller, principal);
 
         // change property nft state
 
@@ -72,7 +77,7 @@ contract Core is Math, ILoan {
             monthlyRate: monthlyRate,
             monthlyPayment: calculateMonthlyPayment(principal, monthlyRate, monthsCount),
             balance: toUD60x18(principal),
-            borrower: msg.sender
+            borrower: borrower
         });
 
         // Add principal to totalDebt
