@@ -5,20 +5,20 @@ import "./Math.sol";
 import "./ILoan.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-type PropertyId is uint;
+type TokenId is uint;
 
 abstract contract Core is Math, ILoan {
 
     // Loan Storage
-    mapping(PropertyId => Loan) public loans;
+    mapping(TokenId => Loan) public loans;
 
     // Libs
     using SafeERC20 for IERC20;
 
-    function loanEquity(PropertyId propertyId) public view returns (UD60x18 equity) {
+    function loanEquity(TokenId tokenId) public view returns (UD60x18 equity) {
 
         // Get Loan
-        Loan memory loan = loans[propertyId];
+        Loan memory loan = loans[tokenId];
 
         // Calculate equity
         equity = loan.propertyValue.sub(loan.balance);
@@ -55,7 +55,7 @@ abstract contract Core is Math, ILoan {
         require(totalSupply.gte(totalDebt), "utilzation can't exceed 100%");
     }
 
-    function startLoan(PropertyId propertyId, uint propertyValue, uint principal, uint yearsCount, address borrower, address seller) internal {
+    function startLoan(TokenId tokenId, uint propertyValue, uint principal, uint yearsCount, address borrower, address seller) internal {
         require(toUD60x18(principal).div(toUD60x18(propertyValue)).lte(maxLtv), "cannot exceed maxLtv");
 
         // Collateralize NFT
@@ -72,7 +72,7 @@ abstract contract Core is Math, ILoan {
         uint monthsCount = yearsCount * 12;
 
         // Store Loan
-        loans[propertyId] = Loan({
+        loans[tokenId] = Loan({
             propertyValue: toUD60x18(propertyValue),
             monthlyRate: monthlyRate,
             monthlyPayment: calculateMonthlyPayment(principal, monthlyRate, monthsCount),
@@ -85,10 +85,10 @@ abstract contract Core is Math, ILoan {
     }
     
     // do we allow multiple repayments within the month? if so, what updates are needed to the math?
-    function repay(PropertyId propertyId, uint repayment) external {
+    function repay(TokenId tokenId, uint repayment) external {
 
         // Get Loan
-        Loan storage loan = loans[propertyId];
+        Loan storage loan = loans[tokenId];
 
         // Calculate accrued
         UD60x18 accrued = loan.monthlyRate.mul(loan.balance);

@@ -26,7 +26,7 @@ contract Auctions is Math, Core, ERC721Holder {
 
     using SafeERC20 for IERC20;
 
-    function startAuction(uint tokenId, uint buyoutPrice) external {
+    function startAuction(TokenId tokenId, uint buyoutPrice) external {
 
         // Pull NFT from seller
         prosperaNftContract.safeTransferFrom(msg.sender, address(this), tokenId);
@@ -37,7 +37,7 @@ contract Auctions is Math, Core, ERC721Holder {
         auction.buyoutPrice = buyoutPrice;
     }
 
-    function buyout(uint tokenId) external { // called by borrower // should we block seller from calling this?
+    function buyout(TokenId tokenId) external { // called by borrower // should we block seller from calling this?
         
         // Get auction
         Auction memory auction = auctions[tokenId];
@@ -49,7 +49,7 @@ contract Auctions is Math, Core, ERC721Holder {
         prosperaNftContract.safeTransferFrom(address(this), msg.sender, tokenId);
     }
 
-    function loanBuyout(uint tokenId) external { // called by borrower // should we block seller from calling this?
+    function loanBuyout(TokenId tokenId) external { // called by borrower // should we block seller from calling this?
         
         // Get auction
         Auction memory auction = auctions[tokenId];
@@ -59,7 +59,7 @@ contract Auctions is Math, Core, ERC721Holder {
 
         // Start Loan
         startLoan({
-            propertyId: ,
+            tokenId: tokenId,
             propertyValue: auction.buyoutPrice,
             principal: ,
             yearsCount: mortgageYears,
@@ -68,7 +68,7 @@ contract Auctions is Math, Core, ERC721Holder {
         });
     }
 
-    function bid(uint tokenId, uint newBid) external { // called by borrower // should we block seller from calling this?
+    function bid(TokenId tokenId, uint newBid) external { // called by borrower // should we block seller from calling this?
 
         // Get highestBidder
         Bidder storage highestBidder = auctions[tokenId].highestBidder;
@@ -87,7 +87,7 @@ contract Auctions is Math, Core, ERC721Holder {
         highestBidder.bid = newBid;
     }
 
-    function loanBid(uint tokenId, uint newBid) external { // called by borrower // should we block seller from calling this?
+    function loanBid(TokenId tokenId, uint newBid) external { // called by borrower // should we block seller from calling this?
 
         // Get highestBidder
         Bidder storage highestBidder = auctions[tokenId].highestBidder;
@@ -106,7 +106,7 @@ contract Auctions is Math, Core, ERC721Holder {
         highestBidder.bid = newBid;
     }
 
-    function acceptBid(uint tokenId) external { // called by seller
+    function acceptBid(TokenId tokenId) external { // called by seller
 
         // Get auction
         Auction memory auction = auctions[tokenId];
@@ -114,7 +114,7 @@ contract Auctions is Math, Core, ERC721Holder {
         require(msg.sender == auction.seller, "only seller can accept bids");
 
         if (/* loanBid */true) {
-            _acceptLoanBid(auction);
+            _acceptLoanBid(tokenId, auction);
 
         } else {
             _acceptBid(tokenId, auction);
@@ -125,7 +125,7 @@ contract Auctions is Math, Core, ERC721Holder {
 
     }
 
-    function _acceptBid(uint tokenId, Auction memory auction) private {
+    function _acceptBid(TokenId tokenId, Auction memory auction) private {
 
         // Send bid from protocol to seller
         USDC.safeTransferFrom(address(this), auction.seller, auction.highestBidder.bid);
@@ -134,14 +134,14 @@ contract Auctions is Math, Core, ERC721Holder {
         prosperaNftContract.safeTransferFrom(address(this), auction.highestBidder.addr, tokenId);
     }
 
-    function _acceptLoanBid(Auction memory auction) private {
+    function _acceptLoanBid(TokenId tokenId, Auction memory auction) private {
 
         // Send highestBid/downPayment from protocol to seller
         USDC.safeTransferFrom(msg.sender, auction.seller, downPayment);
 
         // Start Loan
         startLoan({
-            propertyId: ,
+            tokenId: tokenId,
             propertyValue: auction.highestBidder.bid,
             principal: ,
             yearsCount: mortgageYears,

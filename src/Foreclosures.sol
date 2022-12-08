@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-type PropertyId is uint;
+type TokenId is uint;
 
 contract Foreclosures {
 
@@ -11,12 +11,12 @@ contract Foreclosures {
         PropertyStatus status;
     }
 
-    mapping(PropertyId => Property) public properties;
+    mapping(TokenId => Property) public properties;
 
-    function foreclose(PropertyId propertyId) external {
+    function foreclose(TokenId tokenId) external {
 
         // Get property
-        Property storage property = properties[propertyId];
+        Property storage property = properties[tokenId];
 
         // Ensure current property status is Mortgage
         require(property.status == PropertyStatus.Mortgage);
