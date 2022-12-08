@@ -61,7 +61,6 @@ contract Auctions is Math, Core, ERC721Holder {
             tokenId: tokenId,
             propertyValue: auction.buyoutPrice,
             principal: ,
-            yearsCount: mortgageYears,
             borrower: msg.sender,
             seller: auction.seller
         });
@@ -143,7 +142,6 @@ contract Auctions is Math, Core, ERC721Holder {
             tokenId: tokenId,
             propertyValue: auction.highestBidder.bid,
             principal: ,
-            yearsCount: mortgageYears,
             borrower: auction.highestBidder.addr
             seller: auction.seller // replace with msg.sender?
         });

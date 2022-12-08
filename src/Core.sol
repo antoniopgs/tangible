@@ -9,6 +9,10 @@ type TokenId is uint;
 
 abstract contract Core is Math, ILoan {
 
+    // Loan Term vars
+    UD60x18 public maxLtv = toUD60x18(50).div(toUD60x18(100)); // 0.5
+    uint mortgageYears = 30;
+
     // Loan Storage
     mapping(TokenId => Loan) public loans;
 
@@ -55,7 +59,7 @@ abstract contract Core is Math, ILoan {
         require(totalSupply.gte(totalDebt), "utilzation can't exceed 100%");
     }
 
-    function startLoan(TokenId tokenId, uint propertyValue, uint principal, uint yearsCount, address borrower, address seller) internal {
+    function startLoan(TokenId tokenId, uint propertyValue, uint principal, address borrower, address seller) internal {
         require(toUD60x18(principal).div(toUD60x18(propertyValue)).lte(maxLtv), "cannot exceed maxLtv");
 
         // Collateralize NFT
@@ -69,7 +73,7 @@ abstract contract Core is Math, ILoan {
         UD60x18 monthlyRate = currentYearlyRate().div(toUD60x18(12));
 
         // Calculate monthsCount
-        uint monthsCount = yearsCount * 12;
+        uint monthsCount = mortgageYears * 12;
 
         // Store Loan
         loans[tokenId] = Loan({
