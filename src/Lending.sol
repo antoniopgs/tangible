@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 abstract contract Lending is ILending, Math {
 
-    // Loan Term vars
-    UD60x18 public maxLtv = toUD60x18(50).div(toUD60x18(100)); // 0.5
+    // Loan Term vars // MAYBE MOVE THESE VARS TO THE INTEREST CONTRACT?
+    UD60x18 public ltv = toUD60x18(50).div(toUD60x18(100)); // 0.5
     uint mortgageYears = 30;
 
     // Loan Storage
