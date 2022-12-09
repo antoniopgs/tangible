@@ -2,10 +2,9 @@
 pragma solidity ^0.8.15;
 
 import "./Math.sol";
-import "./ILoan.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-abstract contract Supplying is Math, ILoan {
+abstract contract Supplying is Math {
 
     // Libs
     using SafeERC20 for IERC20;

@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import "@prb/math/UD60x18.sol";
 
-interface ILoan {
+interface ILending {
 
     struct Loan {
         UD60x18 propertyValue;
@@ -11,5 +11,8 @@ interface ILoan {
         UD60x18 monthlyPayment;
         UD60x18 balance;
         address borrower;
-    }    
+    }
+
+    function repay(uint tokenId, uint repayment) external;
+    function loanEquity(uint tokenId) external view returns (UD60x18 equity);
 }

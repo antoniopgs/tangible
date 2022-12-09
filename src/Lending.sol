@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
+import "./ILending.sol";
 import "./Math.sol";
-import "./ILoan.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-abstract contract Lending is Math, ILoan {
+abstract contract Lending is ILending, Math {
 
     // Loan Term vars
     UD60x18 public maxLtv = toUD60x18(50).div(toUD60x18(100)); // 0.5
@@ -17,7 +17,7 @@ abstract contract Lending is Math, ILoan {
     // Libs
     using SafeERC20 for IERC20;
 
-    function loanEquity(uint tokenId) public view returns (UD60x18 equity) {
+    function loanEquity(uint tokenId) external view returns (UD60x18 equity) {
 
         // Get Loan
         Loan memory loan = loans[tokenId];
