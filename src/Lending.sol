@@ -5,8 +5,6 @@ import "./Math.sol";
 import "./ILoan.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-type TokenId is uint;
-
 abstract contract Lending is Math, ILoan {
 
     // Loan Term vars
@@ -14,12 +12,12 @@ abstract contract Lending is Math, ILoan {
     uint mortgageYears = 30;
 
     // Loan Storage
-    mapping(TokenId => Loan) public loans;
+    mapping(uint => Loan) public loans;
 
     // Libs
     using SafeERC20 for IERC20;
 
-    function loanEquity(TokenId tokenId) public view returns (UD60x18 equity) {
+    function loanEquity(uint tokenId) public view returns (UD60x18 equity) {
 
         // Get Loan
         Loan memory loan = loans[tokenId];
@@ -28,7 +26,7 @@ abstract contract Lending is Math, ILoan {
         equity = loan.propertyValue.sub(loan.balance);
     }
 
-    function startLoan(TokenId tokenId, uint propertyValue, uint principal, address borrower, address seller) internal {
+    function startLoan(uint tokenId, uint propertyValue, uint principal, address borrower, address seller) internal {
         require(toUD60x18(principal).div(toUD60x18(propertyValue)).lte(maxLtv), "cannot exceed maxLtv");
 
         // Collateralize NFT
@@ -39,7 +37,7 @@ abstract contract Lending is Math, ILoan {
         // change property nft state
 
         // Calculate monthlyRate
-        UD60x18 monthlyRate = currentYearlyRate().div(toUD60x18(12));
+        UD60x18 monthlyRate = interest.currentYearlyRate(utilization()).div(toUD60x18(12));
 
         // Calculate monthsCount
         uint monthsCount = mortgageYears * 12;
@@ -58,7 +56,7 @@ abstract contract Lending is Math, ILoan {
     }
     
     // do we allow multiple repayments within the month? if so, what updates are needed to the math?
-    function repay(TokenId tokenId, uint repayment) external {
+    function repay(uint tokenId, uint repayment) external {
 
         // Get Loan
         Loan storage loan = loans[tokenId];

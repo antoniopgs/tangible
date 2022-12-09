@@ -6,8 +6,9 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./Math.sol";
 // import "./Core.sol";
+import "./Lending.sol";
 
-contract Auctions is Math, /*Core,*/ ERC721Holder {
+abstract contract Auctions is Math, Lending, /*Core,*/ ERC721Holder {
 
     struct Bidder {
         address addr;
@@ -25,7 +26,7 @@ contract Auctions is Math, /*Core,*/ ERC721Holder {
 
     using SafeERC20 for IERC20;
 
-    function startAuction(TokenId tokenId, uint buyoutPrice) external {
+    function startAuction(uint tokenId, uint buyoutPrice) external {
 
         // Pull NFT from seller
         prosperaNftContract.safeTransferFrom(msg.sender, address(this), tokenId);
@@ -36,7 +37,7 @@ contract Auctions is Math, /*Core,*/ ERC721Holder {
         auction.buyoutPrice = buyoutPrice;
     }
 
-    function buyout(TokenId tokenId) external { // called by borrower // should we block seller from calling this?
+    function buyout(uint tokenId) external { // called by borrower // should we block seller from calling this?
         
         // Get auction
         Auction memory auction = auctions[tokenId];
@@ -48,25 +49,25 @@ contract Auctions is Math, /*Core,*/ ERC721Holder {
         prosperaNftContract.safeTransferFrom(address(this), msg.sender, tokenId);
     }
 
-    function loanBuyout(TokenId tokenId) external { // called by borrower // should we block seller from calling this?
+    function loanBuyout(uint tokenId) external { // called by borrower // should we block seller from calling this?
         
         // Get auction
         Auction memory auction = auctions[tokenId];
         
         // Pull downPayment from msg.sender/buyer to seller
-        USDC.safeTransferFrom(msg.sender, auction.seller, downPayment);
+        // USDC.safeTransferFrom(msg.sender, auction.seller, downPayment); // FIX LATER
 
         // Start Loan
         startLoan({
             tokenId: tokenId,
             propertyValue: auction.buyoutPrice,
-            principal: ,
+            principal: 1, // FIX LATER
             borrower: msg.sender,
             seller: auction.seller
         });
     }
 
-    function bid(TokenId tokenId, uint newBid) external { // called by borrower // should we block seller from calling this?
+    function bid(uint tokenId, uint newBid) external { // called by borrower // should we block seller from calling this?
 
         // Get highestBidder
         Bidder storage highestBidder = auctions[tokenId].highestBidder;
@@ -85,7 +86,7 @@ contract Auctions is Math, /*Core,*/ ERC721Holder {
         highestBidder.bid = newBid;
     }
 
-    function loanBid(TokenId tokenId, uint newBid) external { // called by borrower // should we block seller from calling this?
+    function loanBid(uint tokenId, uint newBid) external { // called by borrower // should we block seller from calling this?
 
         // Get highestBidder
         Bidder storage highestBidder = auctions[tokenId].highestBidder;
@@ -104,7 +105,7 @@ contract Auctions is Math, /*Core,*/ ERC721Holder {
         highestBidder.bid = newBid;
     }
 
-    function acceptBid(TokenId tokenId) external { // called by seller
+    function acceptBid(uint tokenId) external { // called by seller
 
         // Get auction
         Auction memory auction = auctions[tokenId];
@@ -123,7 +124,7 @@ contract Auctions is Math, /*Core,*/ ERC721Holder {
 
     }
 
-    function _acceptBid(TokenId tokenId, Auction memory auction) private {
+    function _acceptBid(uint tokenId, Auction memory auction) private {
 
         // Send bid from protocol to seller
         USDC.safeTransferFrom(address(this), auction.seller, auction.highestBidder.bid);
@@ -132,17 +133,17 @@ contract Auctions is Math, /*Core,*/ ERC721Holder {
         prosperaNftContract.safeTransferFrom(address(this), auction.highestBidder.addr, tokenId);
     }
 
-    function _acceptLoanBid(TokenId tokenId, Auction memory auction) private {
+    function _acceptLoanBid(uint tokenId, Auction memory auction) private {
 
         // Send highestBid/downPayment from protocol to seller
-        USDC.safeTransferFrom(msg.sender, auction.seller, downPayment);
+        // USDC.safeTransferFrom(msg.sender, auction.seller, downPayment); // FIX LATER
 
         // Start Loan
         startLoan({
             tokenId: tokenId,
             propertyValue: auction.highestBidder.bid,
-            principal: ,
-            borrower: auction.highestBidder.addr
+            principal: 1, // FIX LATER
+            borrower: auction.highestBidder.addr,
             seller: auction.seller // replace with msg.sender?
         });
     }

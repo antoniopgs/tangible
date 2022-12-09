@@ -31,7 +31,7 @@ contract ProsperaNft is ERC721URIStorage, AccessControl {
 
     constructor() ERC721("Prospera Real Estate Token", "PROSPERA") {}
 
-    function addInspection(TokenId tokenId, string memory newInspectionURI) external onlyRole(INSPECTOR) {
+    function addInspection(uint tokenId, string memory newInspectionURI) external onlyRole(INSPECTOR) {
         tokenIdInspections[tokenId].push(
             Inspection({
                 inspector: msg.sender,
@@ -41,7 +41,7 @@ contract ProsperaNft is ERC721URIStorage, AccessControl {
         );
     }
 
-    function updateTokenURI(TokenId tokenId, string memory newTokenURI) external {
+    function updateTokenURI(uint tokenId, string memory newTokenURI) external {
         require(msg.sender == ownerOf(tokenId), "only token owner can update its metadata");
         _setTokenURI(tokenId, newTokenURI);
         tokenIdLastURIUpdateTime[tokenId] = block.timestamp;
@@ -54,7 +54,7 @@ contract ProsperaNft is ERC721URIStorage, AccessControl {
         _tokenIds.increment();
     }
 
-    function lastUpdateInspected(TokenId tokenId) external view returns (bool) {
+    function lastUpdateInspected(uint tokenId) external view returns (bool) {
         Inspection[] memory _tokenIdInspections = tokenIdInspections[tokenId];
         return _tokenIdInspections[_tokenIdInspections.length - 1].inspectionTime > tokenIdLastURIUpdateTime[tokenId];
     }

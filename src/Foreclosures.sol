@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-type TokenId is uint;
-
 contract Foreclosures {
 
     enum PropertyStatus { Owned, Auction, Mortgage, Foreclosed, Inspected }
@@ -11,9 +9,9 @@ contract Foreclosures {
         PropertyStatus status;
     }
 
-    mapping(TokenId => Property) public properties;
+    mapping(uint => Property) public properties;
 
-    function foreclose(TokenId tokenId) external {
+    function foreclose(uint tokenId) external {
 
         // Get property
         Property storage property = properties[tokenId];
