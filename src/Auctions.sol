@@ -3,11 +3,9 @@ pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./Math.sol";
 import "./Lending.sol";
 
-abstract contract Auctions is Math, Lending, ERC721Holder {
+abstract contract Auctions is Lending, ERC721Holder {
 
     struct Bidder {
         address addr;
