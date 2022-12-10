@@ -9,7 +9,7 @@ abstract contract Lending is ILending, Math {
 
     // Loan Term vars // MAYBE MOVE THESE VARS TO THE INTEREST CONTRACT?
     UD60x18 public ltv = toUD60x18(50).div(toUD60x18(100)); // 0.5
-    uint mortgageYears = 30;
+    uint public mortgageYears = 30;
 
     // Loan Storage
     mapping(uint => Loan) public loans;
@@ -26,13 +26,15 @@ abstract contract Lending is ILending, Math {
         equity = loan.propertyValue.sub(loan.balance);
     }
 
-    function startLoan(uint tokenId, uint propertyValue, uint principal, address borrower, address seller) internal {
-        require(toUD60x18(principal).div(toUD60x18(propertyValue)).lte(maxLtv), "cannot exceed maxLtv");
+    function startLoan(uint tokenId, uint propertyValue, address borrower, address seller) internal {
+
+        // Calculate principal
+        UD60x18 principal = ltv.mul(toUD60x18(propertyValue));
 
         // Collateralize NFT
 
         // Send principal from protocol to seller
-        USDC.safeTransferFrom(address(this), seller, principal);
+        USDC.safeTransferFrom(address(this), seller, fromUD60x18(principal));
 
         // change property nft state
 
@@ -47,12 +49,12 @@ abstract contract Lending is ILending, Math {
             propertyValue: toUD60x18(propertyValue),
             monthlyRate: monthlyRate,
             monthlyPayment: calculateMonthlyPayment(principal, monthlyRate, monthsCount),
-            balance: toUD60x18(principal),
+            balance: principal,
             borrower: borrower
         });
 
         // Add principal to totalDebt
-        totalDebt = totalDebt.add(toUD60x18(principal));
+        totalDebt = totalDebt.add(principal);
     }
     
     // do we allow multiple repayments within the month? if so, what updates are needed to the math?

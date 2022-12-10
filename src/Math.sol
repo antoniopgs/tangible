@@ -31,12 +31,12 @@ abstract contract Math is Base {
         tusdc = fromUD60x18(toUD60x18(usdc).mul(usdcToTusdcRatio()));
     }
 
-    function calculateMonthlyPayment(uint principal, UD60x18 monthlyRate, uint monthsCount) internal pure returns(UD60x18 monthlyPayment) {
+    function calculateMonthlyPayment(UD60x18 principal, UD60x18 monthlyRate, uint monthsCount) internal pure returns(UD60x18 monthlyPayment) {
 
         // Calculate r
         UD60x18 r = toUD60x18(1).div(toUD60x18(1).add(monthlyRate));
 
         // Calculate monthlyPayment
-        monthlyPayment = toUD60x18(principal).mul(toUD60x18(1).sub(r).div(r.sub(r.powu(monthsCount + 1))));
+        monthlyPayment = principal.mul(toUD60x18(1).sub(r).div(r.sub(r.powu(monthsCount + 1))));
     }
 }

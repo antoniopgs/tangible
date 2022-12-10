@@ -58,7 +58,6 @@ abstract contract Auctions is Lending, ERC721Holder {
         startLoan({
             tokenId: tokenId,
             propertyValue: auction.buyoutPrice,
-            principal: 1, // FIX LATER
             borrower: msg.sender,
             seller: auction.seller
         });
@@ -139,7 +138,6 @@ abstract contract Auctions is Lending, ERC721Holder {
         startLoan({
             tokenId: tokenId,
             propertyValue: auction.highestBidder.bid,
-            principal: 1, // FIX LATER
             borrower: auction.highestBidder.addr,
             seller: auction.seller // replace with msg.sender?
         });
