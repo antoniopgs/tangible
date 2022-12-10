@@ -1,22 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
+import "../interfaces/IAuctions.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "./Lending.sol";
 
-abstract contract Auctions is Lending, ERC721Holder {
-
-    struct Bidder {
-        address addr;
-        uint bid;
-    }
-
-    struct Auction {
-        address seller;
-        uint buyoutPrice;
-        Bidder highestBidder;
-    }
+abstract contract Auctions is IAuctions, Lending, ERC721Holder {
 
     IERC721 prosperaNftContract;
     mapping(uint => Auction) public auctions;

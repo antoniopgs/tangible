@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
+import "../interfaces/ISupplying.sol";
 import "./Math.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-abstract contract Supplying is Math {
+abstract contract Supplying is ISupplying, Math {
 
     // Libs
     using SafeERC20 for IERC20;
