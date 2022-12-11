@@ -12,6 +12,7 @@ interface IAuctions {
         address seller;
         uint buyoutPrice;
         Bidder highestBidder;
+        uint optionPeriodEnd;
     }
 
     function startAuction(uint tokenId, uint buyoutPrice) external;

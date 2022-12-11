@@ -5,13 +5,27 @@ type Time is uint;
 
 contract AuctionClosing {
 
-    // Time public optionPeriodDuration = Time.wrap(10 days);
-    uint optionPeriodDuration = 10 days;
-    // Time public closingPeriodDuration = Time.wrap(30 days);
-    uint closingPeriodDuration = 30 days;
+    uint public optionPeriodDuration = 10 days;
+    uint public closingPeriodDuration = 30 days;
 
     // Time public auctionOptionPeriodStart;
-    uint public auctionOptionPeriodStart;
+    // uint public auctionOptionPeriodStart;
+
+    function beforeOptionPeriod() private view returns (bool) {
+
+    }
+
+    function withinOptionPeriod() private view returns (bool) {
+
+    }
+
+    function withinClosingPeriod() private view returns (bool) {
+
+    }
+
+    function afterClosingPeriod() private view returns (bool) {
+
+    }
 
     function backout() external view {
 
