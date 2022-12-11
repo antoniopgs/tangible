@@ -64,7 +64,7 @@ abstract contract Lending is ILending, Math {
         Loan storage loan = loans[tokenId];
 
         // Calculate accrued
-        UD60x18 accrued = loan.monthlyRate.mul(loan.balance);
+        UD60x18 accrued = loan.monthlyRate.mul(loan.balance); // NEED TO FIX THIS // WAIT, OR IS THIS ALREADY ANTICIPATING THE NEXT MONTH?
         require(toUD60x18(repayment).gte(accrued), "repayment must >= accrued interest"); // might change later due to multiple repayments within the month
 
         // Calculate balanceRepayment
