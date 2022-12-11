@@ -3,46 +3,42 @@ pragma solidity ^0.8.15;
 
 type Time is uint;
 
-contract AuctionClosing {
+import "../interfaces/IAuctions.sol";
+
+abstract contract AuctionClosing is IAuctions {
 
     uint public optionPeriodDuration = 10 days;
     uint public closingPeriodDuration = 30 days;
 
-    // Time public auctionOptionPeriodStart;
-    // uint public auctionOptionPeriodStart;
-
-    function beforeOptionPeriod() private view returns (bool) {
-
+    function beforeOptionPeriod(Auction calldata auction) private pure returns (bool) {
+        return auction.optionPeriodEnd == 0;
     }
 
-    function withinOptionPeriod() private view returns (bool) {
-
+    function inOptionPeriod(Auction calldata auction) private view returns (bool) {
+        return block.timestamp < auction.optionPeriodEnd;
     }
 
-    function withinClosingPeriod() private view returns (bool) {
-
+    function inClosingPeriod(Auction calldata auction) private view returns (bool) {
+        return block.timestamp >= auction.optionPeriodEnd && block.timestamp < auction.optionPeriodEnd + closingPeriodDuration;
     }
 
-    function afterClosingPeriod() private view returns (bool) {
-
+    function afterClosingPeriod(Auction calldata auction) private view returns (bool) {
+        return block.timestamp >= auction.optionPeriodEnd + closingPeriodDuration;
     }
 
-    function backout() external view {
+    function backout(Auction calldata auction) external view {
 
-        if (block.timestamp < auctionOptionPeriodStart) {
+        if (beforeOptionPeriod(auction)) {
             revert("can't back out before option period starts");
 
-        } else if (block.timestamp >= auctionOptionPeriodStart && block.timestamp < auctionOptionPeriodStart + optionPeriodDuration) {
-            // we're in option period
+        } else if (inOptionPeriod(auction)) {
             // user backing out pays option fee
 
-        } else if (block.timestamp >= auctionOptionPeriodStart + optionPeriodDuration && block.timestamp < auctionOptionPeriodStart + optionPeriodDuration + closingPeriodDuration) {
-            // we're in closing period    
+        } else if (inClosingPeriod(auction)) {
             // user pays 1% penalty
 
-        } else if (block.timestamp >= auctionOptionPeriodStart + optionPeriodDuration + closingPeriodDuration) {
-            // closing period is over, transaction should have already been confirmed
-            // confirm transaction
+        } else if (afterClosingPeriod(auction)) {
+            // transaction should have already been confirmed. confirm transaction
         }
     }
 }
