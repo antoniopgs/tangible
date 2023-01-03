@@ -4,6 +4,7 @@ pragma solidity ^0.8.15;
 type Time is uint;
 
 import "../interfaces/IAuctions.sol";
+import "@prb/math/UD60x18.sol";
 
 abstract contract AuctionClosing is IAuctions {
 

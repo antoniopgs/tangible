@@ -10,14 +10,11 @@ interface IAuctions {
 
     struct Auction {
         address seller;
-        uint buyoutPrice;
         Bidder highestBidder;
         uint optionPeriodEnd;
     }
 
-    function startAuction(uint tokenId, uint buyoutPrice) external;
-    function buyout(uint tokenId) external;
-    function loanBuyout(uint tokenId) external;
+    function startAuction(uint tokenId) external;
     function bid(uint tokenId, uint newBid) external;
     function loanBid(uint tokenId, uint newBid) external;
     function acceptBid(uint tokenId) external;

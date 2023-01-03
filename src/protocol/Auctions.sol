@@ -13,7 +13,7 @@ abstract contract Auctions is IAuctions, Lending, ERC721Holder {
 
     using SafeERC20 for IERC20;
 
-    function startAuction(uint tokenId, uint buyoutPrice) external {
+    function startAuction(uint tokenId) external {
 
         // Pull NFT from seller
         prosperaNftContract.safeTransferFrom(msg.sender, address(this), tokenId);
@@ -21,36 +21,6 @@ abstract contract Auctions is IAuctions, Lending, ERC721Holder {
         // Store auction
         Auction storage auction = auctions[tokenId];
         auction.seller = msg.sender;
-        auction.buyoutPrice = buyoutPrice;
-    }
-
-    function buyout(uint tokenId) external { // called by borrower // should we block seller from calling this?
-        
-        // Get auction
-        Auction memory auction = auctions[tokenId];
-        
-        // Pull buyoutPrice from msg.sender/buyer to seller
-        USDC.safeTransferFrom(msg.sender, auction.seller, auction.buyoutPrice);
-
-        // Send NFT to msg.sender/buyer
-        prosperaNftContract.safeTransferFrom(address(this), msg.sender, tokenId);
-    }
-
-    function loanBuyout(uint tokenId) external { // called by borrower // should we block seller from calling this?
-        
-        // Get auction
-        Auction memory auction = auctions[tokenId];
-        
-        // Pull downPayment from msg.sender/buyer to seller
-        // USDC.safeTransferFrom(msg.sender, auction.seller, downPayment); // FIX LATER
-
-        // Start Loan
-        startLoan({
-            tokenId: tokenId,
-            propertyValue: auction.buyoutPrice,
-            borrower: msg.sender,
-            seller: auction.seller
-        });
     }
 
     function bid(uint tokenId, uint newBid) external { // called by borrower // should we block seller from calling this?
