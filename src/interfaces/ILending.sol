@@ -11,8 +11,9 @@ interface ILending {
         UD60x18 monthlyPayment;
         UD60x18 balance;
         address borrower;
+        uint nextPaymentDeadline;
     }
 
-    function repay(uint tokenId, uint repayment) external;
+    function payLoan(uint tokenId, uint payment) external;
     function loanEquity(uint tokenId) external view returns (UD60x18 equity);
 }

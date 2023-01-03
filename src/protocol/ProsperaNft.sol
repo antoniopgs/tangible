@@ -75,4 +75,14 @@ contract ProsperaNft is ERC721URIStorage, AccessControl {
         isEResident[eResidentAddr] = true;
         eResidentAddress[eResidentId] = eResidentAddr;
     }
+
+    // function createDispute() external {
+    //     require(isEResident[msg.sender], "caller not eResident. only eResidents can create disputes");
+
+    //     block.timestamp
+    // }
+
+    function resolveDispute() external onlyRole(PAC) {
+
+    }
 }

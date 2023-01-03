@@ -57,29 +57,29 @@ abstract contract Lending is ILending, Math {
         totalDebt = totalDebt.add(principal);
     }
     
-    // do we allow multiple repayments within the month? if so, what updates are needed to the math?
-    function repay(uint tokenId, uint repayment) external {
+    // do we allow multiple payments within the month? if so, what updates are needed to the math?
+    function payLoan(uint tokenId, uint payment) external {
 
         // Get Loan
         Loan storage loan = loans[tokenId];
 
         // UD60x18 closingCosts = (loan.monthlyRate * timeDelta) * loan.balance;
 
-        // Calculate accruedxw
-        UD60x18 accrued = loan.monthlyRate.mul(loan.balance); // NEED TO FIX THIS // WAIT, OR IS THIS ALREADY ANTICIPATING THE NEXT MONTH?
-        require(toUD60x18(repayment).gte(accrued), "repayment must >= accrued interest"); // might change later due to multiple repayments within the month
+        // Calculate interest
+        UD60x18 interest = loan.monthlyRate.mul(loan.balance); // NEED TO FIX THIS // WAIT, OR IS THIS ALREADY ANTICIPATING THE NEXT MONTH?
+        require(toUD60x18(payment).gte(interest), "payment must >= interest"); // might change later due to multiple payments within the month
 
-        // Calculate balanceRepayment
-        UD60x18 balanceRepayment = toUD60x18(repayment).sub(accrued);
+        // Calculate repayment
+        UD60x18 repayment = toUD60x18(payment).sub(interest);
 
-        // Remove balanceRepayment from balance
-        loan.balance = loan.balance.sub(balanceRepayment);
+        // Remove repayment from balance
+        loan.balance = loan.balance.sub(repayment);
 
-        // Remove balanceRepayment from totalDebt
-        totalDebt = totalDebt.sub(balanceRepayment);
+        // Remove repayment from totalDebt
+        totalDebt = totalDebt.sub(repayment);
 
-        // Add accrued to totalSupply
-        totalSupply = totalSupply.add(accrued);
+        // Add interest to totalSupply
+        totalSupply = totalSupply.add(interest);
 
         // If loan fully repaid
         if (loan.balance.eq(ud(0))) {

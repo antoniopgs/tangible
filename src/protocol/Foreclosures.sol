@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-contract Foreclosures {
+import "../interfaces/ILending.sol";
 
-    enum PropertyStatus { Owned, Auction, Mortgage, Foreclosed, Inspected }
+abstract contract Foreclosures is ILending {
+
+    enum PropertyStatus { Unowned, Auction, Mortgage, Foreclosed }
 
     struct Property {
         PropertyStatus status;
@@ -26,7 +28,7 @@ contract Foreclosures {
         property.status = PropertyStatus.Foreclosed;
     }
 
-    function foreclosurable(Property memory property) private returns (bool) {
-
+    function foreclosurable(Loan calldata loan) private returns (bool) {
+        return block.timestamp > loan.nextPaymentDeadline;
     }
 }

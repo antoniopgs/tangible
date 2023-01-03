@@ -32,13 +32,20 @@ abstract contract AuctionClosing is IAuctions {
             revert("can't back out before option period starts");
 
         } else if (inOptionPeriod(auction)) {
+
             // user backing out pays option fee
+            UD60x18 memory optionFee;
 
         } else if (inClosingPeriod(auction)) {
-            // user pays 1% penalty
+
+            // user backing out pays 1% penalty
+            UD60x18 memory closingFee;
 
         } else if (afterClosingPeriod(auction)) {
             // transaction should have already been confirmed. confirm transaction
+
+            // Start Loan
+            startLoan();
         }
     }
 }
