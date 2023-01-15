@@ -5,7 +5,6 @@ deposits = 0
 tUsdcSupply1 = 0
 tUsdcSupply2 = 0
 
-
 # System Functions
 def utilization():
     try:
@@ -13,13 +12,11 @@ def utilization():
     except ZeroDivisionError:
         return 0
 
-
 def weightedAvgBorrowerRate():
     try:
         return interestOwed / outstandingDebt
     except ZeroDivisionError:
         return 0
-
 
 def lenderApr1():
     try:
@@ -27,10 +24,8 @@ def lenderApr1():
     except ZeroDivisionError:
         return 0
 
-
 def lenderApr2():
     return utilization() * weightedAvgBorrowerRate()
-
 
 def tUsdcToUsdc1():
     if tUsdcSupply1 == 0:
@@ -38,16 +33,11 @@ def tUsdcToUsdc1():
     else:
         return (deposits + interestOwed) / tUsdcSupply1
 
-
 def tUsdcToUsdc2():
     if tUsdcSupply2 == 0:
         return 1
     else:
         return 1 + (interestOwed / tUsdcSupply2)
-
-
-# Util Functions
-
 
 # Util Functions
 def printAndValidate():
@@ -70,7 +60,6 @@ tUsdcToUsdc2: {tUsdcToUsdc2()}
     # assert tUsdcToUsdc1() == tUsdcToUsdc2(), "tUsdcToUsdc mismatch"
     # assert tUsdcSupply1 == tUsdcSupply2, "tUsdcSupply mismatch"
 
-
 def deposit(amount):
     global tUsdcSupply1, tUsdcSupply2, deposits
     print(f"A user deposits {amount} Usdc.")
@@ -81,7 +70,6 @@ def deposit(amount):
     # Log
     printAndValidate()
 
-
 def borrow(amount, rate):
     global outstandingDebt, interestOwed
     print(f"A user borrows {amount} Usdc at {rate * 100}%.")
@@ -90,7 +78,6 @@ def borrow(amount, rate):
 
     # Log
     printAndValidate()
-
 
 printAndValidate()
 
