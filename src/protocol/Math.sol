@@ -1,42 +1,54 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./Base.sol";
 import "@prb/math/UD60x18.sol";
 
-abstract contract Math is Base {
+abstract contract Math {
+
+    struct Loan {
+        UD60x18 tUsdcBalance;
+    }
+
+    // Exponent Vars
+    uint private lastOperationTime;
+    UD60x18 internal borrowerRateSecond;
 
     // System Vars
-    UD60x18 internal totalDebt; // maybe rename to totalBorrowed?
-    UD60x18 internal totalSupply;
+    UD60x18 internal savedOutstandingDebt;
+    UD60x18 internal borrowed;
+    UD60x18 internal deposits;
 
-    function utilization() public view returns (UD60x18 ) {
-        return totalDebt.div(totalSupply);
+    function lastOperationTimeDelta() private view returns(UD60x18) {
+        return toUD60x18(block.timestamp - lastOperationTime);
     }
 
-    function usdcToTusdcRatio() private view returns(UD60x18 ) {
-        
-        // Get tusdcSupply
-        uint tusdcSupply = tUSDC.totalSupply();
-
-        if (tusdcSupply == 0 || totalSupply.eq(ud(0))) {
-            return toUD60x18(1);
-
-        } else {
-            return toUD60x18(tusdcSupply).div(totalSupply);
-        }
+    function currentExponent() internal view returns(UD60x18) {
+        return borrowerRateSecond.mul(lastOperationTimeDelta());
     }
 
-    function usdcToTusdc(uint usdc) internal view returns(uint tusdc) {
-        tusdc = fromUD60x18(toUD60x18(usdc).mul(usdcToTusdcRatio()));
+    function outstandingDebt() public view returns (UD60x18) {
+        return savedOutstandingDebt.mul(currentExponent().exp());
     }
 
-    function calculateMonthlyPayment(UD60x18 principal, UD60x18 monthlyRate, uint monthsCount) internal pure returns(UD60x18 monthlyPayment) {
-
-        // Calculate r
-        UD60x18 r = toUD60x18(1).div(toUD60x18(1).add(monthlyRate));
-
-        // Calculate monthlyPayment
-        monthlyPayment = principal.mul(toUD60x18(1).sub(r).div(r.sub(r.powu(monthsCount + 1))));
+    function interestOwed() public view returns (UD60x18) {
+        return outstandingDebt().sub(borrowed);
     }
+
+    function utilization() public view returns (UD60x18) {
+        return borrowed.div(deposits);
+    }
+
+    function borrowerRateWeightedAvg() public view returns (UD60x18) {
+        // return apy / utilization() // less efficient
+        return interestOwed().div(borrowed);
+    }
+
+    function borrowerDebt(Loan memory loan) public view returns (UD60x18) {
+        return loan.tUsdcBalance.mul(toUD60x18(1).add(borrowerRateWeightedAvg())); // 1 + w might just be my new tUsdc ratio?
+    }
+
+    // function foreclose(Loan memory loan) external {
+    //     savedOutstandingDebt = interestOwed() - loanBalance(loan)
+    //     loan.balance = 0;
+    // }
 }
