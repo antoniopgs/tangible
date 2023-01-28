@@ -15,7 +15,7 @@ abstract contract Math {
 
     // System Vars
     UD60x18 internal savedOutstandingDebt;
-    UD60x18 internal borrowed;
+    UD60x18 internal borrowed; // maybe I can get rid of this?
     UD60x18 internal deposits;
 
     function lastOperationTimeDelta() private view returns(UD60x18) {
@@ -47,8 +47,8 @@ abstract contract Math {
         return loan.tUsdcBalance.mul(toUD60x18(1).add(borrowerRateWeightedAvg())); // 1 + w might just be my new tUsdc ratio?
     }
 
-    // function foreclose(Loan memory loan) external {
-    //     savedOutstandingDebt = interestOwed() - loanBalance(loan)
-    //     loan.balance = 0;
-    // }
+    function foreclose(Loan memory loan) external {
+        savedOutstandingDebt = outstandingDebt() - borrowedDebt(loan); // have to remove the future, not the past
+        loan.tUsdcBalance = 0;
+    }
 }
