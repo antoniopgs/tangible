@@ -48,7 +48,8 @@ abstract contract Math {
     }
 
     function foreclose(Loan memory loan) external {
-        savedOutstandingDebt = outstandingDebt() - borrowedDebt(loan); // have to remove the future, not the past
+        // borrowerDebt = borrowerDebt(loan);
+        savedOutstandingDebt = outstandingDebt().sub(borrowerDebt(loan)); // have to remove the future, not the past
         loan.tUsdcBalance = 0;
     }
 }
