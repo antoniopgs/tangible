@@ -14,8 +14,11 @@ interface IAuctions {
         uint optionPeriodEnd;
     }
 
+    // Seller
     function startAuction(uint tokenId) external;
+    function acceptBid(uint tokenId) external;
+
+    // Borrower
     function bid(uint tokenId, uint newBid) external;
     function loanBid(uint tokenId, uint newBid) external;
-    function acceptBid(uint tokenId) external;
 }
