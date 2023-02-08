@@ -71,4 +71,16 @@ abstract contract Lending is ILending, LoanTimeMath {
         // Update loan.nextPaymentDeadline
         loan.nextPaymentDeadline += 30 days;
     }
+
+    function pullNft(uint tokenId) external {
+
+        // Load loan
+        Loan storage loan = loans[tokenId];
+
+        // Ensure loan is paid off
+        require(loan.balance.eq(toUD60x18(0)), "can't pull nft if loan.balance > 0");
+
+        // Send nft to borrower
+        prosperaNftContract.safeTransferFrom(address(this), loan.borrower, tokenId);
+    }
 }
