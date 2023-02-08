@@ -7,7 +7,6 @@ abstract contract Math is Base {
 
     // System Vars
     UD60x18 internal totalBorrowed; // maybe rename to totalBorrowed?
-    // UD60x18 internal interestOwed;
     UD60x18 internal totalDeposits;
 
     function utilization() public view returns (UD60x18) {

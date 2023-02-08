@@ -68,14 +68,6 @@ abstract contract Lending is ILending, Math {
         // Add interest to deposits
         totalDeposits = totalDeposits.add(interest);
 
-        /*
-        interestOwed = interestOwed - prevInterest + newInterest
-        interestOwed = interestOwed - (rate * loan.prevBalance) + (rate * loan.newBalance)
-        interestOwed = interestOwed - rate(loan.prevBalance - loan.newBalance)
-        interestOwed = interestOwed - rate(repayment)
-        */
-        // interestOwed = interestOwed.sub(loan.monthlyRate.mul(repayment)); // don't forget to increase interestOwed in startLoan()
-
         // Update loan.nextPaymentDeadline
         loan.nextPaymentDeadline += 30 days;
 
