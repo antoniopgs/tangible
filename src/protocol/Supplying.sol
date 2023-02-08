@@ -15,8 +15,8 @@ abstract contract Supplying is ISupplying, Math {
         // Pull LIQ from staker
         USDC.safeTransferFrom(msg.sender, address(this), usdc);
 
-        // Add usdc to totalSupply
-        totalSupply = totalSupply.add(toUD60x18(usdc));
+        // Add usdc to totalDeposits
+        totalDeposits = totalDeposits.add(toUD60x18(usdc));
 
         // Calculate tusdc
         uint tusdc = usdcToTusdc(usdc);
@@ -36,8 +36,8 @@ abstract contract Supplying is ISupplying, Math {
         // Send LIQ to unstaker
         USDC.safeTransfer(msg.sender, usdc); // reentrancy possible?
 
-        // Remove usdc from totalSupply
-        totalSupply = totalSupply.sub(toUD60x18(usdc));
-        require(totalSupply.gte(totalDebt), "utilzation can't exceed 100%");
+        // Remove usdc from totalDeposits
+        totalDeposits = totalDeposits.sub(toUD60x18(usdc));
+        require(totalDeposits.gte(totalBorrowed), "utilzation can't exceed 100%");
     }    
 }

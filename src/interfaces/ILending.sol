@@ -7,7 +7,6 @@ interface ILending {
 
     struct Loan {
         UD60x18 propertyValue;
-        UD60x18 monthlyRate;
         UD60x18 monthlyPayment;
         UD60x18 balance;
         address borrower;

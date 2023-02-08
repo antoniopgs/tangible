@@ -42,7 +42,7 @@ abstract contract Auctions is IAuctions, Lending, ERC721Holder {
         highestBidder.bid = newBid;
     }
 
-    function loanBid(uint tokenId, uint newBid) external { // called by borrower // should we block seller from calling this?
+    function loanBid(uint tokenId, uint newBid, uint downPayment) external { // called by borrower // should we block seller from calling this?
 
         // Get highestBidder
         Bidder storage highestBidder = auctions[tokenId].highestBidder;
@@ -53,8 +53,8 @@ abstract contract Auctions is IAuctions, Lending, ERC721Holder {
         // Refund highestBidder
         USDC.safeTransfer(highestBidder.addr, highestBidder.bid);
 
-        // Pull bid from caller/borrower to protocol
-        USDC.safeTransferFrom(msg.sender, address(this), newBid);
+        // Pull downPayment from caller/borrower to protocol
+        USDC.safeTransferFrom(msg.sender, address(this), downPayment);
 
         // Update highestBidder
         highestBidder.addr = msg.sender;
@@ -94,12 +94,12 @@ abstract contract Auctions is IAuctions, Lending, ERC721Holder {
         // Send highestBid/downPayment from protocol to seller
         // USDC.safeTransferFrom(msg.sender, auction.seller, downPayment); // FIX LATER
 
-        // Start Loan
-        startLoan({
-            tokenId: tokenId,
-            propertyValue: auction.highestBidder.bid,
-            borrower: auction.highestBidder.addr,
-            seller: auction.seller // replace with msg.sender?
-        });
+        // // Start Loan
+        // startLoan({
+        //     tokenId: tokenId,
+        //     propertyValue: auction.highestBidder.bid,
+        //     borrower: auction.highestBidder.addr,
+        //     seller: auction.seller // replace with msg.sender?
+        // });
     }
 }

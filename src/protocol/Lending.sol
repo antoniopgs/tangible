@@ -7,10 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 abstract contract Lending is ILending, Math {
 
-    // Loan Term vars // MAYBE MOVE THESE VARS TO THE INTEREST CONTRACT?
-    UD60x18 public ltv = toUD60x18(50).div(toUD60x18(100)); // 0.5
-    uint public mortgageYears = 30;
-
     // Loan Storage
     mapping(uint => Loan) public loans;
 
@@ -26,7 +22,7 @@ abstract contract Lending is ILending, Math {
         equity = loan.propertyValue.sub(loan.balance);
     }
 
-    function startLoan(uint tokenId, uint propertyValue, address borrower, address seller) internal {
+    function startLoan(uint tokenId, uint propertyValue, address borrower, address seller) public { // available to keepers
 
         // Calculate principal
         UD60x18 principal = ltv.mul(toUD60x18(propertyValue));
@@ -38,51 +34,53 @@ abstract contract Lending is ILending, Math {
 
         // change property nft state
 
-        // Calculate monthlyRate
-        UD60x18 monthlyRate = interest.currentYearlyRate(utilization()).div(toUD60x18(12));
-
-        // Calculate monthsCount
-        uint monthsCount = mortgageYears * 12;
-
         // Store Loan
         loans[tokenId] = Loan({
             propertyValue: toUD60x18(propertyValue),
-            monthlyRate: monthlyRate,
-            monthlyPayment: calculateMonthlyPayment(principal, monthlyRate, monthsCount),
+            monthlyPayment: calculateMonthlyPayment(principal),
             balance: principal,
-            borrower: borrower
+            borrower: borrower,
+            nextPaymentDeadline: block.timestamp + 30 days
         });
 
-        // Add principal to totalDebt
-        totalDebt = totalDebt.add(principal);
+        // Add principal to totalBorrowed
+        totalBorrowed = totalBorrowed.add(principal);
     }
     
-    // do we allow multiple payments within the month? if so, what updates are needed to the math?
-    function payLoan(uint tokenId, uint payment) external {
+    function payLoan(uint tokenId) external {
 
-        // Get Loan
+        // Load loan
         Loan storage loan = loans[tokenId];
 
-        // UD60x18 closingCosts = (loan.monthlyRate * timeDelta) * loan.balance;
+        // Pull monthlyPayment from borrower
+        USDC.safeTransferFrom(msg.sender, address(this), fromUD60x18(loan.monthlyPayment));
 
         // Calculate interest
-        UD60x18 interest = loan.monthlyRate.mul(loan.balance); // NEED TO FIX THIS // WAIT, OR IS THIS ALREADY ANTICIPATING THE NEXT MONTH?
-        require(toUD60x18(payment).gte(interest), "payment must >= interest"); // might change later due to multiple payments within the month
+        UD60x18 interest = monthlyBorrowerRate.mul(loan.balance);
 
         // Calculate repayment
-        UD60x18 repayment = toUD60x18(payment).sub(interest);
+        UD60x18 repayment = loan.monthlyPayment.sub(interest);
 
-        // Remove repayment from balance
+        // Remove repayment from loan.balance & outstandingDebt
         loan.balance = loan.balance.sub(repayment);
+        totalBorrowed = totalBorrowed.sub(repayment);
 
-        // Remove repayment from totalDebt
-        totalDebt = totalDebt.sub(repayment);
+        // Add interest to deposits
+        totalDeposits = totalDeposits.add(interest);
 
-        // Add interest to totalSupply
-        totalSupply = totalSupply.add(interest);
+        /*
+        interestOwed = interestOwed - prevInterest + newInterest
+        interestOwed = interestOwed - (rate * loan.prevBalance) + (rate * loan.newBalance)
+        interestOwed = interestOwed - rate(loan.prevBalance - loan.newBalance)
+        interestOwed = interestOwed - rate(repayment)
+        */
+        // interestOwed = interestOwed.sub(loan.monthlyRate.mul(repayment)); // don't forget to increase interestOwed in startLoan()
+
+        // Update loan.nextPaymentDeadline
+        loan.nextPaymentDeadline += 30 days;
 
         // If loan fully repaid
-        if (loan.balance.eq(ud(0))) {
+        if (loan.balance.eq(ud(0))) { // maybe just do pull mechanism instead?
             // transfer property nft to borrower
         }
     }

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../interfaces/ILending.sol";
+import "./Lending.sol";
 
-abstract contract Foreclosures is ILending {
+abstract contract Foreclosures is Lending {
 
     enum PropertyStatus { Unowned, Auction, Mortgage, Foreclosed }
 
@@ -22,13 +22,13 @@ abstract contract Foreclosures is ILending {
         require(property.status == PropertyStatus.Mortgage);
 
         // Ensure property is foreclosurable
-        require(foreclosurable(property));
+        require(foreclosurable(loans[tokenId]));
 
         // Change property status to Foreclosed
         property.status = PropertyStatus.Foreclosed;
     }
 
-    function foreclosurable(Loan calldata loan) private returns (bool) {
+    function foreclosurable(Loan memory loan) private view returns (bool) {
         return block.timestamp > loan.nextPaymentDeadline;
     }
 }
