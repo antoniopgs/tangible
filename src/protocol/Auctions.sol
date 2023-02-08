@@ -3,13 +3,11 @@ pragma solidity ^0.8.15;
 
 import "../interfaces/IAuctions.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "./AuctionClosing.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "./Lending.sol";
 
-abstract contract Auctions is IAuctions, Lending, ERC721Holder {
-
-    IERC721 prosperaNftContract;
-    mapping(uint => Auction) public auctions;
+abstract contract Auctions is IAuctions, AuctionClosing, ERC721Holder {
 
     using SafeERC20 for IERC20;
 
@@ -90,16 +88,6 @@ abstract contract Auctions is IAuctions, Lending, ERC721Holder {
     }
 
     function _acceptLoanBid(uint tokenId, Auction memory auction) private {
-
-        // Send highestBid/downPayment from protocol to seller
-        // USDC.safeTransferFrom(msg.sender, auction.seller, downPayment); // FIX LATER
-
-        // // Start Loan
-        // startLoan({
-        //     tokenId: tokenId,
-        //     propertyValue: auction.highestBidder.bid,
-        //     borrower: auction.highestBidder.addr,
-        //     seller: auction.seller // replace with msg.sender?
-        // });
+        auction.optionPeriodEnd = block.timestamp + optionPeriodDuration;
     }
 }

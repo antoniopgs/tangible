@@ -2,10 +2,10 @@
 pragma solidity ^0.8.15;
 
 import "../interfaces/ILending.sol";
-import "./Math.sol";
+import "./LoanTimeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-abstract contract Lending is ILending, Math {
+abstract contract Lending is ILending, LoanTimeMath {
 
     // Loan Storage
     mapping(uint => Loan) public loans;
@@ -70,10 +70,5 @@ abstract contract Lending is ILending, Math {
 
         // Update loan.nextPaymentDeadline
         loan.nextPaymentDeadline += 30 days;
-
-        // If loan fully repaid
-        if (loan.balance.eq(ud(0))) { // maybe just do pull mechanism instead?
-            // transfer property nft to borrower
-        }
     }
 }

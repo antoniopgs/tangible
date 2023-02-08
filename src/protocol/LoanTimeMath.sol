@@ -3,10 +3,10 @@ pragma solidity ^0.8.15;
 
 import "./Base.sol";
 
-abstract contract Math is Base {
+abstract contract LoanTimeMath is Base {
 
     // System Vars
-    UD60x18 internal totalBorrowed; // maybe rename to totalBorrowed?
+    UD60x18 internal totalBorrowed;
     UD60x18 internal totalDeposits;
 
     function utilization() public view returns (UD60x18) {

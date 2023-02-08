@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-type Time is uint;
-
-import "./Auctions.sol";
+import "../interfaces/IAuctions.sol";
 import "./Lending.sol";
 
-abstract contract AuctionClosing is Auctions {
+abstract contract AuctionClosing is IAuctions, Lending {
 
     uint public optionPeriodDuration = 10 days;
     uint public closingPeriodDuration = 30 days;
     UD60x18 public optionFee;
     UD60x18 public closingFee;
+
+    mapping(uint => Auction) public auctions;
 
     using SafeERC20 for IERC20;
 

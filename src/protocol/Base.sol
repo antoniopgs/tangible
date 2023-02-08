@@ -3,12 +3,14 @@ pragma solidity ^0.8.15;
 
 import "./tUsdc.sol";
 import "@prb/math/UD60x18.sol";
+import "./ProsperaNft.sol";
 
 abstract contract Base {
 
     // Tokens
     IERC20 public USDC;
     tUsdc public tUSDC;
+    ProsperaNft prosperaNftContract;
 
     // Loan Terms
     UD60x18 internal monthlyBorrowerRate;
