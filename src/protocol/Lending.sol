@@ -45,6 +45,7 @@ abstract contract Lending is ILending, LoanTimeMath {
 
         // Add principal to totalBorrowed
         totalBorrowed = totalBorrowed.add(principal);
+        require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
     }
     
     function payLoan(uint tokenId) external {

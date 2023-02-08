@@ -38,6 +38,6 @@ abstract contract Supplying is ISupplying, LoanTimeMath {
 
         // Remove usdc from totalDeposits
         totalDeposits = totalDeposits.sub(toUD60x18(usdc));
-        require(totalDeposits.gte(totalBorrowed), "utilzation can't exceed 100%");
+        require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
     }    
 }

@@ -17,11 +17,15 @@ abstract contract Base {
     uint internal loansMonthCount;
     UD60x18 public ltv;
 
-    constructor(IERC20 _USDC, tUsdc _tUSDC, uint yearlyBorrowerRatePct, uint loansYearCount, uint ltvPct) {
+    // Other
+    UD60x18 public utilizationCap;
+
+    constructor(IERC20 _USDC, tUsdc _tUSDC, uint yearlyBorrowerRatePct, uint loansYearCount, uint ltvPct, uint utilizationCapPct) {
         USDC = _USDC;
         tUSDC = _tUSDC;
         monthlyBorrowerRate = toUD60x18(yearlyBorrowerRatePct).div(toUD60x18(100)).div(toUD60x18(12));
         loansMonthCount = loansYearCount * 12;
         ltv = toUD60x18(ltvPct).div(toUD60x18(100));
+        utilizationCap = toUD60x18(utilizationCapPct).div(toUD60x18(100));
     }
 }
