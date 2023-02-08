@@ -21,7 +21,8 @@ abstract contract Lending is ILending, LoanTimeMath {
         // Calculate equity
         equity = loan.propertyValue.sub(loan.balance);
     }
-
+    
+    // CAN ANYONE START LOAN? IT PROBABLY SHOULD BE GETTING QUEUED UP FIRST
     function startLoan(uint tokenId, uint propertyValue, address borrower, address seller) public { // available to keepers
 
         // Calculate principal
