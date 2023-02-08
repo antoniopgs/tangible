@@ -29,6 +29,6 @@ abstract contract Foreclosures is Lending {
     }
 
     function foreclosurable(Loan memory loan) private view returns (bool) {
-        return block.timestamp > loan.nextPaymentDeadline;
+        return block.timestamp > loan.nextPaymentDeadline + (30 days * allowedDelayedPayments);
     }
 }
