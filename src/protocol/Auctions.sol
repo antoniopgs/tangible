@@ -62,12 +62,12 @@ abstract contract Auctions is IAuctions, AuctionClosing, ERC721Holder {
     function acceptBid(uint tokenId) external { // called by seller
 
         // Get auction
-        Auction memory auction = auctions[tokenId];
+        Auction storage auction = auctions[tokenId];
 
         require(msg.sender == auction.seller, "only seller can accept bids");
 
         if (/* loanBid */true) {
-            _acceptLoanBid(tokenId, auction);
+            _acceptLoanBid(auction);
 
         } else {
             _acceptBid(tokenId, auction);
@@ -87,7 +87,7 @@ abstract contract Auctions is IAuctions, AuctionClosing, ERC721Holder {
         prosperaNftContract.safeTransferFrom(address(this), auction.highestBidder.addr, tokenId);
     }
 
-    function _acceptLoanBid(uint tokenId, Auction memory auction) private {
+    function _acceptLoanBid(Auction storage auction) private {
         auction.optionPeriodEnd = block.timestamp + optionPeriodDuration;
     }
 }
