@@ -21,73 +21,89 @@ abstract contract Auctions is IAuctions, AuctionClosing, ERC721Holder {
         auction.seller = msg.sender;
     }
 
-    function bid(uint tokenId, uint newBid) external { // called by borrower // should we block seller from calling this?
-
-        // Get highestBidder
-        Bidder storage highestBidder = auctions[tokenId].highestBidder;
-
-        // Ensure newBid > highestBidder
-        require(newBid > highestBidder.bid, "new bid must be greater than current highest bid");
-
-        // Refund highestBidder
-        USDC.safeTransfer(highestBidder.addr, highestBidder.bid);
+    function bid(uint tokenId, UD60x18 bidAmount) external { // called by borrower // should we block seller from calling this?
 
         // Pull bid from caller/bidder to protocol
         USDC.safeTransferFrom(msg.sender, address(this), newBid);
 
-        // Update highestBidder
-        highestBidder.addr = msg.sender;
-        highestBidder.bid = newBid;
+        // Add Bidder to auction bidders
+        auctions[tokenId].bidders.push(
+            Bid({
+                bidder: msg.sender,
+                amount: bidAmount,
+                loan: false
+            })
+        );
     }
 
-    function loanBid(uint tokenId, uint newBid, uint downPayment) external { // called by borrower // should we block seller from calling this?
+    function loanBid(uint tokenId, UD60x18 bidAmount, UD60x18 downPayment) external { // called by borrower // should we block seller from calling this?
 
-        // Get highestBidder
-        Bidder storage highestBidder = auctions[tokenId].highestBidder;
+        // Calculate bid ltv
+        UD60x18 ltv = toUD60x18(1).sub(downPayment.div(bidAmount));
 
-        // Ensure newBid > highestBidder
-        require(newBid > highestBidder.bid, "new bid must be greater than current highest bid");
-
-        // Refund highestBidder
-        USDC.safeTransfer(highestBidder.addr, highestBidder.bid);
+        // Ensure bid ltv <= maxLtv
+        require(ltv.lte(maxLtvPct), "ltv cannot exceed maxLtv");
 
         // Pull downPayment from caller/borrower to protocol
         USDC.safeTransferFrom(msg.sender, address(this), downPayment);
 
-        // Update highestBidder
-        highestBidder.addr = msg.sender;
-        highestBidder.bid = newBid;
+        // Add Bidder to auction bidders
+        auctions[tokenId].bidders.push(
+            Bid({
+                bidder: msg.sender,
+                amount: bidAmount,
+                loan: true
+            })
+        );
     }
 
-    function acceptBid(uint tokenId) external { // called by seller
+    function pullBid(uint tokenId) external {
+        // require(, "only bidder can pull his bid");
+    }
+
+    function acceptLoanBid(uint tokenId, uint bidIdx) external { // called by seller
 
         // Get auction
-        Auction storage auction = auctions[tokenId];
+        Auction memory auction = auctions[tokenId];
 
+        // Ensure caller is seller
         require(msg.sender == auction.seller, "only seller can accept bids");
 
-        if (/* loanBid */true) {
-            _acceptLoanBid(auction);
+        // Get bid
+        Bid memory _bid = auction.bids[bidIdx];
 
-        } else {
-            _acceptBid(tokenId, auction);
-        }
-
-        // Pull bid from protocol to seller
-        USDC.safeTransferFrom(address(this), auction.seller, auction.highestBidder.bid);
-
-    }
-
-    function _acceptBid(uint tokenId, Auction memory auction) private {
-
-        // Send bid from protocol to seller
-        USDC.safeTransferFrom(address(this), auction.seller, auction.highestBidder.bid);
+        // Send bid.amount from protocol to seller
+        USDC.safeTransferFrom(address(this), auction.seller, _bid.amount); // DON'T FORGET TO CHARGE FEE LATER
 
         // Send NFT from protocol to bidder
-        prosperaNftContract.safeTransferFrom(address(this), auction.highestBidder.addr, tokenId);
+        prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId);
+
+        // Start optionPeriod
+        auction.optionPeriodEnd = block.timestamp + optionPeriodDuration;
     }
 
-    function _acceptLoanBid(Auction storage auction) private {
+    function loanBidActionable() public view returns(bool) {
+        availableLiquidity >= principal
+    }
+
+    function acceptBid(uint tokenId, uint bidIdx) external {
+
+        // Get auction
+        Auction memory auction = auctions[tokenId];
+
+        // Ensure caller is seller
+        require(msg.sender == auction.seller, "only seller can accept bids");
+
+        // Get bid
+        Bid memory _bid = auction.bids[bidIdx];
+
+        // Send bid.amount from protocol to seller
+        USDC.safeTransferFrom(address(this), auction.seller, _bid.amount); // DON'T FORGET TO CHARGE FEE LATER
+
+        // Send NFT from protocol to bidder
+        prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId);
+
+        // Start optionPeriod
         auction.optionPeriodEnd = block.timestamp + optionPeriodDuration;
     }
 }

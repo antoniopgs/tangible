@@ -14,7 +14,9 @@ abstract contract LoanTimeMath is Base {
     }
 
     function lenderApy() public view returns (UD60x18) {
-        return monthlyBorrowerRate.mul(toUD60x18(12)).mul(utilization());
+        UD60x18 countCompoundingPeriods = toUD60x18(365 days).div(toUD60x18(30 days));
+        UD60x18 apy = toUD60x18(1).add(monthlyBorrowerRate).pow(countCompoundingPeriods).sub(toUD60x18(1));
+        return apy.mul(utilization());
     }
 
     function usdcToTusdcRatio() private view returns(UD60x18) {

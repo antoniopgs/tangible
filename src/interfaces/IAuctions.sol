@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
+import "@prb/math/UD60x18.sol";
+
 interface IAuctions {
 
-    struct Bidder {
-        address addr;
-        uint bid;
+    struct Bid {
+        address bidder;
+        UD60x18 amount;
+        bool loan;
     }
 
     struct Auction {
         address seller;
-        Bidder highestBidder;
+        Bid[] bids;
         uint optionPeriodEnd;
     }
 
