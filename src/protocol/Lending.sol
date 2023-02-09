@@ -23,10 +23,13 @@ abstract contract Lending is ILending, LoanTimeMath {
     }
     
     // CAN ANYONE START LOAN? IT PROBABLY SHOULD BE GETTING QUEUED UP FIRST
-    function startLoan(uint tokenId, uint propertyValue, address borrower, address seller) public { // available to keepers
+    function startLoan(uint tokenId, UD60x18 propertyValue, UD60x18 principal, address borrower, address seller) public { // available to keepers
 
-        // Calculate principal
-        UD60x18 principal = ltv.mul(toUD60x18(propertyValue));
+        // Calculate bid ltv
+        UD60x18 ltv = principal.div(propertyValue);
+
+        // Ensure ltv <= maxLtv
+        require(ltv.lte(maxLtv), "ltv can't exceeed maxLtv");
 
         // Collateralize NFT
 
@@ -37,7 +40,7 @@ abstract contract Lending is ILending, LoanTimeMath {
 
         // Store Loan
         loans[tokenId] = Loan({
-            propertyValue: toUD60x18(propertyValue),
+            propertyValue: propertyValue,
             monthlyPayment: calculateMonthlyPayment(principal),
             balance: principal,
             borrower: borrower,
