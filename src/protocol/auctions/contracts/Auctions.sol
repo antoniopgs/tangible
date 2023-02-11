@@ -5,7 +5,7 @@ import "../interfaces/IAuctions.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "./AuctionClosing.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import "./Lending.sol";
+import "../../mortgages/contracts/Lending.sol";
 
 abstract contract Auctions is IAuctions, AuctionClosing, ERC721Holder {
 

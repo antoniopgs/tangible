@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "../interfaces/IAuctions.sol";
-import "./Lending.sol";
+import "../../mortgages/contracts/Lending.sol";
 
 abstract contract AuctionClosing is IAuctions, Lending {
 

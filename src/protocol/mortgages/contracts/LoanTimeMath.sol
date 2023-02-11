@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./Base.sol";
+import "../../other/Base.sol";
 
 abstract contract LoanTimeMath is Base {
 

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./tUsdc.sol";
+import "../../tokens/tUsdc.sol";
 import "@prb/math/UD60x18.sol";
-import "./ProsperaNft.sol";
+import "../../tokens/ProsperaNft.sol";
 
 abstract contract Base {
 
