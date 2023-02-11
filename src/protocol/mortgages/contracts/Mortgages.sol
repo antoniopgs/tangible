@@ -5,7 +5,7 @@ import "./Supplying.sol";
 import "./Lending.sol";
 import "./Foreclosures.sol";
 
-contract Mortgages is Supplying, Lending, Foreclosures {
+contract Mortgages is Supplying, Lending, Foreclosures { // IMPROVE MODULARITY LATER
 
     constructor (
         IERC20 _USDC,
