@@ -11,18 +11,18 @@ abstract contract Foreclosures is Borrowing {
         PropertyStatus status;
     }
 
-    mapping(uint => Property) public properties;
+    mapping(string => Property) public properties;
 
-    function foreclose(uint tokenId) external {
+    function foreclose(string calldata propertyUri) external {
 
         // Get property
-        Property storage property = properties[tokenId];
+        Property storage property = properties[propertyUri];
 
         // Ensure current property status is Mortgage
         require(property.status == PropertyStatus.Mortgage);
 
         // Ensure property is foreclosurable
-        require(foreclosurable(loans[tokenId]));
+        require(foreclosurable(loans[propertyUri]));
 
         // Change property status to Foreclosed
         property.status = PropertyStatus.Foreclosed;

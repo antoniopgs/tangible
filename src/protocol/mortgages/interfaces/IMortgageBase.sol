@@ -6,10 +6,10 @@ import "@prb/math/UD60x18.sol";
 interface IMortgageBase {
 
     struct Loan {
+        address borrower;
         UD60x18 propertyValue;
         UD60x18 monthlyPayment;
         UD60x18 balance;
-        address borrower;
         uint nextPaymentDeadline;
     }
 }

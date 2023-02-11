@@ -8,22 +8,22 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 abstract contract Borrowing is IBorrowing, LoanTimeMath {
 
     // Loan Storage
-    mapping(uint => Loan) public loans;
+    mapping(string => Loan) public loans;
 
     // Libs
     using SafeERC20 for IERC20;
 
-    function propertyEquity(uint tokenId) external view returns (UD60x18 equity) {
+    function propertyEquity(string calldata propertyUri) external view returns (UD60x18 equity) {
 
         // Get Loan
-        Loan memory loan = loans[tokenId];
+        Loan memory loan = loans[propertyUri];
 
         // Calculate equity
         equity = loan.propertyValue.sub(loan.balance);
     }
     
     // CAN ANYONE START LOAN? IT PROBABLY SHOULD BE GETTING QUEUED UP FIRST
-    function startLoan(uint tokenId, UD60x18 propertyValue, UD60x18 principal, address borrower, address seller) public { // available to keepers
+    function startLoan(string calldata propertyUri, UD60x18 propertyValue, UD60x18 principal, address borrower, address seller) public { // available to keepers
 
         // Calculate bid ltv
         UD60x18 ltv = principal.div(propertyValue);
@@ -39,11 +39,11 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath {
         // change property nft state
 
         // Store Loan
-        loans[tokenId] = Loan({
+        loans[propertyUri] = Loan({
+            borrower: borrower,
             propertyValue: propertyValue,
             monthlyPayment: calculateMonthlyPayment(principal),
             balance: principal,
-            borrower: borrower,
             nextPaymentDeadline: block.timestamp + 30 days
         });
 
@@ -52,10 +52,10 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath {
         require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
     }
     
-    function payLoan(uint tokenId) external {
+    function payLoan(string calldata propertyUri) external {
 
         // Load loan
-        Loan storage loan = loans[tokenId];
+        Loan storage loan = loans[propertyUri];
 
         // Pull monthlyPayment from borrower
         USDC.safeTransferFrom(msg.sender, address(this), fromUD60x18(loan.monthlyPayment));
@@ -75,17 +75,5 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath {
 
         // Update loan.nextPaymentDeadline
         loan.nextPaymentDeadline += 30 days;
-    }
-
-    function pullNft(uint tokenId) external {
-
-        // Load loan
-        Loan storage loan = loans[tokenId];
-
-        // Ensure loan is paid off
-        require(loan.balance.eq(toUD60x18(0)), "can't pull nft if loan.balance > 0");
-
-        // Send nft to borrower
-        prosperaNftContract.safeTransferFrom(address(this), loan.borrower, tokenId);
     }
 }

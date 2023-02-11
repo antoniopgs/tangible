@@ -61,13 +61,13 @@ abstract contract AuctionClosing is IAuctions, Borrowing {
                 USDC.safeTransferFrom(msg.sender, auction.seller, fromUD60x18(bid.propertyValue));
 
                 // Start Loan
-                startLoan({
-                    tokenId: tokenId,
-                    propertyValue: bid.propertyValue,
-                    principal: bid.propertyValue.sub(bid.downPayment),
-                    borrower: bid.bidder,
-                    seller: auction.seller // replace with msg.sender?
-                });
+                // startLoan({ // FIX LATER
+                //     tokenId: tokenId,
+                //     propertyValue: bid.propertyValue,
+                //     principal: bid.propertyValue.sub(bid.downPayment),
+                //     borrower: bid.bidder,
+                //     seller: auction.seller // replace with msg.sender?
+                // });
 
             // }
         }

@@ -11,7 +11,7 @@ abstract contract MortgageBase is IMortgageBase {
     // Tokens
     IERC20 public USDC;
     tUsdc public tUSDC;
-    ProsperaNft prosperaNftContract;
+    // ProsperaNft prosperaNftContract; // IMPLEMENT NFT LATER
 
     // Loan Terms
     UD60x18 internal monthlyBorrowerRate;

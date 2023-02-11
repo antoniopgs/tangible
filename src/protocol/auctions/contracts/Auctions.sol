@@ -14,7 +14,7 @@ abstract contract Auctions is IAuctions, AuctionClosing, ERC721Holder {
     function startAuction(uint tokenId) external {
 
         // Pull NFT from seller
-        prosperaNftContract.safeTransferFrom(msg.sender, address(this), tokenId);
+        // prosperaNftContract.safeTransferFrom(msg.sender, address(this), tokenId); // NFT COMES LATER
 
         // Store auction
         Auction storage auction = auctions[tokenId];
@@ -84,7 +84,7 @@ abstract contract Auctions is IAuctions, AuctionClosing, ERC721Holder {
         USDC.safeTransferFrom(address(this), auction.seller, fromUD60x18(_bid.propertyValue)); // DON'T FORGET TO CHARGE FEE LATER // DO WE STILL NEED OPTION & CLOSING PERIODS FOR NON-LOAN BIDS?
 
         // Send NFT from protocol to bidder
-        prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId); // DO WE STILL NEED OPTION & CLOSING PERIODS FOR NON-LOAN BIDS?
+        // prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId); // DO WE STILL NEED OPTION & CLOSING PERIODS FOR NON-LOAN BIDS? // NFT COMES LATER
 
         // Start optionPeriod
         auction.optionPeriodEnd = block.timestamp + optionPeriodDuration;
