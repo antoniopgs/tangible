@@ -21,38 +21,38 @@ abstract contract Auctions is IAuctions, AuctionClosing, ERC721Holder {
         auction.seller = msg.sender;
     }
 
-    function bid(uint tokenId, UD60x18 bidAmount) external { // called by borrower // should we block seller from calling this?
+    // function bid(uint tokenId, UD60x18 bidAmount) external { // called by borrower // should we block seller from calling this?
 
-        // Pull bid from caller/bidder to protocol
-        USDC.safeTransferFrom(msg.sender, address(this), bidAmount);
+    //     // Pull bid from caller/bidder to protocol
+    //     USDC.safeTransferFrom(msg.sender, address(this), bidAmount);
 
-        // Add Bidder to auction bidders
-        auctions[tokenId].bidders.push(
-            Bid({
-                bidder: msg.sender,
-                amount: bidAmount,
-                loan: false
-            })
-        );
-    }
+    //     // Add Bidder to auction bidders
+    //     auctions[tokenId].bidders.push(
+    //         Bid({
+    //             bidder: msg.sender,
+    //             amount: bidAmount,
+    //             loan: false
+    //         })
+    //     );
+    // }
 
-    function loanBid(uint tokenId, UD60x18 bidAmount, UD60x18 downPayment) external { // called by borrower // should we block seller from calling this?
+    function bid(uint tokenId, UD60x18 propertyValue, UD60x18 downPayment) external { // called by borrower // should we block seller from calling this?
 
         // Calculate bid ltv
-        UD60x18 ltv = toUD60x18(1).sub(downPayment.div(bidAmount));
+        UD60x18 ltv = toUD60x18(1).sub(downPayment.div(propertyValue));
 
         // Ensure bid ltv <= maxLtv
         require(ltv.lte(maxLtv), "ltv cannot exceed maxLtv");
 
         // Pull downPayment from caller/borrower to protocol
-        USDC.safeTransferFrom(msg.sender, address(this), downPayment);
+        USDC.safeTransferFrom(msg.sender, address(this), fromUD60x18(downPayment));
 
         // Add Bidder to auction bidders
-        auctions[tokenId].bidders.push(
+        auctions[tokenId].bids.push(
             Bid({
                 bidder: msg.sender,
-                amount: bidAmount,
-                loan: true
+                propertyValue: propertyValue,
+                downPayment: downPayment
             })
         );
     }
@@ -81,7 +81,7 @@ abstract contract Auctions is IAuctions, AuctionClosing, ERC721Holder {
         Bid memory _bid = auction.bids[bidIdx];
 
         // Send bid.amount from protocol to seller
-        USDC.safeTransferFrom(address(this), auction.seller, _bid.amount); // DON'T FORGET TO CHARGE FEE LATER // DO WE STILL NEED OPTION & CLOSING PERIODS FOR NON-LOAN BIDS?
+        USDC.safeTransferFrom(address(this), auction.seller, fromUD60x18(_bid.propertyValue)); // DON'T FORGET TO CHARGE FEE LATER // DO WE STILL NEED OPTION & CLOSING PERIODS FOR NON-LOAN BIDS?
 
         // Send NFT from protocol to bidder
         prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId); // DO WE STILL NEED OPTION & CLOSING PERIODS FOR NON-LOAN BIDS?

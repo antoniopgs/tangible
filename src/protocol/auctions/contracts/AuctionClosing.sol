@@ -53,14 +53,19 @@ abstract contract AuctionClosing is IAuctions, Lending {
             // If after closing period, loan should have already started. If it hasn't, start it.
             // if (loanNotStarted) {
 
-                // Send highestBid/propertyValue from protocol to seller
-                USDC.safeTransferFrom(msg.sender, auction.seller, auction.highestBidder.bid);
+                // Get bid responsible for option period
+                Bid memory bid = auction.bids[auction.optionPeriodBidIdx];
+
+
+                // Send bid/propertyValue from protocol to seller
+                USDC.safeTransferFrom(msg.sender, auction.seller, fromUD60x18(bid.propertyValue));
 
                 // Start Loan
                 startLoan({
                     tokenId: tokenId,
-                    propertyValue: auction.highestBidder.bid,
-                    borrower: auction.highestBidder.addr,
+                    propertyValue: bid.propertyValue,
+                    principal: bid.propertyValue.sub(bid.downPayment),
+                    borrower: bid.bidder,
                     seller: auction.seller // replace with msg.sender?
                 });
 

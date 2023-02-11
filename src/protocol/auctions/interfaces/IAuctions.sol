@@ -7,14 +7,15 @@ interface IAuctions {
 
     struct Bid {
         address bidder;
-        UD60x18 amount;
-        bool loan;
+        UD60x18 propertyValue;
+        UD60x18 downPayment;
     }
 
     struct Auction {
         address seller;
         Bid[] bids;
         uint optionPeriodEnd;
+        uint optionPeriodBidIdx;
     }
 
     // Seller
@@ -22,6 +23,5 @@ interface IAuctions {
     function acceptBid(uint tokenId) external;
 
     // Borrower
-    function bid(uint tokenId, uint newBid) external;
-    function loanBid(uint tokenId, uint newBid) external;
+    function bid(uint tokenId, UD60x18 propertyValue, UD60x18 downPayment) external;
 }
