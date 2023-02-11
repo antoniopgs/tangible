@@ -13,7 +13,7 @@ abstract contract Lending is ILending, LoanTimeMath {
     // Libs
     using SafeERC20 for IERC20;
 
-    function loanEquity(uint tokenId) external view returns (UD60x18 equity) {
+    function propertyEquity(uint tokenId) external view returns (UD60x18 equity) {
 
         // Get Loan
         Loan memory loan = loans[tokenId];
