@@ -26,12 +26,8 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         // Ensure ltv <= maxLtv
         require(ltv.lte(maxLtv), "ltv can't exceeed maxLtv");
 
-        // Collateralize NFT
-
-        // Send principal from protocol to seller
-        USDC.safeTransferFrom(address(this), seller, fromUD60x18(principal));
-
-        // change property nft state
+        // Send propertyValue from protocol to seller
+        USDC.safeTransferFrom(address(this), seller, fromUD60x18(propertyValue));
 
         // Store Loan
         loans[propertyUri] = Loan({
