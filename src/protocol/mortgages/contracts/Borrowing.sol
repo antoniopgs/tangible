@@ -26,8 +26,11 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         // Ensure ltv <= maxLtv
         require(ltv.lte(maxLtv), "ltv can't exceeed maxLtv");
 
-        // Send propertyValue from protocol to seller
-        USDC.safeTransferFrom(address(this), seller, fromUD60x18(propertyValue));
+        // Add principal to totalBorrowed
+        totalBorrowed = totalBorrowed.add(principal);
+        
+        // Ensure utilization <= utilizationCap
+        require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
 
         // Store Loan
         loans[propertyUri] = Loan({
@@ -38,9 +41,11 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
             nextPaymentDeadline: block.timestamp + 30 days
         });
 
-        // Add principal to totalBorrowed
-        totalBorrowed = totalBorrowed.add(principal);
-        require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
+        // Pull principal from borrower/caller to protocol
+        USDC.safeTransferFrom(msg.sender, address(this), fromUD60x18(principal));
+
+        // Send propertyValue from protocol to seller
+        USDC.safeTransferFrom(address(this), seller, fromUD60x18(propertyValue));
     }
     
     function payLoan(string calldata propertyUri) external {
