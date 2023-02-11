@@ -96,7 +96,7 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         require(state(loan) == State.Foreclosed, "no foreclosure");
 
         // Calculate defaulterDebt
-        uint foreclosureDelay = block.timestamp - loan.lastPayment; // instead of block.timestamp, should this use a "uint saleTime"
+        uint foreclosureDelay = block.timestamp - loan.lastPayment;
         UD60x18 foreclosureDelayMonths = toUD60x18(foreclosureDelay).div(toUD60x18(30 days));
         UD60x18 foreclosureAccrued = loan.monthlyPayment.mul(forecosureDelayMonths); // DOUBLE CHECK THIS
         UD60x18 defaulterDebt = loan.balance.add(foreclosureAccrued);
