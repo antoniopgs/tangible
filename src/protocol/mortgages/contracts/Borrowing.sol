@@ -35,7 +35,6 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         // Store Loan
         loans[propertyUri] = Loan({
             borrower: borrower,
-            propertyValue: propertyValue,
             monthlyPayment: calculateMonthlyPayment(principal),
             balance: principal,
             nextPaymentDeadline: block.timestamp + 30 days
@@ -46,6 +45,9 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
 
         // Send propertyValue from protocol to seller
         USDC.safeTransferFrom(address(this), seller, fromUD60x18(propertyValue));
+
+        // Emit event
+        emit NewLoan(propertyUri, propertyValue, principal, borrower, seller, block.timestamp);
     }
     
     function payLoan(string calldata propertyUri) external {
@@ -73,7 +75,8 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         totalDeposits = totalDeposits.add(interest);
 
         // If loan completely paid off
-        if (loan.balance.eq(toUD60x18(0))) {
+        bool loanPaid = loan.balance.eq(toUD60x18(0));
+        if (loanPaid) {
 
             // Reset loan state to Null (so it can re-enter system later)
             loan.borrower = address(0);
@@ -84,6 +87,9 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
             // Update loan.nextPaymentDeadline
             loan.nextPaymentDeadline += 30 days;
         }
+
+        // Emit event
+        emit LoanPayment(propertyUri, msg.sender, block.timestamp, loanPaid);
     }
 
     function foreclose(string calldata propertyUri) external {

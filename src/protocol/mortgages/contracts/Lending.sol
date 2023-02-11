@@ -23,6 +23,9 @@ abstract contract Lending is ILending, LoanTimeMath {
 
         // Mint tusdc to depositor
         tUSDC.mint(msg.sender, tusdc);
+
+        // Emit event
+        emit Deposit(msg.sender, usdc, tusdc, block.timestamp);
     }
 
     function withdraw(uint usdc) external {
@@ -39,5 +42,8 @@ abstract contract Lending is ILending, LoanTimeMath {
         // Remove usdc from totalDeposits
         totalDeposits = totalDeposits.sub(toUD60x18(usdc));
         require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
+
+        // Emit event
+        emit Withdrawal(msg.sender, usdc, tusdc, block.timestamp);
     }    
 }
