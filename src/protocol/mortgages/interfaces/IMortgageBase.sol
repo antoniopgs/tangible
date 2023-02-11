@@ -5,6 +5,8 @@ import "@prb/math/UD60x18.sol";
 
 interface IMortgageBase {
 
+    enum Status { Unowned, Auction, Mortgage, Foreclosed }
+
     struct Loan {
         address borrower;
         UD60x18 propertyValue;

@@ -5,27 +5,19 @@ import "./Borrowing.sol";
 
 abstract contract Foreclosures is Borrowing {
 
-    enum PropertyStatus { Unowned, Auction, Mortgage, Foreclosed }
-
-    struct Property {
-        PropertyStatus status;
-    }
-
-    mapping(string => Property) public properties;
-
     function foreclose(string calldata propertyUri) external {
 
-        // Get property
-        Property storage property = properties[propertyUri];
+        // Get loan
+        Loan storage loan = loans[propertyUri];
 
-        // Ensure current property status is Mortgage
-        require(property.status == PropertyStatus.Mortgage);
+        // Ensure current loan status is Mortgage
+        require(loan.status == Status.Mortgage);
 
-        // Ensure property is foreclosurable
+        // Ensure loan is foreclosurable
         require(foreclosurable(loans[propertyUri]));
 
-        // Change property status to Foreclosed
-        property.status = PropertyStatus.Foreclosed;
+        // Change loan status to Foreclosed
+        loan.status = Status.Foreclosed;
     }
 
     function foreclosurable(Loan memory loan) private view returns (bool) {
