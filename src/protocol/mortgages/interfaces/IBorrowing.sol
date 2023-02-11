@@ -7,5 +7,4 @@ interface IBorrowing {
     enum State { Null, Mortgage, Default, Foreclosed }
     function startLoan(string calldata propertyUri, UD60x18 propertyValue, UD60x18 principal, address borrower, address seller) external;
     function payLoan(string calldata propertyUri) external;
-    function propertyEquity(string calldata propertyUri) external view returns (UD60x18 equity);
 }

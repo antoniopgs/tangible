@@ -4,14 +4,21 @@ pragma solidity ^0.8.15;
 import "../interfaces/IBorrowing.sol";
 import "./LoanTimeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-abstract contract Borrowing is IBorrowing, LoanTimeMath {
+abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
 
     // Libs
     using SafeERC20 for IERC20;
-    
-    // CAN ANYONE START LOAN? IT PROBABLY SHOULD BE GETTING QUEUED UP FIRST
-    function startLoan(string calldata propertyUri, UD60x18 propertyValue, UD60x18 principal, address borrower, address seller) public { // available to keepers
+
+    // WHO should start loans?
+    function startLoan(string calldata propertyUri, UD60x18 propertyValue, UD60x18 principal, address borrower, address seller) external {
+
+        // Get Loan
+        Loan storage loan = loans[propertyUri];
+
+        // Ensure property has no associated loan
+        require(state(loan) == State.Null, "property already has associated loan");
 
         // Calculate bid ltv
         UD60x18 ltv = principal.div(propertyValue);
@@ -45,6 +52,9 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath {
         // Load loan
         Loan storage loan = loans[propertyUri];
 
+        // Ensure property has active mortgage
+        require(state(loan) == State.Mortgage, "property has no active mortgage"); // CAN BORROWERS ALSO PAY LOAN IF STATE == DEFAULTED?
+
         // Pull monthlyPayment from borrower
         USDC.safeTransferFrom(msg.sender, address(this), fromUD60x18(loan.monthlyPayment));
 
@@ -65,25 +75,44 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath {
         loan.nextPaymentDeadline += 30 days;
     }
 
-    function propertyEquity(string calldata propertyUri) external view returns (UD60x18 equity) {
-
-        // Get Loan
-        Loan memory loan = loans[propertyUri];
-
-        // Calculate equity
-        equity = loan.propertyValue.sub(loan.balance);
-    }
-
     function foreclose(string calldata propertyUri) external {
 
         // Get loan
         Loan storage loan = loans[propertyUri];
 
         // Ensure borrower has defaulted
-        require(state(loan) == State.Default);
+        require(state(loan) == State.Default, "no default");
 
         // Zero-out nextPaymentDeadline
         loan.nextPaymentDeadline = 0;
+    }
+
+    function completeForeclosure(string calldata propertyUri, UD60x18 salePrice) external onlyOwner {
+
+        // Get Loan
+        Loan storage loan = loans[propertyUri];
+
+        // Ensure property has been foreclosed
+        require(state(loan) == State.Foreclosed, "no foreclosure");
+
+        // Calculate defaulterDebt
+        uint foreclosureDelay = block.timestamp - loan.lastPayment; // instead of block.timestamp, should this use a "uint saleTime"
+        UD60x18 foreclosureDelayMonths = toUD60x18(foreclosureDelay).div(toUD60x18(30 days));
+        UD60x18 foreclosureAccrued = loan.monthlyPayment.mul(forecosureDelayMonths); // DOUBLE CHECK THIS
+        UD60x18 defaulterDebt = loan.balance.add(foreclosureAccrued);
+
+        // Pay defaulterDebt to lenders
+        // remove repayment
+        totalDeposits = totalDeposits.add(defaulterDebt);
+
+        // Calculate defaulterEquity
+        UD60x18 defaulterEquity = salePrice.sub(defaulterDebt);
+
+        // Send defaulterEquity to defaulter
+        USDC.safeTransferFrom(address(this), loan.borrower, defaulterEquity);
+
+        // Reset loan state to Null (so it can re-enter system later)
+        loan.borrower = address(0);
     }
 
     function foreclosurable(Loan memory loan) private view returns (bool) {
