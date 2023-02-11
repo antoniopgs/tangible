@@ -71,8 +71,18 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         // Add interest to deposits
         totalDeposits = totalDeposits.add(interest);
 
-        // Update loan.nextPaymentDeadline
-        loan.nextPaymentDeadline += 30 days;
+        // If loan completely paid off
+        if (loan.balance.eq(toUD60x18(0))) {
+
+            // Reset loan state to Null (so it can re-enter system later)
+            loan.borrower = address(0);
+
+        // If more payments are needed to pay off loan
+        } else {
+
+            // Update loan.nextPaymentDeadline
+            loan.nextPaymentDeadline += 30 days;
+        }
     }
 
     function foreclose(string calldata propertyUri) external {
@@ -96,9 +106,10 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         require(state(loan) == State.Foreclosed, "no foreclosure");
 
         // Calculate defaulterDebt
-        uint foreclosureDelay = block.timestamp - loan.lastPayment;
-        UD60x18 foreclosureDelayMonths = toUD60x18(foreclosureDelay).div(toUD60x18(30 days));
-        UD60x18 foreclosureAccrued = loan.monthlyPayment.mul(forecosureDelayMonths); // DOUBLE CHECK THIS
+        uint defaulterLastPayment = loan.nextPaymentDeadline - 30 days;
+        uint foreclosureDelaySeconds = block.timestamp - defaulterLastPayment;
+        UD60x18 foreclosureDelayMonths = toUD60x18(foreclosureDelaySeconds).div(toUD60x18(30 days));
+        UD60x18 foreclosureAccrued = loan.monthlyPayment.mul(foreclosureDelayMonths); // DOUBLE CHECK THIS
         UD60x18 defaulterDebt = loan.balance.add(foreclosureAccrued);
 
         // Pay defaulterDebt to lenders
@@ -109,7 +120,7 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         UD60x18 defaulterEquity = salePrice.sub(defaulterDebt);
 
         // Send defaulterEquity to defaulter
-        USDC.safeTransferFrom(address(this), loan.borrower, defaulterEquity);
+        USDC.safeTransferFrom(address(this), loan.borrower, fromUD60x18(defaulterEquity));
 
         // Reset loan state to Null (so it can re-enter system later)
         loan.borrower = address(0);

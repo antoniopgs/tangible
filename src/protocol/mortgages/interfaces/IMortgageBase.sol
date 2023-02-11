@@ -7,7 +7,7 @@ interface IMortgageBase {
 
     struct Loan {
         address borrower;
-        UD60x18 propertyValue;
+        UD60x18 propertyValue; // might not be needed
         UD60x18 balance;
         UD60x18 monthlyPayment;
         uint nextPaymentDeadline;
