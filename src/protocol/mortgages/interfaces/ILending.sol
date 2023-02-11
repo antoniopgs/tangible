@@ -13,6 +13,7 @@ interface ILending {
         uint nextPaymentDeadline;
     }
 
-    function payLoan(uint tokenId, uint payment) external;
-    function loanEquity(uint tokenId) external view returns (UD60x18 equity);
+    function startLoan(uint tokenId, UD60x18 propertyValue, UD60x18 principal, address borrower, address seller) external;
+    function payLoan(uint tokenId) external;
+    function propertyEquity(uint tokenId) external view returns (UD60x18 equity);
 }
