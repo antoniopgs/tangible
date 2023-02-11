@@ -2,9 +2,9 @@
 pragma solidity ^0.8.15;
 
 import "../interfaces/IAuctions.sol";
-import "../../mortgages/contracts/Lending.sol";
+import "../../mortgages/contracts/Borrowing.sol";
 
-abstract contract AuctionClosing is IAuctions, Lending {
+abstract contract AuctionClosing is IAuctions, Borrowing {
 
     uint public optionPeriodDuration = 10 days;
     uint public closingPeriodDuration = 30 days;

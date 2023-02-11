@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./Supplying.sol";
 import "./Lending.sol";
+import "./Borrowing.sol";
 import "./Foreclosures.sol";
 
-contract Mortgages is Supplying, Lending, Foreclosures { // IMPROVE MODULARITY LATER
+contract Mortgages is Lending, Borrowing, Foreclosures { // IMPROVE MODULARITY LATER
 
     constructor (
         IERC20 _USDC,

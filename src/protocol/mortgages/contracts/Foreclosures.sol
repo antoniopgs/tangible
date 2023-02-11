@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./Lending.sol";
+import "./Borrowing.sol";
 
-abstract contract Foreclosures is Lending {
+abstract contract Foreclosures is Borrowing {
 
     enum PropertyStatus { Unowned, Auction, Mortgage, Foreclosed }
 

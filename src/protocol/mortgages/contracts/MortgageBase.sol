@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
+import "../interfaces/IMortgageBase.sol";
 import "../../../tokens/ProsperaNft.sol";
 import "../../../tokens/tUsdc.sol";
 import "@prb/math/UD60x18.sol";
 
-abstract contract MortgageBase {
+abstract contract MortgageBase is IMortgageBase {
 
     // Tokens
     IERC20 public USDC;
