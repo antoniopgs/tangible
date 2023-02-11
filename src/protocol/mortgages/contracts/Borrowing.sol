@@ -12,15 +12,6 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath {
 
     // Libs
     using SafeERC20 for IERC20;
-
-    function propertyEquity(string calldata propertyUri) external view returns (UD60x18 equity) {
-
-        // Get Loan
-        Loan memory loan = loans[propertyUri];
-
-        // Calculate equity
-        equity = loan.propertyValue.sub(loan.balance);
-    }
     
     // CAN ANYONE START LOAN? IT PROBABLY SHOULD BE GETTING QUEUED UP FIRST
     function startLoan(string calldata propertyUri, UD60x18 propertyValue, UD60x18 principal, address borrower, address seller) public { // available to keepers
@@ -75,5 +66,14 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath {
 
         // Update loan.nextPaymentDeadline
         loan.nextPaymentDeadline += 30 days;
+    }
+
+    function propertyEquity(string calldata propertyUri) external view returns (UD60x18 equity) {
+
+        // Get Loan
+        Loan memory loan = loans[propertyUri];
+
+        // Calculate equity
+        equity = loan.propertyValue.sub(loan.balance);
     }
 }
