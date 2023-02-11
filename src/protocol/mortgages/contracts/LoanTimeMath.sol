@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../../other/Base.sol";
+import "./MortgageBase.sol";
 
-abstract contract LoanTimeMath is Base {
+abstract contract LoanTimeMath is MortgageBase {
 
-    // System Vars
+    // Math Vars
     UD60x18 internal totalBorrowed;
     UD60x18 internal totalDeposits;
 

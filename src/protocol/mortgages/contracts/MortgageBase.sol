@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../../tokens/tUsdc.sol";
+import "../../../tokens/ProsperaNft.sol";
+import "../../../tokens/tUsdc.sol";
 import "@prb/math/UD60x18.sol";
-import "../../tokens/ProsperaNft.sol";
 
-abstract contract Base {
+abstract contract MortgageBase {
 
     // Tokens
     IERC20 public USDC;
@@ -16,10 +16,10 @@ abstract contract Base {
     UD60x18 internal monthlyBorrowerRate;
     uint internal loansMonthCount;
     UD60x18 public maxLtv;
-
-    // Other
-    UD60x18 public utilizationCap;
     uint public allowedDelayedPayments;
+
+    // System
+    UD60x18 public utilizationCap;
 
     constructor(IERC20 _USDC, tUsdc _tUSDC, uint yearlyBorrowerRatePct, uint loansYearCount, uint maxLtvPct, uint utilizationCapPct, uint _allowedDelayedPayments) {
         USDC = _USDC;
