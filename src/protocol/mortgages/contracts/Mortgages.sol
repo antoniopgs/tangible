@@ -3,9 +3,8 @@ pragma solidity ^0.8.15;
 
 import "./Lending.sol";
 import "./Borrowing.sol";
-import "./Foreclosures.sol";
 
-contract Mortgages is Lending, Borrowing, Foreclosures { // IMPROVE MODULARITY LATER
+contract Mortgages is Lending, Borrowing { // IMPROVE MODULARITY LATER
 
     constructor (
         IERC20 _USDC,

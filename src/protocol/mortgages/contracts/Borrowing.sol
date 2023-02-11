@@ -7,9 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 abstract contract Borrowing is IBorrowing, LoanTimeMath {
 
-    // Loan Storage
-    mapping(string => Loan) public loans;
-
     // Libs
     using SafeERC20 for IERC20;
     
@@ -75,5 +72,49 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath {
 
         // Calculate equity
         equity = loan.propertyValue.sub(loan.balance);
+    }
+
+    function foreclose(string calldata propertyUri) external {
+
+        // Get loan
+        Loan storage loan = loans[propertyUri];
+
+        // Ensure borrower has defaulted
+        require(state(loan) == State.Default);
+
+        // Zero-out nextPaymentDeadline
+        loan.nextPaymentDeadline = 0;
+    }
+
+    function foreclosurable(Loan memory loan) private view returns (bool) {
+        return block.timestamp > loan.nextPaymentDeadline + (30 days * allowedDelayedPayments);
+    }
+
+    function state(Loan memory loan) internal view returns (State) {
+        
+        // If no borrower
+        if (loan.borrower == address(0)) {
+            return State.Null;
+
+        // If borrower
+        } else {
+            
+            // If not foreclosurable
+            if (!foreclosurable(loan)) {
+                
+                // If positive payment deadline
+                if (loan.nextPaymentDeadline > 0 ) {
+                    return State.Mortgage;
+
+                // If no payment deadline
+                } else {
+                    return State.Foreclosed;
+                }
+
+            // If foreclosurable
+            } else {
+                return State.Default;
+            }
+        }
     }
 }

@@ -23,6 +23,9 @@ abstract contract MortgageBase is IMortgageBase {
     UD60x18 public utilizationCap;
     UD60x18 perfectLenderApy; // lenderApy if 100% utilization
 
+    // Loan Storage
+    mapping(string => Loan) public loans;
+
     constructor(IERC20 _USDC, tUsdc _tUSDC, uint yearlyBorrowerRatePct, uint loansYearCount, uint maxLtvPct, uint utilizationCapPct, uint _allowedDelayedPayments) {
         USDC = _USDC;
         tUSDC = _tUSDC;
