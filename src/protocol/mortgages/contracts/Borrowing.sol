@@ -32,11 +32,18 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         // Ensure utilization <= utilizationCap
         require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
 
+        // Calculate installment
+        UD60x18 installment = calculateInstallment(principal);
+
+        // Calculate totalLoanCost
+        UD60x18 totalLoanCost = installment.mul(toUD60x18(loansMonthCount));
+
         // Store Loan
         loans[propertyUri] = Loan({
             borrower: borrower,
-            monthlyPayment: calculateMonthlyPayment(principal),
             balance: principal,
+            installment: installment,
+            unpaidInterest: totalLoanCost.sub(principal),
             nextPaymentDeadline: block.timestamp + 30 days
         });
 
@@ -59,20 +66,25 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         require(state(loan) == State.Mortgage, "property has no active mortgage"); // CAN BORROWERS ALSO PAY LOAN IF STATE == DEFAULTED?
 
         // Pull monthlyPayment from borrower
-        USDC.safeTransferFrom(msg.sender, address(this), fromUD60x18(loan.monthlyPayment));
+        USDC.safeTransferFrom(msg.sender, address(this), fromUD60x18(loan.installment));
+
+        // loan.balance = loan.balance.sub(loan.installment);
 
         // Calculate interest
         UD60x18 interest = monthlyBorrowerRate.mul(loan.balance);
 
         // Calculate repayment
-        UD60x18 repayment = loan.monthlyPayment.sub(interest);
+        UD60x18 repayment = loan.installment.sub(interest);
 
-        // Remove repayment from loan.balance & outstandingDebt
+        // Remove repayment from loan.balance & totalBorrowed
         loan.balance = loan.balance.sub(repayment);
         totalBorrowed = totalBorrowed.sub(repayment);
 
         // Add interest to deposits
         totalDeposits = totalDeposits.add(interest);
+
+        // Remove interest from loan.unpaidInterest
+        loan.unpaidInterest = loan.unpaidInterest.sub(interest);
 
         // If loan completely paid off
         bool loanPaid = loan.balance.eq(toUD60x18(0));
@@ -112,20 +124,17 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         // Ensure property has been foreclosed
         require(state(loan) == State.Foreclosed, "no foreclosure");
 
-        // Calculate defaulterDebt
-        uint defaulterLastPayment = loan.nextPaymentDeadline - 30 days; // WON'T WORK BECAUSE I'M ZERO-ING OUT loan.nextPaymentDeadline in foreclose()
-        uint foreclosureDelaySeconds = block.timestamp - defaulterLastPayment;
-        UD60x18 foreclosureDelayMonths = toUD60x18(foreclosureDelaySeconds).div(toUD60x18(30 days));
-        UD60x18 foreclosureAccrued = loan.monthlyPayment.mul(foreclosureDelayMonths); // DOUBLE CHECK THIS
-        UD60x18 defaulterDebt = loan.balance.add(foreclosureAccrued);
+        // UD60x18 totalInterest = loan.balance.sub(loan.principal);       
 
-        // calculate interest & repayment
-        // loan.balance = loan.balance.sub(repayment); // remove repayment from loan.balance
-        // totalBorrowed = totalBorrowed.sub(repayment); // remove repayment from borrowed
-        // totalDeposits = totalDeposits.add(interest); // add interest to deposits
+        // Remove loan.balance from loan.balance & totalBorrowed
+        loan.balance = loan.balance.sub(loan.balance);
+        totalBorrowed = totalBorrowed.sub(loan.balance);
+
+        // Add unpaidInterest to totalDeposits
+        totalDeposits = totalDeposits.add(loan.unpaidInterest);
 
         // Calculate defaulterEquity
-        UD60x18 defaulterEquity = salePrice.sub(defaulterDebt);
+        UD60x18 defaulterEquity = salePrice.sub(loan.balance.add(loan.unpaidInterest));
 
         // Send defaulterEquity to defaulter
         USDC.safeTransferFrom(address(this), loan.borrower, fromUD60x18(defaulterEquity));

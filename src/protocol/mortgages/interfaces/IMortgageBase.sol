@@ -8,7 +8,8 @@ interface IMortgageBase {
     struct Loan {
         address borrower;
         UD60x18 balance;
-        UD60x18 monthlyPayment;
+        UD60x18 installment;
+        UD60x18 unpaidInterest;
         uint nextPaymentDeadline;
     }
 }
