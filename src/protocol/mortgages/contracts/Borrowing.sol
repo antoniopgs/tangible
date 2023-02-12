@@ -68,8 +68,6 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         // Pull monthlyPayment from borrower
         USDC.safeTransferFrom(msg.sender, address(this), fromUD60x18(loan.installment));
 
-        // loan.balance = loan.balance.sub(loan.installment);
-
         // Calculate interest
         UD60x18 interest = monthlyBorrowerRate.mul(loan.balance);
 
@@ -122,9 +120,7 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         Loan storage loan = loans[propertyUri];
 
         // Ensure property has been foreclosed
-        require(state(loan) == State.Foreclosed, "no foreclosure");
-
-        // UD60x18 totalInterest = loan.balance.sub(loan.principal);       
+        require(state(loan) == State.Foreclosed, "no foreclosure");       
 
         // Remove loan.balance from loan.balance & totalBorrowed
         loan.balance = loan.balance.sub(loan.balance);
@@ -133,8 +129,11 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         // Add unpaidInterest to totalDeposits
         totalDeposits = totalDeposits.add(loan.unpaidInterest);
 
+        // Calculate defaulterDebt
+        UD60x18 defaulterDebt = loan.balance.add(loan.unpaidInterest);
+
         // Calculate defaulterEquity
-        UD60x18 defaulterEquity = salePrice.sub(loan.balance.add(loan.unpaidInterest));
+        UD60x18 defaulterEquity = salePrice.sub(defaulterDebt);
 
         // Send defaulterEquity to defaulter
         USDC.safeTransferFrom(address(this), loan.borrower, fromUD60x18(defaulterEquity));
