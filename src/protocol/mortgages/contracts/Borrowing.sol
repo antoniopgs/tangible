@@ -119,9 +119,10 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         UD60x18 foreclosureAccrued = loan.monthlyPayment.mul(foreclosureDelayMonths); // DOUBLE CHECK THIS
         UD60x18 defaulterDebt = loan.balance.add(foreclosureAccrued);
 
-        // Pay defaulterDebt to lenders
-        // remove repayment
-        totalDeposits = totalDeposits.add(defaulterDebt);
+        // calculate interest & repayment
+        // loan.balance = loan.balance.sub(repayment); // remove repayment from loan.balance
+        // totalBorrowed = totalBorrowed.sub(repayment); // remove repayment from borrowed
+        // totalDeposits = totalDeposits.add(interest); // add interest to deposits
 
         // Calculate defaulterEquity
         UD60x18 defaulterEquity = salePrice.sub(defaulterDebt);
