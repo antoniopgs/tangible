@@ -37,9 +37,9 @@ abstract contract LoanTimeMath is MortgageBase {
     function calculateInstallment(UD60x18 principal) internal view returns(UD60x18 monthlyPayment) {
 
         // Calculate x
-        UD60x18 x = toUD60x18(1).add(monthlyBorrowerRate).powu(loansMonthCount);
+        UD60x18 x = toUD60x18(1).add(periodicBorrowerRate).pow(installmentCount);
         
         // Calculate monthlyPayment
-        monthlyPayment = principal.mul(monthlyBorrowerRate).mul(x).div(x.sub(toUD60x18(1)));
+        monthlyPayment = principal.mul(periodicBorrowerRate).mul(x).div(x.sub(toUD60x18(1)));
     }
 }

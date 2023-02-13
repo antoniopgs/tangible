@@ -36,7 +36,7 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         UD60x18 installment = calculateInstallment(principal);
 
         // Calculate totalLoanCost
-        UD60x18 totalLoanCost = installment.mul(toUD60x18(loansMonthCount));
+        UD60x18 totalLoanCost = installment.mul(installmentCount);
 
         // Store Loan
         loans[propertyUri] = Loan({
@@ -69,7 +69,7 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         USDC.safeTransferFrom(msg.sender, address(this), fromUD60x18(loan.installment));
 
         // Calculate interest
-        UD60x18 interest = monthlyBorrowerRate.mul(loan.balance);
+        UD60x18 interest = periodicBorrowerRate.mul(loan.balance);
 
         // Calculate repayment
         UD60x18 repayment = loan.installment.sub(interest);
