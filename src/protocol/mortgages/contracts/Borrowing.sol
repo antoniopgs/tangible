@@ -65,7 +65,7 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         // Ensure property has active mortgage
         require(state(loan) == State.Mortgage, "property has no active mortgage"); // CAN BORROWERS ALSO PAY LOAN IF STATE == DEFAULTED?
 
-        // Pull monthlyPayment from borrower
+        // Pull installment from borrower
         USDC.safeTransferFrom(msg.sender, address(this), fromUD60x18(loan.installment));
 
         // Calculate interest
