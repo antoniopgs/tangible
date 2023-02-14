@@ -5,14 +5,16 @@ import "../interfaces/IBorrowing.sol";
 import "./LoanTimeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./State.sol";
 
-abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
+// later replace onlyOwner with a modifier with better upgradeabitlity
+abstract contract Borrowing is IBorrowing, LoanTimeMath, State, Ownable {
 
     // Libs
     using SafeERC20 for IERC20;
 
     // WHO should start loans?
-    function startLoan(string calldata propertyUri, UD60x18 propertyValue, UD60x18 principal, address borrower, address seller) external {
+    function startLoan(string calldata propertyUri, UD60x18 propertyValue, UD60x18 principal, address borrower, address seller) external onlyOwner {
 
         // Get Loan
         Loan storage loan = loans[propertyUri];
@@ -48,10 +50,10 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
         });
 
         // Pull principal from borrower/caller to protocol
-        USDC.safeTransferFrom(msg.sender, address(this), fromUD60x18(principal));
+        USDC.safeTransferFrom(msg.sender, address(this), fromUD60x18(principal)); // RETHINK THIS
 
         // Send propertyValue from protocol to seller
-        USDC.safeTransferFrom(address(this), seller, fromUD60x18(propertyValue));
+        USDC.safeTransferFrom(address(this), seller, fromUD60x18(propertyValue)); // RETHINK THIS
 
         // Emit event
         emit NewLoan(propertyUri, propertyValue, principal, borrower, seller, block.timestamp);
@@ -61,6 +63,8 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
 
         // Load loan
         Loan storage loan = loans[propertyUri];
+
+        require(msg.sender == loan.borrower, "only borrower can pay his loan");
 
         // Ensure property has active mortgage
         require(state(loan) == State.Mortgage, "property has no active mortgage"); // CAN BORROWERS ALSO PAY LOAN IF STATE == DEFAULTED?
@@ -100,77 +104,5 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, Ownable {
 
         // Emit event
         emit LoanPayment(propertyUri, msg.sender, block.timestamp, loanPaid);
-    }
-
-    function foreclose(string calldata propertyUri) external {
-
-        // Get loan
-        Loan storage loan = loans[propertyUri];
-
-        // Ensure borrower has defaulted
-        require(state(loan) == State.Default, "no default");
-
-        // Zero-out nextPaymentDeadline
-        loan.nextPaymentDeadline = 0;
-    }
-
-    function completeForeclosure(string calldata propertyUri, UD60x18 salePrice) external onlyOwner {
-
-        // Get Loan
-        Loan storage loan = loans[propertyUri];
-
-        // Ensure property has been foreclosed
-        require(state(loan) == State.Foreclosed, "no foreclosure");       
-
-        // Remove loan.balance from loan.balance & totalBorrowed
-        loan.balance = loan.balance.sub(loan.balance);
-        totalBorrowed = totalBorrowed.sub(loan.balance);
-
-        // Add unpaidInterest to totalDeposits
-        totalDeposits = totalDeposits.add(loan.unpaidInterest);
-
-        // Calculate defaulterDebt
-        UD60x18 defaulterDebt = loan.balance.add(loan.unpaidInterest);
-
-        // Calculate defaulterEquity
-        UD60x18 defaulterEquity = salePrice.sub(defaulterDebt);
-
-        // Send defaulterEquity to defaulter
-        USDC.safeTransferFrom(address(this), loan.borrower, fromUD60x18(defaulterEquity));
-
-        // Reset loan state to Null (so it can re-enter system later)
-        loan.borrower = address(0);
-    }
-
-    function foreclosurable(Loan memory loan) private view returns (bool) {
-        return block.timestamp > loan.nextPaymentDeadline + (30 days * allowedDelayedPayments);
-    }
-
-    function state(Loan memory loan) internal view returns (State) {
-        
-        // If no borrower
-        if (loan.borrower == address(0)) {
-            return State.Null;
-
-        // If borrower
-        } else {
-            
-            // If not foreclosurable
-            if (!foreclosurable(loan)) {
-                
-                // If positive payment deadline
-                if (loan.nextPaymentDeadline > 0 ) {
-                    return State.Mortgage;
-
-                // If no payment deadline
-                } else {
-                    return State.Foreclosed;
-                }
-
-            // If foreclosurable
-            } else {
-                return State.Default;
-            }
-        }
     }
 }
