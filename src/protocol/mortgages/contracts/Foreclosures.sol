@@ -5,14 +5,26 @@ import "./Borrowing.sol";
 
 abstract contract Foreclosures is Borrowing {
 
+    UD60x18 foreclosureFee;
+    UD60x18 foreclosurerCut;
+    UD60x18 tangibleUsdc;
+
     // Libs
     using SafeERC20 for IERC20;
 
     function chainlinkForeclose(string calldata propertyUri) external {
+
+        // Get Loan
         Loan memory loan = loans[propertyUri];
 
         // Ensure loan is foreclosurable
         require(state(loan) == State.Default, "loan not foreclosurable");
+
+        // Calculate foreclosureFeeAmount
+        UD60x18 foreclosureFeeAmount = foreclosureFee.mul(loan.propertyValue);
+
+        // Tangible has to pay for chainlink keepers, so it keeps all the foreclosureFeeAmount
+        tangibleUsdc = tangibleUsdc.add(foreclosureFeeAmount);
     }
 
     function foreclose(string calldata propertyUri) external {
@@ -25,6 +37,18 @@ abstract contract Foreclosures is Borrowing {
 
         // Zero-out nextPaymentDeadline
         loan.nextPaymentDeadline = 0;
+
+        // Calculate foreclosureFeeAmount
+        UD60x18 foreclosureFeeAmount = foreclosureFee.mul(loan.propertyValue);
+
+        // Calculate foreclosureCutAmount
+        UD60x18 foreclosurerCutAmount = foreclosurerCut.mul(foreclosureFeeAmount);
+
+        // Give foreclosurerCutAmount to foreclosurer/caller
+        USDC.safeTransferFrom(address(this), msg.sender, foreclosurerCutAmount);
+
+        // Tangible keeps rest of foreclosureFeeAmount
+        tangibleUsdc = tangibleUsdc.add(foreclosureFeeAmount.sub(foreclosureFeeAmount));
     }
 
     function completeForeclosure(string calldata propertyUri, UD60x18 salePrice) external onlyOwner {
