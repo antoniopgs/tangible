@@ -36,6 +36,7 @@ abstract contract State is IMortgageBase, IState {
         }
     }
 
+    // I might want to talk to Nick Dranias, to get a more clear view on how this is allowed to work
     function defaulted(Loan memory loan) private view returns (bool) {
         return block.timestamp > loan.nextPaymentDeadline + (30 days * allowedDelayedPayments); // REDO THIS
     }
