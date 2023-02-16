@@ -12,13 +12,10 @@ abstract contract Foreclosures is Borrowing {
     // Libs
     using SafeERC20 for IERC20;
 
-    function chainlinkForeclose(string calldata propertyUri) external {
-
-        // Get Loan
-        Loan memory loan = loans[propertyUri];
+    function chainlinkForeclose(Loan calldata loan) internal {
 
         // Ensure loan is foreclosurable
-        require(state(loan) == State.Default, "loan not foreclosurable");
+        require(state(loan) == State.Default, "no default");
 
         // Calculate foreclosureFeeAmount
         UD60x18 foreclosureFeeAmount = foreclosureFee.mul(loan.propertyValue);
