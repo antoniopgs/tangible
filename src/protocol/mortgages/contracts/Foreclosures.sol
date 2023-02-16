@@ -18,7 +18,7 @@ abstract contract Foreclosures is Borrowing {
         require(state(loan) == State.Default, "no default");
 
         // Calculate foreclosureFeeAmount
-        UD60x18 foreclosureFeeAmount = foreclosureFee.mul(loan.propertyValue);
+        UD60x18 foreclosureFeeAmount = foreclosureFee.mul(loan.propertyValue); // Note: for upgradeability purposes, should propertyValue be inside the loan struct?
 
         // Tangible has to pay for chainlink keepers, so it keeps all the foreclosureFeeAmount
         tangibleUsdc = tangibleUsdc.add(foreclosureFeeAmount);

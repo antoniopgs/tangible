@@ -6,7 +6,7 @@ import "@prb/math/UD60x18.sol";
 interface IMortgageBase {
 
     struct Loan {
-        string propertyCid;
+        string propertyUri; // Note: can I remove this from here?
         address borrower;
         UD60x18 balance;
         UD60x18 installment;

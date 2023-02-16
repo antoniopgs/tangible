@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./State.sol";
 
-// later replace onlyOwner with a modifier with better upgradeabitlity
+// Note: later replace onlyOwner with a modifier with better upgradeabitlity
 abstract contract Borrowing is IBorrowing, LoanTimeMath, State, Ownable {
 
     // Libs
@@ -42,6 +42,7 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, State, Ownable {
 
         // Store Loan
         loans[propertyUri] = Loan({
+            propertyUri: propertyUri,
             borrower: borrower,
             balance: principal,
             installment: installment,

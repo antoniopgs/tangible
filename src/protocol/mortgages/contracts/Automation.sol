@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import "@chainlink/contracts/src/v0.8/AutomationCompatible.sol"; // Note: imports from ./AutomationBase.sol & ./interfaces/AutomationCompatibleInterface.sol
+import "@chainlink/contracts/AutomationCompatible.sol"; // Note: imports from ./AutomationBase.sol & ./interfaces/AutomationCompatibleInterface.sol
 import "./Foreclosures.sol";
 
-contract Automation is Foreclosures, AutomationCompatibleInterface {
+abstract contract Automation is Foreclosures, AutomationCompatibleInterface {
 
     function checkUpkeep(bytes calldata checkData) external view override returns (bool upkeepNeeded, bytes memory performData) { // Note: maybe implement batch liquidations later
 
