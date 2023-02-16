@@ -2,3 +2,4 @@ ds-test/=lib/forge-std/lib/ds-test/src/
 forge-std/=lib/forge-std/src/
 @prb/math/=lib/prb-math/src/
 @openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
+@chainlink/contracts=lib/chainlink/contracts/src/v0.8/
