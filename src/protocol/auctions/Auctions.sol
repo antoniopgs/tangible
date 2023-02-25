@@ -11,7 +11,7 @@ import "../pool/IPool.sol";
 contract Auctions is IAuctions, ERC721Holder {
     
     // Storage
-    mapping(uint => Auction) public auctions;
+    mapping(uint => Bid[]) public bids;
 
     // Links
     IERC721 prosperaNftContract;
@@ -20,16 +20,6 @@ contract Auctions is IAuctions, ERC721Holder {
     IPool pool;
 
     using SafeERC20 for IERC20;
-
-    function startAuction(uint tokenId) external {
-
-        // Pull NFT from seller
-        prosperaNftContract.safeTransferFrom(msg.sender, address(this), tokenId); // NFT COMES LATER
-
-        // Store auction
-        Auction storage auction = auctions[tokenId];
-        auction.seller = msg.sender;
-    }
 
     function bid(uint tokenId, uint propertyValue, uint downPayment) external {
 
@@ -43,7 +33,7 @@ contract Auctions is IAuctions, ERC721Holder {
         USDC.safeTransferFrom(msg.sender, address(this), downPayment);
 
         // Add Bidder to auction bids
-        auctions[tokenId].bids.push(
+        bids[tokenId].push(
             Bid({
                 bidder: msg.sender,
                 propertyValue: propertyValue,
@@ -54,20 +44,20 @@ contract Auctions is IAuctions, ERC721Holder {
 
     function acceptBid(uint tokenId, uint bidIdx) external {
 
-        // Get auction
-        Auction memory auction = auctions[tokenId];
+        // Get nftOwner
+        address nftOwner = prosperaNftContract.ownerOf(tokenId);
 
-        // Ensure caller is seller
-        require(msg.sender == auction.seller, "only seller can accept bids");
+        // Ensure caller is nft owner
+        require(msg.sender == nftOwner, "only nft owner can accept bids");
 
         // Get bid
-        Bid memory _bid = auction.bids[bidIdx];
+        Bid memory _bid = bids[tokenId][bidIdx];
 
         // If regular bid
         if (_bid.downPayment == _bid.propertyValue) {
 
             // Send bid.propertyValue from protocol to seller
-            USDC.safeTransferFrom(address(this), auction.seller, _bid.propertyValue); // DON'T FORGET TO CHARGE FEE LATER
+            USDC.safeTransferFrom(address(this), nftOwner, _bid.propertyValue); // DON'T FORGET TO CHARGE FEE LATER
 
             // Send NFT from protocol to bidder
             prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId); // NFT COMES LATER
@@ -79,7 +69,7 @@ contract Auctions is IAuctions, ERC721Holder {
             require(loanBidActionable(_bid), "loanBid not actionable");
 
             // Send bid.propertyValue from protocol to seller
-            USDC.safeTransferFrom(address(this), auction.seller, _bid.propertyValue); // DON'T FORGET TO CHARGE FEE LATER
+            USDC.safeTransferFrom(address(this), nftOwner, _bid.propertyValue); // DON'T FORGET TO CHARGE FEE LATER
 
             // Start Loan
             borrowing.startLoan({
@@ -93,23 +83,23 @@ contract Auctions is IAuctions, ERC721Holder {
 
     function cancelBid(uint tokenId, uint bidIdx) external {
 
-        // Get auctionBids
-        Bid[] storage auctionBids = auctions[tokenId].bids;
+        // Get nft bids
+        Bid[] storage nftBids = bids[tokenId];
 
         // Get bidToCancel
-        Bid memory bidToCancel = auctionBids[bidIdx];
+        Bid memory bidToCancel = nftBids[bidIdx];
 
         // Ensure caller is bidder
         require(msg.sender == bidToCancel.bidder, "only bidder can cancel his bid");
 
         // Get lastBid
-        Bid memory lastBid = auctionBids[auctionBids.length - 1];
+        Bid memory lastBid = nftBids[nftBids.length - 1];
 
         // Write lastBid over bidIdx
-        auctionBids[bidIdx] = lastBid;
+        nftBids[bidIdx] = lastBid;
 
         // Remove lastBid
-        auctionBids.pop();
+        nftBids.pop();
 
         // Send bidToCancel.downPayment from protocol to bidder
         USDC.safeTransferFrom(address(this), bidToCancel.bidder, bidToCancel.downPayment);

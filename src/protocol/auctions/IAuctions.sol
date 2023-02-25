@@ -11,17 +11,11 @@ interface IAuctions {
         uint downPayment;
     }
 
-    struct Auction {
-        address seller;
-        Bid[] bids;
-    }
-
-    // Seller
-    function startAuction(uint tokenId) external;
-    function loanBidActionable(Bid memory bid) external view returns(bool);
-    function acceptBid(uint tokenId, uint bidIdx) external;
-
     // Bidder
     function bid(uint tokenId, uint propertyValue, uint downPayment) external;
     function cancelBid(uint tokenId, uint bidIdx) external;
+
+    // Seller
+    function loanBidActionable(Bid memory bid) external view returns(bool);
+    function acceptBid(uint tokenId, uint bidIdx) external;
 }
