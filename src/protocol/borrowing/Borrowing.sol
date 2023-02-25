@@ -1,26 +1,31 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../interfaces/IBorrowing.sol";
-import "./LoanTimeMath.sol";
+import "./IBorrowing.sol";
+// import "./LoanTimeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./State.sol";
+// import "./State.sol";
 
 // Note: later replace onlyOwner with a modifier with better upgradeabitlity
-abstract contract Borrowing is IBorrowing, LoanTimeMath, State, Ownable {
+abstract contract Borrowing is IBorrowing/*, LoanTimeMath*//*, State*/, Ownable {
 
     // Libs
     using SafeERC20 for IERC20;
 
+    mapping(uint => Loan) public loans;
+
     // WHO should start loans?
-    function startLoan(string calldata propertyUri, UD60x18 propertyValue, UD60x18 principal, address borrower, address seller) external onlyOwner {
+    function startLoan(uint tokenId, UD60x18 propertyValue, UD60x18 downPayment, address borrower) external onlyOwner {
 
         // Get Loan
-        Loan storage loan = loans[propertyUri];
+        Loan storage loan = loans[tokenId];
 
         // Ensure property has no associated loan
         require(state(loan) == State.Null, "property already has associated loan");
+
+        // Calculate principal
+        UD60x18 principal = propertyValue.sub(downPayment);
 
         // Calculate bid ltv
         UD60x18 ltv = principal.div(propertyValue);
@@ -41,8 +46,7 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, State, Ownable {
         UD60x18 totalLoanCost = installment.mul(installmentCount);
 
         // Store Loan
-        loans[propertyUri] = Loan({
-            propertyUri: propertyUri,
+        loans[tokenId] = Loan({
             borrower: borrower,
             balance: principal,
             installment: installment,
@@ -50,20 +54,20 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, State, Ownable {
             nextPaymentDeadline: block.timestamp + 30 days
         });
 
-        // Pull principal from borrower/caller to protocol
-        USDC.safeTransferFrom(msg.sender, address(this), fromUD60x18(principal)); // RETHINK THIS
+        // Pull downPayment from borrower/caller to pool
+        USDC.safeTransferFrom(msg.sender, address(pool), fromUD60x18(downPayment));
 
-        // Send propertyValue from protocol to seller
-        USDC.safeTransferFrom(address(this), seller, fromUD60x18(propertyValue)); // RETHINK THIS
+        // Send propertyValue from pool to seller
+        USDC.safeTransferFrom(address(pool), seller, fromUD60x18(propertyValue));
 
         // Emit event
-        emit NewLoan(propertyUri, propertyValue, principal, borrower, seller, block.timestamp);
+        emit NewLoan(tokenId, propertyValue, principal, borrower, seller, block.timestamp);
     }
     
-    function payLoan(string calldata propertyUri) external {
+    function payLoan(uint tokenId) external {
 
         // Load loan
-        Loan storage loan = loans[propertyUri];
+        Loan storage loan = loans[tokenId];
 
         require(msg.sender == loan.borrower, "only borrower can pay his loan");
 
@@ -104,6 +108,15 @@ abstract contract Borrowing is IBorrowing, LoanTimeMath, State, Ownable {
         }
 
         // Emit event
-        emit LoanPayment(propertyUri, msg.sender, block.timestamp, loanPaid);
+        emit LoanPayment(tokenId, msg.sender, block.timestamp, loanPaid);
+    }
+
+    function calculateInstallment(UD60x18 principal) internal view returns(UD60x18 installment) {
+
+        // Calculate x
+        UD60x18 x = toUD60x18(1).add(periodicBorrowerRate).pow(installmentCount);
+        
+        // Calculate installment
+        installment = principal.mul(periodicBorrowerRate).mul(x).div(x.sub(toUD60x18(1)));
     }
 }

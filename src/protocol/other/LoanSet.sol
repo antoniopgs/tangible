@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import "../interfaces/IMortgageBase.sol";
-
 library LoanSet {
 
     struct Set {
         mapping(string => bool) contains;
         mapping(string => uint) indexes;
-        IMortgageBase.Loan[] loans;
+        Loan[] loans;
     }
 
     function get(Set storage set, string calldata propertyCid) internal view returns(IMortgageBase.Loan memory) {

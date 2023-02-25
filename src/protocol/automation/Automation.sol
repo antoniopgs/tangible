@@ -2,9 +2,11 @@
 pragma solidity ^0.8.15;
 
 import "@chainlink/contracts/AutomationCompatible.sol"; // Note: imports from ./AutomationBase.sol & ./interfaces/AutomationCompatibleInterface.sol
-import "./Foreclosures.sol";
+import "../foreclosures/IForeclosures.sol";
 
-abstract contract Automation is Foreclosures, AutomationCompatibleInterface {
+abstract contract Automation is AutomationCompatibleInterface {
+
+    IForeclosures foreclosures;
 
     function checkUpkeep(bytes calldata checkData) external view override returns (bool upkeepNeeded, bytes memory performData) { // Note: maybe implement batch liquidations later
 
@@ -31,6 +33,6 @@ abstract contract Automation is Foreclosures, AutomationCompatibleInterface {
         (Loan memory loan) = abi.decode(performData, (Loan));
 
         // Chainlink foreclose
-        chainlinkForeclose(loan);
+        foreclosures.chainlinkForeclose(loan);
     }
 }

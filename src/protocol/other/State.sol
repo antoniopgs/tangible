@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../interfaces/IState.sol";
-import "../interfaces/IMortgageBase.sol";
+contract State {
 
-abstract contract State is IMortgageBase, IState {
+    enum NftState { Null, Mortgage, Default, Foreclosed }
 
     uint public allowedDelayedPayments = 2;
 
-    function state(Loan memory loan) internal view returns (State) {
+    function state(Loan memory loan) internal view returns (NftState) {
         
         // If no borrower
         if (loan.borrower == address(0)) {
-            return State.Null;
+            return NftState.Null;
 
         // If borrower
         } else {
@@ -22,16 +21,16 @@ abstract contract State is IMortgageBase, IState {
                 
                 // If positive payment deadline
                 if (loan.nextPaymentDeadline > 0 ) {
-                    return State.Mortgage;
+                    return NftState.Mortgage;
 
                 // If no payment deadline
                 } else {
-                    return State.Foreclosed;
+                    return NftState.Foreclosed;
                 }
 
             // If defaulted
             } else {
-                return State.Default;
+                return NftState.Default;
             }
         }
     }

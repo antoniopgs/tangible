@@ -1,19 +1,24 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./MortgageBase.sol";
+import "./IPool.sol";
+import "@prb/math/UD60x18.sol";
+import "@openzeppelin/contracts/token/ERC777/IERC777.sol";
 
-abstract contract LoanTimeMath is MortgageBase {
+contract Pool is IPool {
 
     // Math Vars
     UD60x18 internal totalBorrowed;
     UD60x18 internal totalDeposits;
 
+    // Links
+    IERC777 tUSDC;
+
     function utilization() public view returns (UD60x18) {
         return totalBorrowed.div(totalDeposits);
     }
 
-    function lenderApy() public view returns (UD60x18) {
+    function lenderApy() external view returns (UD60x18) {
         return perfectLenderApy.mul(utilization());
     }
 
@@ -34,12 +39,7 @@ abstract contract LoanTimeMath is MortgageBase {
         tusdc = fromUD60x18(toUD60x18(usdc).mul(usdcToTusdcRatio()));
     }
 
-    function calculateInstallment(UD60x18 principal) internal view returns(UD60x18 installment) {
-
-        // Calculate x
-        UD60x18 x = toUD60x18(1).add(periodicBorrowerRate).pow(installmentCount);
-        
-        // Calculate installment
-        installment = principal.mul(periodicBorrowerRate).mul(x).div(x.sub(toUD60x18(1)));
+    function availableLiquidity() external view returns(uint) {
+        return fromUD60x18(totalDeposits.sub(totalBorrowed));
     }
 }
