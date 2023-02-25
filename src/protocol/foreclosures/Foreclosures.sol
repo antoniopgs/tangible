@@ -33,10 +33,10 @@ contract Foreclosures is IBorrowing {
     }
 
     // in order to make this work, fix functional states, so that once default happens, "defaulted" view always returns true
-    function foreclose(string calldata propertyUri, UD60x18 salePrice) external {
+    function foreclose(uint tokenId, UD60x18 salePrice) external {
 
         // Get Loan
-        Loan storage loan = loans[propertyUri];
+        Loan storage loan = loans[tokenId];
 
         // Ensure borrower has defaulted
         require(defaulted(loan), "no default"); 
