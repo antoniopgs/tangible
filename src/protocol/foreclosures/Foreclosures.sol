@@ -74,6 +74,6 @@ contract Foreclosures is IBorrowing {
     }
 
     function defaulted(Loan calldata loan) private view returns(bool) {
-
+        return block.timestamp > loan.nextPaymentDeadline;
     }
 }
