@@ -1,31 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "@prb/math/UD60x18.sol";
-
-type tokenId is uint;
-type idx is uint;
+import "./Property.sol";
 
 library PropertySet {
-
-    struct Bid {
-        address bidder;
-        uint propertyValue;
-        uint downPayment;
-    }
-
-    struct Loan {
-        address borrower;
-        UD60x18 balance;
-        UD60x18 installment;
-        UD60x18 unpaidInterest;
-        uint nextPaymentDeadline;
-    }
-
-    struct Property {
-        Bid[] bids;
-        Loan loan;
-    }
 
     struct Set {
         mapping(tokenId => bool) contains;
@@ -45,38 +23,38 @@ library PropertySet {
         return set.properties.length;
     }
 
-    function add(Set storage set, Property memory property) internal {
+    function append(Set storage set, tokenId _tokenId, Property memory property) internal {
         require(!set.contains[_tokenId], "set already contains property");
 
         // Push property into properties
         set.properties.push(property);
 
         // Store property idx
-        set.indexes[_tokenId] = set.length() - 1;
+        set.indexes[_tokenId] = idx.wrap(length(set) - 1);
 
         // Update contains
-        set.contains[tokenId] = true;
+        set.contains[_tokenId] = true;
     }
 
-    function remove(Set storage set, Property memory property) internal {
-        require(set.contains[tokenId], "set doesn't contain property");
+    function remove(Set storage set, tokenId _tokenId) internal {
+        require(set.contains[_tokenId], "set doesn't contain property");
 
         // Get index of property to remove
-        uint idxToRemove = set.indexes[tokenId];
+        idx idxToRemove = set.indexes[_tokenId];
 
         // Get last property
-        Property memory lastProperty = set.properties[set.length() - 1];
+        Property memory lastProperty = set.properties[length(set) - 1];
 
         // Write lastProperty over idxToRemove
-        set.values[idxToRemove] = lastProperty;
+        set.properties[idx.unwrap(idxToRemove)] = lastProperty;
 
-        // Update lastProerty idx to idxToRemove
+        // Update lastProperty idx to idxToRemove
         set.indexes[lastProperty.tokenId] = idxToRemove;
 
         // Remove lastProperty
-        set.property.pop();
+        set.properties.pop();
 
         // Remove removed property from contains mapping
-        set.contains[tokenId] = false;
+        set.contains[_tokenId] = false;
     }
 }
