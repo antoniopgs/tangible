@@ -2,16 +2,14 @@
 pragma solidity ^0.8.15;
 
 import "./IAuctions.sol";
-import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+// import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../borrowing/IBorrowing.sol";
-import "../pool/IPool.sol";
+// import "../pool/IPool.sol";
+import "../types/Property.sol";
 
-contract Auctions is IAuctions, ERC721Holder {
-    
-    // Storage
-    mapping(uint => Bid[]) public bids;
+contract Auctions is IAuctions {
 
     // Links
     IERC721 prosperaNftContract;
@@ -21,7 +19,7 @@ contract Auctions is IAuctions, ERC721Holder {
 
     using SafeERC20 for IERC20;
 
-    function bid(uint tokenId, uint propertyValue, uint downPayment) external {
+    function bid(tokenId _tokenId, uint propertyValue, uint downPayment) external {
 
         // Calculate bid ltv
         uint ltv = 1 - (downPayment / propertyValue);
@@ -42,7 +40,7 @@ contract Auctions is IAuctions, ERC721Holder {
         );
     }
 
-    function acceptBid(uint tokenId, uint bidIdx) external {
+    function acceptBid(tokenId _tokenId, bidIdx _bidIdx) external {
 
         // Get nftOwner
         address nftOwner = prosperaNftContract.ownerOf(tokenId);
@@ -81,7 +79,7 @@ contract Auctions is IAuctions, ERC721Holder {
         }
     }
 
-    function cancelBid(uint tokenId, uint bidIdx) external {
+    function cancelBid(tokenId _tokenId, bidIdx _bidIdx) external {
 
         // Get nft bids
         Bid[] storage nftBids = bids[tokenId];

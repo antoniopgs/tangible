@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../borrowing/IBorrowing.sol";
+import "../pool/IPool.sol";
 
-interface IForeclosures is IBorrowing {
+interface IForeclosures is IPool {
     
     function defaulted(Loan calldata loan) external view returns (bool);
     function foreclose(Loan calldata loan) external;

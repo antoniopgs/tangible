@@ -3,9 +3,10 @@ pragma solidity ^0.8.15;
 
 import "./IBorrowing.sol";
 // import "./LoanTimeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+// import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+// import "@openzeppelin/contracts/access/Ownable.sol";
 // import "./State.sol";
+// import "@prb/math/UD60x18.sol";
 
 // Note: later replace onlyOwner with a modifier with better upgradeabitlity
 abstract contract Borrowing is IBorrowing/*, LoanTimeMath*//*, State*/, Ownable {
@@ -13,10 +14,8 @@ abstract contract Borrowing is IBorrowing/*, LoanTimeMath*//*, State*/, Ownable 
     // Libs
     using SafeERC20 for IERC20;
 
-    mapping(uint => Loan) public loans;
-
     // WHO should start loans?
-    function startLoan(uint tokenId, UD60x18 propertyValue, UD60x18 downPayment, address borrower) external onlyOwner {
+    function startLoan(tokenId _tokenId, uint propertyValue, uint downPayment, address borrower) external onlyOwner {
 
         // Get Loan
         Loan storage loan = loans[tokenId];
@@ -64,7 +63,7 @@ abstract contract Borrowing is IBorrowing/*, LoanTimeMath*//*, State*/, Ownable 
         emit NewLoan(tokenId, propertyValue, principal, borrower, seller, block.timestamp);
     }
     
-    function payLoan(uint tokenId) external {
+    function payLoan(tokenId _tokenId) external {
 
         // Load loan
         Loan storage loan = loans[tokenId];
