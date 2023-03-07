@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../borrowing/IBorrowing.sol";
-import "@prb/math/UD60x18.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../pool/IPool.sol";
+// import "../borrowing/IBorrowing.sol";
+// import "@prb/math/UD60x18.sol";
+// import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+// import "../pool/IPool.sol";
+import "./IForeclosures.sol";
 
-contract Foreclosures is IBorrowing {
+contract Foreclosures is IForeclosures {
 
     // Foreclosure vars
     UD60x18 foreclosureFeeRatio;

@@ -9,10 +9,10 @@ import "./IBorrowing.sol";
 // import "@prb/math/UD60x18.sol";
 
 // Note: later replace onlyOwner with a modifier with better upgradeabitlity
-abstract contract Borrowing is IBorrowing/*, LoanTimeMath*//*, State*/, Ownable {
+abstract contract Borrowing is IBorrowing/*, LoanTimeMath*//*, State, Ownable*/ {
 
     // Libs
-    using SafeERC20 for IERC20;
+    // using SafeERC20 for IERC20;
 
     // WHO should start loans?
     function startLoan(tokenId _tokenId, uint propertyValue, uint downPayment, address borrower) external onlyOwner {

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "./IPool.sol";
-import "../types/PropertySet.sol";
+import "../../types/PropertySet.sol";
 import "@openzeppelin/contracts/token/ERC777/IERC777.sol";
 
 contract Pool is IPool {
@@ -13,9 +13,6 @@ contract Pool is IPool {
     // Math Vars
     UD60x18 internal totalBorrowed;
     UD60x18 internal totalDeposits;
-
-    // Properties storage
-    PropertySet.Set internal properties;
 
     function utilization() public view returns (UD60x18) {
         return totalBorrowed.div(totalDeposits);
@@ -44,13 +41,5 @@ contract Pool is IPool {
 
     function lenderApy() external view returns (UD60x18) {
         // return perfectLenderApy.mul(utilization());
-    }
-
-    function propertiesLength() external view returns(uint) {
-        return properties.length();
-    }
-
-    function propertyAt(idx _idx) external returns(Property memory property) {
-        return properties.at(_idx);
     }
 }

@@ -2,24 +2,26 @@
 pragma solidity ^0.8.15;
 
 import "./IAuctions.sol";
+import "../vault/IVault.sol";
 // import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../borrowing/IBorrowing.sol";
+// import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+// import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+// import "../borrowing/IBorrowing.sol";
 // import "../pool/IPool.sol";
-import "../types/Property.sol";
+// import "../types/Property.sol";
 
 contract Auctions is IAuctions {
 
     // Links
-    IERC721 prosperaNftContract;
-    IERC20 USDC;
-    IBorrowing borrowing;
-    IPool pool;
+    // IERC721 prosperaNftContract;
+    // IERC20 USDC;
+    // IBorrowing borrowing;
+    // IPool pool;
+    IVault vault;
 
-    using SafeERC20 for IERC20;
+    // using SafeERC20 for IERC20;
 
-    function bid(tokenId _tokenId, uint propertyValue, uint downPayment) external {
+    function bid(TokenId tokenId, uint propertyValue, uint downPayment) external {
 
         // Calculate bid ltv
         uint ltv = 1 - (downPayment / propertyValue);
@@ -30,8 +32,8 @@ contract Auctions is IAuctions {
         // Pull downPayment bidder to protocol
         USDC.safeTransferFrom(msg.sender, address(this), downPayment);
 
-        // Add Bidder to auction bids
-        bids[tokenId].push(
+        // Add bid to vault
+        vault.addBid(
             Bid({
                 bidder: msg.sender,
                 propertyValue: propertyValue,
@@ -40,7 +42,7 @@ contract Auctions is IAuctions {
         );
     }
 
-    function acceptBid(tokenId _tokenId, bidIdx _bidIdx) external {
+    function acceptBid(TokenId tokenId, Idx _bidIdx) external {
 
         // Get nftOwner
         address nftOwner = prosperaNftContract.ownerOf(tokenId);
@@ -79,7 +81,7 @@ contract Auctions is IAuctions {
         }
     }
 
-    function cancelBid(tokenId _tokenId, bidIdx _bidIdx) external {
+    function cancelBid(TokenId tokenId, Idx bidIdx) external {
 
         // Get nft bids
         Bid[] storage nftBids = bids[tokenId];
