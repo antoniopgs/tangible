@@ -2,10 +2,11 @@
 pragma solidity ^0.8.15;
 
 import "./IVault.sol";
+import "../../../config/config/ConfigUser.sol";
 import "../../../types/PropertySet.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-abstract contract Vault is IVault {
+abstract contract Vault is IVault, ConfigUser {
 
     // Links
     IERC20 USDC;
@@ -17,15 +18,15 @@ abstract contract Vault is IVault {
     using PropertySet for PropertySet.Set;
     using SafeERC20 for IERC20;
 
-    function addProperty(TokenId tokenId) external /* onlyConfigRole(PROPERTY_MANAGER) */ {
+    function addProperty(TokenId tokenId) external onlyConfigRole(PROPERTY_MANAGER) {
         properties.addProperty(tokenId);
     }
 
-    function removeProperty(TokenId tokenId) external /* onlyConfigRole(PROPERTY_MANAGER) */ {
+    function removeProperty(TokenId tokenId) external onlyConfigRole(PROPERTY_MANAGER) {
         properties.removeProperty(tokenId);
     }
 
-    function addBid(TokenId tokenId, Bid memory bid) external /* onlyConfigRole(BID_MANAGER) */ {
+    function addBid(TokenId tokenId, Bid memory bid) external onlyConfigRole(BID_MANAGER) {
 
         // Pull downPayment from bidder
         USDC.safeTransferFrom(bid.bidder, address(this), bid.downPayment);
@@ -34,7 +35,7 @@ abstract contract Vault is IVault {
         properties.addBid(tokenId, bid);
     }
 
-    function removeBid(TokenId tokenId, Idx bidIdx) external /* onlyConfigRole(BID_MANAGER) */ {
+    function removeBid(TokenId tokenId, Idx bidIdx) external onlyConfigRole(BID_MANAGER) {
 
         // Remove bid
         properties.removeBid(tokenId, bidIdx);
@@ -43,7 +44,7 @@ abstract contract Vault is IVault {
         // USDC.safeTransferFrom(bid.bidder, address(this), bid.downPayment);
     }
 
-    function updateLoan() external /* onlyConfigRole(LOAN_MANAGER) */ {
+    function updateLoan() external onlyConfigRole(LOAN_MANAGER) {
         
     }
 

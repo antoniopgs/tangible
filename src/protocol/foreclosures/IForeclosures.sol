@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../types/Property.sol";
+import "../../types/Property.sol";
 
 interface IForeclosures {
     
