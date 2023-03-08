@@ -9,10 +9,7 @@ contract State is IState, Vault {
     // Libs
     using PropertySet for PropertySet.Set;
 
-    function state(TokenId _tokenId) external view returns (PropertyState) {
-
-        // Get property loan
-        Loan memory loan = properties.get(_tokenId).loan;
+    function state(Loan calldata loan) external view returns (PropertyState) {
         
         // If no borrower
         if (loan.borrower == address(0)) { // Note: acceptBid() must clear-out borrower & acceptLoanBid() must update borrower

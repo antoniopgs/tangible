@@ -52,7 +52,11 @@ abstract contract Vault is IVault, ConfigUser {
         return properties.length();
     }
 
-    function propertyAt(Idx _idx) external view returns(Property memory property) {
-        return properties.at(_idx);
+    function loanAt(Idx _idx) external view returns(Loan memory) {
+        return properties.at(_idx).loan;
+    }
+
+    function getBid(TokenId tokenId, Idx bidIdx) external view returns(Bid memory) {
+        return properties.get(tokenId).bids[Idx.unwrap(bidIdx)];
     }
 }

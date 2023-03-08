@@ -10,5 +10,6 @@ interface IVault {
     function removeBid(TokenId tokenId, Idx bidIdx) external;
     function updateLoan() external;
     function propertiesLength() external view returns(uint);
-    function propertyAt(Idx _idx) external view returns(Property memory property);
+    function loanAt(Idx _idx) external view returns(Loan memory);
+    function getBid(TokenId tokenId, Idx bidIdx) external view returns(Bid memory);
 }

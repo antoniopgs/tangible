@@ -2,11 +2,12 @@
 pragma solidity ^0.8.15;
 
 import "./ILending.sol";
-// import "./LoanTimeMath.sol";
+import "../../config/config/ConfigUser.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC777/IERC777.sol";
+import "../pool/IPool.sol";
 
-abstract contract Lending is ILending/*, LoanTimeMath*/ {
+abstract contract Lending is ILending, ConfigUser {
 
     IERC20 USDC;
     IERC777 tUSDC;
@@ -45,9 +46,26 @@ abstract contract Lending is ILending/*, LoanTimeMath*/ {
 
         // Remove usdc from totalDeposits
         totalDeposits = totalDeposits.sub(toUD60x18(usdc));
-        require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
+        require(IPool(config.getAddress(POOL)).utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
 
         // Emit event
         emit Withdrawal(msg.sender, usdc, tusdc, block.timestamp);
-    }    
+    }
+
+    function usdcToTusdcRatio() private view returns(UD60x18) {
+        
+        // Get tusdcSupply
+        uint tusdcSupply = tUSDC.totalSupply();
+
+        if (tusdcSupply == 0 || totalDeposits.eq(ud(0))) {
+            return toUD60x18(1);
+
+        } else {
+            return toUD60x18(tusdcSupply).div(totalDeposits);
+        }
+    }
+
+    function usdcToTusdc(uint usdc) private view returns(uint tusdc) {
+        tusdc = fromUD60x18(toUD60x18(usdc).mul(usdcToTusdcRatio()));
+    }   
 }

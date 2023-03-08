@@ -2,29 +2,29 @@
 pragma solidity ^0.8.15;
 
 import "@chainlink/contracts/AutomationCompatible.sol"; // Note: imports from ./AutomationBase.sol & ./interfaces/AutomationCompatibleInterface.sol
-import "../pool/IPool.sol";
+import "../../config/config/ConfigUser.sol";
 import "../foreclosures/IForeclosures.sol";
+import "../vault/state/IState.sol";
 
-abstract contract Automation is AutomationCompatibleInterface {
+contract Automation is AutomationCompatibleInterface, ConfigUser {
 
-    IForeclosures foreclosures;
-    IPool pool;
+    function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) { // Note: maybe implement batch liquidations later
 
-    function checkUpkeep(bytes calldata checkData) external view override returns (bool upkeepNeeded, bytes memory performData) { // Note: maybe implement batch liquidations later
+        // Get vault
+        IState vault = IState(config.getAddress(VAULT));
 
         // Loop properties
-        for (uint i = 0; i < pool.propertiesLength(); i++) {
+        for (uint i = 0; i < vault.propertiesLength(); i++) {
 
             // Load property loan
-            Loan memory loan = pool.propertyAt(i).loan;
+            Loan memory loan = vault.loanAt(Idx.wrap(i));
 
             // If loan has been defaulted
-            if (state(loan) == State.Default) {
+            if (vault.state(loan) == IState.PropertyState.Default) {
 
                 // Return
                 upkeepNeeded = true;
                 performData = abi.encode(loan);
-                return;
             }
         }
     }
@@ -35,6 +35,6 @@ abstract contract Automation is AutomationCompatibleInterface {
         (Loan memory loan) = abi.decode(performData, (Loan));
 
         // Chainlink foreclose
-        foreclosures.chainlinkForeclose(loan);
+        IForeclosures(config.getAddress(FORECLOSURES)).chainlinkForeclose(loan);
     }
 }

@@ -2,9 +2,9 @@
 pragma solidity ^0.8.15;
 
 import "./IAuctions.sol";
+// import "../pool/Pool.sol";
 import "../../config/config/ConfigUser.sol";
 import "../vault/vault/IVault.sol";
-import "../pool/IPool.sol";
 import "../borrowing/IBorrowing.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 // import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
