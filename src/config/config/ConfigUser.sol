@@ -2,18 +2,19 @@
 pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "./Config.sol";
+import "./IConfig.sol";
 import "../roles/RoleNames.sol";
+import "./ConfigNames.sol";
 
 abstract contract ConfigUser is ReentrancyGuardUpgradeable {
 
-    Config internal config;
+    IConfig internal config;
 
-    function __ConfigUser_init(Config _config) internal onlyInitializing {
+    function __ConfigUser_init(IConfig _config) internal onlyInitializing {
         config = _config;
     }
 
-    function setConfig(Config _config) external onlyConfigRole(CONFIG_MANAGER) {
+    function setConfig(IConfig _config) external onlyConfigRole(CONFIG_MANAGER) {
         config = _config;
     }
 

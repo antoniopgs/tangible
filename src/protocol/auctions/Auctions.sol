@@ -2,24 +2,25 @@
 pragma solidity ^0.8.15;
 
 import "./IAuctions.sol";
+import "../../config/config/ConfigUser.sol";
 import "../vault/vault/IVault.sol";
+import "../pool/IPool.sol";
+import "../borrowing/IBorrowing.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 // import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 // import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-// import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-// import "../borrowing/IBorrowing.sol";
-// import "../pool/IPool.sol";
 // import "../types/Property.sol";
 
-contract Auctions is IAuctions {
+contract Auctions is IAuctions, ConfigUser {
 
     // Links
     // IERC721 prosperaNftContract;
-    // IERC20 USDC;
-    // IBorrowing borrowing;
-    // IPool pool;
+    IERC20 constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // ethereum
+    IBorrowing borrowing;
+    IPool pool;
     IVault vault;
 
-    // using SafeERC20 for IERC20;
+    using SafeERC20 for IERC20;
 
     function bid(TokenId tokenId, uint propertyValue, uint downPayment) external {
 
@@ -27,10 +28,10 @@ contract Auctions is IAuctions {
         uint ltv = 1 - (downPayment / propertyValue);
 
         // Ensure bid ltv <= maxLtv
-        require(ltv <= borrowing.maxLtv(), "ltv cannot exceed maxLtv");
+        require(ltv <= config.getUD60x18(MAX_LTV), "ltv cannot exceed maxLtv");
 
         // Pull downPayment bidder to protocol
-        USDC.safeTransferFrom(msg.sender, address(this), downPayment);
+        IERC20(config.getAddress(USDC)).safeTransferFrom(msg.sender, address(this), downPayment);
 
         // Add bid to vault
         vault.addBid(
@@ -57,7 +58,7 @@ contract Auctions is IAuctions {
         if (_bid.downPayment == _bid.propertyValue) {
 
             // Send bid.propertyValue from protocol to seller
-            USDC.safeTransferFrom(address(this), nftOwner, _bid.propertyValue); // DON'T FORGET TO CHARGE FEE LATER
+            IERC20(config.getAddress(USDC)).safeTransferFrom(address(this), nftOwner, _bid.propertyValue); // DON'T FORGET TO CHARGE FEE LATER
 
             // Send NFT from protocol to bidder
             prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId); // NFT COMES LATER
@@ -69,7 +70,7 @@ contract Auctions is IAuctions {
             require(loanBidActionable(_bid), "loanBid not actionable");
 
             // Send bid.propertyValue from protocol to seller
-            USDC.safeTransferFrom(address(this), nftOwner, _bid.propertyValue); // DON'T FORGET TO CHARGE FEE LATER
+            IERC20(config.getAddress(USDC)).safeTransferFrom(address(this), nftOwner, _bid.propertyValue); // DON'T FORGET TO CHARGE FEE LATER
 
             // Start Loan
             borrowing.startLoan({
@@ -102,7 +103,7 @@ contract Auctions is IAuctions {
         nftBids.pop();
 
         // Send bidToCancel.downPayment from protocol to bidder
-        USDC.safeTransferFrom(address(this), bidToCancel.bidder, bidToCancel.downPayment);
+        IERC20(config.getAddress(USDC)).safeTransferFrom(address(this), bidToCancel.bidder, bidToCancel.downPayment);
     }
 
     function loanBidActionable(Bid memory _bid) public view returns(bool) {
@@ -114,6 +115,6 @@ contract Auctions is IAuctions {
         uint ltv = principal / _bid.propertyValue; // FIX LATER
 
         // Return actionability
-        return ltv <= borrowing.maxLtv() && pool.availableLiquidity() >= principal;
+        return ltv <= config.getUD60x18(MAX_LTV) && pool.availableLiquidity() >= principal;
     }
 }

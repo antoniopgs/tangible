@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-bytes32 constant maxLtv = keccak256("maxLtv");
+bytes32 constant MAX_LTV = keccak256("MAX_LTV");
 
-// Contract Links
-bytes32 constant auctions = keccak256("auctions");
-bytes32 constant automation = keccak256("automation");
-bytes32 constant borrowing = keccak256("borrowing");
-bytes32 constant foreclosures = keccak256("foreclosures");
-bytes32 constant interest = keccak256("interest");
-bytes32 constant lending = keccak256("lending");
-bytes32 constant pool = keccak256("pool");
-bytes32 constant vault = keccak256("vault");
+// Protocol Contract Links
+bytes32 constant AUCTIONS = keccak256("AUCTIONS");
+bytes32 constant AUTOMATION = keccak256("AUTOMATION");
+bytes32 constant BORROWING = keccak256("BORROWING");
+bytes32 constant FORECLOSURES = keccak256("FORECLOSURES");
+bytes32 constant INTEREST = keccak256("INTEREST");
+bytes32 constant LENDING = keccak256("LENDING");
+bytes32 constant POOL = keccak256("POOL");
+bytes32 constant VAULT = keccak256("VAULT");
+
+// 

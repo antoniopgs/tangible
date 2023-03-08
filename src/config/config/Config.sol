@@ -32,14 +32,14 @@ contract Config is IConfig, Roles {
     }
 
     function setLinks(ProtocolContracts memory protocolContracts) private {
-        setAddress(auctions, protocolContracts.auctions);
-        setAddress(automation, protocolContracts.automation);
-        setAddress(borrowing, protocolContracts.borrowing);
-        setAddress(foreclosures, protocolContracts.foreclosures);
-        setAddress(interest, protocolContracts.interest);
-        setAddress(lending, protocolContracts.lending);
-        setAddress(pool, protocolContracts.pool);
-        setAddress(vault, protocolContracts.vault);
+        setAddress(AUCTIONS, protocolContracts.auctions);
+        setAddress(AUTOMATION, protocolContracts.automation);
+        setAddress(BORROWING, protocolContracts.borrowing);
+        setAddress(FORECLOSURES, protocolContracts.foreclosures);
+        setAddress(INTEREST, protocolContracts.interest);
+        setAddress(LENDING, protocolContracts.lending);
+        setAddress(POOL, protocolContracts.pool);
+        setAddress(VAULT, protocolContracts.vault);
     }
 
     function setVars() private {
