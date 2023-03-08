@@ -15,7 +15,7 @@ abstract contract Borrowing is IBorrowing/*, LoanTimeMath*//*, State, Ownable*/ 
     // using SafeERC20 for IERC20;
 
     // WHO should start loans?
-    function startLoan(tokenId _tokenId, uint propertyValue, uint downPayment, address borrower) external onlyOwner {
+    function startLoan(TokenId _tokenId, uint propertyValue, uint downPayment, address borrower) external /* onlyOwner */ {
 
         // Get Loan
         Loan storage loan = loans[tokenId];
@@ -63,7 +63,7 @@ abstract contract Borrowing is IBorrowing/*, LoanTimeMath*//*, State, Ownable*/ 
         emit NewLoan(tokenId, propertyValue, principal, borrower, seller, block.timestamp);
     }
     
-    function payLoan(tokenId _tokenId) external {
+    function payLoan(TokenId _tokenId) external {
 
         // Load loan
         Loan storage loan = loans[tokenId];

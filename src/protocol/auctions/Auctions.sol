@@ -14,11 +14,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract Auctions is IAuctions, ConfigUser {
 
     // Links
-    // IERC721 prosperaNftContract;
     IERC20 constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // ethereum
-    IBorrowing borrowing;
-    IPool pool;
-    IVault vault;
+    // IERC721 prosperaNftContract;
 
     using SafeERC20 for IERC20;
 
@@ -34,7 +31,7 @@ contract Auctions is IAuctions, ConfigUser {
         IERC20(config.getAddress(USDC)).safeTransferFrom(msg.sender, address(this), downPayment);
 
         // Add bid to vault
-        vault.addBid(
+        IVault(config.getAddress(VAULT)).addBid(
             Bid({
                 bidder: msg.sender,
                 propertyValue: propertyValue,
@@ -73,7 +70,7 @@ contract Auctions is IAuctions, ConfigUser {
             IERC20(config.getAddress(USDC)).safeTransferFrom(address(this), nftOwner, _bid.propertyValue); // DON'T FORGET TO CHARGE FEE LATER
 
             // Start Loan
-            borrowing.startLoan({
+            IBorrowing(config.getAddress(BORROWING)).startLoan({
                 tokenId: tokenId,
                 propertyValue: _bid.propertyValue,
                 principal: _bid.propertyValue - _bid.downPayment,
@@ -115,6 +112,6 @@ contract Auctions is IAuctions, ConfigUser {
         uint ltv = principal / _bid.propertyValue; // FIX LATER
 
         // Return actionability
-        return ltv <= config.getUD60x18(MAX_LTV) && pool.availableLiquidity() >= principal;
+        return ltv <= config.getUD60x18(MAX_LTV) && IPool(config.getAddress(POOL)).availableLiquidity() >= principal;
     }
 }
