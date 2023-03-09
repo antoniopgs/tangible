@@ -7,9 +7,11 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 // import "@openzeppelin/contracts/access/Ownable.sol";
 // import "./State.sol";
 // import "@prb/math/UD60x18.sol";
+import "../../config/config/ConfigUser.sol";
+import "../vault/vault/IVault.sol";
 
 // Note: later replace onlyOwner with a modifier with better upgradeabitlity
-abstract contract Borrowing is IBorrowing/*, LoanTimeMath*//*, State, Ownable*/ {
+contract Borrowing is IBorrowing, ConfigUser/*, LoanTimeMath*//*, State, Ownable*/ {
 
     IERC20 constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // ethereum
 
@@ -23,7 +25,7 @@ abstract contract Borrowing is IBorrowing/*, LoanTimeMath*//*, State, Ownable*/ 
         Loan storage loan = loans[tokenId];
 
         // Ensure property has no associated loan
-        require(state(loan) == State.Null, "property already has associated loan");
+        require(IVault(config.getAddress(VAULT)).state(loan) == IVault.State.Null, "property already has associated loan");
 
         // Calculate principal
         UD60x18 principal = propertyValue.sub(downPayment);
@@ -32,13 +34,13 @@ abstract contract Borrowing is IBorrowing/*, LoanTimeMath*//*, State, Ownable*/ 
         UD60x18 ltv = principal.div(propertyValue);
 
         // Ensure ltv <= maxLtv
-        require(ltv.lte(maxLtv), "ltv can't exceeed maxLtv");
+        require(ltv.lte(config.getUD60x18(MAX_LTV)), "ltv can't exceeed maxLtv");
 
         // Add principal to totalBorrowed
         totalBorrowed = totalBorrowed.add(principal);
         
         // Ensure utilization <= utilizationCap
-        require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
+        require(IPool(config.getAddress(POOL)).utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
 
         // Calculate installment
         UD60x18 installment = calculateInstallment(principal);
