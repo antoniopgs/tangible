@@ -2,14 +2,22 @@
 pragma solidity ^0.8.15;
 
 import "./Property.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 library PropertySet {
-
+    
+    // Structs
     struct Set {
         mapping(TokenId => bool) contains;
         mapping(TokenId => Idx) indexes;
         Property[] properties;
     }
+
+    // Constants
+    IERC20 constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+
+    // Libs
+    using SafeERC20 for IERC20;
 
     function at(Set storage set, Idx idx) internal view returns(Property storage) {
         return set.properties[Idx.unwrap(idx)];
@@ -62,8 +70,11 @@ library PropertySet {
         set.contains[tokenId] = false;
     }
 
-    function addBid(Set storage set, TokenId tokenId, Bid memory bid) external {
+    function addBid(Set storage set, address caller, TokenId tokenId, Bid memory bid) external {
         require(set.contains[tokenId], "set doesn't contain property");
+
+        // Pull downPayment from caller/bidder to protocol
+        USDC.safeTransferFrom(caller, address(this), bid.downPayment);
 
         // Get property
         Property storage property = get(set, tokenId);
@@ -72,20 +83,29 @@ library PropertySet {
         property.bids.push(bid);
     }
 
-    function removeBid(Set storage set, TokenId tokenId, Idx bidIdx) external {
+    function removeBid(Set storage set, address caller, TokenId tokenId, Idx bidIdx) external {
         require(set.contains[tokenId], "set doesn't contain property");
 
-        // Get property
-        Property storage property = get(set, tokenId);
+        // Get propertyBids
+        Bid[] storage propertyBids = get(set, tokenId).bids;
+
+        // Get bidToRemove
+        Bid memory bidToRemove = propertyBids[Idx.unwrap(bidIdx)];
+
+        // Ensure caller is bidder
+        require(caller == bidToRemove.bidder, "only bidder can remove his bid");
 
         // Get last propertyLastBid
-        Bid memory propertyLastBid = property.bids[property.bids.length - 1];
+        Bid memory propertyLastBid = propertyBids[propertyBids.length - 1];
 
-        // Write propertyLastBid over bidIdx
-        property.bids[Idx.unwrap(bidIdx)] = propertyLastBid;
+        // Write propertyLastBid over bidToRemove
+        propertyBids[Idx.unwrap(bidIdx)] = propertyLastBid;
 
         // Remove lastPropertyBid
-        property.bids.pop();
+        propertyBids.pop();
+
+        // Send bidToRemove's downPayment from protocol to bidder
+        USDC.safeTransferFrom(address(this), bidToRemove.bidder, bidToRemove.downPayment);
     }
 
     function updateLoan() external {

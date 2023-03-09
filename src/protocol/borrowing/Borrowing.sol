@@ -70,6 +70,13 @@ abstract contract Borrowing is IBorrowing/*, LoanTimeMath*//*, State, Ownable*/ 
         // Load loan
         Loan storage loan = loans[tokenId];
 
+        // If borrower is making delayed payments
+        if (defaulted(loan)) {
+
+        } else {
+            
+        }
+
         require(msg.sender == loan.borrower, "only borrower can pay his loan");
 
         // Ensure property has active mortgage
