@@ -11,53 +11,8 @@ contract Borrowing is IBorrowing, State {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    // WHO should start loans?
-    function startLoan(TokenId tokenId, UD60x18 propertyValue, UD60x18 downPayment, address borrower) external /* onlyOwner */ {
-
-        // Get Loan
-        Loan storage loan = loans[tokenId];
-
-        // Ensure property has no associated loan
-        require(state(loan) == State.None, "property already has associated loan");
-
-        // Calculate principal
-        UD60x18 principal = propertyValue.sub(downPayment);
-
-        // Calculate bid ltv
-        UD60x18 ltv = principal.div(propertyValue);
-
-        // Ensure ltv <= maxLtv
-        require(ltv.lte(maxLtv), "ltv can't exceeed maxLtv");
-
-        // Add principal to totalBorrowed
-        totalBorrowed = totalBorrowed.add(principal);
-        
-        // Ensure utilization <= utilizationCap
-        require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
-
-        // Calculate installment
-        UD60x18 installment = calculateInstallment(principal);
-
-        // Calculate totalLoanCost
-        UD60x18 totalLoanCost = installment.mul(installmentCount);
-
-        // Store Loan
-        loans[tokenId] = Loan({
-            borrower: borrower,
-            balance: principal,
-            installment: installment,
-            unpaidInterest: totalLoanCost.sub(principal),
-            nextPaymentDeadline: block.timestamp + 30 days
-        });
-
-        // Add tokenId to loansTokenIds
-        loansTokenIds.add(TokenId.unwrap(tokenId));
-
-        // Pull downPayment from borrower
-        USDC.safeTransferFrom(borrower, address(this), fromUD60x18(downPayment));
-
-        // Emit event
-        emit NewLoan(tokenId, propertyValue, principal, borrower, block.timestamp);
+    function startLoan(TokenId tokenId, UD60x18 propertyValue, UD60x18 downPayment, address borrower) external onlyOwner {
+        _startLoan(tokenId, propertyValue, downPayment, borrower);
     }
     
     function payLoan(TokenId tokenId) external {
@@ -115,14 +70,5 @@ contract Borrowing is IBorrowing, State {
 
         // Emit event
         emit LoanPayment(tokenId, msg.sender, block.timestamp, loanPaid);
-    }
-
-    function calculateInstallment(UD60x18 principal) internal view returns(UD60x18 installment) {
-
-        // Calculate x
-        UD60x18 x = toUD60x18(1).add(periodicBorrowerRate).pow(installmentCount);
-        
-        // Calculate installment
-        installment = principal.mul(periodicBorrowerRate).mul(x).div(x.sub(toUD60x18(1)));
     }
 }

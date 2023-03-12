@@ -20,7 +20,7 @@ contract Auctions is IAuctions, State {
         // Todo: Ensure tokenId exists?
 
         // Pull downPayment from caller to protocol
-        USDC.safeTransferFrom(msg.sender, address(this), downPayment);
+        USDC.safeTransferFrom(msg.sender, address(this), fromUD60x18(downPayment));
 
         // Add bid to tokenId bids
         bids[tokenId].push(
@@ -55,7 +55,7 @@ contract Auctions is IAuctions, State {
         propertyBids.pop();
 
         // Send bidToRemove's downPayment from protocol to bidder
-        USDC.safeTransferFrom(address(this), bidToRemove.bidder, bidToRemove.downPayment);
+        USDC.safeTransferFrom(address(this), bidToRemove.bidder, fromUD60x18(bidToRemove.downPayment));
     }
 
     function acceptBid(TokenId tokenId, Idx bidIdx) external {
@@ -72,16 +72,16 @@ contract Auctions is IAuctions, State {
         // Todo: if State == Null vs if State == Mortgage
 
         // Calculate saleFee
-        UD60x18 saleFee = toUD60x18(_bid.propertyValue).mul(saleFeeRatio);
+        UD60x18 saleFee = _bid.propertyValue.mul(saleFeeRatio);
 
         // Add saleFee to protocolMoney
         protocolMoney = protocolMoney.add(saleFee);
 
         // Send (bid.propertyValue - saleFee) to nftOwner
-        USDC.safeTransferFrom(address(this), nftOwner, fromUD60x18(toUD60x18(_bid.propertyValue).sub(saleFee)));
+        USDC.safeTransferFrom(address(this), nftOwner, fromUD60x18(_bid.propertyValue.sub(saleFee)));
 
         // If regular bid
-        if (_bid.downPayment == _bid.propertyValue) {
+        if (_bid.downPayment.eq(_bid.propertyValue)) {
 
             // Send NFT from protocol to bidder
             prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, TokenId.unwrap(tokenId)); // Note: NFT COMES LATER
@@ -93,10 +93,10 @@ contract Auctions is IAuctions, State {
             require(loanBidActionable(_bid), "loanBid not actionable");
 
             // Start Loan
-            startLoan({
+            _startLoan({
                 tokenId: tokenId,
                 propertyValue: _bid.propertyValue,
-                principal: _bid.propertyValue - _bid.downPayment,
+                downPayment: _bid.downPayment,
                 borrower: _bid.bidder
             });
         }
@@ -105,16 +105,16 @@ contract Auctions is IAuctions, State {
     function loanBidActionable(Bid memory _bid) public view returns(bool) {
 
         // Calculate loanBid principal
-        uint principal = _bid.propertyValue - _bid.downPayment;
+        UD60x18 principal = _bid.propertyValue.sub(_bid.downPayment);
 
         // Calculate loanBid ltv
-        UD60x18 ltv = toUD60x18(principal).div(toUD60x18(_bid.propertyValue));
+        UD60x18 ltv = principal.div(_bid.propertyValue);
 
         // Return actionability
-        return ltv.lte(maxLtv) && availableLiquidity() >= principal;
+        return ltv.lte(maxLtv) && availableLiquidity().gte(principal);
     }
 
-    function availableLiquidity() private view returns(uint) {
-        return fromUD60x18(totalDeposits.sub(totalBorrowed));
+    function availableLiquidity() private view returns(UD60x18) {
+        return totalDeposits.sub(totalBorrowed);
     }
 }
