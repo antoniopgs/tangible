@@ -9,9 +9,10 @@ contract Borrowing is IBorrowing, State {
 
     // Libs
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     // WHO should start loans?
-    function startLoan(TokenId tokenId, uint propertyValue, uint downPayment, address borrower) external /* onlyOwner */ {
+    function startLoan(TokenId tokenId, UD60x18 propertyValue, UD60x18 downPayment, address borrower) external /* onlyOwner */ {
 
         // Get Loan
         Loan storage loan = loans[tokenId];
@@ -50,7 +51,7 @@ contract Borrowing is IBorrowing, State {
         });
 
         // Add tokenId to loansTokenIds
-        loansTokenIds.add(tokenId);
+        loansTokenIds.add(TokenId.unwrap(tokenId));
 
         // Pull downPayment from borrower
         USDC.safeTransferFrom(borrower, address(this), fromUD60x18(downPayment));
@@ -103,7 +104,7 @@ contract Borrowing is IBorrowing, State {
             loan.borrower = address(0);
 
             // Remove tokenId from loansTokenIds
-            loansTokenIds.remove(tokenId);
+            loansTokenIds.remove(TokenId.unwrap(tokenId));
 
         // If more payments are needed to pay off loan
         } else {

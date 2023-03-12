@@ -71,17 +71,17 @@ contract Auctions is IAuctions, State {
 
         // Todo: if State == Null vs if State == Mortgage
 
+        // Calculate saleFee
+        UD60x18 saleFee = toUD60x18(_bid.propertyValue).mul(saleFeeRatio);
+
+        // Add saleFee to protocolMoney
+        protocolMoney = protocolMoney.add(saleFee);
+
+        // Send (bid.propertyValue - saleFee) to nftOwner
+        USDC.safeTransferFrom(address(this), nftOwner, fromUD60x18(toUD60x18(_bid.propertyValue).sub(saleFee)));
+
         // If regular bid
         if (_bid.downPayment == _bid.propertyValue) {
-
-            // Calculate saleFee
-            UD60x18 saleFee = toUD60x18(_bid.propertyValue).mul(saleFeeRatio);
-
-            // Add saleFee to protocolMoney
-            protocolMoney = protocolMoney.add(saleFee);
-
-            // Send (bid.propertyValue - saleFee) to nftOwner
-            USDC.safeTransferFrom(address(this), nftOwner, fromUD60x18(toUD60x18(_bid.propertyValue).sub(saleFee)));
 
             // Send NFT from protocol to bidder
             prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, TokenId.unwrap(tokenId)); // Note: NFT COMES LATER
@@ -92,16 +92,13 @@ contract Auctions is IAuctions, State {
             // Ensure loan bid is actionable
             require(loanBidActionable(_bid), "loanBid not actionable");
 
-            // Send propertyValue to nftOwner
-            USDC.safeTransferFrom(address(this), nftOwner, _bid.propertyValue); // Todo: DON'T FORGET TO CHARGE FEE LATER
-
             // Start Loan
-            // startLoan({
-            //     tokenId: tokenId,
-            //     propertyValue: _bid.propertyValue,
-            //     principal: _bid.propertyValue - _bid.downPayment,
-            //     borrower: _bid.bidder
-            // });
+            startLoan({
+                tokenId: tokenId,
+                propertyValue: _bid.propertyValue,
+                principal: _bid.propertyValue - _bid.downPayment,
+                borrower: _bid.bidder
+            });
         }
     }
 
