@@ -27,14 +27,6 @@ contract Vault is IVault, PropertyState, ConfigUser {
         properties.removeProperty(tokenId);
     }
 
-    function addBid(address caller, TokenId tokenId, Bid memory bid) external onlyConfigRole(BID_MANAGER) {
-        properties.addBid(caller, tokenId, bid);
-    }
-
-    function removeBid(address caller, TokenId tokenId, Idx bidIdx) external onlyConfigRole(BID_MANAGER) {
-        properties.removeBid(caller, tokenId, bidIdx);
-    }
-
     function updateLoan() external onlyConfigRole(LOAN_MANAGER) {
         
     }

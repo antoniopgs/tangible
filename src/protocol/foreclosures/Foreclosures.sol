@@ -3,20 +3,12 @@ pragma solidity ^0.8.15;
 
 // import "../borrowing/IBorrowing.sol";
 // import "@prb/math/UD60x18.sol";
-// import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 // import "../pool/IPool.sol";
 import "./IForeclosures.sol";
+import "../state/state/State.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract Foreclosures is IForeclosures {
-
-    // Foreclosure vars
-    UD60x18 foreclosureFeeRatio;
-    UD60x18 foreclosurerCutRatio;
-
-    // Links
-    IERC20 USDC;
-    IPool pool;
-    address tangibleVault;
+contract Foreclosures is IForeclosures, State {
 
     // Libs
     using SafeERC20 for IERC20;
@@ -34,7 +26,7 @@ contract Foreclosures is IForeclosures {
     }
 
     // in order to make this work, fix functional states, so that once default happens, "defaulted" view always returns true
-    function foreclose(tokenId _tokenId, UD60x18 salePrice) external {
+    function foreclose(TokenId tokenId, UD60x18 salePrice) external {
 
         // Get Loan
         Loan storage loan = loans[tokenId];

@@ -2,21 +2,13 @@
 pragma solidity ^0.8.15;
 
 import "./IBorrowing.sol";
-// import "./LoanTimeMath.sol";
+import "../state/state/State.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-// import "@openzeppelin/contracts/access/Ownable.sol";
-// import "./State.sol";
-// import "@prb/math/UD60x18.sol";
-import "../../config/config/ConfigUser.sol";
-import "../vault/vault/IVault.sol";
 
-// Note: later replace onlyOwner with a modifier with better upgradeabitlity
-contract Borrowing is IBorrowing, ConfigUser/*, LoanTimeMath*//*, State, Ownable*/ {
-
-    IERC20 constant USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // ethereum
+contract Borrowing is IBorrowing, State {
 
     // Libs
-    // using SafeERC20 for IERC20;
+    using SafeERC20 for IERC20;
 
     // WHO should start loans?
     function startLoan(TokenId tokenId, uint propertyValue, uint downPayment, address borrower) external /* onlyOwner */ {
@@ -34,13 +26,13 @@ contract Borrowing is IBorrowing, ConfigUser/*, LoanTimeMath*//*, State, Ownable
         UD60x18 ltv = principal.div(propertyValue);
 
         // Ensure ltv <= maxLtv
-        require(ltv.lte(config.getUD60x18(MAX_LTV)), "ltv can't exceeed maxLtv");
+        require(ltv.lte(maxLtv), "ltv can't exceeed maxLtv");
 
         // Add principal to totalBorrowed
         totalBorrowed = totalBorrowed.add(principal);
         
         // Ensure utilization <= utilizationCap
-        require(IPool(config.getAddress(POOL)).utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
+        require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
 
         // Calculate installment
         UD60x18 installment = calculateInstallment(principal);
@@ -57,11 +49,11 @@ contract Borrowing is IBorrowing, ConfigUser/*, LoanTimeMath*//*, State, Ownable
             nextPaymentDeadline: block.timestamp + 30 days
         });
 
-        // Pull downPayment from borrower/caller to pool
-        USDC.safeTransferFrom(msg.sender, address(pool), fromUD60x18(downPayment));
+        // Pull downPayment from borrower
+        USDC.safeTransferFrom(borrower, address(this), fromUD60x18(downPayment));
 
-        // Send propertyValue from pool to seller
-        USDC.safeTransferFrom(address(pool), seller, fromUD60x18(propertyValue));
+        // Send propertyValue to seller
+        USDC.safeTransferFrom(address(this), seller, fromUD60x18(propertyValue));
 
         // Emit event
         emit NewLoan(tokenId, propertyValue, principal, borrower, seller, block.timestamp);

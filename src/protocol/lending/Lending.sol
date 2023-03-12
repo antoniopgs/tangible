@@ -2,15 +2,10 @@
 pragma solidity ^0.8.15;
 
 import "./ILending.sol";
-import "../../config/config/ConfigUser.sol";
+import "../state/state/State.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC777/IERC777.sol";
-import "../pool/IPool.sol";
 
-abstract contract Lending is ILending, ConfigUser {
-
-    IERC20 USDC;
-    IERC777 tUSDC;
+contract Lending is ILending, State {
 
     // Libs
     using SafeERC20 for IERC20;
@@ -46,7 +41,7 @@ abstract contract Lending is ILending, ConfigUser {
 
         // Remove usdc from totalDeposits
         totalDeposits = totalDeposits.sub(toUD60x18(usdc));
-        require(IPool(config.getAddress(POOL)).utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
+        require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
 
         // Emit event
         emit Withdrawal(msg.sender, usdc, tusdc, block.timestamp);

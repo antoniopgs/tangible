@@ -10,9 +10,6 @@ contract Automation is AutomationCompatibleInterface, ConfigUser {
 
     function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) { // Note: maybe implement batch liquidations later
 
-        // Get vault
-        IVault vault = IVault(config.getAddress(VAULT));
-
         // Loop properties
         for (uint i = 0; i < vault.propertiesLength(); i++) {
 

@@ -7,8 +7,6 @@ import "../propertyState/IPropertyState.sol";
 interface IVault is IPropertyState {
     function addProperty(TokenId tokenId) external;
     function removeProperty(TokenId tokenId) external;
-    function addBid(address caller, TokenId tokenId, Bid memory bid) external;
-    function removeBid(address caller, TokenId tokenId, Idx bidIdx) external;
     function updateLoan() external;
     function propertiesLength() external view returns(uint);
     function loanAt(Idx _idx) external view returns(Loan memory);

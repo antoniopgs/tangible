@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract ProsperaNft is ERC721URIStorage, AccessControl {
+contract TangibleNft is ERC721URIStorage, AccessControl {
 
     // Structs
     struct Inspection {

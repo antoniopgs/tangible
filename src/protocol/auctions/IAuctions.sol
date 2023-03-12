@@ -10,6 +10,6 @@ interface IAuctions {
     function cancelBid(TokenId tokenId, Idx bidIdx) external;
 
     // Seller
-    function loanBidActionable(Bid memory bid) external view returns(bool);
     function acceptBid(TokenId tokenId, Idx bidIdx) external;
+    function loanBidActionable(Bid memory bid) external view returns(bool);
 }

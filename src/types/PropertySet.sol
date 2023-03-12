@@ -70,44 +70,6 @@ library PropertySet {
         set.contains[tokenId] = false;
     }
 
-    function addBid(Set storage set, address caller, TokenId tokenId, Bid memory bid) external {
-        require(set.contains[tokenId], "set doesn't contain property");
-
-        // Pull downPayment from caller/bidder to protocol
-        USDC.safeTransferFrom(caller, address(this), bid.downPayment);
-
-        // Get property
-        Property storage property = get(set, tokenId);
-
-        // Add bid to property bids
-        property.bids.push(bid);
-    }
-
-    function removeBid(Set storage set, address caller, TokenId tokenId, Idx bidIdx) external {
-        require(set.contains[tokenId], "set doesn't contain property");
-
-        // Get propertyBids
-        Bid[] storage propertyBids = get(set, tokenId).bids;
-
-        // Get bidToRemove
-        Bid memory bidToRemove = propertyBids[Idx.unwrap(bidIdx)];
-
-        // Ensure caller is bidder
-        require(caller == bidToRemove.bidder, "only bidder can remove his bid");
-
-        // Get last propertyLastBid
-        Bid memory propertyLastBid = propertyBids[propertyBids.length - 1];
-
-        // Write propertyLastBid over bidToRemove
-        propertyBids[Idx.unwrap(bidIdx)] = propertyLastBid;
-
-        // Remove lastPropertyBid
-        propertyBids.pop();
-
-        // Send bidToRemove's downPayment from protocol to bidder
-        USDC.safeTransferFrom(address(this), bidToRemove.bidder, bidToRemove.downPayment);
-    }
-
     function updateLoan() external {
 
     }
