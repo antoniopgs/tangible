@@ -6,18 +6,15 @@ import "./IInterest.sol";
 contract Interest is IInterest {
 
     // IPool pool;
-    UD60x18 borrowerApr;
+    UD60x18 yearlyBorrowerRate;
 
-    constructor(uint borrowerRatePct) {
-        borrowerApr = toUD60x18(borrowerRatePct).div(toUD60x18(100));
+    constructor(uint borrowerAprPct) {
+        yearlyBorrowerRate = toUD60x18(borrowerAprPct).div(toUD60x18(100));
     }
 
-    function calculateBorrowerRate() external view returns (UD60x18) {
+    function calculateYearlyBorrowerRate(UD60x18 utilization) external view returns (UD60x18) {
 
-        // Get pool utilization
-        // UD60x18 utilization = pool.utilization();
-
-        // Return borrowerApr
-        return borrowerApr;
+        // Return yearlyBorrowerRate
+        return yearlyBorrowerRate;
     }
 }
