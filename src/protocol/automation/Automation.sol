@@ -10,11 +10,12 @@ contract Automation is AutomationCompatibleInterface, State {
 
     function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) { // Note: maybe implement batch liquidations later
 
-        // Loop properties
-        for (uint i = 0; i < vault.propertiesLength(); i++) {
+        // Loop loans
+        for (uint i = 0; i < loansCount(); i++) {
 
             // Load property loan
-            Loan memory loan = vault.loanAt(Idx.wrap(i));
+            // Loan memory loan = vault.loanAt(Idx.wrap(i));
+            Loan memory loan = loans[tokenId];
 
             // If loan has been defaulted
             if (state(loan) == State.Default) {

@@ -31,10 +31,6 @@ contract Vault is IVault, PropertyState, ConfigUser {
         
     }
 
-    function propertiesLength() external view returns(uint) {
-        return properties.length();
-    }
-
     function loanAt(Idx _idx) external view returns(Loan memory) {
         return properties.at(_idx).loan;
     }
