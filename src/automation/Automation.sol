@@ -2,14 +2,14 @@
 pragma solidity ^0.8.15;
 
 import "@chainlink/contracts/AutomationCompatible.sol"; // Note: imports from ./AutomationBase.sol & ./interfaces/AutomationCompatibleInterface.sol
-import "../foreclosures/Foreclosures.sol";
+import "../protocol/foreclosures/IForeclosures.sol";
 
 contract Automation is AutomationCompatibleInterface {
 
-    IProtocol protocol;
+    IForeclosures protocol;
     
     // Libs
-    using EnumerableSet for EnumerableSet.UintSet;
+    // using EnumerableSet for EnumerableSet.UintSet;
 
     function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) { // Note: maybe implement batch liquidations later
 

@@ -5,17 +5,43 @@ import "./IForeclosures.sol";
 import "../state/state/State.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-abstract contract Foreclosures is IForeclosures, State {
+contract Foreclosures is IForeclosures, State {
 
     // Libs
     using SafeERC20 for IERC20;
 
-    function foreclose(TokenId tokenId, UD60x18 salePrice) external {
-        _foreclose(tokenId, salePrice, foreclosurerCutRatio); // Note: if regular foreclosure: use foreclosurerCutRatio
+    function adminForeclose(TokenId tokenId, UD60x18 salePrice) external onlyOwner {
+        _foreclose({
+            tokenId: tokenId,
+            salePrice: salePrice,
+            foreclosurerCutRatio: UD60x18.wrap(0) // Note: if admin foreclosure: foreclosurerCutRatio is 0
+        });
+    }
+
+    function foreclose(TokenId tokenId) external {
+
+        // Get highestBid
+        UD60x18 highestBid;
+
+        // Foreclose
+        _foreclose({
+            tokenId: tokenId,
+            salePrice: highestBid,
+            foreclosurerCutRatio: foreclosurerCutRatio // Note: if regular foreclosure: use foreclosurerCutRatio
+        });
     }
 
     function chainlinkForeclose(TokenId tokenId) external {
-        _foreclose(tokenId, salePrice, UD60x18.wrap(0)); // Note: if chainlink foreclosure: foreclosurerCutRatio is 0 (because protocol pays LINK for it)
+
+        // Get highestBid
+        UD60x18 highestBid;
+
+        // Foreclose
+        _foreclose({
+            tokenId: tokenId,
+            salePrice: highestBid,
+            foreclosurerCutRatio: UD60x18.wrap(0) // Note: if chainlink foreclosure: foreclosurerCutRatio is 0 (because protocol pays LINK for it)
+        });
     }
 
     // in order to make this work, fix functional states, so that once default happens, "defaulted" view always returns true
@@ -25,7 +51,12 @@ abstract contract Foreclosures is IForeclosures, State {
         Loan storage loan = loans[tokenId];
 
         // Ensure borrower has defaulted
-        require(state(loan) == State.Default, "no default"); 
+        require(state(loan) == State.Default, "no default");
+
+        // Calculate defaulterDebt
+        UD60x18 defaulterDebt = loan.balance.add(loan.unpaidInterest);
+
+        require(salePrice.gte(defaulterDebt), "salePrice doesn't cover defaulterDebt + fees"); // Todo: add fees later
 
         // Remove loan.balance from loan.balance & totalBorrowed
         loan.balance = loan.balance.sub(loan.balance);
@@ -33,9 +64,6 @@ abstract contract Foreclosures is IForeclosures, State {
 
         // Add unpaidInterest to totalDeposits
         totalDeposits = totalDeposits.add(loan.unpaidInterest);
-
-        // Calculate defaulterDebt
-        UD60x18 defaulterDebt = loan.balance.add(loan.unpaidInterest);
 
         // Todo: Add Sale fee
 
