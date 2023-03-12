@@ -21,7 +21,7 @@ contract Borrowing is IBorrowing, State {
         Loan storage loan = loans[tokenId];
 
         // If borrower is making delayed payments
-        if (defaulted(loan)) {
+        if (state(loan) == State.Default) {
 
         } else {
             
