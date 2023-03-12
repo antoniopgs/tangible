@@ -88,12 +88,12 @@ contract Auctions is IAuctions, State {
             USDC.safeTransferFrom(address(this), nftOwner, _bid.propertyValue); // Todo: DON'T FORGET TO CHARGE FEE LATER
 
             // Start Loan
-            IBorrowing(config.getAddress(BORROWING)).startLoan({
-                tokenId: tokenId,
-                propertyValue: _bid.propertyValue,
-                principal: _bid.propertyValue - _bid.downPayment,
-                borrower: _bid.bidder
-            });
+            // startLoan({
+            //     tokenId: tokenId,
+            //     propertyValue: _bid.propertyValue,
+            //     principal: _bid.propertyValue - _bid.downPayment,
+            //     borrower: _bid.bidder
+            // });
         }
     }
 

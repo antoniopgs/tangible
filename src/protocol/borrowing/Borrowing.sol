@@ -17,7 +17,7 @@ contract Borrowing is IBorrowing, State {
         Loan storage loan = loans[tokenId];
 
         // Ensure property has no associated loan
-        require(IVault(config.getAddress(VAULT)).state(loan) == IVault.State.Null, "property already has associated loan");
+        require(state(loan) == State.Null, "property already has associated loan");
 
         // Calculate principal
         UD60x18 principal = propertyValue.sub(downPayment);
