@@ -14,7 +14,7 @@ contract Automation is AutomationCompatibleInterface, Foreclosures {
         // Loop loans
         for (uint i = 0; i < loansTokenIds.length(); i++) {
 
-            // Get loan
+            // Get loan 
             Loan memory loan = loans[TokenId.wrap(loansTokenIds.at(i))];
 
             // If loan has been defaulted

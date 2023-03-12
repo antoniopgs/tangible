@@ -69,11 +69,19 @@ contract Auctions is IAuctions, State {
         // Get bid
         Bid memory _bid = bids[tokenId][Idx.unwrap(bidIdx)];
 
+        // Todo: if State == Null vs if State == Mortgage
+
         // If regular bid
         if (_bid.downPayment == _bid.propertyValue) {
 
-            // Send bid.propertyValue from protocol to seller
-            USDC.safeTransferFrom(address(this), nftOwner, _bid.propertyValue); // Todo: DON'T FORGET TO CHARGE FEE LATER
+            // Calculate saleFee
+            UD60x18 saleFee = toUD60x18(_bid.propertyValue).mul(saleFeeRatio);
+
+            // Add saleFee to protocolMoney
+            protocolMoney = protocolMoney.add(saleFee);
+
+            // Send (bid.propertyValue - saleFee) to nftOwner
+            USDC.safeTransferFrom(address(this), nftOwner, fromUD60x18(toUD60x18(_bid.propertyValue).sub(saleFee)));
 
             // Send NFT from protocol to bidder
             prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, TokenId.unwrap(tokenId)); // Note: NFT COMES LATER

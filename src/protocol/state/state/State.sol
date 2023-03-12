@@ -15,26 +15,43 @@ abstract contract State is IState, TargetManager {
     tUsdc tUSDC;
     TangibleNft internal prosperaNftContract;
 
-    // Mappings
+    // Main Storage
     mapping(TokenId => Bid[]) bids;
     mapping(TokenId => Loan) public loans;
     EnumerableSet.UintSet internal loansTokenIds;
+    UD60x18 protocolMoney;
 
-    // Math Vars
+    // Pool vars
     UD60x18 totalBorrowed;
     UD60x18 totalDeposits;
     
-    // Borrowing Vars
-    UD60x18 maxLtv;
+    // Borrowing vars
+    UD60x18 public maxLtv;
     UD60x18 internal installmentCount;
     UD60x18 public utilizationCap;
-    UD60x18 internal periodicBorrowerRate;
+    UD60x18 internal periodicBorrowerRate; // period is 30 days
+
+    // Auction vars
+    UD60x18 saleFeeRatio;
 
     // Foreclosure vars
     UD60x18 foreclosureFeeRatio;
     UD60x18 foreclosurerCutRatio;
 
-    UD60x18 protocolMoney;
+    // UD60x18 internal immutable compoundingPeriodsPerYear = toUD60x18(365).div(toUD60x18(30)); // period is 30 days
+    // UD60x18 perfectLenderApy; // lenderApy if 100% utilization
+
+    constructor() {
+
+    }
+
+    // constructor(uint yearlyBorrowerRatePct, uint loansYearCount, uint maxLtvPct, uint utilizationCapPct) {
+    //     periodicBorrowerRate = toUD60x18(yearlyBorrowerRatePct).mul(toUD60x18(30)).div(toUD60x18(100)).div(toUD60x18(365)); // yearlyBorrowerRate is the APR
+    //     installmentCount = toUD60x18(loansYearCount * 365).div(toUD60x18(30)); // make it separate from compoundingPeriodsPerYear to move div later (and increase precision)
+    //     maxLtv = toUD60x18(maxLtvPct).div(toUD60x18(100));
+    //     utilizationCap = toUD60x18(utilizationCapPct).div(toUD60x18(100));
+    //     perfectLenderApy = toUD60x18(1).add(periodicBorrowerRate).pow(compoundingPeriodsPerYear).sub(toUD60x18(1));
+    // }
 
     function utilization() public view returns (UD60x18) {
         return totalBorrowed.div(totalDeposits);
