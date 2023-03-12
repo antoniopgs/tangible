@@ -5,7 +5,7 @@ import "./IForeclosures.sol";
 import "../state/state/State.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract Foreclosures is IForeclosures, State {
+abstract contract Foreclosures is IForeclosures, State {
 
     // Libs
     using SafeERC20 for IERC20;
@@ -31,7 +31,7 @@ contract Foreclosures is IForeclosures, State {
         });
     }
 
-    function chainlinkForeclose(TokenId tokenId) external {
+    function chainlinkForeclose(TokenId tokenId) internal {
 
         // Get highestBid
         UD60x18 highestBid;

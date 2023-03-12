@@ -114,8 +114,14 @@ abstract contract State is IState, TargetManager {
         // Ensure utilization <= utilizationCap
         require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
 
+        // Get yearlyBorrowerRate
+        UD60x18 yearlyBorrowerRate = interest.calculateYearlyBorrowerRate(utilization());
+
+        // Calculate periodicBorrowerRate
+        UD60x18 periodicBorrowerRate = yearlyBorrowerRate.div(periodsPerYear);
+
         // Calculate installment
-        UD60x18 installment = calculateInstallment(principal);
+        UD60x18 installment = calculateInstallment(periodicBorrowerRate, principal);
 
         // Calculate totalLoanCost
         UD60x18 totalLoanCost = installment.mul(installmentCount);
@@ -124,6 +130,7 @@ abstract contract State is IState, TargetManager {
         loans[tokenId] = Loan({
             borrower: borrower,
             balance: principal,
+            periodicBorrowerRate: periodicBorrowerRate,
             installment: installment,
             unpaidInterest: totalLoanCost.sub(principal),
             nextPaymentDeadline: block.timestamp + 30 days
@@ -139,13 +146,7 @@ abstract contract State is IState, TargetManager {
         emit NewLoan(tokenId, propertyValue, principal, borrower, block.timestamp);
     }
 
-    function calculateInstallment(UD60x18 principal) internal view returns(UD60x18 installment) {
-
-        // Get yearlyBorrowerRate
-        UD60x18 yearlyBorrowerRate = interest.calculateYearlyBorrowerRate(utilization());
-
-        // Calculate periodicBorrowerRate
-        UD60x18 periodicBorrowerRate = yearlyBorrowerRate.div(periodsPerYear);
+    function calculateInstallment(UD60x18 periodicBorrowerRate, UD60x18 principal) internal view returns(UD60x18 installment) {
 
         // Calculate x
         UD60x18 x = toUD60x18(1).add(periodicBorrowerRate).pow(installmentCount);

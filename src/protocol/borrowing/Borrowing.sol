@@ -36,7 +36,7 @@ contract Borrowing is IBorrowing, State {
         USDC.safeTransferFrom(msg.sender, address(this), fromUD60x18(loan.installment));
 
         // Calculate interest
-        UD60x18 interest = periodicBorrowerRate.mul(loan.balance);
+        UD60x18 interest = loan.periodicBorrowerRate.mul(loan.balance);
 
         // Calculate repayment
         UD60x18 repayment = loan.installment.sub(interest);

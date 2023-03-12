@@ -21,6 +21,7 @@ interface IState {
     struct Loan {
         address borrower;
         UD60x18 balance;
+        UD60x18 periodicBorrowerRate;
         UD60x18 installment;
         UD60x18 unpaidInterest;
         uint nextPaymentDeadline;
