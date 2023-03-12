@@ -67,7 +67,7 @@ contract Auctions is IAuctions, State {
         require(msg.sender == nftOwner, "only nft owner can accept bids");
 
         // Get bid
-        Bid memory _bid = bids[tokenId][bidIdx];
+        Bid memory _bid = bids[tokenId][Idx.unwrap(bidIdx)];
 
         // If regular bid
         if (_bid.downPayment == _bid.propertyValue) {
@@ -84,7 +84,7 @@ contract Auctions is IAuctions, State {
             // Ensure loan bid is actionable
             require(loanBidActionable(_bid), "loanBid not actionable");
 
-            // Send bid.propertyValue from protocol to seller
+            // Send propertyValue to nftOwner
             USDC.safeTransferFrom(address(this), nftOwner, _bid.propertyValue); // Todo: DON'T FORGET TO CHARGE FEE LATER
 
             // Start Loan

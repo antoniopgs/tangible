@@ -5,15 +5,18 @@ import "@chainlink/contracts/AutomationCompatible.sol"; // Note: imports from ./
 import "../foreclosures/Foreclosures.sol";
 
 contract Automation is AutomationCompatibleInterface, Foreclosures {
+    
+    // Libs
+    using EnumerableSet for EnumerableSet.UintSet;
 
     function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) { // Note: maybe implement batch liquidations later
 
         // Loop loans
-        for (uint i = 0; i < loansCount(); i++) {
+        for (uint i = 0; i < loansTokenIds.length(); i++) {
 
             // Load property loan
             // Loan memory loan = vault.loanAt(Idx.wrap(i));
-            Loan memory loan = loans[tokenId];
+            Loan memory loan = loans[TokenId.wrap(loansTokenIds.at(i))];
 
             // If loan has been defaulted
             if (state(loan) == State.Default) {
@@ -34,7 +37,7 @@ contract Automation is AutomationCompatibleInterface, Foreclosures {
         chainlinkForeclose(loan);
     }
 
-    function chainlinkForeclose(Loan calldata loan) internal {
+    function chainlinkForeclose(Loan memory loan) internal {
 
         // Ensure loan is foreclosurable
         require(state(loan) == State.Default, "no default");

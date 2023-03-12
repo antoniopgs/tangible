@@ -17,7 +17,7 @@ contract Borrowing is IBorrowing, State {
         Loan storage loan = loans[tokenId];
 
         // Ensure property has no associated loan
-        require(state(loan) == State.Null, "property already has associated loan");
+        require(state(loan) == State.None, "property already has associated loan");
 
         // Calculate principal
         UD60x18 principal = propertyValue.sub(downPayment);
@@ -49,14 +49,14 @@ contract Borrowing is IBorrowing, State {
             nextPaymentDeadline: block.timestamp + 30 days
         });
 
+        // Add tokenId to loansTokenIds
+        loansTokenIds.add(tokenId);
+
         // Pull downPayment from borrower
         USDC.safeTransferFrom(borrower, address(this), fromUD60x18(downPayment));
 
-        // Send propertyValue to seller
-        USDC.safeTransferFrom(address(this), seller, fromUD60x18(propertyValue));
-
         // Emit event
-        emit NewLoan(tokenId, propertyValue, principal, borrower, seller, block.timestamp);
+        emit NewLoan(tokenId, propertyValue, principal, borrower, block.timestamp);
     }
     
     function payLoan(TokenId tokenId) external {
@@ -101,6 +101,9 @@ contract Borrowing is IBorrowing, State {
 
             // Reset loan state to Null (so it can re-enter system later)
             loan.borrower = address(0);
+
+            // Remove tokenId from loansTokenIds
+            loansTokenIds.remove(tokenId);
 
         // If more payments are needed to pay off loan
         } else {

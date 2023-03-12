@@ -6,6 +6,7 @@ import "../targetManager/TargetManager.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../../tokens/tUsdc.sol";
 import "../../../tokens/TangibleNft.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 abstract contract State is IState, TargetManager {
 
@@ -15,15 +16,16 @@ abstract contract State is IState, TargetManager {
     TangibleNft internal prosperaNftContract;
 
     // Mappings
-    mapping(uint => Bid[]) bids;
-    mapping(uint => Loan) public loans;
+    mapping(TokenId => Bid[]) bids;
+    mapping(TokenId => Loan) public loans;
+    EnumerableSet.UintSet internal loansTokenIds;
 
     // Math Vars
     UD60x18 totalBorrowed;
     UD60x18 totalDeposits;
     
     // Borrowing Vars
-    uint maxLtv;
+    UD60x18 maxLtv;
     UD60x18 internal installmentCount;
     UD60x18 public utilizationCap;
     UD60x18 internal periodicBorrowerRate;
@@ -38,7 +40,7 @@ abstract contract State is IState, TargetManager {
         return totalBorrowed.div(totalDeposits);
     }
 
-    function state(Loan calldata loan) internal view returns (State) {
+    function state(Loan memory loan) internal view returns (State) {
         
         // If no borrower
         if (loan.borrower == address(0)) { // Note: acceptBid() must clear-out borrower & acceptLoanBid() must update borrower
@@ -60,9 +62,5 @@ abstract contract State is IState, TargetManager {
 
     function defaulted(Loan memory loan) internal view returns (bool) {
         return block.timestamp > loan.nextPaymentDeadline;
-    }
-
-    function loansCount() internal view returns(uint) {
-
     }
 }

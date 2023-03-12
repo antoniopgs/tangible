@@ -39,10 +39,10 @@ abstract contract Foreclosures is IForeclosures, State {
         UD60x18 foreclosurerCut = foreclosurerCutRatio.mul(foreclosureFee);
 
         // Send foreclosurerCut to foreclosurer/caller
-        USDC.safeTransferFrom(address(this), msg.sender, foreclosurerCut);
+        USDC.safeTransferFrom(address(this), msg.sender, fromUD60x18(foreclosurerCut));
 
         // Add rest of foreclosureFee (foreclosureFee - foreclosurerCut) to protocolMoney
-        protocolMoney += foreclosureFee.sub(foreclosurerCut);
+        protocolMoney = protocolMoney.add(foreclosureFee.sub(foreclosurerCut));
 
         // Send rest (defaulterEquity - foreclosureFee) to defaulter
         USDC.safeTransferFrom(address(this), loan.borrower, fromUD60x18(defaulterEquity.sub(foreclosureFee)));
