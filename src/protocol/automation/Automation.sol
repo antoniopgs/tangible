@@ -2,11 +2,9 @@
 pragma solidity ^0.8.15;
 
 import "@chainlink/contracts/AutomationCompatible.sol"; // Note: imports from ./AutomationBase.sol & ./interfaces/AutomationCompatibleInterface.sol
-import "../state/state/State.sol";
-// import "../foreclosures/IForeclosures.sol";
-// import "../vault/vault/IVault.sol";
+import "../foreclosures/Foreclosures.sol";
 
-contract Automation is AutomationCompatibleInterface, State {
+contract Automation is AutomationCompatibleInterface, Foreclosures {
 
     function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) { // Note: maybe implement batch liquidations later
 
@@ -34,5 +32,17 @@ contract Automation is AutomationCompatibleInterface, State {
 
         // Chainlink foreclose
         chainlinkForeclose(loan);
+    }
+
+    function chainlinkForeclose(Loan calldata loan) internal {
+
+        // Ensure loan is foreclosurable
+        require(state(loan) == State.Default, "no default");
+
+        // Calculate foreclosureFee
+        UD60x18 foreclosureFee = foreclosureFeeRatio.mul(loan.propertyValue); // Note: for upgradeability purposes, should propertyValue be inside the loan struct?
+
+        // Add foreclosureFee to protocolMoney // Note: Protocol pays for chainlink, so it keeps all the foreclosureFee here
+        protocolMoney += foreclosureFee;
     }
 }

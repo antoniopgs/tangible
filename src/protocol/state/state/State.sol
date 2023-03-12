@@ -7,8 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../../tokens/tUsdc.sol";
 import "../../../tokens/TangibleNft.sol";
 
-import "@prb/math/UD60x18.sol";
-
 abstract contract State is IState, TargetManager {
 
     // Tokens
@@ -34,6 +32,8 @@ abstract contract State is IState, TargetManager {
     UD60x18 foreclosureFeeRatio;
     UD60x18 foreclosurerCutRatio;
 
+    UD60x18 protocolMoney;
+
     function utilization() public view returns (UD60x18) {
         return totalBorrowed.div(totalDeposits);
     }
@@ -58,7 +58,7 @@ abstract contract State is IState, TargetManager {
         }
     }
 
-    function defaulted(Loan memory loan) private view returns (bool) {
+    function defaulted(Loan memory loan) internal view returns (bool) {
         return block.timestamp > loan.nextPaymentDeadline;
     }
 

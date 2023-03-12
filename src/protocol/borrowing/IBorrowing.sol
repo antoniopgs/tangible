@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../pool/IPool.sol";
-
 interface IBorrowing {
     
     event NewLoan(TokenId tokenId, uint propertyValue, uint principal, address borrower, address seller, uint time);
