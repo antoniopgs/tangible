@@ -9,10 +9,10 @@ contract Auctions is IAuctions, State {
 
     using SafeERC20 for IERC20;
 
-    function bid(TokenId tokenId, uint propertyValue, uint downPayment) external {
+    function bid(TokenId tokenId, UD60x18 propertyValue, UD60x18 downPayment) external {
 
         // Calculate bid ltv
-        UD60x18 ltv = toUD60x18(1).sub(toUD60x18(downPayment).div(toUD60x18(propertyValue)));
+        UD60x18 ltv = toUD60x18(1).sub(downPayment.div(propertyValue));
 
         // Ensure bid ltv <= maxLtv
         require(ltv.lte(maxLtv), "ltv cannot exceed maxLtv");

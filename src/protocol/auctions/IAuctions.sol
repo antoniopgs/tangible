@@ -6,7 +6,7 @@ import "../state/state/IState.sol";
 interface IAuctions is IState {
 
     // Bidder
-    function bid(TokenId tokenId, uint propertyValue, uint downPayment) external;
+    function bid(TokenId tokenId, UD60x18 propertyValue, UD60x18 downPayment) external;
     function cancelBid(TokenId tokenId, Idx bidIdx) external;
 
     // Seller
