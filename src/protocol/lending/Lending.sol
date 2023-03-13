@@ -12,7 +12,7 @@ contract Lending is ILending, State {
 
     function deposit(uint usdc) external {
 
-        // Pull LIQ from staker
+        // Pull LIQ from depositor
         USDC.safeTransferFrom(msg.sender, address(this), usdc);
 
         // Add usdc to totalDeposits
@@ -33,15 +33,15 @@ contract Lending is ILending, State {
         // Calculate tusdc
         uint tusdc = usdcToTusdc(usdc);
 
-        // Burn tusdc from withdrawer/msg.sender
+        // Burn tusdc from withdrawer
         tUSDC.burn(tusdc, "");
-
-        // Send LIQ to unstaker
-        USDC.safeTransfer(msg.sender, usdc); // reentrancy possible?
 
         // Remove usdc from totalDeposits
         totalDeposits = totalDeposits.sub(toUD60x18(usdc));
         require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
+
+        // Send LIQ to withdrawer
+        USDC.safeTransfer(msg.sender, usdc); // Question: reentrancy possible?
 
         // Emit event
         emit Withdrawal(msg.sender, usdc, tusdc, block.timestamp);

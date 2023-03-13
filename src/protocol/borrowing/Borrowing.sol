@@ -88,20 +88,21 @@ contract Borrowing is IBorrowing, State {
         // Load loan
         Loan storage loan = loans[tokenId];
 
-        // If borrower is making delayed payments
+        // Ensure caller is borrower
+        require(msg.sender == loan.borrower, "only borrower can pay his loan");
+
+        // If borrower is delayed
         if (state(loan) == State.Default) {
 
-        } else {
             
-        }
 
-        require(msg.sender == loan.borrower, "only borrower can pay his loan");
+        }
 
         // Ensure property has active mortgage
         require(state(loan) == State.Mortgage, "property has no active mortgage"); // CAN BORROWERS ALSO PAY LOAN IF STATE == DEFAULTED?
 
         // Pull installment from borrower
-        USDC.safeTransferFrom(msg.sender, address(this), fromUD60x18(loan.installment));
+        USDC.safeTransferFrom(loan.borrower, address(this), fromUD60x18(loan.installment));
 
         // Calculate interest
         UD60x18 interest = loan.periodicBorrowerRate.mul(loan.balance);
@@ -137,7 +138,7 @@ contract Borrowing is IBorrowing, State {
         }
 
         // Emit event
-        emit LoanPayment(tokenId, msg.sender, block.timestamp, loanPaid);
+        emit LoanPayment(tokenId, loan.borrower, block.timestamp, loanPaid);
     }
 
     function calculateInstallment(UD60x18 periodicBorrowerRate, UD60x18 principal) private view returns(UD60x18 installment) {
@@ -147,5 +148,11 @@ contract Borrowing is IBorrowing, State {
         
         // Calculate installment
         installment = principal.mul(periodicBorrowerRate).mul(x).div(x.sub(toUD60x18(1)));
+    }
+
+    function redeemLoan(Loan memory loan) private {
+
+        // Redeem (pull borrower's entire loan balance)
+        USDC.safeTransferFrom(loan.borrower, address(this), fromUD60x18(loan.installment));
     }
 }

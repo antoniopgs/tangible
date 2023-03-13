@@ -83,6 +83,6 @@ abstract contract State is IState, TargetManager {
     }
 
     function defaulted(Loan memory loan) private view returns (bool) {
-        return block.timestamp > loan.nextPaymentDeadline;
+        return block.timestamp > loan.nextPaymentDeadline; // Note: no allowed missed payments for now to keep it simple
     }
 }

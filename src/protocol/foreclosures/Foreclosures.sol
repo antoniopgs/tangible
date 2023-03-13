@@ -18,32 +18,32 @@ contract Foreclosures is IForeclosures, State {
         });
     }
 
-    function foreclose(TokenId tokenId) external {
+    // function foreclose(TokenId tokenId) external {
 
-        // Get highestBid
-        UD60x18 highestBid;
+    //     // Get highestBid
+    //     UD60x18 highestBid;
 
-        // Foreclose
-        _foreclose({
-            tokenId: tokenId,
-            salePrice: highestBid,
-            foreclosurerCutRatio: foreclosurerCutRatio // Note: if regular foreclosure: use foreclosurerCutRatio
-        });
-    }
+    //     // Foreclose
+    //     _foreclose({
+    //         tokenId: tokenId,
+    //         salePrice: highestBid,
+    //         foreclosurerCutRatio: foreclosurerCutRatio // Note: if regular foreclosure: use foreclosurerCutRatio
+    //     });
+    // }
 
-    function chainlinkForeclose(TokenId tokenId) external {
-        require(msg.sender == address(this), "unauthorized"); // Note: msg.sender must be address(this) because this will be called via delegatecall
+    // function chainlinkForeclose(TokenId tokenId) external {
+    //     require(msg.sender == address(this), "unauthorized"); // Note: msg.sender must be address(this) because this will be called via delegatecall
 
-        // Get highestBid
-        UD60x18 highestBid;
+    //     // Get highestBid
+    //     UD60x18 highestBid;
 
-        // Foreclose
-        _foreclose({
-            tokenId: tokenId,
-            salePrice: highestBid,
-            foreclosurerCutRatio: UD60x18.wrap(0) // Note: if chainlink foreclosure: foreclosurerCutRatio is 0 (because protocol pays LINK for it)
-        });
-    }
+    //     // Foreclose
+    //     _foreclose({
+    //         tokenId: tokenId,
+    //         salePrice: highestBid,
+    //         foreclosurerCutRatio: UD60x18.wrap(0) // Note: if chainlink foreclosure: foreclosurerCutRatio is 0 (because protocol pays LINK for it)
+    //     });
+    // }
 
     // in order to make this work, fix functional states, so that once default happens, "defaulted" view always returns true
     function _foreclose(TokenId tokenId, UD60x18 salePrice, UD60x18 foreclosurerCutRatio) private {
@@ -53,6 +53,9 @@ contract Foreclosures is IForeclosures, State {
 
         // Ensure borrower has defaulted
         require(state(loan) == State.Default, "no default");
+
+        // Ensure 45 days have passed since default
+        require(block.timestamp >= loan.nextPaymentDeadline + 45 days, "45 days must have passed since default");
 
         // Calculate defaulterDebt
         UD60x18 defaulterDebt = loan.balance.add(loan.unpaidInterest);
