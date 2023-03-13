@@ -2,9 +2,10 @@
 pragma solidity ^0.8.15;
 
 import "@chainlink/contracts/AutomationCompatible.sol"; // Note: imports from ./AutomationBase.sol & ./interfaces/AutomationCompatibleInterface.sol
-import "../foreclosures/Foreclosures.sol";
+import "../state/state/State.sol";
+import "../foreclosures/IForeclosures.sol";
 
-contract Automation is AutomationCompatibleInterface, Foreclosures {
+contract Automation is AutomationCompatibleInterface, State {
     
     // Libs
     using EnumerableSet for EnumerableSet.UintSet;
@@ -35,7 +36,13 @@ contract Automation is AutomationCompatibleInterface, Foreclosures {
         // Decode tokenId
         (uint tokenId) = abi.decode(performData, (uint));
 
-        // Chainlink foreclose
-        chainlinkForeclose(TokenId.wrap(tokenId));
+        // Chainlink Foreclose (via delegatecall)
+        (bool success, bytes memory data) = logicTargets[IForeclosures.chainlinkForeclose.selector].delegatecall(
+            abi.encodeCall(
+                IForeclosures.chainlinkForeclose,
+                (TokenId.wrap(tokenId))
+            )
+        );
+        require(success, "chainlinkForeclose delegateCall failed");
     }
 }

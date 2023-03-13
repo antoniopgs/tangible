@@ -4,6 +4,7 @@ pragma solidity ^0.8.15;
 import "./IAuctions.sol";
 import "../state/state/State.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../borrowing/IBorrowing.sol";
 
 contract Auctions is IAuctions, State {
 
@@ -92,13 +93,15 @@ contract Auctions is IAuctions, State {
             // Ensure loan bid is actionable
             require(loanBidActionable(_bid), "loanBid not actionable");
 
-            // Start Loan
-            _startLoan({
-                tokenId: tokenId,
-                propertyValue: _bid.propertyValue,
-                downPayment: _bid.downPayment,
-                borrower: _bid.bidder
-            });
+            // Start Loan (via delegate call)
+            (bool success, bytes memory data) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
+                abi.encodeCall(
+                    IBorrowing.startLoan,
+                    (tokenId, _bid.propertyValue, _bid.downPayment, _bid.bidder)
+                )
+            );
+            require(success, "startLoan delegateCall failed");
+            // Todo: return data
         }
     }
 

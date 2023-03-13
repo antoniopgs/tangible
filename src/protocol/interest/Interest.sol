@@ -2,8 +2,9 @@
 pragma solidity ^0.8.15;
 
 import "./IInterest.sol";
+import "../state/state/State.sol";
 
-contract Interest is IInterest {
+contract Interest is IInterest, State {
 
     // IPool pool;
     UD60x18 yearlyBorrowerRate;
@@ -12,7 +13,7 @@ contract Interest is IInterest {
         yearlyBorrowerRate = toUD60x18(borrowerAprPct).div(toUD60x18(100));
     }
 
-    function calculateYearlyBorrowerRate(UD60x18 utilization) external view returns (UD60x18) {
+    function calculateYearlyBorrowerRate(UD60x18 /*utilization*/) external view returns (UD60x18) {
 
         // Return yearlyBorrowerRate
         return yearlyBorrowerRate;
