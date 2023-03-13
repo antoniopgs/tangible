@@ -91,15 +91,8 @@ contract Borrowing is IBorrowing, State {
         // Ensure caller is borrower
         require(msg.sender == loan.borrower, "only borrower can pay his loan");
 
-        // If borrower is delayed
-        if (state(loan) == State.Default) {
-
-            
-
-        }
-
         // Ensure property has active mortgage
-        require(state(loan) == State.Mortgage, "property has no active mortgage"); // CAN BORROWERS ALSO PAY LOAN IF STATE == DEFAULTED?
+        require(state(loan) == State.Mortgage, "property has no active mortgage");
 
         // Pull installment from borrower
         USDC.safeTransferFrom(loan.borrower, address(this), fromUD60x18(loan.installment));
@@ -124,11 +117,8 @@ contract Borrowing is IBorrowing, State {
         bool loanPaid = loan.balance.eq(toUD60x18(0));
         if (loanPaid) {
 
-            // Reset loan state to Null (so it can re-enter system later)
-            loan.borrower = address(0);
-
-            // Remove tokenId from loansTokenIds
-            loansTokenIds.remove(TokenId.unwrap(tokenId));
+            // Send Nft
+            sendNft(loan, loan.borrower, TokenId.unwrap(tokenId));
 
         // If more payments are needed to pay off loan
         } else {
@@ -150,9 +140,31 @@ contract Borrowing is IBorrowing, State {
         installment = principal.mul(periodicBorrowerRate).mul(x).div(x.sub(toUD60x18(1)));
     }
 
-    function redeemLoan(Loan memory loan) private {
+    function redeemLoan(TokenId tokenId) external {
+        
+        // Get loan
+        Loan storage loan = loans[tokenId];
 
-        // Redeem (pull borrower's entire loan balance)
-        USDC.safeTransferFrom(loan.borrower, address(this), fromUD60x18(loan.installment));
+        // Ensure caller is borrower
+        require(msg.sender == loan.borrower, "only borrower can pay his loan");
+
+        // Ensure borrower has defaulted
+        require(state(loan) == State.Default, "no default");
+
+        // Calculate defaulterDebt
+        UD60x18 defaulterDebt = loan.balance.add(loan.unpaidInterest); // should redeemer pay all the interest? or only the interest until redemption time?
+
+        // Redeem (pull defaulter's entire debt)
+        USDC.safeTransferFrom(loan.borrower, address(this), fromUD60x18(defaulterDebt));
+
+        // Remove loan.balance from loan.balance & totalBorrowed
+        loan.balance = loan.balance.sub(loan.balance);
+        totalBorrowed = totalBorrowed.sub(loan.balance);
+
+        // Add unpaidInterest to totalDeposits
+        totalDeposits = totalDeposits.add(loan.unpaidInterest);
+
+        // Send Nft to borrower
+        sendNft(loan, loan.borrower, TokenId.unwrap(tokenId));
     }
 }

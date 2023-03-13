@@ -85,4 +85,16 @@ abstract contract State is IState, TargetManager {
     function defaulted(Loan memory loan) private view returns (bool) {
         return block.timestamp > loan.nextPaymentDeadline; // Note: no allowed missed payments for now to keep it simple
     }
+
+    function sendNft(Loan storage loan, address receiver, uint tokenId) internal {
+
+        // Send Nft to receiver
+        prosperaNftContract.safeTransferFrom(address(this), receiver, tokenId);
+
+        // Reset loan state to Null (so it can re-enter system later)
+        loan.borrower = address(0);
+
+        // Remove tokenId from loansTokenIds
+        loansTokenIds.remove(tokenId);
+    }
 }

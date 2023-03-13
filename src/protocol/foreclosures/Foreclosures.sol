@@ -9,6 +9,7 @@ contract Foreclosures is IForeclosures, State {
 
     // Libs
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     function adminForeclose(TokenId tokenId, UD60x18 salePrice) external onlyOwner {
         _foreclose({
@@ -96,7 +97,8 @@ contract Foreclosures is IForeclosures, State {
         // Send leftover to defaulter
         USDC.safeTransferFrom(address(this), loan.borrower, fromUD60x18(leftover));
 
-        // Reset loan state to Null (so it can re-enter system later)
-        loan.borrower = address(0);
+        // Send Nft to highestBidder
+        address highestBidder;
+        sendNft(loan, highestBidder, TokenId.unwrap(tokenId));
     }
 }
