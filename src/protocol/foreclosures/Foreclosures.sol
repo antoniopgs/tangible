@@ -32,6 +32,7 @@ contract Foreclosures is IForeclosures, State {
     }
 
     function chainlinkForeclose(TokenId tokenId) external {
+        require(msg.sender == address(this), "unauthorized"); // Note: msg.sender must be address(this) because this will be called via delegatecall
 
         // Get highestBid
         UD60x18 highestBid;
