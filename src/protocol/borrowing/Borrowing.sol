@@ -13,16 +13,15 @@ contract Borrowing is IBorrowing, State {
     using EnumerableSet for EnumerableSet.UintSet;
 
     function adminStartLoan(TokenId tokenId, UD60x18 propertyValue, UD60x18 downPayment, address borrower) external onlyOwner {
-        _startLoan(tokenId, propertyValue, downPayment, borrower);
+        startLoan(tokenId, propertyValue, downPayment, borrower);
     }
 
-    function startLoan(TokenId tokenId, UD60x18 propertyValue, UD60x18 downPayment, address borrower) external {
+    function acceptBidStartLoan(TokenId tokenId, UD60x18 propertyValue, UD60x18 downPayment, address borrower) external {
         require(msg.sender == address(this), "unauthorized"); // Note: msg.sender must be address(this) because this will be called via delegatecall
-        _startLoan(tokenId, propertyValue, downPayment, borrower);
+        startLoan(tokenId, propertyValue, downPayment, borrower);
     }
 
-    // WHO should start loans?
-    function _startLoan(TokenId tokenId, UD60x18 propertyValue, UD60x18 downPayment, address borrower) internal {
+    function startLoan(TokenId tokenId, UD60x18 propertyValue, UD60x18 downPayment, address borrower) private {
 
         // Get Loan
         Loan storage loan = loans[tokenId];

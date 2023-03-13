@@ -94,14 +94,13 @@ contract Auctions is IAuctions, State {
             require(loanBidActionable(_bid), "loanBid not actionable");
 
             // Start Loan (via delegate call)
-            (bool success, bytes memory data) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
+            (bool success, ) = logicTargets[IBorrowing.acceptBidStartLoan.selector].delegatecall(
                 abi.encodeCall(
-                    IBorrowing.startLoan,
+                    IBorrowing.acceptBidStartLoan,
                     (tokenId, _bid.propertyValue, _bid.downPayment, _bid.bidder)
                 )
             );
-            require(success, "startLoan delegateCall failed");
-            // Todo: return data
+            require(success, "acceptBidStartLoan delegateCall failed");
         }
     }
 

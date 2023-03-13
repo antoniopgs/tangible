@@ -37,7 +37,7 @@ contract Automation is AutomationCompatibleInterface, State {
         (uint tokenId) = abi.decode(performData, (uint));
 
         // Chainlink Foreclose (via delegatecall)
-        (bool success, bytes memory data) = logicTargets[IForeclosures.chainlinkForeclose.selector].delegatecall(
+        (bool success, ) = logicTargets[IForeclosures.chainlinkForeclose.selector].delegatecall(
             abi.encodeCall(
                 IForeclosures.chainlinkForeclose,
                 (TokenId.wrap(tokenId))
