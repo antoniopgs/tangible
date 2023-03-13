@@ -10,4 +10,5 @@ interface IBorrowing {
     function adminStartLoan(TokenId tokenId, UD60x18 propertyValue, UD60x18 downPayment, address borrower) external;
     function acceptBidStartLoan(TokenId tokenId, UD60x18 propertyValue, UD60x18 downPayment, address borrower) external;
     function payLoan(TokenId tokenId) external;
+    function redeemLoan(TokenId tokenId) external;
 }

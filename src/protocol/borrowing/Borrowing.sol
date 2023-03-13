@@ -151,6 +151,9 @@ contract Borrowing is IBorrowing, State {
         // Ensure borrower has defaulted
         require(state(loan) == State.Default, "no default");
 
+        // Ensure redemptionWindow has passed
+        require(block.timestamp >= loan.nextPaymentDeadline + redemptionWindow);
+
         // Calculate defaulterDebt
         UD60x18 defaulterDebt = loan.balance.add(loan.unpaidInterest); // should redeemer pay all the interest? or only the interest until redemption time?
 

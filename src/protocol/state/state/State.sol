@@ -38,6 +38,7 @@ abstract contract State is IState, TargetManager {
     // Foreclosure vars
     UD60x18 foreclosureFeeRatio;
     UD60x18 foreclosurerCutRatio;
+    uint public redemptionWindow = 45 days;
 
     // UD60x18 internal immutable compoundingPeriodsPerYear = toUD60x18(365).div(toUD60x18(30)); // period is 30 days
     // UD60x18 perfectLenderApy; // lenderApy if 100% utilization
