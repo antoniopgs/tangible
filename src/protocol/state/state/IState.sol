@@ -8,10 +8,13 @@ type Idx is uint;
 
 interface IState {
 
+    // Events
     event NewLoan(TokenId tokenId, UD60x18 propertyValue, UD60x18 principal, address borrower, uint time);
 
+    // Enums
     enum State { None, Mortgage, Default } // Note: maybe switch to: enum NftOwner { Seller, Borrower, Protocol }
 
+    // Structs
     struct Bid {
         address bidder;
         UD60x18 propertyValue;
