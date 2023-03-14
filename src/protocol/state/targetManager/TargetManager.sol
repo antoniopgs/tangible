@@ -12,11 +12,9 @@ abstract contract TargetManager is ITargetManager, Ownable {
         return logicTargets[bytes4(keccak256(abi.encodePacked(sig)))];
     }
 
-    function setTargets(string[] calldata sigsArr, address[] calldata targetsArr) external onlyOwner {
-        require(sigsArr.length == targetsArr.length, "unequal array lengths");
-
-        for (uint256 i = 0; i < sigsArr.length; i++) {
-            logicTargets[bytes4(keccak256(abi.encodePacked(sigsArr[i])))] = targetsArr[i];
+    function setSigsTarget(bytes4[] calldata selectorsArr, address target) external onlyOwner {
+        for (uint256 i = 0; i < selectorsArr.length; i++) {
+            logicTargets[selectorsArr[i]] = target;
         }
     }
 
