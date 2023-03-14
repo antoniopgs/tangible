@@ -56,7 +56,7 @@ contract Foreclosures is IForeclosures, State {
         require(state(loan) == State.Default, "no default");
 
         // Ensure 45 days have passed since default
-        require(block.timestamp >= loan.nextPaymentDeadline + 45 days, "45 days must have passed since default");
+        require(block.timestamp >= loan.nextPaymentDeadline + 45 days, "45 days must have passed since default"); // Note: maybe add "Foreclosurable" state afterwards?
 
         // Calculate defaulterDebt
         UD60x18 defaulterDebt = loan.balance.add(loan.unpaidInterest);
