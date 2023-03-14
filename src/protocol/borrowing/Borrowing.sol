@@ -12,16 +12,16 @@ contract Borrowing is IBorrowing, State {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    function adminStartLoan(TokenId tokenId, UD60x18 propertyValue, UD60x18 downPayment, address borrower) external onlyOwner {
+    function adminStartLoan(TokenId tokenId, uint propertyValue, uint downPayment, address borrower) external onlyOwner {
         startLoan(tokenId, propertyValue, downPayment, borrower);
     }
 
-    function acceptBidStartLoan(TokenId tokenId, UD60x18 propertyValue, UD60x18 downPayment, address borrower) external {
+    function acceptBidStartLoan(TokenId tokenId, uint propertyValue, uint downPayment, address borrower) external {
         require(msg.sender == address(this), "unauthorized"); // Note: msg.sender must be address(this) because this will be called via delegatecall
         startLoan(tokenId, propertyValue, downPayment, borrower);
     }
 
-    function startLoan(TokenId tokenId, UD60x18 propertyValue, UD60x18 downPayment, address borrower) private {
+    function startLoan(TokenId tokenId, uint propertyValue, uint downPayment, address borrower) private {
 
         // Get Loan
         Loan storage loan = loans[tokenId];
@@ -30,10 +30,10 @@ contract Borrowing is IBorrowing, State {
         require(state(loan) == State.None, "property already has associated loan");
 
         // Calculate principal
-        UD60x18 principal = propertyValue.sub(downPayment);
+        UD60x18 principal = toUD60x18(propertyValue).sub(toUD60x18(downPayment));
 
         // Calculate bid ltv
-        UD60x18 ltv = principal.div(propertyValue);
+        UD60x18 ltv = principal.div(toUD60x18(propertyValue));
 
         // Ensure ltv <= maxLtv
         require(ltv.lte(maxLtv), "ltv can't exceeed maxLtv");
@@ -65,7 +65,7 @@ contract Borrowing is IBorrowing, State {
             borrower: borrower,
             balance: principal,
             periodicRate: periodRate,
-            installment: installment,
+            installment: fromUD60x18(installment),
             unpaidInterest: totalLoanCost.sub(principal),
             nextPaymentDeadline: block.timestamp + periodDuration
         });
@@ -74,10 +74,10 @@ contract Borrowing is IBorrowing, State {
         loansTokenIds.add(TokenId.unwrap(tokenId));
 
         // Pull downPayment from borrower
-        USDC.safeTransferFrom(borrower, address(this), fromUD60x18(downPayment));
+        USDC.safeTransferFrom(borrower, address(this), downPayment);
 
         // Emit event
-        emit NewLoan(tokenId, propertyValue, principal, borrower, block.timestamp);
+        emit NewLoan(tokenId, propertyValue, fromUD60x18(principal), borrower, block.timestamp);
     }
     
     function payLoan(TokenId tokenId) external {
@@ -92,17 +92,27 @@ contract Borrowing is IBorrowing, State {
         require(state(loan) == State.Mortgage, "property has no active mortgage");
 
         // Pull installment from borrower
-        USDC.safeTransferFrom(loan.borrower, address(this), fromUD60x18(loan.installment));
+        USDC.safeTransferFrom(loan.borrower, address(this), loan.installment);
 
         // Calculate interest
         UD60x18 interest = loan.periodicRate.mul(loan.balance);
 
         // Calculate repayment
-        UD60x18 repayment = loan.installment.sub(interest);
+        UD60x18 repayment = toUD60x18(loan.installment).sub(interest);
+
+        // Clamp repayment // Question: will this mess up APY?
+        if (repayment.gt(loan.balance)) {
+            repayment = loan.balance;
+        }
 
         // Remove repayment from loan.balance & totalBorrowed
         loan.balance = loan.balance.sub(repayment);
         totalBorrowed = totalBorrowed.sub(repayment);
+
+        // Clamp interest // Question: will this mess up APY?
+        if (interest.gt(loan.unpaidInterest)) {
+            interest = loan.unpaidInterest;
+        }
 
         // Add interest to deposits
         totalDeposits = totalDeposits.add(interest);
