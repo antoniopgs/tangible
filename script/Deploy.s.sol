@@ -35,7 +35,7 @@ contract DeployScript is Script {
     tUsdc tUSDC;
 
     // Functions
-    function run() external {
+    function run() public {
 
         // Deploy Contracts
         // auctions = new Auctions(); // Note: v2
@@ -48,31 +48,43 @@ contract DeployScript is Script {
 
         // Deploy Tokens
         // prosperaNftContract = new TangibleNft(); // Note: v2
-        address[] memory tUsdcDefaultOperators;
+        address[] memory tUsdcDefaultOperators = new address[](1);
+        tUsdcDefaultOperators[0] = address(protocol);
+        console.log("tUsdcDefaultOperators[0]:", tUsdcDefaultOperators[0]);
+        console.log("tUsdcDefaultOperators.length:", tUsdcDefaultOperators.length);
         tUSDC = new tUsdc(tUsdcDefaultOperators);
+        console.log(4);
 
         // Set borrowingSigs
-        bytes4[] memory borrowingSigs;
+        bytes4[] memory borrowingSigs = new bytes4[](4);
         borrowingSigs[0] = IBorrowing.adminStartLoan.selector;
         borrowingSigs[1] = IBorrowing.acceptBidStartLoan.selector;
         borrowingSigs[2] = IBorrowing.payLoan.selector;
         borrowingSigs[3] = IBorrowing.redeemLoan.selector;
         protocol.setSigsTarget(borrowingSigs, address(borrowing));
 
+        console.log(5);
+
         // Set foreclosureSigs
-        bytes4[] memory foreclosureSigs;
+        bytes4[] memory foreclosureSigs = new bytes4[](1);
         foreclosureSigs[0] = IForeclosures.adminForeclose.selector;
         protocol.setSigsTarget(foreclosureSigs, address(foreclosures));
 
+        console.log(6);
+
         // Set interestSigs
-        bytes4[] memory interestSigs;
+        bytes4[] memory interestSigs = new bytes4[](1);
         interestSigs[0] = IInterest.calculatePeriodRate.selector;
         protocol.setSigsTarget(interestSigs, address(interest));
 
+        console.log(7);
+
         // Set lendingSigs
-        bytes4[] memory lendingSigs;
+        bytes4[] memory lendingSigs = new bytes4[](2);
         lendingSigs[0] = ILending.deposit.selector;
         lendingSigs[1] = ILending.withdraw.selector;
         protocol.setSigsTarget(lendingSigs, address(lending));
+
+        console.log(8);
     }
 }
