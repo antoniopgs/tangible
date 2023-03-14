@@ -6,13 +6,6 @@ import "../state/state/State.sol";
 
 contract Interest is IInterest, State {
 
-    // IPool pool;
-    UD60x18 yearlyBorrowerRate;
-
-    constructor(uint borrowerAprPct) {
-        yearlyBorrowerRate = toUD60x18(borrowerAprPct).div(toUD60x18(100));
-    }
-
     function calculateYearlyBorrowerRate(UD60x18 /*utilization*/) external view returns (UD60x18) {
 
         // Return yearlyBorrowerRate

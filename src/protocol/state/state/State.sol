@@ -25,12 +25,20 @@ abstract contract State is IState, TargetManager {
     // Pool vars
     UD60x18 totalBorrowed;
     UD60x18 totalDeposits;
+    UD60x18 public utilizationCap = toUD60x18(90).div(toUD60x18(100)); // 90%
     
-    // Borrowing vars
-    UD60x18 public maxLtv;
-    UD60x18 internal installmentCount;
-    UD60x18 public utilizationCap;
-    UD60x18 public immutable periodsPerYear = toUD60x18(12);
+    // Borrowing terms
+    UD60x18 internal loanDuration = toUD60x18(5 * 365 days); // 5 years
+    UD60x18 public maxLtv = toUD60x18(50).div(toUD60x18(100)); // 50%
+    UD60x18 public borrowerApr = toUD60x18(5).div(toUD60x18(100)); // 5%
+
+    // Borrowing math vars
+    UD60x18 public compoundingPeriodDuration = toUD60x18(30 days);
+    UD60x18 internal immutable compoundingPeriodsPerYear = toUD60x18(12);
+    UD60x18 internal installmentCount = loanDuration.div(compoundingPeriodDuration);
+    // UD60x18 internal immutable compoundingPeriodsPerYear = toUD60x18(365).div(toUD60x18(30)); // 1 period = 30 days
+    UD60x18 internal periodicBorrowerRate = borrowerApr.div(compoundingPeriodsPerYear);
+    // UD60x18 perfectLenderApy = toUD60x18(1).add(periodicBorrowerRate).pow(compoundingPeriodsPerYear).sub(toUD60x18(1)); // lenderApy if 100% utilization
 
     // Auction vars
     UD60x18 saleFeeRatio;
@@ -40,28 +48,17 @@ abstract contract State is IState, TargetManager {
     UD60x18 foreclosurerCutRatio;
     uint public redemptionWindow = 45 days;
 
-    // UD60x18 internal immutable compoundingPeriodsPerYear = toUD60x18(365).div(toUD60x18(30)); // period is 30 days
-    // UD60x18 perfectLenderApy; // lenderApy if 100% utilization
-
     // Libs
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    constructor() {
-
-    }
-
-    // constructor(uint yearlyBorrowerRatePct, uint loansYearCount, uint maxLtvPct, uint utilizationCapPct) {
-    //     periodicBorrowerRate = toUD60x18(yearlyBorrowerRatePct).mul(toUD60x18(30)).div(toUD60x18(100)).div(toUD60x18(365)); // yearlyBorrowerRate is the APR
-    //     installmentCount = toUD60x18(loansYearCount * 365).div(toUD60x18(30)); // make it separate from compoundingPeriodsPerYear to move div later (and increase precision)
-    //     maxLtv = toUD60x18(maxLtvPct).div(toUD60x18(100));
-    //     utilizationCap = toUD60x18(utilizationCapPct).div(toUD60x18(100));
-    //     perfectLenderApy = toUD60x18(1).add(periodicBorrowerRate).pow(compoundingPeriodsPerYear).sub(toUD60x18(1));
-    // }
-
     function utilization() public view returns (UD60x18) {
         return totalBorrowed.div(totalDeposits);
     }
+
+    // function lenderApy() public view returns (UD60x18) {
+    //     interestOwed.div(totalDeposits);
+    // }
 
     function state(Loan memory loan) internal view returns (State) {
         
