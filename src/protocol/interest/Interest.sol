@@ -6,9 +6,9 @@ import "../state/state/State.sol";
 
 contract Interest is IInterest, State {
 
-    function calculateYearlyBorrowerRate(UD60x18 /*utilization*/) external view returns (UD60x18) {
+    function calculatePeriodRate(UD60x18 /*utilization*/) external view returns (UD60x18) {
 
-        // Return yearlyBorrowerRate
-        return yearlyBorrowerRate;
+        // Return periodRate
+        return periodRate;
     }
 }

@@ -26,19 +26,20 @@ abstract contract State is IState, TargetManager {
     UD60x18 totalBorrowed;
     UD60x18 totalDeposits;
     UD60x18 public utilizationCap = toUD60x18(90).div(toUD60x18(100)); // 90%
-    
+
     // Borrowing terms
-    UD60x18 internal loanDuration = toUD60x18(5 * 365 days); // 5 years
+    uint internal constant loanYears = 5; // 5 "years" (each year has 360 days)
     UD60x18 public maxLtv = toUD60x18(50).div(toUD60x18(100)); // 50%
     UD60x18 public borrowerApr = toUD60x18(5).div(toUD60x18(100)); // 5%
 
     // Borrowing math vars
-    UD60x18 public compoundingPeriodDuration = toUD60x18(30 days);
-    UD60x18 internal immutable compoundingPeriodsPerYear = toUD60x18(12);
-    UD60x18 internal installmentCount = loanDuration.div(compoundingPeriodDuration);
-    // UD60x18 internal immutable compoundingPeriodsPerYear = toUD60x18(365).div(toUD60x18(30)); // 1 period = 30 days
-    UD60x18 internal periodicBorrowerRate = borrowerApr.div(compoundingPeriodsPerYear);
-    // UD60x18 perfectLenderApy = toUD60x18(1).add(periodicBorrowerRate).pow(compoundingPeriodsPerYear).sub(toUD60x18(1)); // lenderApy if 100% utilization
+     uint internal constant periodDuration = 30 days;
+    uint internal constant periodsPerYear = 12;
+    // UD60x18 internal immutable periodsPerYear = toUD60x18(365 days).div(toUD60x18(periodDuration)); // 365 days / 30 days = 12.1666...
+    uint internal constant yearDuration = periodsPerYear * periodDuration; // 12 * 30 = 360 days
+    uint internal constant installmentCount = loanYears * periodsPerYear; // 5 * 12 = 60 installments
+    UD60x18 internal immutable periodRate = borrowerApr.div(toUD60x18(periodsPerYear)); // 5% / 12 = 0.41666...%
+    // UD60x18 perfectLenderApy = toUD60x18(1).add(periodicBorrowerRate).pow(periodsPerYear).sub(toUD60x18(1)); // lenderApy if 100% utilization
 
     // Auction vars
     UD60x18 saleFeeRatio;

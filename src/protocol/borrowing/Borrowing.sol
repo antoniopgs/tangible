@@ -44,30 +44,27 @@ contract Borrowing is IBorrowing, State {
         // Ensure utilization <= utilizationCap
         require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
 
-        // Calculate & decode yearlyBorrowerRate
-        (bool success, bytes memory data) = logicTargets[IInterest.calculateYearlyBorrowerRate.selector].delegatecall(
+        // Calculate & decode periodRate
+        (bool success, bytes memory data) = logicTargets[IInterest.calculatePeriodRate.selector].delegatecall(
             abi.encodeCall(
-                IInterest.calculateYearlyBorrowerRate,
+                IInterest.calculatePeriodRate,
                 (utilization())
             )
         );
         require(success, "calculateYearlyBorrowerRate delegateCall failed");
-        UD60x18 yearlyBorrowerRate = abi.decode(data, (UD60x18));
-
-        // Calculate periodicBorrowerRate
-        UD60x18 periodicBorrowerRate = yearlyBorrowerRate.div(periodsPerYear);
+        UD60x18 periodRate = abi.decode(data, (UD60x18));
 
         // Calculate installment
-        UD60x18 installment = calculateInstallment(periodicBorrowerRate, principal);
+        UD60x18 installment = calculateInstallment(periodRate, principal);
 
         // Calculate totalLoanCost
-        UD60x18 totalLoanCost = installment.mul(installmentCount);
+        UD60x18 totalLoanCost = installment.mul(toUD60x18(installmentCount));
 
         // Store Loan
         loans[tokenId] = Loan({
             borrower: borrower,
             balance: principal,
-            periodicBorrowerRate: periodicBorrowerRate,
+            periodicRate: periodRate,
             installment: installment,
             unpaidInterest: totalLoanCost.sub(principal),
             nextPaymentDeadline: block.timestamp + 30 days
@@ -98,7 +95,7 @@ contract Borrowing is IBorrowing, State {
         USDC.safeTransferFrom(loan.borrower, address(this), fromUD60x18(loan.installment));
 
         // Calculate interest
-        UD60x18 interest = loan.periodicBorrowerRate.mul(loan.balance);
+        UD60x18 interest = loan.periodicRate.mul(loan.balance);
 
         // Calculate repayment
         UD60x18 repayment = loan.installment.sub(interest);
@@ -131,10 +128,10 @@ contract Borrowing is IBorrowing, State {
         emit LoanPayment(tokenId, loan.borrower, block.timestamp, loanPaid);
     }
 
-    function calculateInstallment(UD60x18 periodicBorrowerRate, UD60x18 principal) private view returns(UD60x18 installment) {
+    function calculateInstallment(UD60x18 periodicBorrowerRate, UD60x18 principal) private pure returns(UD60x18 installment) {
 
         // Calculate x
-        UD60x18 x = toUD60x18(1).add(periodicBorrowerRate).pow(installmentCount);
+        UD60x18 x = toUD60x18(1).add(periodicBorrowerRate).pow(toUD60x18(installmentCount));
         
         // Calculate installment
         installment = principal.mul(periodicBorrowerRate).mul(x).div(x.sub(toUD60x18(1)));
