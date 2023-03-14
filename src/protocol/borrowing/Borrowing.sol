@@ -67,7 +67,7 @@ contract Borrowing is IBorrowing, State {
             periodicRate: periodRate,
             installment: installment,
             unpaidInterest: totalLoanCost.sub(principal),
-            nextPaymentDeadline: block.timestamp + 30 days
+            nextPaymentDeadline: block.timestamp + periodDuration
         });
 
         // Add tokenId to loansTokenIds
@@ -121,7 +121,7 @@ contract Borrowing is IBorrowing, State {
         } else {
 
             // Update loan.nextPaymentDeadline
-            loan.nextPaymentDeadline += 30 days;
+            loan.nextPaymentDeadline += periodDuration;
         }
 
         // Emit event
