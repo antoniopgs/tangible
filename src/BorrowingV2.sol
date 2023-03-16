@@ -5,6 +5,9 @@ import "@prb/math/UD60x18.sol";
 
 contract BorrowingV2 {
 
+    // Borrowing terms
+    uint public loanMaxYears = 5;
+
     // Structs
     struct Loan {
         UD60x18 ratePerSecond;
@@ -13,17 +16,15 @@ contract BorrowingV2 {
         uint lastPaymentTime;
     }
 
-    // Borrowing terms
-    uint public loanMaxYears = 5;
-
-    // Main storage
-    mapping(uint => Loan) public loans;
-
     // Pool vars
     UD60x18 totalPrincipal;
     UD60x18 totalDeposits;
     UD60x18 totalInterestOwed;
 
+    // Loan storage
+    mapping(uint => Loan) public loans;
+
+    // Functions
     function utilization() public view returns (UD60x18) {
         return totalPrincipal.div(totalDeposits);
     }
@@ -44,7 +45,6 @@ contract BorrowingV2 {
         return borrowerApr(utilization()).div(toUD60x18(365 days));
     }
 
-    // Functions
     function startLoan(uint tokenId, uint principal) external { // Note: principal should be uint (not UD60x18)
 
         // Calculate loanRatePerSecond
