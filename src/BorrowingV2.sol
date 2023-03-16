@@ -107,8 +107,12 @@ contract BorrowingV2 {
 
     // If borrower paid avgPaymentPerSecond every second, each payment's interest would be: ratePerSecond * 1s = ratePerSecond
     // So each payment's repayment would be: avgPaymentPerSecond - ratePerSecond
-    // So each second: loan.unpaidPrincipal -= avgPaymentPerSecond - ratePerSecond
-    // So 30 days later: loan.unpaidPrincipal -= 30 days(avgPaymentPerSecond - ratePerSecond);
+    // So each second:
+    //  - loan.maxUnpaidInterest -= ratePerSecond
+    //  - loan.unpaidPrincipal -= avgPaymentPerSecond - ratePerSecond
+    // So 30 days later:
+    // - loan.maxUnpaidInterest -= 30 days(ratePerSecond);
+    // - loan.unpaidPrincipal -= 30 days(avgPaymentPerSecond - ratePerSecond);
     function defaulted(Loan memory loan) private view returns(bool) {
         timeDeltaSinceLastPayment(loan) > 30 days && ??? < loan.nextDeadlineMax???;
     }
