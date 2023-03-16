@@ -36,11 +36,7 @@ contract BorrowingV2 {
         return block.timestamp - loan.lastPaymentTime;
     }
 
-    function accruedInterestSinceLastPayment(Loan memory loan) private view returns (UD60x18) {
-        return loan.ratePerSecond.mul(toUD60x18(timeDeltaSinceLastPayment(loan)));
-    }
-
-    function borrowerApr(UD60x18 /* utilization */) private /* view */ pure returns (UD60x18) {
+    function borrowerApr(UD60x18 /* utilization */) public /* view */ pure returns (UD60x18) {
         return toUD60x18(5).div(toUD60x18(100)); // 5%
     }
 
@@ -85,7 +81,7 @@ contract BorrowingV2 {
         Loan storage loan = loans[tokenId];
 
         // Calculate interest
-        UD60x18 interest = accruedInterestSinceLastPayment(loan);
+        UD60x18 interest = loan.ratePerSecond.mul(toUD60x18(timeDeltaSinceLastPayment(loan)));
 
         // Calculate repayment
         UD60x18 repayment = toUD60x18(payment).sub(interest);
@@ -109,6 +105,10 @@ contract BorrowingV2 {
         return principal.mul(ratePerSecond).mul(x).div(x.sub(toUD60x18(1)));
     }
 
+    // If borrower paid avgPaymentPerSecond every second, each payment's interest would be: ratePerSecond * 1s = ratePerSecond
+    // So each payment's repayment would be: avgPaymentPerSecond - ratePerSecond
+    // So each second: loan.unpaidPrincipal -= avgPaymentPerSecond - ratePerSecond
+    // So 30 days later: loan.unpaidPrincipal -= 30 days(avgPaymentPerSecond - ratePerSecond);
     function defaulted(Loan memory loan) private view returns(bool) {
         timeDeltaSinceLastPayment(loan) > 30 days && ??? < loan.nextDeadlineMax???;
     }
