@@ -128,6 +128,18 @@ contract BorrowingV2 {
         // timeDeltaSinceLastPayment(loan) > 30 days && ??? < loan.nextDeadlineMax???;
     }
 
+    function loanMonthMaxUnpaidInterest(Loan memory loan) private view returns(bool) {
+        return loan.initialMaxUnpaidInterest.sub(loanMonth(loan).mul(toUD60x18(30 days).mul(loan.ratePerSecond)));
+    }
+
+    function loanMonthMaxUnpaidPrincipal(Loan memory loan) private view returns(bool) {
+        return loan.principal.sub(loanMonth(loan).mul(toUD60x18(30 days).mul(loan.avgPaymentPerSecond.sub(loan.ratePerSecond))));
+    }
+
+    function loanMonth(Loan memory loan) private view returns(UD60x18) {
+
+    }
+
     function foreclose(Loan memory loan, uint salePrice) external {
 
         // Update pool
