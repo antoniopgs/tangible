@@ -1,55 +1,55 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.15;
+// // SPDX-License-Identifier: UNLICENSED
+// pragma solidity ^0.8.15;
 
-import "@prb/math/UD60x18.sol";
+// import "@prb/math/UD60x18.sol";
 
-abstract contract Math {
+// abstract contract Math {
 
-    struct Loan {
-        UD60x18 tUsdcBalance;
-    }
+//     struct Loan {
+//         UD60x18 tUsdcBalance;
+//     }
 
-    // Exponent Vars
-    uint private lastOperationTime;
-    UD60x18 internal borrowerRateSecond;
+//     // Exponent Vars
+//     uint private lastOperationTime;
+//     UD60x18 internal borrowerRateSecond;
 
-    // System Vars
-    UD60x18 internal savedOutstandingDebt;
-    UD60x18 internal borrowed; // maybe I can get rid of this?
-    UD60x18 internal deposits;
+//     // System Vars
+//     UD60x18 internal savedOutstandingDebt;
+//     UD60x18 internal borrowed; // maybe I can get rid of this?
+//     UD60x18 internal deposits;
 
-    function lastOperationTimeDelta() private view returns(UD60x18) {
-        return toUD60x18(block.timestamp - lastOperationTime);
-    }
+//     function lastOperationTimeDelta() private view returns(UD60x18) {
+//         return toUD60x18(block.timestamp - lastOperationTime);
+//     }
 
-    function currentExponent() internal view returns(UD60x18) {
-        return borrowerRateSecond.mul(lastOperationTimeDelta());
-    }
+//     function currentExponent() internal view returns(UD60x18) {
+//         return borrowerRateSecond.mul(lastOperationTimeDelta());
+//     }
 
-    function outstandingDebt() public view returns (UD60x18) {
-        return savedOutstandingDebt.mul(currentExponent().exp());
-    }
+//     function outstandingDebt() public view returns (UD60x18) {
+//         return savedOutstandingDebt.mul(currentExponent().exp());
+//     }
 
-    function interestOwed() public view returns (UD60x18) {
-        return outstandingDebt().sub(borrowed);
-    }
+//     function interestOwed() public view returns (UD60x18) {
+//         return outstandingDebt().sub(borrowed);
+//     }
 
-    function utilization() public view returns (UD60x18) {
-        return borrowed.div(deposits);
-    }
+//     function utilization() public view returns (UD60x18) {
+//         return borrowed.div(deposits);
+//     }
 
-    function borrowerRateWeightedAvg() public view returns (UD60x18) {
-        // return apy / utilization() // less efficient
-        return interestOwed().div(borrowed);
-    }
+//     function borrowerRateWeightedAvg() public view returns (UD60x18) {
+//         // return apy / utilization() // less efficient
+//         return interestOwed().div(borrowed);
+//     }
 
-    function borrowerDebt(Loan memory loan) public view returns (UD60x18) {
-        return loan.tUsdcBalance.mul(toUD60x18(1).add(borrowerRateWeightedAvg())); // 1 + w might just be my new tUsdc ratio?
-    }
+//     function borrowerDebt(Loan memory loan) public view returns (UD60x18) {
+//         return loan.tUsdcBalance.mul(toUD60x18(1).add(borrowerRateWeightedAvg())); // 1 + w might just be my new tUsdc ratio?
+//     }
 
-    function foreclose(Loan memory loan) external {
-        // borrowerDebt = borrowerDebt(loan);
-        savedOutstandingDebt = outstandingDebt().sub(borrowerDebt(loan)); // have to remove the future, not the past
-        loan.tUsdcBalance = 0;
-    }
-}
+//     function foreclose(Loan memory loan) external {
+//         // borrowerDebt = borrowerDebt(loan);
+//         savedOutstandingDebt = outstandingDebt().sub(borrowerDebt(loan)); // have to remove the future, not the past
+//         loan.tUsdcBalance = 0;
+//     }
+// }

@@ -14,6 +14,9 @@ contract BorrowingV2 {
         UD60x18 unpaidPrincipal;
         UD60x18 maxUnpaidInterest;
         uint lastPaymentTime;
+        UD60x18 principal;
+        UD60x18 avgPaymentPerSecond;
+        uint startTime;
     }
 
     // Pool vars
@@ -68,7 +71,10 @@ contract BorrowingV2 {
             ratePerSecond: borrowerRatePerSecond(),
             unpaidPrincipal: toUD60x18(principal),
             maxUnpaidInterest: loanMaxUnpaidInterest,
-            lastPaymentTime: block.timestamp // Note: so loan starts accruing from now (not a payment)
+            lastPaymentTime: block.timestamp, // Note: so loan starts accruing from now (not a payment)
+            principal: toUD60x18(principal),
+            avgPaymentPerSecond: _avgPaymentPerSecond,
+            startTime: block.timestamp
         });
 
         // Update pool
@@ -81,8 +87,11 @@ contract BorrowingV2 {
         // Load loan
         Loan storage loan = loans[tokenId];
 
+        // Calculate accruedRate
+        UD60x18 accruedRate = loan.ratePerSecond.mul(toUD60x18(timeDeltaSinceLastPayment(loan)));
+
         // Calculate interest
-        UD60x18 interest = loan.ratePerSecond.mul(toUD60x18(timeDeltaSinceLastPayment(loan)));
+        UD60x18 interest = accruedRate.mul(loan.unpaidPrincipal);
 
         // Calculate repayment
         UD60x18 repayment = toUD60x18(payment).sub(interest);
@@ -90,6 +99,7 @@ contract BorrowingV2 {
         // Update loan
         loan.unpaidPrincipal = loan.unpaidPrincipal.sub(repayment);
         loan.maxUnpaidInterest = loan.maxUnpaidInterest.sub(interest);
+        loan.lastPaymentTime = block.timestamp;
 
         // Update pool
         totalPrincipal = totalPrincipal.sub(repayment);
@@ -128,13 +138,13 @@ contract BorrowingV2 {
     function defaulted(Loan memory loan) private view returns(bool) {
         
         // Question: which one of these should I use?
-        return loanMonthMaxUnpaidInterestCap(loan).lt(loan.maxUnpaidInterest);
+        // return loanMonthMaxUnpaidInterestCap(loan).lt(loan.maxUnpaidInterest);
         return loanMonthUnpaidPrincipalCap(loan).lt(loan.unpaidPrincipal);
     }
 
-    function loanMonthMaxUnpaidInterestCap(Loan memory loan) private view returns(UD60x18) {
-        return loan.initialMaxUnpaidInterest.sub(toUD60x18(loanCompletedMonths(loan)).mul(toUD60x18(30 days).mul(loan.ratePerSecond)));
-    }
+    // function loanMonthMaxUnpaidInterestCap(Loan memory loan) private view returns(UD60x18) {
+    //     return loan.initialMaxUnpaidInterest.sub(toUD60x18(loanCompletedMonths(loan)).mul(toUD60x18(30 days).mul(loan.ratePerSecond)));
+    // }
 
     function loanMonthUnpaidPrincipalCap(Loan memory loan) private view returns(UD60x18) {
         return loan.principal.sub(toUD60x18(loanCompletedMonths(loan)).mul(toUD60x18(30 days).mul(loan.avgPaymentPerSecond.sub(loan.ratePerSecond))));
