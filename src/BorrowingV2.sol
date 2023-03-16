@@ -132,13 +132,14 @@ contract BorrowingV2 {
     }
 
     function loanMonthMaxUnpaidInterestCap(Loan memory loan) private view returns(UD60x18) {
-        return loan.initialMaxUnpaidInterest.sub(loanCompletedMonths(loan).mul(toUD60x18(30 days).mul(loan.ratePerSecond)));
+        return loan.initialMaxUnpaidInterest.sub(toUD60x18(loanCompletedMonths(loan)).mul(toUD60x18(30 days).mul(loan.ratePerSecond)));
     }
 
     function loanMonthUnpaidPrincipalCap(Loan memory loan) private view returns(UD60x18) {
-        return loan.principal.sub(loanCompletedMonths(loan).mul(toUD60x18(30 days).mul(loan.avgPaymentPerSecond.sub(loan.ratePerSecond))));
+        return loan.principal.sub(toUD60x18(loanCompletedMonths(loan)).mul(toUD60x18(30 days).mul(loan.avgPaymentPerSecond.sub(loan.ratePerSecond))));
     }
 
+    // Note: should truncate on purpose, so that it enforces payment after 30 days, but not every second
     function loanCompletedMonths(Loan memory loan) private view returns(uint) {
         return (block.timestamp - loan.startTime) / 30 days;
     }
