@@ -105,8 +105,9 @@ contract BorrowingV2 {
         return principal.mul(ratePerSecond).mul(x).div(x.sub(toUD60x18(1)));
     }
 
-    // If borrower paid avgPaymentPerSecond every second, each payment's interest would be: ratePerSecond * 1s = ratePerSecond
-    // So each payment's repayment would be: avgPaymentPerSecond - ratePerSecond
+    // If borrower paid avgPaymentPerSecond every second:
+    //  - each payment's interest would be: ratePerSecond * 1s = ratePerSecond
+    //  - each payment's repayment would be: avgPaymentPerSecond - ratePerSecond
     // So each second:
     //  - loan.maxUnpaidInterest -= ratePerSecond
     //  - loan.unpaidPrincipal -= avgPaymentPerSecond - ratePerSecond
