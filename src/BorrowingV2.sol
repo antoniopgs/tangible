@@ -110,6 +110,6 @@ contract BorrowingV2 {
     }
 
     function defaulted(Loan memory loan) private view returns(bool) {
-        
+        timeDeltaSinceLastPayment(loan) > 30 days && ??? < loan.nextDeadlineMax???;
     }
 }
