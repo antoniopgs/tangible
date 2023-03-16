@@ -137,7 +137,7 @@ contract BorrowingV2 {
     }
 
     function loanMonth(Loan memory loan) private view returns(UD60x18) {
-
+        return (block.timestamp - loan.startTime) / 30 days;
     }
 
     function foreclose(Loan memory loan, uint salePrice) external {
