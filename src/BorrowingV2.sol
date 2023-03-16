@@ -115,6 +115,20 @@ contract BorrowingV2 {
     // - loan.maxUnpaidInterest -= 30 days(ratePerSecond);
     // - loan.unpaidPrincipal -= 30 days(avgPaymentPerSecond - ratePerSecond);
     function defaulted(Loan memory loan) private view returns(bool) {
-        timeDeltaSinceLastPayment(loan) > 30 days && ??? < loan.nextDeadlineMax???;
+        // timeDeltaSinceLastPayment(loan) > 30 days && ??? < loan.nextDeadlineMax???;
+    }
+
+    function foreclose(Loan memory loan, uint salePrice) external {
+
+        // Update pool
+        totalPrincipal = totalPrincipal.sub(loan.unpaidPrincipal);
+        totalDeposits = totalDeposits.add(loan.maxUnpaidInterest);
+        totalInterestOwed = totalInterestOwed.sub(loan.maxUnpaidInterest);
+
+        // Calculate defaulterDebt
+        UD60x18 defaulterDebt = loan.unpaidPrincipal.add(loan.maxUnpaidInterest);
+
+        // Calculate defaulterEquity
+        UD60x18 defaulterEquity = toUD60x18(salePrice).sub(defaulterDebt);
     }
 }
