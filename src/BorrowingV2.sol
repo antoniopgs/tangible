@@ -125,18 +125,21 @@ contract BorrowingV2 {
     //  - loan.monthNEndMaxUnpaidInterest = loan.initialMaxUnpaidInterest - n(30 days(ratePerSecond))
     //  - loan.monthNEndMaxUnpaidPrincipal = loan.principal - n(30 days(avgPaymentPerSecond - ratePerSecond))
     function defaulted(Loan memory loan) private view returns(bool) {
-        // timeDeltaSinceLastPayment(loan) > 30 days && ??? < loan.nextDeadlineMax???;
+        
+        // Question: which one of these should I use?
+        return loanMonthMaxUnpaidInterestCap(loan).lt(loan.maxUnpaidInterest);
+        return loanMonthUnpaidPrincipalCap(loan).lt(loan.unpaidPrincipal);
     }
 
-    function loanMonthMaxUnpaidInterest(Loan memory loan) private view returns(bool) {
-        return loan.initialMaxUnpaidInterest.sub(loanMonth(loan).mul(toUD60x18(30 days).mul(loan.ratePerSecond)));
+    function loanMonthMaxUnpaidInterestCap(Loan memory loan) private view returns(UD60x18) {
+        return loan.initialMaxUnpaidInterest.sub(loanCompletedMonths(loan).mul(toUD60x18(30 days).mul(loan.ratePerSecond)));
     }
 
-    function loanMonthMaxUnpaidPrincipal(Loan memory loan) private view returns(bool) {
-        return loan.principal.sub(loanMonth(loan).mul(toUD60x18(30 days).mul(loan.avgPaymentPerSecond.sub(loan.ratePerSecond))));
+    function loanMonthUnpaidPrincipalCap(Loan memory loan) private view returns(UD60x18) {
+        return loan.principal.sub(loanCompletedMonths(loan).mul(toUD60x18(30 days).mul(loan.avgPaymentPerSecond.sub(loan.ratePerSecond))));
     }
 
-    function loanMonth(Loan memory loan) private view returns(UD60x18) {
+    function loanCompletedMonths(Loan memory loan) private view returns(uint) {
         return (block.timestamp - loan.startTime) / 30 days;
     }
 
