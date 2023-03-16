@@ -21,6 +21,7 @@ contract InterestV2 {
         return k1.add(k2.div(toUD60x18(1).sub(utilization())));
     }
 
+    // Note: should be equal to tusdcSupply / totalDeposits
     function perfectTUsdcToUsdcRatio() private view returns (UD60x18) {
         return toUD60x18(1).add(lenderApy());
     }

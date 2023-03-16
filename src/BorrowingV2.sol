@@ -29,6 +29,7 @@ contract BorrowingV2 {
         return totalPrincipal.div(totalDeposits);
     }
 
+    // Note: should be equal to tusdcSupply / totalDeposits
     function lenderApy() external view returns(UD60x18) {
         return totalInterestOwed.div(totalDeposits);
     }
