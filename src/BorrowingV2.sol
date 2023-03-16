@@ -115,13 +115,13 @@ contract BorrowingV2 {
     //  - loan.maxUnpaidInterest -= 30 days(ratePerSecond);
     //  - loan.unpaidPrincipal -= 30 days(avgPaymentPerSecond - ratePerSecond);
     // Don't think an early/bigger payment should anticipate the rest of the payments. should probably calculate all deadlines off the 1st one
-    // So, for the end of month 1:
+    // So, at the end of month 1:
     //  - loan.month1EndMaxUnpaidInterest = loan.initialMaxUnpaidInterest - 30 days(ratePerSecond)
     //  - loan.month1EndMaxUnpaidPrincipal = loan.principal - 30 days(avgPaymentPerSecond - ratePerSecond)
-    // So, for the end of month 7:
+    // So, at the end of month 7:
     //  - loan.month7EndMaxUnpaidInterest = loan.initialMaxUnpaidInterest - 7(30 days(ratePerSecond))
     //  - loan.month7EndMaxUnpaidPrincipal = loan.principal - 7(30 days(avgPaymentPerSecond - ratePerSecond))
-    // So, for the end of month n:
+    // So, at the end of month n:
     //  - loan.monthNEndMaxUnpaidInterest = loan.initialMaxUnpaidInterest - n(30 days(ratePerSecond))
     //  - loan.monthNEndMaxUnpaidPrincipal = loan.principal - n(30 days(avgPaymentPerSecond - ratePerSecond))
     function defaulted(Loan memory loan) private view returns(bool) {
