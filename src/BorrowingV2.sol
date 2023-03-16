@@ -14,7 +14,7 @@ contract BorrowingV2 {
     }
 
     // Borrowing terms
-    uint constant loanYears = 1;
+    uint public loanMaxYears = 5;
 
     // Main storage
     mapping(uint => Loan) public loans;
@@ -55,7 +55,7 @@ contract BorrowingV2 {
         UD60x18 loanRatePerSecond = borrowerRatePerSecond();
 
         // Calculate loanMaxSeconds
-        uint loanMaxSeconds = loanYears * 365 days;
+        uint loanMaxSeconds = loanMaxYears * 365 days;
 
         // Calculate avgPaymentPerSecond
         UD60x18 _avgPaymentPerSecond = avgPaymentPerSecond(toUD60x18(principal), loanRatePerSecond, loanMaxSeconds);
