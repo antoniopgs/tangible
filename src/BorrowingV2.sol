@@ -14,7 +14,7 @@ contract BorrowingV2 {
     }
 
     // Borrowing terms
-    uint private constant loanYears = 1; // 1 "year" (each year will have 360 days)
+    uint constant loanYears = 1;
 
     // Main storage
     mapping(uint => Loan) public loans;
