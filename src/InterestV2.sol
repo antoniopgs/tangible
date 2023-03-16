@@ -21,11 +21,15 @@ contract InterestV2 {
         return k1.add(k2.div(toUD60x18(1).sub(utilization())));
     }
 
-    function tUsdcToUsdc() public view returns (UD60x18) {
+    function perfectTUsdcToUsdcRatio() private view returns (UD60x18) {
+        return toUD60x18(1).add(lenderApy());
+    }
+
+    function tUsdcToUsdcRatio() public view returns (UD60x18) {
         
         // If utilization <= optimal
         if (utilization().lte(optimalUtilization)) {
-            return toUD60x18(1).add(lenderApy());
+            return perfectTUsdcToUsdcRatio();
 
         // If utilization > optimal (penalty slope)
         } else {
@@ -35,5 +39,17 @@ contract InterestV2 {
 
     function weightedAvgBorrowerRate() private view returns(UD60x18) {
         return lenderApy().div(utilization());
+    }
+
+    function perfectTUsdcToUsdc(uint tUsdc) private view returns(uint usdc) {
+        usdc = fromUD60x18(toUD60x18(tUsdc).mul(perfectTUsdcToUsdcRatio()));
+    }
+
+    function tUsdcToUsdc(uint tUsdc) private view returns (uint usdc) {
+        usdc = fromUD60x18(toUD60x18(tUsdc).mul(tUsdcToUsdcRatio()));
+    }
+
+    function withdrawPenalty(uint tUsdc) private view returns(uint) {
+        return perfectTUsdcToUsdc(tUsdc) - tUsdcToUsdc(tUsdc);
     }
 }
