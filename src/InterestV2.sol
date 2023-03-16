@@ -29,7 +29,7 @@ contract InterestV2 {
 
         // If utilization > optimal (penalty slope)
         } else {
-            return .div(optimalUtilization.sub(1));
+            return optimalUtilization.mul(w).add(1).div(optimalUtilization.sub(1));
         }
     }
 }
