@@ -24,12 +24,16 @@ contract InterestV2 {
     function tUsdcToUsdc() public view returns (UD60x18) {
         
         // If utilization <= optimal
-        if (utilization.lte(optimalUtilization)) {
+        if (utilization().lte(optimalUtilization)) {
             return toUD60x18(1).add(lenderApy());
 
         // If utilization > optimal (penalty slope)
         } else {
-            return optimalUtilization.mul(w).add(1).div(optimalUtilization.sub(1));
+            return optimalUtilization.mul(weightedAvgBorrowerRate()).add(toUD60x18(1)).div(optimalUtilization.sub(toUD60x18(1)));
         }
+    }
+
+    function weightedAvgBorrowerRate() private view returns(UD60x18) {
+        return lenderApy().div(utilization());
     }
 }
