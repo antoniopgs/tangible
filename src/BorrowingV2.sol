@@ -154,6 +154,9 @@ contract BorrowingV2 {
     // Shortening names of second 2:
     //  - loan.maxUnpaidInterestSecond2 = i0 - (p0 * r) - (p0 - (p - (p0 * r)) * r)
     //  - loan.unpaidPrincipalSecond2 = p0 - (p - (p0 * r)) - (p - (p0 - (p - (p0 * r)) * r))
+    // Simplying second 2:
+    //  - loan.maxUnpaidInterestSecond2 = i0 - (p0r) - (p0 - (p - (p0r)) * r)
+    //  - loan.unpaidPrincipalSecond2 = p0 - (p - (p0r)) - (p - (p0 - (p - (p0r)) * r))
 
 
     // If borrower paid avgPaymentPerSecond every second:
