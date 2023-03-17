@@ -2,7 +2,6 @@
 pragma solidity ^0.8.15;
 
 import "@prb/math/UD60x18.sol";
-import "forge-std/console.sol";
 
 contract BorrowingV2 {
 
@@ -40,32 +39,20 @@ contract BorrowingV2 {
 
     function startLoan(uint tokenId, uint principal) external { // Note: principal should be uint (not UD60x18)
 
-        console.log(1);
-
         // Calculate loanRatePerSecond
         UD60x18 loanRatePerSecond = borrowerRatePerSecond();
-
-        console.log(2);
 
         // Calculate loanMaxSeconds
         uint loanMaxSeconds = loanMaxYears * 365 days;
 
-        console.log(3);
-
         // Calculate avgPaymentPerSecond
         UD60x18 _avgPaymentPerSecond = avgPaymentPerSecond(toUD60x18(principal), loanRatePerSecond, loanMaxSeconds);
-
-        console.log(4);
 
         // Calculate loanMaxCost
         UD60x18 loanMaxCost = _avgPaymentPerSecond.mul(toUD60x18(loanMaxSeconds));
 
-        console.log(5);
-
         // Calculate loanMaxUnpaidInterest
         UD60x18 loanMaxUnpaidInterest = loanMaxCost.sub(toUD60x18(principal));
-
-        console.log(6);
 
         // Store Loan
         loans[tokenId] = Loan({
@@ -78,59 +65,35 @@ contract BorrowingV2 {
             startTime: block.timestamp
         });
 
-        console.log(7);
-
         // Update pool
         totalPrincipal = totalPrincipal.add(toUD60x18(principal));
-        console.log(8);
         totalInterestOwed = totalInterestOwed.add(loanMaxUnpaidInterest);
-        console.log(9);
     }
     
     function payLoan(uint tokenId, uint payment) external {
 
-        console.log(11);
-
         // Load loan
         Loan storage loan = loans[tokenId];
-
-        console.log(22);
 
         // Calculate accruedRate
         UD60x18 accruedRate = loan.ratePerSecond.mul(toUD60x18(timeDeltaSinceLastPayment(tokenId)));
 
-        console.log(33);
-
         // Calculate interest
         UD60x18 interest = accruedRate.mul(loan.unpaidPrincipal);
 
-        console.log(44);
-
         // Calculate repayment
-        console.log("payment:", payment);
-        console.log("UD60x18.unwrap(interest)", UD60x18.unwrap(interest));
         require(toUD60x18(payment).gte(interest), "payment must be >= interest");
         UD60x18 repayment = toUD60x18(payment).sub(interest);
 
-        console.log(55);
-
         // Update loan
-        console.log("UD60x18.unwrap(loan.unpaidPrincipal):", UD60x18.unwrap(loan.unpaidPrincipal));
-        console.log("UD60x18.unwrap(repayment)", UD60x18.unwrap(repayment));
         loan.unpaidPrincipal = loan.unpaidPrincipal.sub(repayment);
-        console.log(551);
         loan.maxUnpaidInterest = loan.maxUnpaidInterest.sub(interest);
-        console.log(552);
         loan.lastPaymentTime = block.timestamp;
-
-        console.log(66);
 
         // Update pool
         totalPrincipal = totalPrincipal.sub(repayment);
         totalDeposits = totalDeposits.add(interest);
         totalInterestOwed = totalInterestOwed.sub(interest);
-        
-        console.log(77);
     }
 
     function redeem(uint tokenId) external {
@@ -249,18 +212,11 @@ contract BorrowingV2 {
         // Get loan
         Loan memory loan = loans[tokenId];
 
-        console.log("rate per second:", UD60x18.unwrap(loan.ratePerSecond));
-        console.log("timeDelta:", timeDeltaSinceLastPayment(tokenId));
-
         // Calculate accruedRate
         UD60x18 accruedRate = loan.ratePerSecond.mul(toUD60x18(timeDeltaSinceLastPayment(tokenId)));
 
-        console.log("accruedRate", UD60x18.unwrap(accruedRate));
-
         // Calculate interest
         UD60x18 interest = accruedRate.mul(loan.unpaidPrincipal);
-
-        console.log("interest", UD60x18.unwrap(interest));
 
         // Return interest as minimumPayment
         return fromUD60x18(interest);
