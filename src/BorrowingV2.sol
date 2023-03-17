@@ -140,6 +140,23 @@ contract BorrowingV2 {
     }
 
     // If borrower paid avgPaymentPerSecond every second:
+    //  - each payment's interest would be: unpaidPrincipal * (ratePerSecond * 1s) = unpaidPrincipal * ratePerSecond
+    //  - each payment's repayment would be: avgPaymentPerSecond - (unpaidPrincipal * ratePerSecond)
+    // So at second 1:
+    //  - loan.maxUnpaidInterestSecond1 = loan.maxUnpaidInterestSecond0 - (loan.unpaidPrincipalSecond0 * ratePerSecond)
+    //  - loan.unpaidPrincipalSecond1 = loan.unpaidPrincipalSecond0 - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 * ratePerSecond))
+    // So at second 2:
+    //  - loan.maxUnpaidInterestSecond2 = loan.maxUnpaidInterestSecond1 - (loan.unpaidPrincipalSecond1 * ratePerSecond)
+    //  - loan.unpaidPrincipalSecond2 = loan.unpaidPrincipalSecond1 - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond1 * ratePerSecond))
+    // Or, at second 2:
+    //  - loan.maxUnpaidInterestSecond2 = loan.maxUnpaidInterestSecond0 - (loan.unpaidPrincipalSecond0 * ratePerSecond) - (loan.unpaidPrincipalSecond0 - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 * ratePerSecond)) * ratePerSecond)
+    //  - loan.unpaidPrincipalSecond2 = loan.unpaidPrincipalSecond0 - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 * ratePerSecond)) - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 * ratePerSecond)) * ratePerSecond))
+    // Simpifying second 2:
+    //  - loan.maxUnpaidInterestSecond2 = loan.maxUnpaidInterestSecond0 - (loan.unpaidPrincipalSecond0 * ratePerSecond) - (loan.unpaidPrincipalSecond0 - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 * ratePerSecond)) * ratePerSecond)
+    //  - loan.unpaidPrincipalSecond2 = loan.unpaidPrincipalSecond0 - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 * ratePerSecond)) - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 * ratePerSecond)) * ratePerSecond))
+
+
+    // If borrower paid avgPaymentPerSecond every second:
     //  - each payment's interest would be: ratePerSecond * 1s = ratePerSecond
     //  - each payment's repayment would be: avgPaymentPerSecond - ratePerSecond
     // So each second:
@@ -164,8 +181,6 @@ contract BorrowingV2 {
         // return loanMonthMaxUnpaidInterestCap(loan).lt(loan.maxUnpaidInterest);
         return loanMonthUnpaidPrincipalCap(loan).lt(loan.unpaidPrincipal);
     }
-
-
 
     // Note: should be equal to tusdcSupply / totalDeposits
     function lenderApy() external view returns(UD60x18) {
