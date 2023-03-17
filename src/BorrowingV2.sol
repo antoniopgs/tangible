@@ -151,12 +151,18 @@ contract BorrowingV2 {
     // Or, at second 2:
     //  - loan.maxUnpaidInterestSecond2 = loan.maxUnpaidInterestSecond0 - (loan.unpaidPrincipalSecond0 * ratePerSecond) - (loan.unpaidPrincipalSecond0 - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 * ratePerSecond)) * ratePerSecond)
     //  - loan.unpaidPrincipalSecond2 = loan.unpaidPrincipalSecond0 - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 * ratePerSecond)) - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 * ratePerSecond)) * ratePerSecond))
-    // Shortening names of second 2:
-    //  - loan.maxUnpaidInterestSecond2 = i0 - (p0 * r) - (p0 - (p - (p0 * r)) * r)
-    //  - loan.unpaidPrincipalSecond2 = p0 - (p - (p0 * r)) - (p - (p0 - (p - (p0 * r)) * r))
+    // Shortening names of second 2 (interestSecond0 -> i | principalSecond0 -> p | ratePerSecond -> r | avgPaymentPerSecond -> k):
+    //  - loan.maxUnpaidInterestSecond2 = i - (p * r) - (p - (k - (p * r)) * r)
+    //  - loan.unpaidPrincipalSecond2 = p - (k - (p * r)) - (k - (p - (k - (p * r)) * r))
     // Simplying second 2:
-    //  - loan.maxUnpaidInterestSecond2 = i0 - (p0r) - (p0 - (p - (p0r)) * r)
-    //  - loan.unpaidPrincipalSecond2 = p0 - (p - (p0r)) - (p - (p0 - (p - (p0r)) * r))
+    //  - loan.maxUnpaidInterestSecond2 = i - (pr) - (p - (k - (pr)) * r)
+    //  - loan.unpaidPrincipalSecond2 = p - (k - (pr)) - (k - (p - (k - (pr)) * r))
+    // Simplying second 2 more:
+    //  - loan.maxUnpaidInterestSecond2 = i - pr -p + rk - pr^2
+    //  - loan.unpaidPrincipalSecond2 = p - k + pr -k + p -kr + prr
+    // Simplying second 2 even more:
+    //  - loan.maxUnpaidInterestSecond2 = - pr^2 + kr - pr - p + i
+    //  - loan.unpaidPrincipalSecond2 = pr^2 + pr - kr + 2p - 2k
 
 
     // If borrower paid avgPaymentPerSecond every second:
