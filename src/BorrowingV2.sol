@@ -164,6 +164,10 @@ contract BorrowingV2 {
     //  - loan.maxUnpaidInterestSecond2 = - pr^2 + kr - pr - p + i
     //  - loan.unpaidPrincipalSecond2 = pr^2 + pr - kr + 2p - 2k
 
+    // pr^2 + pr - kr + 2p - 2k
+    // r(pr + p - k) + 2p - 2k
+    // r(p(r + 1) - k) + 2(p - k)
+
 
     // If borrower paid avgPaymentPerSecond every second:
     //  - each payment's interest would be: ratePerSecond * 1s = ratePerSecond
