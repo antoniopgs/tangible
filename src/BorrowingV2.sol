@@ -29,26 +29,13 @@ contract BorrowingV2 {
     mapping(uint => Loan) public loans;
 
     // Functions
-    function utilization() public view returns (UD60x18) {
-        return totalPrincipal.div(totalDeposits);
+    function deposit(uint usdc) external {
+        totalDeposits = totalDeposits.add(toUD60x18(usdc));
     }
 
-    // Note: should be equal to tusdcSupply / totalDeposits
-    function lenderApy() external view returns(UD60x18) {
-        return totalInterestOwed.div(totalDeposits);
-    }
-
-    function timeDeltaSinceLastPayment(/* Loan memory loan */ uint tokenId) /* private */ public view returns(uint) {
-        Loan memory loan = loans[tokenId];
-        return block.timestamp - loan.lastPaymentTime;
-    }
-
-    function borrowerApr(UD60x18 /* utilization */) public /* view */ pure returns (UD60x18) {
-        return toUD60x18(5).div(toUD60x18(100)); // 5%
-    }
-
-    function borrowerRatePerSecond() private view returns(UD60x18) {
-        return borrowerApr(utilization()).div(toUD60x18(365 days));
+    function withdraw(uint usdc) external {
+        totalDeposits = totalDeposits.sub(toUD60x18(usdc));
+        require(totalPrincipal.lte(totalDeposits), "utilization can't exceed 100%");
     }
 
     function startLoan(uint tokenId, uint principal) external { // Note: principal should be uint (not UD60x18)
@@ -146,13 +133,47 @@ contract BorrowingV2 {
         console.log(77);
     }
 
-    function avgPaymentPerSecond(UD60x18 principal, UD60x18 ratePerSecond, uint loanMaxSeconds) private pure returns(UD60x18) {
-
-        // Calculate x
-        UD60x18 x = toUD60x18(1).add(ratePerSecond).powu(loanMaxSeconds);
+    function redeem(uint tokenId) external {
         
-        // Calculate avgPaymentPerSecond
-        return principal.mul(ratePerSecond).mul(x).div(x.sub(toUD60x18(1)));
+        // Get Loan
+        Loan storage loan = loans[tokenId];
+
+        // require(defaulted(loan), "no default");
+
+        // Calculate defaulterDebt
+        UD60x18 defaulterDebt = loan.unpaidPrincipal.add(loan.maxUnpaidInterest); // Question: charge redeemer all the interest? or only interest accrued until now?
+
+        // Redeem (pull defaulter's entire debt)
+        // USDC.safeTransferFrom(loan.borrower, address(this), fromUD60x18(defaulterDebt));
+
+        // Update pool
+        totalPrincipal = totalPrincipal.sub(loan.unpaidPrincipal);
+        totalDeposits = totalDeposits.add(loan.maxUnpaidInterest);
+        totalInterestOwed = totalInterestOwed.sub(loan.maxUnpaidInterest);
+
+        // Zero-out loan (only need to zero-out borrower address)
+        // loan.borrower = address(0);
+    }
+
+    function foreclose(Loan memory loan, uint salePrice) external {
+
+        // require(defaulted(loan) + 45 days, "not foreclosurable");
+
+        // Update pool
+        totalPrincipal = totalPrincipal.sub(loan.unpaidPrincipal);
+        totalDeposits = totalDeposits.add(loan.maxUnpaidInterest);
+        totalInterestOwed = totalInterestOwed.sub(loan.maxUnpaidInterest);
+
+        // Calculate defaulterDebt
+        UD60x18 defaulterDebt = loan.unpaidPrincipal.add(loan.maxUnpaidInterest); // Question: charge redeemer all the interest? or only interest accrued until now?
+
+        // Calculate defaulterEquity
+        UD60x18 defaulterEquity = toUD60x18(salePrice).sub(defaulterDebt);
+    }
+
+    // Views
+    function utilization() public view returns (UD60x18) {
+        return totalPrincipal.div(totalDeposits);
     }
 
     // If borrower paid avgPaymentPerSecond every second:
@@ -181,6 +202,35 @@ contract BorrowingV2 {
         return loanMonthUnpaidPrincipalCap(loan).lt(loan.unpaidPrincipal);
     }
 
+
+
+    // Note: should be equal to tusdcSupply / totalDeposits
+    function lenderApy() external view returns(UD60x18) {
+        return totalInterestOwed.div(totalDeposits);
+    }
+
+    function timeDeltaSinceLastPayment(/* Loan memory loan */ uint tokenId) /* private */ public view returns(uint) {
+        Loan memory loan = loans[tokenId];
+        return block.timestamp - loan.lastPaymentTime;
+    }
+
+    function borrowerApr(UD60x18 /* utilization */) public /* view */ pure returns (UD60x18) {
+        return toUD60x18(5).div(toUD60x18(100)); // 5%
+    }
+
+    function borrowerRatePerSecond() private view returns(UD60x18) {
+        return borrowerApr(utilization()).div(toUD60x18(365 days));
+    }
+
+    function avgPaymentPerSecond(UD60x18 principal, UD60x18 ratePerSecond, uint loanMaxSeconds) private pure returns(UD60x18) {
+
+        // Calculate x
+        UD60x18 x = toUD60x18(1).add(ratePerSecond).powu(loanMaxSeconds);
+        
+        // Calculate avgPaymentPerSecond
+        return principal.mul(ratePerSecond).mul(x).div(x.sub(toUD60x18(1)));
+    }
+
     // function loanMonthMaxUnpaidInterestCap(Loan memory loan) private view returns(UD60x18) {
     //     return loan.initialMaxUnpaidInterest.sub(toUD60x18(loanCompletedMonths(loan)).mul(toUD60x18(30 days).mul(loan.ratePerSecond)));
     // }
@@ -192,29 +242,6 @@ contract BorrowingV2 {
     // Note: should truncate on purpose, so that it enforces payment after 30 days, but not every second
     function loanCompletedMonths(Loan memory loan) private view returns(uint) {
         return (block.timestamp - loan.startTime) / 30 days;
-    }
-
-    function foreclose(Loan memory loan, uint salePrice) external {
-
-        // Update pool
-        totalPrincipal = totalPrincipal.sub(loan.unpaidPrincipal);
-        totalDeposits = totalDeposits.add(loan.maxUnpaidInterest);
-        totalInterestOwed = totalInterestOwed.sub(loan.maxUnpaidInterest);
-
-        // Calculate defaulterDebt
-        UD60x18 defaulterDebt = loan.unpaidPrincipal.add(loan.maxUnpaidInterest);
-
-        // Calculate defaulterEquity
-        UD60x18 defaulterEquity = toUD60x18(salePrice).sub(defaulterDebt);
-    }
-
-    function deposit(uint usdc) external {
-        totalDeposits = totalDeposits.add(toUD60x18(usdc));
-    }
-
-    function withdraw(uint usdc) external {
-        totalDeposits = totalDeposits.sub(toUD60x18(usdc));
-        require(totalPrincipal.lte(totalDeposits), "utilization can't exceed 100%");
     }
 
     function minimumPayment(uint tokenId) external view returns (uint) {
