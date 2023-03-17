@@ -42,6 +42,10 @@
 
 **Simplifying $i_3$:**
 - $i_3 = i_2 - rp_2$
+- $i_3 = (i_0 - p_0r^2 - 2p_0r + rk) - r(p_0 -2k + 2rp_0 -rk + r^2p_0)$
+- $i_3 = i_0 - p_0r^2 - 2p_0r + rk -rp_0 +2kr - 2r^2p_0 +r^2k - r^3p_0$
+- $i_3 = i_0 - 3p_0r^2 - 3p_0r +3kr +r^2k - r^3p_0$
+- $i_3 = i_0 - p_0r^3 - 3p_0r^2 - 3p_0r + kr^2 + 3kr$
 
 **Simplifying $p_3$:**
 - $p_3 = p_2 - (k - rp_2)$
