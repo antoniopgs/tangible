@@ -140,24 +140,22 @@ contract BorrowingV2 {
     }
 
     // Borrowers can pay off loans faster (by paying more/earlier), but there should be a minimum pay off speed: function unpaidPrincipalCap
-    // At the slowest, every month the borrower must at least pay: 30 days * avgPaymentPerSecond
-    //  - interest = (30 days * ratePerSecond) * unpaidPrincipal
-    //  - repayment = (30 days * avgPaymentPerSecond) - interest
+    // At the slowest, every month the borrower must at least pay: ks
+
+    // Renaming:
+    // i0 -> month0UnpaidInterestCap (or initialUnpaidInterest)
+    // p1 -> month1UnpaidPrincipalCap
+    // r -> ratePerSecond
+    // k -> avgPaymentPerSecond
+    // s -> secondsIn30Days
+
     // So after 1 month:
-    //  - maxUnpaidInterestCap1 = unpaidInterest0 - 30 days * ratePerSecond * unpaidPrincipal0
-    //  - unpaidPrincipalCap1 = unpaidPrincipal0 - (30 days * avgPaymentPerSecond) + (30 days * ratePerSecond * unpaidPrincipal0)
-    // Simplifying after 1 month:
-    //  - maxUnpaidInterestCap1 = unpaidInterest0 - 30 days * ratePerSecond * unpaidPrincipal0
-    //  - unpaidPrincipalCap1 = unpaidPrincipal0 - 30 days(avgPaymentPerSecond + ratePerSecond * unpaidPrincipal0) // Note: signs are wrong
+    // i1 = i0 - rsp0
+    // p1 = p0 - (ks - i1) <=> p0 -ks + i1 <=> p0 -ks + i0 - rsp0
+
     // So after 2 months:
-    //  - maxUnpaidInterestCap2 = maxUnpaidInterestCap1 - 30 days * ratePerSecond * unpaidPrincipalCap1
-    //  - unpaidPrincipalCap2 = unpaidPrincipalCap1 - (30 days * avgPaymentPerSecond) + (30 days * ratePerSecond * unpaidPrincipalCap1)
-    // Replacing in after 2 months:
-    //  - maxUnpaidInterestCap2 = unpaidInterest0 - 30 days * ratePerSecond * unpaidPrincipal0 - 30 days * ratePerSecond * unpaidPrincipal0 - (30 days * avgPaymentPerSecond) + (30 days * ratePerSecond * unpaidPrincipal0)
-    //  - unpaidPrincipalCap2 = unpaidPrincipal0 - (30 days * avgPaymentPerSecond) + (30 days * ratePerSecond * unpaidPrincipal0) - (30 days * avgPaymentPerSecond) + (30 days * ratePerSecond * unpaidPrincipal0 - (30 days * avgPaymentPerSecond) + (30 days * ratePerSecond * unpaidPrincipal0))
-    // Simplifying after 2 months:
-    //  - maxUnpaidInterestCap2 = unpaidInterest0 - 30 days((ratePerSecond * unpaidPrincipal0) - (avgPaymentPerSecond))
-    //  - unpaidPrincipalCap2 = unpaidPrincipal0 - 30 days * 3(avgPaymentPerSecond + ratePerSecond * unpaidPrincipal0)
+    // i2 = i1 - rsp1
+    // p2 = p1 - (ks - i2) <=> p1 -ks + i2 <=> p0 -ks + i0 - rsp0 -ks + i0 - rsp0 - rs(p0 -ks + i0 - rsp0) <=>
     function defaulted(Loan memory loan) private view returns(bool) {
         
         // Question: which one of these should I use?
