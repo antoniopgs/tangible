@@ -69,7 +69,7 @@ contract BorrowingV2 {
         totalPrincipal = totalPrincipal.add(toUD60x18(principal));
         totalInterestOwed = totalInterestOwed.add(loanMaxUnpaidInterest);
     }
-    
+
     function payLoan(uint tokenId, uint payment) external {
 
         // Load loan
@@ -139,55 +139,15 @@ contract BorrowingV2 {
         return totalPrincipal.div(totalDeposits);
     }
 
-    // If borrower paid avgPaymentPerSecond every second:
-    //  - each payment's interest would be: unpaidPrincipal * (ratePerSecond * 1s) = unpaidPrincipal * ratePerSecond
-    //  - each payment's repayment would be: avgPaymentPerSecond - (unpaidPrincipal * ratePerSecond)
+    // If borrower paid avgPaymentPerSecond every second, then each payments':
+    //  - interest = (ratePerSecond * 1s) * unpaidPrincipal = ratePerSecond * unpaidPrincipal
+    //  - repayment = avgPaymentPerSecond - (ratePerSecond * unpaidPrincipal)
     // So at second 1:
-    //  - loan.maxUnpaidInterestSecond1 = loan.maxUnpaidInterestSecond0 - (loan.unpaidPrincipalSecond0 * ratePerSecond)
-    //  - loan.unpaidPrincipalSecond1 = loan.unpaidPrincipalSecond0 - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 * ratePerSecond))
+    //  - unpaidInterestS1 = unpaidInterestS0 - (ratePerSecond * unpaidPrincipalS0)
+    //  - unpaidPrincipalS1 = unpaidPrincipalS0 - avgPaymentPerSecond - (ratePerSecond * unpaidPrincipalS0)
     // So at second 2:
-    //  - loan.maxUnpaidInterestSecond2 = loan.maxUnpaidInterestSecond1 - (loan.unpaidPrincipalSecond1 * ratePerSecond)
-    //  - loan.unpaidPrincipalSecond2 = loan.unpaidPrincipalSecond1 - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond1 * ratePerSecond))
-    // Or, at second 2:
-    //  - loan.maxUnpaidInterestSecond2 = loan.maxUnpaidInterestSecond0 - (loan.unpaidPrincipalSecond0 * ratePerSecond) - (loan.unpaidPrincipalSecond0 - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 * ratePerSecond)) * ratePerSecond)
-    //  - loan.unpaidPrincipalSecond2 = loan.unpaidPrincipalSecond0 - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 * ratePerSecond)) - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 - (avgPaymentPerSecond - (loan.unpaidPrincipalSecond0 * ratePerSecond)) * ratePerSecond))
-    // Shortening names of second 2 (interestSecond0 -> i | principalSecond0 -> p | ratePerSecond -> r | avgPaymentPerSecond -> k):
-    //  - loan.maxUnpaidInterestSecond2 = i - (p * r) - (p - (k - (p * r)) * r)
-    //  - loan.unpaidPrincipalSecond2 = p - (k - (p * r)) - (k - (p - (k - (p * r)) * r))
-    // Simplying second 2:
-    //  - loan.maxUnpaidInterestSecond2 = i - (pr) - (p - (k - (pr)) * r)
-    //  - loan.unpaidPrincipalSecond2 = p - (k - (pr)) - (k - (p - (k - (pr)) * r))
-    // Simplying second 2 more:
-    //  - loan.maxUnpaidInterestSecond2 = i - pr -p + rk - pr^2
-    //  - loan.unpaidPrincipalSecond2 = p - k + pr -k + p -kr + prr
-    // Simplying second 2 even more:
-    //  - loan.maxUnpaidInterestSecond2 = - pr^2 + kr - pr - p + i
-    //  - loan.unpaidPrincipalSecond2 = pr^2 + pr - kr + 2p - 2k
-
-    // pr^2 + pr - kr + 2p - 2k
-    // r(pr + p - k) + 2p - 2k
-    // r(p(r + 1) - k) + 2(p - k)
-
-
-    // If borrower paid avgPaymentPerSecond every second:
-    //  - each payment's interest would be: ratePerSecond * 1s = ratePerSecond
-    //  - each payment's repayment would be: avgPaymentPerSecond - ratePerSecond
-    // So each second:
-    //  - loan.maxUnpaidInterest -= ratePerSecond
-    //  - loan.unpaidPrincipal -= avgPaymentPerSecond - ratePerSecond
-    // So 30 days later:
-    //  - loan.maxUnpaidInterest -= 30 days(ratePerSecond);
-    //  - loan.unpaidPrincipal -= 30 days(avgPaymentPerSecond - ratePerSecond);
-    // Don't think an early/bigger payment should anticipate the rest of the payments. should probably calculate all deadlines off the 1st one
-    // So, at the end of month 1:
-    //  - loan.month1EndMaxUnpaidInterest = loan.initialMaxUnpaidInterest - 30 days(ratePerSecond)
-    //  - loan.month1EndMaxUnpaidPrincipal = loan.principal - 30 days(avgPaymentPerSecond - ratePerSecond)
-    // So, at the end of month 7:
-    //  - loan.month7EndMaxUnpaidInterest = loan.initialMaxUnpaidInterest - 7(30 days(ratePerSecond))
-    //  - loan.month7EndMaxUnpaidPrincipal = loan.principal - 7(30 days(avgPaymentPerSecond - ratePerSecond))
-    // So, at the end of month n:
-    //  - loan.monthNEndMaxUnpaidInterest = loan.initialMaxUnpaidInterest - n(30 days(ratePerSecond))
-    //  - loan.monthNEndMaxUnpaidPrincipal = loan.principal - n(30 days(avgPaymentPerSecond - ratePerSecond))
+    //  - unpaidInterestS2 = unpaidInterestS1 - (ratePerSecond * unpaidPrincipalS1)
+    //  - unpaidPrincipalS2 = unpaidPrincipalS1 - avgPaymentPerSecond - (ratePerSecond * unpaidPrincipalS1)
     function defaulted(Loan memory loan) private view returns(bool) {
         
         // Question: which one of these should I use?
