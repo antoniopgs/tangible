@@ -146,6 +146,9 @@ contract BorrowingV2 {
     // So after 1 month:
     //  - maxUnpaidInterestCap1 = unpaidInterest0 - 30 days * ratePerSecond * unpaidPrincipal0
     //  - unpaidPrincipalCap1 = unpaidPrincipal0 - (30 days * avgPaymentPerSecond) + (30 days * ratePerSecond * unpaidPrincipal0)
+    // Simplifying after 1 month:
+    //  - maxUnpaidInterestCap1 = unpaidInterest0 - 30 days * ratePerSecond * unpaidPrincipal0
+    //  - unpaidPrincipalCap1 = unpaidPrincipal0 - 30 days(avgPaymentPerSecond + ratePerSecond * unpaidPrincipal0)
     // So after 2 months:
     //  - maxUnpaidInterestCap2 = maxUnpaidInterestCap1 - 30 days * ratePerSecond * unpaidPrincipalCap1
     //  - unpaidPrincipalCap2 = unpaidPrincipalCap1 - (30 days * avgPaymentPerSecond) + (30 days * ratePerSecond * unpaidPrincipalCap1)
