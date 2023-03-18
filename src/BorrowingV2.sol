@@ -144,11 +144,11 @@ contract BorrowingV2 {
     //  - interest = (30 days * ratePerSecond) * unpaidPrincipal
     //  - repayment = (30 days * avgPaymentPerSecond) - interest
     // So after 1 month:
-    //  - maxUnpaidInterestCap = unpaidInterest - 30 days * ratePerSecond * unpaidPrincipal
-    //  - unpaidPrincipalCap = unpaidPrincipal - (30 days * avgPaymentPerSecond) + (30 days * ratePerSecond * unpaidPrincipal)
+    //  - maxUnpaidInterestCap1 = unpaidInterest0 - 30 days * ratePerSecond * unpaidPrincipal0
+    //  - unpaidPrincipalCap1 = unpaidPrincipal0 - (30 days * avgPaymentPerSecond) + (30 days * ratePerSecond * unpaidPrincipal0)
     // So after 2 months:
-    //  - maxUnpaidInterestCap = 
-    //  - unpaidPrincipalCap = 
+    //  - maxUnpaidInterestCap2 = unpaidInterest1 - 30 days * ratePerSecond * unpaidPrincipal1
+    //  - unpaidPrincipalCap2 = unpaidPrincipal1 - (30 days * avgPaymentPerSecond) + (30 days * ratePerSecond * unpaidPrincipal1)
     function defaulted(Loan memory loan) private view returns(bool) {
         
         // Question: which one of these should I use?
