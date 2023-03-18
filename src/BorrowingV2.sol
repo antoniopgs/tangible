@@ -141,11 +141,11 @@ contract BorrowingV2 {
 
     // Borrowers can pay off loans faster (by paying more/earlier), but there should be a minimum pay off speed: function unpaidPrincipalCap
     // At the slowest, every month the borrower must at least pay: 30 days * avgPaymentPerSecond
-    //  - interest = (30 days * ratePerSecond) * unpaidPrincipal
-    //  - repayment = (30 days * avgPaymentPerSecond) - ((30 days * ratePerSecond) * unpaidPrincipal)
+    //  - interest = (30 days * ratePerSecond) * unpaidPrincipal = 30 days * ratePerSecond * unpaidPrincipal
+    //  - repayment = (30 days * avgPaymentPerSecond) - (30 days * ratePerSecond * unpaidPrincipal) = 30 days * avgPaymentPerSecond - 30 days * ratePerSecond * unpaidPrincipal
     // So after 30 days:
-    //  - maxUnpaidInterest -= (ratePerSecond * 30 days) * unpaidPrincipal
-    //  - unpaidPrincipal -= (30 days * avgPaymentPerSecond) - ((30 days * ratePerSecond) * unpaidPrincipal)
+    //  - maxUnpaidInterest -= 30 days * ratePerSecond * unpaidPrincipal
+    //  - unpaidPrincipal -= 30 days * avgPaymentPerSecond - 30 days * ratePerSecond * unpaidPrincipal
     function defaulted(Loan memory loan) private view returns(bool) {
         
         // Question: which one of these should I use?
