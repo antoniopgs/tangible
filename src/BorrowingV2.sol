@@ -150,7 +150,7 @@ contract BorrowingV2 {
         
         // Question: which one of these should I use?
         // return loanMonthMaxUnpaidInterestCap(loan).lt(loan.maxUnpaidInterest);
-        return loanMonthUnpaidPrincipalCap(loan).lt(loan.unpaidPrincipal);
+        return unpaidPrincipalCap(loan).lt(loan.unpaidPrincipal);
     }
 
     // Note: should be equal to tusdcSupply / totalDeposits
@@ -184,8 +184,13 @@ contract BorrowingV2 {
     //     return loan.initialMaxUnpaidInterest.sub(toUD60x18(loanCompletedMonths(loan)).mul(toUD60x18(30 days).mul(loan.ratePerSecond)));
     // }
 
-    function loanMonthUnpaidPrincipalCap(Loan memory loan) private view returns(UD60x18) {
-        return loan.principal.sub(toUD60x18(loanCompletedMonths(loan)).mul(toUD60x18(30 days).mul(loan.avgPaymentPerSecond.sub(loan.ratePerSecond))));
+    // why is this not using any loan tickover?
+    function unpaidPrincipalCap(Loan memory loan) private pure returns(UD60x18) {
+        UD60x18 minPayment = toUD60x18(30 days).mul(loan.avgPaymentPerSecond);
+        UD60x18 minRate = toUD60x18(30 days).mul(loan.ratePerSecond);
+        UD60x18 minInterest = minRate.mul(loan.unpaidPrincipal);
+        UD60x18 minRepayment = (minPayment).sub(minInterest);
+        return loan.unpaidPrincipal.sub(minRepayment);
     }
 
     // Note: should truncate on purpose, so that it enforces payment after 30 days, but not every second
