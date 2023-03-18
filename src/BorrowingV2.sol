@@ -151,14 +151,14 @@ contract BorrowingV2 {
 
     // So after 1 month:
     // i1 = i0 - rsp0
-    // p1 = p0 - (ks - i1) <=> p0 -ks + i1 <=> p0 -ks + i0 - rsp0
+    // p1 = p0 - (ks - i1) <=> p0 - ks + i1 <=> p0 - ks + i0 - rsp0
 
     // So after 2 months:
-    // i2 = i1 - rsp1 <=> i0 - rsp0 - rs(p0 -ks + i0 - rsp0) <=> i0 -2rsp0 +rsks -rsi0 +p0r^2s^2
+    // i2 = i1 - rsp1 <=> i0 - rsp0 - rs(p0 -ks + i0 - rsp0) <=> i0 - 2rsp0 + krs^2 - rsi0 + p0r^2s^2
     // p2 = p1 - (ks - i2) <=> p1 -ks + i2 <=> p0 -ks + i0 - rsp0 -ks + i0 - rsp0 - rs(p0 -ks + i0 - rsp0) <=> p0 -2ks + 2i0 - 3rsp0 +rks^2 - rsi0 + p0r^2s^2
 
     // So after 3 months:
-    // i3 = i2 - rsp2
+    // i3 = i2 - rsp2 <=> i0 - 3rsp0 - 3rsi0 + 3krs^2 + 4p0r^2s^2 - ks^3r^2 + i0r^2s^2 - p0r^3s^3
     // p3 = 
     function defaulted(Loan memory loan) private view returns(bool) {
         
