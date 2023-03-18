@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.15;
 
-import "https://github.com/PaulRBerg/prb-math/blob/main/src/UD60x18.sol";
+import "@prb/math/UD60x18.sol";
 
 contract BorrowingV2Monthly {
 
@@ -103,6 +103,6 @@ contract BorrowingV2Monthly {
     }
 
     function defaulted(Loan memory loan) private view returns(bool) {
-        
+        return block.timestamp > loan.nextPaymentDeadline;
     }
 }
