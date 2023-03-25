@@ -5,19 +5,21 @@ import "@prb/math/UD60x18.sol";
 
 contract BorrowingV2 {
 
-    // Borrowing vars
-    uint private periodsPerYear = 365 days; // means 1 period = 1 second
-    uint maxPeriodsBetweenPayments = 30 days;
-
     // Structs
     struct Loan {
         UD60x18 periodicRate;
-        uint periodicPayment;
         uint unpaidPrincipal;
         uint maxUnpaidInterest;
-        uint startTime;
         uint lastPaymentTime;
     }
+
+    // Time vars
+    uint private periodLengthSeconds = 1 seconds;
+    uint private periodsPerSecond = 1 / periodLengthSeconds;
+    uint private periodsPerYear = 365 days * periodsPerSecond;
+
+    // Borrowing terms
+    uint private maxPeriodsBetweenPayments = 30 * 24 * 60 * 60 * periodsPerSecond; // 30 days;
 
     // Pool vars
     uint totalPrincipal;
@@ -59,9 +61,7 @@ contract BorrowingV2 {
             periodicRate: periodicRate,
             unpaidPrincipal: principal,
             maxUnpaidInterest: maxUnpaidInterest,
-            lastPaymentTime: block.timestamp, // Note: so loan starts accruing from now (not a payment)
-            periodicPayment: periodicPayment,
-            startTime: block.timestamp
+            lastPaymentTime: block.timestamp // Note: so loan starts accruing from now (not a payment)
         });
 
         // Update pool
@@ -75,7 +75,7 @@ contract BorrowingV2 {
         Loan storage loan = loans[tokenId];
 
         // Calculate accruedRate
-        UD60x18 accruedRate = loan.periodicRate.mul(toUD60x18(periodsSinceLastPayment(tokenId)));
+        UD60x18 accruedRate = loan.periodicRate.mul(toUD60x18(periodsSinceLastPayment(loan)));
 
         // Calculate interest
         uint interest = fromUD60x18(accruedRate.mul(toUD60x18(loan.unpaidPrincipal)));
@@ -138,42 +138,17 @@ contract BorrowingV2 {
         return totalPrincipal / totalDeposits;
     }
 
-    // Borrowers can pay off loans faster (by paying more/earlier), but there should be a minimum pay off speed: function unpaidPrincipalCap
-    // At the slowest, every month the borrower must at least pay: ks
-
-    // Renaming:
-    // i0 -> month0UnpaidInterestCap (or initialUnpaidInterest)
-    // p1 -> month1UnpaidPrincipalCap
-    // r -> ratePerSecond
-    // k -> avgPaymentPerSecond
-    // s -> secondsIn30Days
-
-    // So after 1 month:
-    // i1 = i0 - rsp0
-    // p1 = p0 - (ks - i1) <=> p0 - ks + i1 <=> p0 - ks + i0 - rsp0
-
-    // So after 2 months:
-    // i2 = i1 - rsp1 <=> i0 - rsp0 - rs(p0 -ks + i0 - rsp0) <=> i0 - 2rsp0 + krs^2 - rsi0 + p0r^2s^2
-    // p2 = p1 - (ks - i2) <=> p1 -ks + i2 <=> p0 -ks + i0 - rsp0 -ks + i0 - rsp0 - rs(p0 -ks + i0 - rsp0) <=> p0 -2ks + 2i0 - 3rsp0 +rks^2 - rsi0 + p0r^2s^2
-
-    // So after 3 months:
-    // i3 = i2 - rsp2 <=> i0 - 3rsp0 - 3rsi0 + 3krs^2 + 4p0r^2s^2 - ks^3r^2 + i0r^2s^2 - p0r^3s^3
-    // p3 = 
-    function defaulted(Loan memory loan) private view returns(bool) {
-        
-        // Question: which one of these should I use?
-        // return loanMonthMaxUnpaidInterestCap(loan).lt(loan.maxUnpaidInterest);
-        return unpaidPrincipalCap(loan) < loan.unpaidPrincipal;
-    }
-
-    // Note: should be equal to tusdcSupply / totalDeposits
-    function lenderApy() external view returns(uint) {
+    function lenderApy() external view returns(uint) { // Note: should be equal to tusdcSupply / totalDeposits
         return totalInterestOwed / totalDeposits;
     }
 
-    function periodsSinceLastPayment(/* Loan memory loan */ uint tokenId) /* private */ public view returns(uint) {
-        Loan memory loan = loans[tokenId];
-        return block.timestamp - loan.lastPaymentTime;
+    function defaulted(Loan memory loan) private view returns(bool) {
+        return periodsSinceLastPayment(loan) > maxPeriodsBetweenPayments;
+    }
+
+    function periodsSinceLastPayment(Loan memory loan) private view returns(uint) {
+        uint secondsSinceLastPayment = block.timestamp - loan.lastPaymentTime;
+        return secondsSinceLastPayment / periodsPerSecond;
     }
 
     function borrowerApr(uint /* utilization */) public /* view */ pure returns (UD60x18) {
@@ -189,40 +164,7 @@ contract BorrowingV2 {
         // Calculate x
         UD60x18 x = toUD60x18(1).add(periodicRate).powu(periodCount);
         
-        // Calculate avgPaymentPerSecond
+        // Calculate periodicPayment
         return fromUD60x18(toUD60x18(principal).mul(periodicRate).mul(x).div(x.sub(toUD60x18(1))));
-    }
-
-    // function loanMonthMaxUnpaidInterestCap(Loan memory loan) private view returns(UD60x18) {
-    //     return loan.initialMaxUnpaidInterest.sub(toUD60x18(loanCompletedMonths(loan)).mul(toUD60x18(30 days).mul(loan.ratePerSecond)));
-    // }
-
-    // why is this not using any loan tickover?
-    function unpaidPrincipalCap(Loan memory loan) private view returns(uint) {
-        uint minPayment = maxPeriodsBetweenPayments * loan.periodicPayment;
-        UD60x18 maxRate = toUD60x18(maxPeriodsBetweenPayments).mul(loan.periodicRate);
-        uint maxInterest = fromUD60x18(maxRate.mul(toUD60x18(loan.unpaidPrincipal)));
-        uint minRepayment = minPayment - maxInterest;
-        return loan.unpaidPrincipal - minRepayment;
-    }
-
-    // Note: should truncate on purpose, so that it enforces payment after 30 days, but not every second
-    function loanCompletedMonths(Loan memory loan) private view returns(uint) {
-        return (block.timestamp - loan.startTime) / 30 days;
-    }
-
-    function minimumPayment(uint tokenId) external view returns (uint) {
-
-        // Get loan
-        Loan memory loan = loans[tokenId];
-
-        // Calculate accruedRate
-        UD60x18 accruedRate = loan.periodicRate.mul(toUD60x18(periodsSinceLastPayment(tokenId)));
-
-        // Calculate interest
-        uint interest = fromUD60x18(accruedRate.mul(toUD60x18(loan.unpaidPrincipal)));
-
-        // Return interest as minimumPayment
-        return interest;
     }
 }
