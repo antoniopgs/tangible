@@ -15,11 +15,9 @@ contract BorrowingV2 {
 
     // Time vars
     uint private periodLengthSeconds = 1 seconds;
-    uint private periodsPerSecond = 1 / periodLengthSeconds;
-    uint private periodsPerYear = 365 days * periodsPerSecond;
 
     // Borrowing terms
-    uint private maxPeriodsBetweenPayments = 30 * 24 * 60 * 60 * periodsPerSecond; // 30 days;
+    uint private maxPaymentGapSeconds = 30 days;
 
     // Pool vars
     uint totalPrincipal;
@@ -45,7 +43,7 @@ contract BorrowingV2 {
         UD60x18 periodicRate = _periodicRate();
 
         // Calculate periodCount
-        uint periodCount = yearsCount * periodsPerYear;
+        uint periodCount = yearsCount * periodsPerYear();
 
         // Calculate periodicPayment
         uint periodicPayment = calculatePeriodicPayment(principal, periodicRate, periodCount);
@@ -143,12 +141,12 @@ contract BorrowingV2 {
     }
 
     function defaulted(Loan memory loan) private view returns(bool) {
-        return periodsSinceLastPayment(loan) > maxPeriodsBetweenPayments;
+        return periodsSinceLastPayment(loan) > maxPeriodsBetweenPayments();
     }
 
     function periodsSinceLastPayment(Loan memory loan) private view returns(uint) {
         uint secondsSinceLastPayment = block.timestamp - loan.lastPaymentTime;
-        return secondsSinceLastPayment / periodsPerSecond;
+        return secondsSinceLastPayment / periodsPerSecond();
     }
 
     function borrowerApr(uint /* utilization */) public /* view */ pure returns (UD60x18) {
@@ -156,7 +154,7 @@ contract BorrowingV2 {
     }
 
     function _periodicRate() private view returns(UD60x18) {
-        return borrowerApr(utilization()).div(toUD60x18(periodsPerYear));
+        return borrowerApr(utilization()).div(toUD60x18(periodsPerYear()));
     }
 
     function calculatePeriodicPayment(uint principal, UD60x18 periodicRate, uint periodCount) private pure returns(uint) {
@@ -166,5 +164,17 @@ contract BorrowingV2 {
         
         // Calculate periodicPayment
         return fromUD60x18(toUD60x18(principal).mul(periodicRate).mul(x).div(x.sub(toUD60x18(1))));
+    }
+
+    function periodsPerSecond() private view returns(uint) {
+        return 1 / periodLengthSeconds;
+    }
+
+    function periodsPerYear() private view returns(uint) {
+        return 365 days * periodsPerSecond();
+    }
+
+    function maxPeriodsBetweenPayments() private view returns(uint) {
+        return maxPaymentGapSeconds * periodsPerSecond();
     }
 }
