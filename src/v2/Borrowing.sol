@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import "@prb/math/UD60x18.sol";
 
-contract BorrowingV2 {
+contract Borrowing {
 
     // Structs
     struct Loan {
@@ -23,7 +23,7 @@ contract BorrowingV2 {
     // TimeConfig private timeConfig = TimeConfig({ periodsPerYear: 12, periodLengthSeconds: 30 days });
 
     // Borrowing terms
-    uint private maxPaymentGapSeconds = 30 days;
+    uint private maxPaymentGapSeconds = 30 days; // Note: maybe I don't even need this?
 
     // Pool vars
     uint totalPrincipal;
