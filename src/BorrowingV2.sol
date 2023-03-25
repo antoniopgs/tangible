@@ -13,8 +13,14 @@ contract BorrowingV2 {
         uint lastPaymentTime;
     }
 
-    // Time vars
-    uint private periodLengthSeconds = 1 seconds;
+    struct TimeConfig {
+        uint periodsPerYear;
+        uint periodLengthSeconds;
+    }
+
+    // Time Config
+    TimeConfig private timeConfig = TimeConfig({ periodsPerYear: 365 * 24 * 60 * 60, periodLengthSeconds: 1 });
+    // TimeConfig private timeConfig = TimeConfig({ periodsPerYear: 12, periodLengthSeconds: 30 * 24 * 60 * 60 });
 
     // Borrowing terms
     uint private maxPaymentGapSeconds = 30 days;
@@ -43,7 +49,7 @@ contract BorrowingV2 {
         UD60x18 periodicRate = _periodicRate();
 
         // Calculate periodCount
-        uint periodCount = yearsCount * periodsPerYear();
+        uint periodCount = yearsCount * timeConfig.periodsPerYear;
 
         // Calculate periodicPayment
         uint periodicPayment = calculatePeriodicPayment(principal, periodicRate, periodCount);
@@ -154,7 +160,7 @@ contract BorrowingV2 {
     }
 
     function _periodicRate() private view returns(UD60x18) {
-        return borrowerApr(utilization()).div(toUD60x18(periodsPerYear()));
+        return borrowerApr(utilization()).div(toUD60x18(timeConfig.periodsPerYear));
     }
 
     function calculatePeriodicPayment(uint principal, UD60x18 periodicRate, uint periodCount) private pure returns(uint) {
@@ -167,11 +173,7 @@ contract BorrowingV2 {
     }
 
     function periodsPerSecond() private view returns(uint) {
-        return 1 / periodLengthSeconds;
-    }
-
-    function periodsPerYear() private view returns(uint) {
-        return 365 days * periodsPerSecond();
+        return 1 / timeConfig.periodLengthSeconds;
     }
 
     function maxPeriodsBetweenPayments() private view returns(uint) {
