@@ -19,8 +19,8 @@ contract BorrowingV2 {
     }
 
     // Time Config
-    TimeConfig private timeConfig = TimeConfig({ periodsPerYear: 365 * 24 * 60 * 60, periodLengthSeconds: 1 });
-    // TimeConfig private timeConfig = TimeConfig({ periodsPerYear: 12, periodLengthSeconds: 30 * 24 * 60 * 60 });
+    TimeConfig private timeConfig = TimeConfig({ periodsPerYear: 365 days, periodLengthSeconds: 1 seconds });
+    // TimeConfig private timeConfig = TimeConfig({ periodsPerYear: 12, periodLengthSeconds: 30 days });
 
     // Borrowing terms
     uint private maxPaymentGapSeconds = 30 days;
