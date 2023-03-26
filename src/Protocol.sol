@@ -155,12 +155,12 @@ contract Protocol is Initializable {
     }
 
     // ----- VIEWS -----
-    function utilization() external view returns (uint) {
-        return totalPrincipal / totalDeposits;
+    function utilization() external view returns (UD60x18) {
+        return toUD60x18(totalPrincipal).div(toUD60x18(totalDeposits));
     }
 
-    function lenderApy() external view returns (uint) {
-        return totalInterestOwed / totalDeposits;
+    function lenderApy() external view returns (UD60x18) {
+        return toUD60x18(totalInterestOwed).div(toUD60x18(totalDeposits));
     }
 
     function calculateMonthlyRate() private /* view */ pure returns (UD60x18) {
