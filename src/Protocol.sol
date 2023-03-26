@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "@prb/math/UD60x18.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./tUsdc.sol";
+import "@prb/math/UD60x18.sol";
 
-contract Protocol {
+contract Protocol is Initializable {
+
+    // Tokens
+    IERC20 USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // ethereum
+    tUsdc tUSDC;
 
     // Structs
     struct Loan {
@@ -15,10 +21,6 @@ contract Protocol {
         uint maxUnpaidInterest;
         uint nextPaymentDeadline;
     }
-
-    // Tokens
-    IERC20 USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // ethereum
-    IERC20 tUSDC;
 
     // Pool
     uint totalPrincipal;
@@ -34,6 +36,10 @@ contract Protocol {
 
     // Libs
     using SafeERC20 for IERC20;
+
+    function initialize(tUsdc _tUSDC) external initializer {
+        tUSDC = _tUSDC;
+    }
 
     function deposit(uint _deposit) external {
 
