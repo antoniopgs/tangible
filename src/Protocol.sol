@@ -25,37 +25,45 @@ contract Protocol {
     uint totalDeposits;
     uint totalInterestOwed;
 
-    // Other
-    UD60x18 public maxLtv = toUD60x18(50).div(toUD60x18(100)); // 50%
-
     // Loan storage
     mapping(uint => Loan) public loans;
 
-    // Resident storage
-    mapping(address => bool) private isResident;
-    mapping(uint => uint) private residentAddress;
-    mapping(address => uint) private addressResident;
+    // Other
+    UD60x18 public maxLtv = toUD60x18(50).div(toUD60x18(100)); // 50%
+    uint public redemptionWindow = 45 days;
 
     // Libs
     using SafeERC20 for IERC20;
 
     function deposit(uint _deposit) external {
 
-        // Pull deposit
+        // Pull _deposit
         USDC.safeTransferFrom(msg.sender, address(this), _deposit);
 
-        // Update Pool
+        // Update pool
         totalDeposits += _deposit;
+
+        // Calculate tusdc
+        uint tusdc = usdcToTusdc(_deposit);
+
+        // Mint tusdc to depositor
+        tUSDC.mint(msg.sender, tusdc);
     }
 
     function withdraw(uint withdrawal) external {
 
-        // Update Pool
+        // Calculate tusdc
+        uint tusdc = usdcToTusdc(withdrawal);
+
+        // Burn tusdc from withdrawer
+        tUSDC.burn(tusdc, "");
+
+        // Update & Validate pool
         totalDeposits -= withdrawal;
         require(totalPrincipal <= totalDeposits, "utilization can't exceed 100%");
 
         // Send withdrawal
-        USDC.safeTransferFrom(address(this), msg.sender, withdrawal);
+        USDC.safeTransfer(msg.sender, withdrawal); // Question: reentrancy possible?
     }
 
     function startLoan(uint tokenId, address borrower, uint propertyValue, uint downPayment, uint loanYears) external {
@@ -184,4 +192,8 @@ contract Protocol {
     }
 
     // Todo: State Validations
+
+    function defaulted(Loan memory loan) private view returns(bool) {
+        return block.timestamp > loan.nextPaymentDeadline;
+    }
 }
