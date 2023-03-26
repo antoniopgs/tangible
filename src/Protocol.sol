@@ -170,13 +170,19 @@ contract Protocol is Initializable {
         // Ensure Default
         require(state(loan) == State.Default, "no default, or redemptionWindow exceeded");
 
+        // Calculate defaulterDebt
+        uint defaulterDebt = loan.unpaidPrincipal + loan.maxUnpaidInterest; // Note: should redeemer pay maxUnpaidInterest? I think so
+
+        // Redeem (pull defaulter's entire debt)
+        USDC.safeTransferFrom(msg.sender, address(this), defaulterDebt);
+
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += loan.maxUnpaidInterest;
         totalInterestOwed -= loan.maxUnpaidInterest;
 
         // Clearout loan
-        loan.borrower = address(0);
+        loan.borrower = address(0); // Note: this eliminates need to decrease loan.unpaidPrincipal
     }
 
     function foreclose(uint tokenId) external {
