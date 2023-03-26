@@ -75,7 +75,7 @@ contract Protocol is Initializable {
         require(totalPrincipal <= totalDeposits, "utilization can't exceed 100%");
 
         // Send withdrawal
-        USDC.safeTransfer(msg.sender, withdrawal); // Question: reentrancy possible?
+        USDC.safeTransfer(msg.sender, withdrawal);
     }
 
     function startLoan(uint tokenId, address borrower, uint propertyValue, uint downPayment, uint loanYears) external {
@@ -174,7 +174,7 @@ contract Protocol is Initializable {
         require(state(loan) == State.Default, "no default, or redemptionWindow exceeded");
 
         // Calculate defaulterDebt
-        uint defaulterDebt = loan.unpaidPrincipal + loan.maxUnpaidInterest; // Note: should redeemer pay maxUnpaidInterest? I think so
+        uint defaulterDebt = loan.unpaidPrincipal + loan.maxUnpaidInterest; // Question: should redeemer pay maxUnpaidInterest? I think so
 
         // Redeem (pull defaulter's entire debt)
         USDC.safeTransferFrom(msg.sender, address(this), defaulterDebt);
@@ -197,7 +197,7 @@ contract Protocol is Initializable {
         require(state(loan) == State.Foreclosurable, "not foreclosurable");
 
         // Calculate defaulterDebt
-        uint defaulterDebt = loan.unpaidPrincipal + loan.maxUnpaidInterest; // Note: this is unused, so something weird going on. need to rethink
+        uint defaulterDebt = loan.unpaidPrincipal + loan.maxUnpaidInterest; // Todo: this is unused, so something weird going on. need to rethink
 
         // require(salePrice >= defaulterDebt + fees, "salePrice must cover defaultDebt + fees"); // Todo: uncomment once other fees are implemented
 
@@ -206,7 +206,7 @@ contract Protocol is Initializable {
 
         // Calculate foreclosureFee
         uint foreclosureFee = fromUD60x18(foreclosureSpread.mul(toUD60x18(defaulterEquity)));
-        // uint foreclosureFee = foreclosureSpread.mul(salePrice); // Question: shouldn't the foreclosure spread be applied to the salePrice?
+        // uint foreclosureFee = foreclosureSpread.mul(salePrice); // Todo: shouldn't the foreclosure spread be applied to the salePrice?
 
         // Calculate leftover
         uint leftover = defaulterEquity - foreclosureFee;
