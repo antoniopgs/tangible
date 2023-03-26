@@ -6,8 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./tUsdc.sol";
 import "@prb/math/UD60x18.sol";
 
-// Todo: implement sale fees, foreclosure fee and payLoan fee (protocol needs to make money)
-// Todo: implement protocolfees view and withdrawal
+// Todo: implement payLoan fee, sale fee, foreclosure fee, and maybe redemption fee?
+// Todo: implement view and withdrawal mechanism for protocolUsdc
 contract Protocol is Initializable {
 
     // Tokens
@@ -201,7 +201,7 @@ contract Protocol is Initializable {
         // Calculate defaulterDebt
         uint defaulterDebt = loan.unpaidPrincipal + loan.maxUnpaidInterest;
 
-        require(salePrice >= defaulterDebt + fees, "salePrice must cover defaultDebt + fees");
+        // require(salePrice >= defaulterDebt + fees, "salePrice must cover defaultDebt + fees"); // Todo: uncomment once other fees are implemented
 
         // Calculate defaulterEquity
         uint defaulterEquity = salePrice - defaulterDebt; // Question: which is right?
