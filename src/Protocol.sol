@@ -197,13 +197,12 @@ contract Protocol is Initializable {
         require(state(loan) == State.Foreclosurable, "not foreclosurable");
 
         // Calculate defaulterDebt
-        uint defaulterDebt = loan.unpaidPrincipal + loan.maxUnpaidInterest;
+        uint defaulterDebt = loan.unpaidPrincipal + loan.maxUnpaidInterest; // Note: this is unused, so something weird going on. need to rethink
 
         // require(salePrice >= defaulterDebt + fees, "salePrice must cover defaultDebt + fees"); // Todo: uncomment once other fees are implemented
 
         // Calculate defaulterEquity
-        uint defaulterEquity = salePrice - defaulterDebt; // Question: which is right?
-        uint defaulterEquity2 = salePrice - loan.unpaidPrincipal; // Question: which is right?
+        uint defaulterEquity = salePrice - loan.unpaidPrincipal;
 
         // Calculate foreclosureFee
         uint foreclosureFee = fromUD60x18(foreclosureSpread.mul(toUD60x18(defaulterEquity)));
