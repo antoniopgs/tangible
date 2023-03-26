@@ -22,6 +22,9 @@ contract Protocol is Initializable {
         uint nextPaymentDeadline;
     }
 
+    // Enums
+    enum State { None, Mortgage, Default, Foreclosurable } // Note: maybe switch to: enum NftOwner { Seller, Borrower, Protocol }
+
     // Pool
     uint totalPrincipal;
     uint totalDeposits;
@@ -74,6 +77,12 @@ contract Protocol is Initializable {
 
     function startLoan(uint tokenId, address borrower, uint propertyValue, uint downPayment, uint loanYears) external {
 
+        // Get Loan
+        Loan storage loan = loans[tokenId];
+
+        // Ensure None
+        require(state(loan) == State.None, "loan not empty");
+
         // Calculate principal
         uint principal = propertyValue - downPayment;
 
@@ -112,6 +121,9 @@ contract Protocol is Initializable {
         // Get Loan
         Loan storage loan = loans[tokenId];
 
+        // Ensure mortgage
+        require(state(loan) == State.Mortgage, "no active mortgage");
+
         // Calculate interest
         uint interest = fromUD60x18(loan.monthlyRate.mul(toUD60x18(loan.unpaidPrincipal)));
 
@@ -133,12 +145,16 @@ contract Protocol is Initializable {
         // Get Loan
         Loan storage loan = loans[tokenId];
 
+        // Ensure Default
+        require(state(loan) == State.Default, "no default, or redemptionWindow exceeded");
+
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += loan.maxUnpaidInterest;
         totalInterestOwed -= loan.maxUnpaidInterest;
 
-        // Update Loan
+        // Clearout loan
+        loan.borrower = address(0);
     }
 
     function foreclose(uint tokenId) external {
@@ -146,12 +162,16 @@ contract Protocol is Initializable {
         // Get Loan
         Loan storage loan = loans[tokenId];
 
+        // Ensure Foreclosurable
+        require(state(loan) == State.Foreclosurable, "not foreclosurable");
+
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += loan.maxUnpaidInterest;
         totalInterestOwed -= loan.maxUnpaidInterest;
 
-        // Update Loan
+        // Clearout loan
+        loan.borrower = address(0);
     }
 
     // ----- VIEWS -----
@@ -197,7 +217,33 @@ contract Protocol is Initializable {
         }
     }
 
-    // Todo: State Validations
+    function state(Loan memory loan) internal view returns (State) {
+        
+        // If no borrower
+        if (loan.borrower == address(0)) { // Note: must zero-out borrower when loan is paid off, redeemed or foreclosed
+            return State.None;
+
+        // If borrower exists
+        } else {
+
+            // If borrower defaulted
+            if (defaulted(loan)) {
+
+                // If redemptionWindow exceeded
+                if (block.timestamp > loan.nextPaymentDeadline + redemptionWindow) {
+                    return State.Foreclosurable;
+
+                // If within redemptionWindow
+                } else {
+                    return State.Default;
+                }
+
+            // If borrower didn't default
+            } else {
+                return State.Mortgage;
+            }
+        }
+    }
 
     function defaulted(Loan memory loan) private view returns(bool) {
         return block.timestamp > loan.nextPaymentDeadline;
