@@ -138,6 +138,17 @@ contract Protocol is Initializable {
         // Update Loan
         loan.unpaidPrincipal -= repayment;
         loan.maxUnpaidInterest -= interest;
+
+        // If loan paid off 
+        if (loan.unpaidPrincipal == 0) {
+
+            // Clearout loan
+            loan.borrower = address(0);
+        
+        // If loan not paid off
+        } else {
+            loan.nextPaymentDeadline += 30 days;
+        }
     }
 
     function redeem(uint tokenId) external {
