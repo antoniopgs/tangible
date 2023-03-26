@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./tUsdc.sol";
 import "@prb/math/UD60x18.sol";
 
+// Todo: implement sale fees, foreclosure fee and payLoan fee (protocol needs to make money)
+// Todo: implement protocolfees view and withdrawal
 contract Protocol is Initializable {
 
     // Tokens
@@ -36,6 +38,7 @@ contract Protocol is Initializable {
     // Other
     UD60x18 public maxLtv = toUD60x18(50).div(toUD60x18(100)); // 50%
     uint public redemptionWindow = 45 days;
+    UD60x18 public foreclosureSpread = toUD60x18(2).div(toUD60x18(100)); // 2%
 
     // Libs
     using SafeERC20 for IERC20;
@@ -185,7 +188,9 @@ contract Protocol is Initializable {
         loan.borrower = address(0); // Note: this eliminates need to decrease loan.unpaidPrincipal
     }
 
-    function foreclose(uint tokenId) external {
+    // Todo: Add Sale fee
+    // Todo: Add Foreclosure fee
+    function foreclose(uint tokenId, uint salePrice) external {
 
         // Get Loan
         Loan storage loan = loans[tokenId];
@@ -193,13 +198,32 @@ contract Protocol is Initializable {
         // Ensure Foreclosurable
         require(state(loan) == State.Foreclosurable, "not foreclosurable");
 
+        // Calculate defaulterDebt
+        uint defaulterDebt = loan.unpaidPrincipal + loan.maxUnpaidInterest;
+
+        require(salePrice >= defaulterDebt + fees, "salePrice must cover defaultDebt + fees");
+
+        // Calculate defaulterEquity
+        uint defaulterEquity = salePrice - defaulterDebt; // Question: which is right?
+        uint defaulterEquity2 = salePrice - loan.unpaidPrincipal; // Question: which is right?
+
+        // Calculate foreclosureFee
+        uint foreclosureFee = fromUD60x18(foreclosureSpread.mul(toUD60x18(defaulterEquity)));
+        // uint foreclosureFee = foreclosureSpread.mul(salePrice); // Question: shouldn't the foreclosure spread be applied to the salePrice?
+
+        // Calculate leftover
+        uint leftover = defaulterEquity - foreclosureFee;
+
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += loan.maxUnpaidInterest;
         totalInterestOwed -= loan.maxUnpaidInterest;
 
+        // Send leftover to defaulter
+        USDC.safeTransfer(loan.borrower, leftover);
+
         // Clearout loan
-        loan.borrower = address(0);
+        loan.borrower = address(0); // Note: this eliminates need to decrease loan.unpaidPrincipal
     }
 
     // ----- VIEWS -----
