@@ -114,6 +114,12 @@ contract Protocol is Initializable {
             maxUnpaidInterest: maxUnpaidInterest,
             nextPaymentDeadline: block.timestamp + 30 days
         });
+
+        // Update pool
+        totalPrincipal += principal;
+        totalInterestOwed += maxUnpaidInterest;
+
+        // Todo: pull downpayment?
     }
 
     function payLoan(uint tokenId) external {
@@ -123,6 +129,9 @@ contract Protocol is Initializable {
 
         // Ensure mortgage
         require(state(loan) == State.Mortgage, "no active mortgage");
+
+        // Pull monthlyPayment
+        USDC.safeTransferFrom(msg.sender, address(this), loan.monthlyPayment); // Note: anyone can pay for the borrower
 
         // Calculate interest
         uint interest = fromUD60x18(loan.monthlyRate.mul(toUD60x18(loan.unpaidPrincipal)));
@@ -149,6 +158,8 @@ contract Protocol is Initializable {
         } else {
             loan.nextPaymentDeadline += 30 days;
         }
+
+        // Todo: clamp
     }
 
     function redeem(uint tokenId) external {
