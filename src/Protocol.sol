@@ -188,8 +188,6 @@ contract Protocol is Initializable {
         loan.borrower = address(0); // Note: this eliminates need to decrease loan.unpaidPrincipal
     }
 
-    // Todo: Add Sale fee
-    // Todo: Add Foreclosure fee
     function foreclose(uint tokenId, uint salePrice) external {
 
         // Get Loan
