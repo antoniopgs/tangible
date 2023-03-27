@@ -172,7 +172,8 @@ contract Protocol is Initializable {
 
         // Calculate defaulterDebt
         uint monthsElapsed;
-        uint defaulterDebt = (loan.unpaidPrincipal + monthlyInterest) ** monthsElapsed;
+        uint defaulterDebt = loan.balance * (1 + loan.monthlyRate) ** monthsElapsed;
+        uint interest = defaulterDebt - loan.balance;
 
         // Redeem (pull defaulter's entire debt)
         USDC.safeTransferFrom(msg.sender, address(this), defaulterDebt);
@@ -196,7 +197,8 @@ contract Protocol is Initializable {
 
         // Calculate defaulterDebt
         uint monthsElapsed;
-        uint defaulterDebt = (loan.unpaidPrincipal + monthlyInterest) ** monthsElapsed;
+        uint defaulterDebt = loan.balance * (1 + loan.monthlyRate) ** monthsElapsed;
+        uint interest = defaulterDebt - loan.balance;
 
         // require(salePrice >= defaulterDebt + fees, "salePrice must cover defaultDebt + fees"); // Todo: uncomment once other fees are implemented
 
