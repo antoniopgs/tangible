@@ -20,7 +20,6 @@ contract Protocol is Initializable {
         UD60x18 monthlyRate;
         uint monthlyPayment;
         uint unpaidPrincipal;
-        uint maxUnpaidInterest;
         uint nextPaymentDeadline;
     }
 
@@ -114,13 +113,12 @@ contract Protocol is Initializable {
             monthlyRate: monthlyRate,
             monthlyPayment: monthlyPayment,
             unpaidPrincipal: principal,
-            maxUnpaidInterest: maxUnpaidInterest,
             nextPaymentDeadline: block.timestamp + 30 days
         });
 
         // Update pool
         totalPrincipal += principal;
-        totalInterestOwed += maxUnpaidInterest;
+        totalInterestOwed += maxUnpaidInterest; // Note: this might be off
 
         // Todo: pull downpayment?
     }
@@ -144,12 +142,11 @@ contract Protocol is Initializable {
 
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
-        totalDeposits += loan.maxUnpaidInterest;
-        totalInterestOwed -= loan.maxUnpaidInterest;
+        totalDeposits += interest;
+        totalInterestOwed -= interest; // Note: this might be off
 
         // Update Loan
         loan.unpaidPrincipal -= repayment;
-        loan.maxUnpaidInterest -= interest;
 
         // If loan paid off 
         if (loan.unpaidPrincipal == 0) {
@@ -174,15 +171,16 @@ contract Protocol is Initializable {
         require(state(loan) == State.Default, "no default, or redemptionWindow exceeded");
 
         // Calculate defaulterDebt
-        uint defaulterDebt = loan.unpaidPrincipal + loan.maxUnpaidInterest; // Question: should redeemer pay maxUnpaidInterest? I think so
+        uint monthsElapsed;
+        uint defaulterDebt = (loan.unpaidPrincipal + monthlyInterest) ** monthsElapsed;
 
         // Redeem (pull defaulter's entire debt)
         USDC.safeTransferFrom(msg.sender, address(this), defaulterDebt);
 
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
-        totalDeposits += loan.maxUnpaidInterest;
-        totalInterestOwed -= loan.maxUnpaidInterest;
+        totalDeposits += interest;
+        totalInterestOwed -= interest; // Note: this might be off (because in startLoan() I added maxUnpaidInterest to totalInterestOwed)
 
         // Clearout loan
         loan.borrower = address(0); // Note: this eliminates need to decrease loan.unpaidPrincipal
@@ -197,15 +195,17 @@ contract Protocol is Initializable {
         require(state(loan) == State.Foreclosurable, "not foreclosurable");
 
         // Calculate defaulterDebt
-        uint defaulterDebt = loan.unpaidPrincipal + loan.maxUnpaidInterest; // Todo: this is unused, so something weird going on. need to rethink
+        uint monthsElapsed;
+        uint defaulterDebt = (loan.unpaidPrincipal + monthlyInterest) ** monthsElapsed;
 
         // require(salePrice >= defaulterDebt + fees, "salePrice must cover defaultDebt + fees"); // Todo: uncomment once other fees are implemented
 
         // Calculate defaulterEquity
-        uint defaulterEquity = salePrice - loan.unpaidPrincipal;
+        require(salePrice >= defaulterDebt, "salePrice must cover defaulterDebt");
+        uint defaulterEquity = salePrice - defaulterDebt;
 
         // Calculate foreclosureFee
-        uint foreclosureFee = fromUD60x18(foreclosureSpread.mul(toUD60x18(defaulterEquity)));
+        uint foreclosureFee = fromUD60x18(foreclosureSpread.mul(toUD60x18(defaulterEquity))); // Question: Wouldn't it be better to include all fees in defaulterDebt?
         // uint foreclosureFee = foreclosureSpread.mul(salePrice); // Todo: shouldn't the foreclosure spread be applied to the salePrice?
 
         // Calculate leftover
@@ -213,8 +213,8 @@ contract Protocol is Initializable {
 
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
-        totalDeposits += loan.maxUnpaidInterest;
-        totalInterestOwed -= loan.maxUnpaidInterest;
+        totalDeposits += interest;
+        totalInterestOwed -= interest; // Note: this might be off (because in startLoan() I added maxUnpaidInterest to totalInterestOwed)
 
         // Send leftover to defaulter
         USDC.safeTransfer(loan.borrower, leftover);
@@ -229,7 +229,7 @@ contract Protocol is Initializable {
     }
 
     function lenderApy() external view returns (UD60x18) {
-        return toUD60x18(totalInterestOwed).div(toUD60x18(totalDeposits));
+        return toUD60x18(totalInterestOwed).div(toUD60x18(totalDeposits)); // Note: this might be off
     }
 
     function calculateMonthlyRate() private /* view */ pure returns (UD60x18) {
