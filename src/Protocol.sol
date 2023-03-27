@@ -19,8 +19,10 @@ contract Protocol is Initializable {
         address borrower;
         UD60x18 monthlyRate;
         uint monthlyPayment;
-        uint unpaidPrincipal;
-        uint nextPaymentDeadline;
+        uint balance;
+        uint monthlyInterestBalance;
+        uint startTime;
+        uint lastActiveMonth;
     }
 
     // Enums
@@ -38,6 +40,7 @@ contract Protocol is Initializable {
     UD60x18 public maxLtv = toUD60x18(50).div(toUD60x18(100)); // 50%
     uint public redemptionWindow = 45 days;
     UD60x18 public foreclosureSpread = toUD60x18(2).div(toUD60x18(100)); // 2%
+    uint public maxElapsedMonths = 1;
 
     // Libs
     using SafeERC20 for IERC20;
@@ -101,29 +104,25 @@ contract Protocol is Initializable {
         // Calculate monthlyPayment
         uint monthlyPayment = calculateMonthlyPayment(principal, monthlyRate, monthCount);
 
-        // Calculate maxCost
-        uint maxCost = monthlyPayment * monthCount;
-
-        // Calculate maxUnpaidInterest
-        uint maxUnpaidInterest = maxCost - principal;
-
         // Store Loan
         loans[tokenId] = Loan({
             borrower: borrower,
             monthlyRate: monthlyRate,
             monthlyPayment: monthlyPayment,
-            unpaidPrincipal: principal,
-            nextPaymentDeadline: block.timestamp + 30 days
+            balance: principal,
+            monthlyInterestBalance: 0,
+            startTime: block.timestamp,
+            lastActiveMonth: 0
         });
 
         // Update pool
         totalPrincipal += principal;
-        totalInterestOwed += maxUnpaidInterest; // Note: this might be off
+        // totalInterestOwed += maxUnpaidInterest; // Note: this might be off
 
         // Todo: pull downpayment?
     }
 
-    function payLoan(uint tokenId) external {
+    function payLoan(uint tokenId, uint payment) external {
 
         // Get Loan
         Loan storage loan = loans[tokenId];
@@ -131,33 +130,60 @@ contract Protocol is Initializable {
         // Ensure mortgage
         require(state(loan) == State.Mortgage, "no active mortgage");
 
-        // Pull monthlyPayment
-        USDC.safeTransferFrom(msg.sender, address(this), loan.monthlyPayment); // Note: anyone can pay for the borrower
+        // Pull payment
+        USDC.safeTransferFrom(msg.sender, address(this), payment); // Note: anyone can pay for the borrower
 
-        // Calculate interest
-        uint interest = fromUD60x18(loan.monthlyRate.mul(toUD60x18(loan.unpaidPrincipal)));
+        // Get loanMonth
+        uint _loanMonth = loanMonth(loan);
 
-        // Calculate repayment
-        uint repayment = loan.monthlyPayment - interest;
+        // If new month
+        if (_loanMonth > loan.lastActiveMonth) {
+
+            // Update lastActiveMonth
+            loan.lastActiveMonth = _loanMonth;
+
+            // Reset monthlyInterestBalance
+            loan.monthlyInterestBalance = loan.balance.mul(toUD60x18(1).add(monthlyRate).powu(monthsElapsed(loan)).sub(toUD60x18(1)));
+        }
+
+        // if payment <= monthlyInterestBalance
+        if (payment <= loan.monthlyInterestBalance) {
+
+            // Add payment to deposits
+            totalDeposits += payment;
+
+            // Decrease monthlyInterestBalance
+            loan.monthlyInterestBalance -= payment;
+
+        // if payment > monthlyInterest
+        } else {
+
+            // Calculate repayment
+            uint repayment = payment - loan.monthlyInterestBalance;
+            
+            // Remove repayment from loan.balance & totalPrincipal
+            loan.balance -= repayment;
+            totalPrincipal -= repayment;
+
+            // Add monthlyInterestBalance to deposits
+            totalDeposits += loan.monthlyInterestBalance;
+
+            // If loan paid off
+            if (loan.balance == 0) {
+
+                // Clearout loan
+                loan.borrower = address(0);
+
+            // If loan not paid off
+            } else {
+
+                // Zero-out monthlyInterestBalance
+                loan.monthlyInterestBalance = 0;
+            }
+        }
 
         // Update pool
-        totalPrincipal -= loan.unpaidPrincipal;
-        totalDeposits += interest;
-        totalInterestOwed -= interest; // Note: this might be off
-
-        // Update Loan
-        loan.unpaidPrincipal -= repayment;
-
-        // If loan paid off 
-        if (loan.unpaidPrincipal == 0) {
-
-            // Clearout loan
-            loan.borrower = address(0);
-        
-        // If loan not paid off
-        } else {
-            loan.nextPaymentDeadline += 30 days;
-        }
+        // totalInterestOwed -= interest; // Note: this might be off
 
         // Todo: clamp
     }
@@ -171,12 +197,13 @@ contract Protocol is Initializable {
         require(state(loan) == State.Default, "no default, or redemptionWindow exceeded");
 
         // Calculate defaulterDebt
-        uint monthsElapsed;
-        uint defaulterDebt = loan.balance * (1 + loan.monthlyRate) ** monthsElapsed;
-        uint interest = defaulterDebt - loan.balance;
+        uint defaulterDebt = fromUD60x18(toUD60x18(loan.balance).mul(toUD60x18(1).add(loan.monthlyRate).powu(monthsElapsed(loan))));
 
         // Redeem (pull defaulter's entire debt)
         USDC.safeTransferFrom(msg.sender, address(this), defaulterDebt);
+
+        // Calculate interest
+        uint interest = defaulterDebt - loan.balance;
 
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
@@ -196,8 +223,7 @@ contract Protocol is Initializable {
         require(state(loan) == State.Foreclosurable, "not foreclosurable");
 
         // Calculate defaulterDebt
-        uint monthsElapsed;
-        uint defaulterDebt = loan.balance * (1 + loan.monthlyRate) ** monthsElapsed;
+        uint defaulterDebt = loan.balance * (1 + loan.monthlyRate) ** monthsElapsed(loan);
         uint interest = defaulterDebt - loan.balance;
 
         // require(salePrice >= defaulterDebt + fees, "salePrice must cover defaultDebt + fees"); // Todo: uncomment once other fees are implemented
@@ -228,6 +254,14 @@ contract Protocol is Initializable {
     // ----- VIEWS -----
     function utilization() external view returns (UD60x18) {
         return toUD60x18(totalPrincipal).div(toUD60x18(totalDeposits));
+    }
+
+    function loanMonth(Loan memory loan) private view returns(uint) {
+        ((block.timestamp - loan.startTime) / 30 days) + 1;
+    }
+
+    function monthsElapsed(Loan memory loan) private view returns(uint) {
+        return loanMonth(loan) - loan.lastActiveMonth;
     }
 
     function lenderApy() external view returns (UD60x18) {
@@ -281,7 +315,7 @@ contract Protocol is Initializable {
             if (defaulted(loan)) {
 
                 // If redemptionWindow exceeded
-                if (block.timestamp > loan.nextPaymentDeadline + redemptionWindow) {
+                if (block.timestamp > loan.nextPaymentDeadline + redemptionWindow) { // Todo: using monthsElapsed now, need to fix this
                     return State.Foreclosurable;
 
                 // If within redemptionWindow
@@ -297,6 +331,6 @@ contract Protocol is Initializable {
     }
 
     function defaulted(Loan memory loan) private view returns(bool) {
-        return block.timestamp > loan.nextPaymentDeadline;
+        return monthsElapsed(loan) > maxElapsedMonths;
     }
 }
