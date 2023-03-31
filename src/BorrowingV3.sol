@@ -128,9 +128,9 @@ contract BorrowingV3 {
         totalDeposits += interest;
         totalInterestOwed -= interest; // Note: this might be off (because in startLoan() I added maxUnpaidInterest to totalInterestOwed)
 
-        // Send defaulterEquity to defaulter
-
         // Clearout loan
+
+        // Send defaulterEquity to defaulter
     }
     
     // Views
