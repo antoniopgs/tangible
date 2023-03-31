@@ -14,10 +14,10 @@ contract BorrowingV3 {
     // Structs
     struct Loan {
         UD60x18 ratePerSecond;
-        uint maxDurationSeconds;
         UD60x18 paymentPerSecond;
         uint startTime;
         uint unpaidPrincipal;
+        uint maxDurationSeconds;
         uint lastPaymentTime;
     }
 
@@ -35,16 +35,18 @@ contract BorrowingV3 {
     // Functions
     function startLoan(uint tokenId, uint principal, uint borrowerAprPct, uint maxDurationYears) external {
 
+        // Calculate ratePerSecond
         UD60x18 ratePerSecond = toUD60x18(borrowerAprPct).div(toUD60x18(100)).div(toUD60x18(yearSeconds));
 
+        // Calculate maxDurationSeconds
         uint maxDurationSeconds = maxDurationYears * yearSeconds;
         
         loans[tokenId] = Loan({
             ratePerSecond: ratePerSecond,
-            maxDurationSeconds: maxDurationSeconds,
             paymentPerSecond: calculatePaymentPerSecond(principal, ratePerSecond, maxDurationSeconds),
             startTime: block.timestamp,
-            balance: principal,
+            unpaidPrincipal: principal,
+            maxDurationSeconds: maxDurationSeconds,
             lastPaymentTime: block.timestamp // Note: no payment here, but needed so lastPaymentElapsedSeconds only counts from now
         });
 
