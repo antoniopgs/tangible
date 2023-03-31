@@ -44,18 +44,28 @@ contract BorrowingV3 {
     function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) private view returns(UD60x18 paymentPerSecond) {
 
         // Calculate x
-        UD60x18 x = toUD60x18(1).add(ratePerSecond).powu(maxDurationSeconds);
+        UD60x18 x = one.add(ratePerSecond).powu(maxDurationSeconds);
         
         // Calculate paymentPerSecond
         paymentPerSecond = toUD60x18(principal).mul(ratePerSecond).mul(x).div(x.sub(one));
     }
 
-    function principalCap(uint tokenId, uint month) public view returns(uint) {
+    function principalCap(uint tokenId, uint month) public view returns(uint cap) {
+
+        // Get loan
         Loan memory loan = loans[tokenId];
+
+        // Calculate elapsedSeconds
         uint elapsedSeconds = month * monthSeconds;
+
+        // Calculate negExponent
         SD59x18 negExponent = toSD59x18(int(elapsedSeconds)).sub(toSD59x18(int(loan.maxDurationSeconds))).sub(toSD59x18(1));
-        SD59x18 numerator = loan.paymentPerSecond.mul(one.sub(one.add(loan.ratePerSecond).pow(negExponent)));
-        return fromUD60x18(numerator.div(loan.ratePerSecond));
+
+        // Calculate z
+        UD60x18 z = UD60x18.wrap(uint(SD59x18.unwrap(SD59x18.wrap(int(UD60x18.unwrap(one.add(loan.ratePerSecond)))).pow(negExponent))));
+
+        // Calculate cap
+        cap = fromUD60x18(loan.paymentPerSecond.mul(one.sub(z)).div(loan.ratePerSecond));
     }
 
     // Note: truncates on purpose (to enforce payment after monthSeconds, but not every second)
@@ -73,7 +83,7 @@ contract BorrowingV3 {
         return loan.balance > currentPrincipalCap(tokenId);
     }
 
-    function lastPaymentElapsedSeconds(Loan memory loan) private returns(uint) {
+    function lastPaymentElapsedSeconds(Loan memory loan) private view returns(uint) {
         return block.timestamp - loan.lastPaymentTime;
     }
 
@@ -84,7 +94,9 @@ contract BorrowingV3 {
         Loan storage loan = loans[tokenId];
 
         // Calculate interest
-        uint interest = loan.ratePerSecond * lastPaymentElapsedSeconds(loan);
+        UD60x18 accruedRate = loan.ratePerSecond.mul(toUD60x18(lastPaymentElapsedSeconds(loan)));
+
+        uint interest = fromUD60x18(toUD60x18(loan.balance).mul(accruedRate));
 
         // Calculate repayment
         uint repayment = payment - interest;
