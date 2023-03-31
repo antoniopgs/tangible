@@ -17,7 +17,7 @@ contract BorrowingV3 {
         uint maxDurationSeconds;
         UD60x18 paymentPerSecond;
         uint startTime;
-        uint balance;
+        uint unpaidPrincipal;
         uint lastPaymentTime;
     }
 
@@ -62,18 +62,75 @@ contract BorrowingV3 {
         UD60x18 accruedRate = loan.ratePerSecond.mul(toUD60x18(lastPaymentElapsedSeconds(loan)));
 
         // Calculate interest
-        uint interest = fromUD60x18(toUD60x18(loan.balance).mul(accruedRate));
+        uint interest = fromUD60x18(toUD60x18(loan.unpaidPrincipal).mul(accruedRate));
 
         // Calculate repayment
         uint repayment = payment - interest;
 
         // Update loan
-        loan.balance -= repayment;
+        loan.unpaidPrincipal -= repayment;
 
         // Update pool
         totalPrincipal -= repayment;
         totalDeposits += interest;
         totalInterestOwed -= interest;
+    }
+
+    function redeem(uint tokenId) external {
+
+        // Get Loan
+        Loan storage loan = loans[tokenId];
+
+        // Ensure State == Default
+
+        // Calculate accruedRate
+        UD60x18 accruedRate = loan.ratePerSecond.mul(toUD60x18(lastPaymentElapsedSeconds(loan)));
+
+        // Calculate interest
+        uint interest = fromUD60x18(toUD60x18(loan.unpaidPrincipal).mul(accruedRate));
+
+        // Calculate defaulterDebt
+        uint defaulterDebt = loan.unpaidPrincipal + interest;
+
+        // Redeem (pull defaulter's entire debt)
+
+        // Update pool
+        totalPrincipal -= loan.unpaidPrincipal;
+        totalDeposits += interest;
+        totalInterestOwed -= interest; // Note: this might be off (because in startLoan() I added maxUnpaidInterest to totalInterestOwed)
+
+        // Clearout loan
+    }
+
+    function foreclose(uint tokenId, uint salePrice) external {
+
+        // Get Loan
+        Loan storage loan = loans[tokenId];
+
+        // Ensure State == Foreclosurable
+
+        // Calculate accruedRate
+        UD60x18 accruedRate = loan.ratePerSecond.mul(toUD60x18(lastPaymentElapsedSeconds(loan)));
+
+        // Calculate interest
+        uint interest = fromUD60x18(toUD60x18(loan.unpaidPrincipal).mul(accruedRate));
+
+        // Calculate defaulterDebt
+        uint defaulterDebt = loan.unpaidPrincipal + interest; // Todo: add fees later
+
+        // Ensure salePrice covers defaulterDebt + fees
+
+        // Calculate defaulterEquity
+        uint defaulterEquity = salePrice - defaulterDebt;
+
+        // Update pool
+        totalPrincipal -= loan.unpaidPrincipal;
+        totalDeposits += interest;
+        totalInterestOwed -= interest; // Note: this might be off (because in startLoan() I added maxUnpaidInterest to totalInterestOwed)
+
+        // Send defaulterEquity to defaulter
+
+        // Clearout loan
     }
     
     // Views
@@ -116,7 +173,7 @@ contract BorrowingV3 {
 
     function defaulted(uint tokenId) public view returns(bool) {
         Loan memory loan = loans[tokenId];
-        return loan.balance > currentPrincipalCap(tokenId);
+        return loan.unpaidPrincipal > currentPrincipalCap(tokenId);
     }
 
     function lastPaymentElapsedSeconds(Loan memory loan) private view returns(uint) {
