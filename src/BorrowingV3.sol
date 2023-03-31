@@ -64,7 +64,7 @@ contract BorrowingV3 {
         uint interest = accruedInterest(loan);
 
         // Calculate repayment
-        uint repayment = payment - interest;
+        uint repayment = payment - interest; // Question: enforce payment > interest? or allow to pay only interest with if/else?
 
         // Update loan
         loan.unpaidPrincipal -= repayment;
