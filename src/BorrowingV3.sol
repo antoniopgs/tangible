@@ -58,17 +58,15 @@ contract BorrowingV3 {
         // Get Loan
         Loan storage loan = loans[tokenId];
 
-        // Calculate accruedRate
-        UD60x18 accruedRate = loan.ratePerSecond.mul(toUD60x18(lastPaymentElapsedSeconds(loan)));
-
         // Calculate interest
-        uint interest = fromUD60x18(toUD60x18(loan.unpaidPrincipal).mul(accruedRate));
+        uint interest = accruedInterest(loan);
 
         // Calculate repayment
         uint repayment = payment - interest;
 
         // Update loan
         loan.unpaidPrincipal -= repayment;
+        loan.lastPaymentTime = block.timestamp;
 
         // Update pool
         totalPrincipal -= repayment;
@@ -83,11 +81,8 @@ contract BorrowingV3 {
 
         // Ensure State == Default
 
-        // Calculate accruedRate
-        UD60x18 accruedRate = loan.ratePerSecond.mul(toUD60x18(lastPaymentElapsedSeconds(loan)));
-
         // Calculate interest
-        uint interest = fromUD60x18(toUD60x18(loan.unpaidPrincipal).mul(accruedRate));
+        uint interest = accruedInterest(loan);
 
         // Calculate defaulterDebt
         uint defaulterDebt = loan.unpaidPrincipal + interest;
@@ -109,11 +104,8 @@ contract BorrowingV3 {
 
         // Ensure State == Foreclosurable
 
-        // Calculate accruedRate
-        UD60x18 accruedRate = loan.ratePerSecond.mul(toUD60x18(lastPaymentElapsedSeconds(loan)));
-
         // Calculate interest
-        uint interest = fromUD60x18(toUD60x18(loan.unpaidPrincipal).mul(accruedRate));
+        uint interest = accruedInterest(loan);
 
         // Calculate defaulterDebt
         uint defaulterDebt = loan.unpaidPrincipal + interest; // Todo: add fees later
@@ -134,13 +126,13 @@ contract BorrowingV3 {
     }
     
     // Views
-    function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) private view returns(UD60x18 paymentPerSecond) {
+    function defaulted(uint tokenId) public view returns(bool) {
+        Loan memory loan = loans[tokenId];
+        return loan.unpaidPrincipal > currentPrincipalCap(tokenId);
+    }
 
-        // Calculate x
-        UD60x18 x = one.add(ratePerSecond).powu(maxDurationSeconds);
-        
-        // Calculate paymentPerSecond
-        paymentPerSecond = toUD60x18(principal).mul(ratePerSecond).mul(x).div(x.sub(one));
+    function currentPrincipalCap(uint tokenId) public view returns(uint) {
+        return principalCap(tokenId, loanCompletedMonths(tokenId));
     }
 
     function principalCap(uint tokenId, uint month) public view returns(uint cap) {
@@ -167,13 +159,21 @@ contract BorrowingV3 {
         return (block.timestamp - loan.startTime) / monthSeconds;
     }
 
-    function currentPrincipalCap(uint tokenId) public view returns(uint) {
-        return principalCap(tokenId, loanCompletedMonths(tokenId));
+    function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) private view returns(UD60x18 paymentPerSecond) {
+
+        // Calculate x
+        UD60x18 x = one.add(ratePerSecond).powu(maxDurationSeconds);
+        
+        // Calculate paymentPerSecond
+        paymentPerSecond = toUD60x18(principal).mul(ratePerSecond).mul(x).div(x.sub(one));
     }
 
-    function defaulted(uint tokenId) public view returns(bool) {
-        Loan memory loan = loans[tokenId];
-        return loan.unpaidPrincipal > currentPrincipalCap(tokenId);
+    function accruedInterest(Loan memory loan) private pure returns(uint) {
+        return fromUD60x18(toUD60x18(loan.unpaidPrincipal).mul(accruedRate(loan)));
+    }
+
+    function accruedRate(Loan memory loan) private pure returns(UD60x18) {
+        return loan.ratePerSecond.mul(toUD60x18(lastPaymentElapsedSeconds(loan)));
     }
 
     function lastPaymentElapsedSeconds(Loan memory loan) private view returns(uint) {
