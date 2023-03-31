@@ -113,6 +113,7 @@ contract BorrowingV3 {
         uint defaulterDebt = loan.unpaidPrincipal + interest; // Todo: add fees later
 
         // Ensure salePrice covers defaulterDebt + fees
+        require(salePrice >= defaulterDebt, "salePrice must >= defaulterDebt"); // Note: minSalePrice will rise over time. Too risky?
 
         // Calculate defaulterEquity
         uint defaulterEquity = salePrice - defaulterDebt;
@@ -131,6 +132,10 @@ contract BorrowingV3 {
     function defaulted(uint tokenId) public view returns(bool) {
         Loan memory loan = loans[tokenId];
         return loan.unpaidPrincipal > currentPrincipalCap(tokenId);
+    }
+
+    function lenderApy() public view returns(UD60x18) {
+
     }
 
     function currentPrincipalCap(uint tokenId) public view returns(uint) {
