@@ -2,13 +2,11 @@
 pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
-import "../script/Deploy.s.sol";
+import "../src/BorrowingV2.sol";
 
-contract BorrowingV2Test is Test, DeployScript {
+contract BorrowingV2Test is Test {
 
-    constructor() {
-        run(); // deploy
-    }
+    BorrowingV2 borrowing = new BorrowingV2();
 
     function testDeposit(uint deposit) external {
 

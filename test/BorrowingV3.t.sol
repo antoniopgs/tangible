@@ -2,37 +2,11 @@
 pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
-import "../script/Deploy.s.sol";
+import "../src/BorrowingV3.sol";
 
-contract BorrowingV2Test is Test, DeployScript {
+contract BorrowingV3Test is Test {
 
-    constructor() {
-        run(); // deploy
-    }
-
-    function testDeposit(uint deposit) external {
-
-        // Bound deposit to 1 billion
-        deposit = bound(deposit, 0, 1_000_000_000);
-
-        // Deposit
-        borrowing.deposit(deposit);
-    }
-
-    function testWithdraw(uint deposit, uint withdrawal) external {
-
-        // Bound deposit between 1 and 1 billion // Note: if deposit can be 0, so can withdrawal, and utilization check will throw "div by 0"
-        deposit = bound(deposit, 1, 1_000_000_000);
-
-        // Deposit
-        borrowing.deposit(deposit);
-
-        // Bound withdrawal to deposit
-        withdrawal = bound(withdrawal, 0, deposit);
-
-        // Withdraw
-        borrowing.withdraw(withdrawal);
-    }
+    BorrowingV3 borrowing = new BorrowingV3();
 
     function testStartLoan(uint deposit, uint tokenId, uint principal, uint timeJump, uint payment) external {
 
