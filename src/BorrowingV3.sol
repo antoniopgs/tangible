@@ -214,20 +214,35 @@ contract BorrowingV3 {
     // Other Views
     function principalCap(uint tokenId, uint month) private view returns(uint cap) {
 
+        console.log("pc1");
+
         // Get loan
         Loan memory loan = loans[tokenId];
+
+        console.log("pc2");
 
         // Calculate elapsedSeconds
         uint elapsedSeconds = month * monthSeconds;
 
+        console.log("pc3");
+
         // Calculate negExponent
         SD59x18 negExponent = toSD59x18(int(elapsedSeconds)).sub(toSD59x18(int(loan.maxDurationSeconds))).sub(toSD59x18(1));
 
-        // Calculate z
-        UD60x18 z = UD60x18.wrap(uint(SD59x18.unwrap(SD59x18.wrap(int(UD60x18.unwrap(one.add(loan.ratePerSecond)))).pow(negExponent))));
+        console.log("pc4");
+
+        // Calculate numerator
+        SD59x18 z1 = SD59x18.wrap(int(UD60x18.unwrap(one.add(loan.ratePerSecond)))).pow(negExponent);
+        SD59x18 z2 = toSD59x18(1).sub(z1);
+        UD60x18 numerator = UD60x18.wrap(uint(SD59x18.unwrap(SD59x18.wrap(int(UD60x18.unwrap(loan.paymentPerSecond))).mul(z2))));
+
+        console.log("pc5");
+        // console.log("UD60x18.unwrap(z):", UD60x18.unwrap(z));
 
         // Calculate cap
-        cap = fromUD60x18(loan.paymentPerSecond.mul(one.sub(z)).div(loan.ratePerSecond));
+        cap = fromUD60x18(numerator.div(loan.ratePerSecond));
+
+        console.log("pc6");
     }
 
     // Note: truncates on purpose (to enforce payment after monthSeconds, but not every second)

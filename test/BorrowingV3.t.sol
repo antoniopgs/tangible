@@ -28,14 +28,23 @@ contract BorrowingV3Test is Test {
             skip(timeJump);
             console.log("time skipped.\n");
 
-            // Pay Loan (with random payment)
-            console.log("making payment...");
-            payLoan(tokenId, randomness[i]);
-            console.log("payment made.\n");
+            // If no default
+            if (!borrowing.defaulted(tokenId)) {
+
+                // Pay Loan (with random payment)
+                console.log("making payment...");
+                payLoan(tokenId, randomness[i]);
+                console.log("payment made.\n");
+
+            } else {
+                console.log("defaulted.\n");
+                return;
+            }
 
             // If loan is paid off, return
             (address borrower, , , , , , , ) = borrowing.loans(tokenId);
             if (borrower == address(0)) {
+                console.log("loan paid off.\n");
                 return;
             }
         }
