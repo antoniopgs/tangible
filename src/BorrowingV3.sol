@@ -103,7 +103,7 @@ contract BorrowingV3 {
         console.log("interest:", interest);
 
         // Calculate repayment
-        uint repayment = payment - interest; // Question: enforce payment > interest? or allow to pay only interest with if/else?
+        uint repayment = payment - interest;
 
         console.log(3);
         console.log("loan.unpaidPrincipal:", loan.unpaidPrincipal);
