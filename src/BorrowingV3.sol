@@ -4,11 +4,12 @@ pragma solidity ^0.8.15;
 import { UD60x18, toUD60x18, fromUD60x18 } from "@prb/math/UD60x18.sol";
 import { SD59x18, toSD59x18 } from "@prb/math/SD59x18.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./tUsdc.sol";
 
 contract BorrowingV3 {
 
     IERC20 USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet
-    IERC20 tUSDC;
+    tUsdc tUSDC;
 
     // Time constants
     uint public constant yearSeconds = 365 days;
@@ -47,19 +48,19 @@ contract BorrowingV3 {
         totalDeposits += usdc;
         
         // Calulate depositor tUsdc
-        uint tUsdc = usdcToTUsdc(usdc);
+        uint _tUsdc = usdcToTUsdc(usdc);
 
         // Mint tUsdc to depositor
-        tUSDC.mint(msg.sender, tUsdc);
+        tUSDC.operatorMint(msg.sender, _tUsdc);
     }
 
     function withdraw(uint usdc) external {
 
         // Calulate withdrawer tUsdc
-        uint tUsdc = usdcToTUsdc(usdc);
+        uint _tUsdc = usdcToTUsdc(usdc);
 
         // Burn withdrawer tUsdc
-        tUSDC.burn(msg.sender, tUsdc);
+        tUSDC.operatorBurn(msg.sender, _tUsdc, "", "");
 
         // Update pool
         totalDeposits -= usdc;
@@ -252,18 +253,18 @@ contract BorrowingV3 {
         cap = fromUD60x18(numerator.div(loan.ratePerSecond));
     }
 
-    function usdcToTUsdc(uint usdc) public view returns(uint tUsdc) {
+    function usdcToTUsdc(uint usdcAmount) public view returns(uint tUsdcAmount) {
         
         // Get tUsdcSupply
         uint tUsdcSupply = tUSDC.totalSupply();
 
         // If tUsdcSupply or totalDeposits = 0, 1:1
         if (tUsdcSupply == 0 || totalDeposits == 0) {
-            tUsdc = usdc;
+            tUsdcAmount = usdcAmount;
         }
 
         // Calculate tUsdc
-        tUsdc = usdc * tUsdcSupply / totalDeposits;
+        tUsdcAmount = usdcAmount * tUsdcSupply / totalDeposits;
     }
 
     // Note: truncates on purpose (to enforce payment after monthSeconds, but not every second)
