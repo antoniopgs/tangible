@@ -20,11 +20,6 @@ contract BorrowingV3Test is Test, DeployScript {
     uint totalPaidInterest;
     uint yearSeconds = borrowing.yearSeconds();
 
-    function setUp() public {
-        console.log(1);
-        run(); // deploy;
-    }
-
     function testMath(uint[] calldata randomness) public {
 
         // Loop actions
