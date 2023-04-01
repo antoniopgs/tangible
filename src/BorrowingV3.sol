@@ -83,6 +83,7 @@ contract BorrowingV3 {
 
         // Update loan
         loan.unpaidPrincipal -= repayment;
+        loan.maxUnpaidInterest -= interest;
         loan.lastPaymentTime = block.timestamp;
 
         // Update pool
@@ -116,6 +117,7 @@ contract BorrowingV3 {
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
+        assert(interest < loan.maxUnpaidInterest);
         maxTotalInterestOwed -= loan.maxUnpaidInterest; // Question: or should it be "maxTotalInterestOwed -= (loan.maxUnpaidInterest - interest)?
 
         // Clearout loan
@@ -143,6 +145,7 @@ contract BorrowingV3 {
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
+        assert(interest < loan.maxUnpaidInterest);
         maxTotalInterestOwed -= loan.maxUnpaidInterest; // Question: or should it be "maxTotalInterestOwed -= (loan.maxUnpaidInterest - interest)?
 
         // Clearout loan
