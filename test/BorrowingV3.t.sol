@@ -7,11 +7,21 @@ import "forge-std/console.sol";
 
 contract BorrowingV3Test is Test {
 
-    enum Action { Start, Pay, Skip }
-
+    // Protocol
     BorrowingV3 borrowing = new BorrowingV3();
+
+    // Actions
+    enum Action { Start, Pay, Skip }
+    
+    // Expectation Vars
+    uint expectedTotalPrincipal;
+    uint expectedTotalDeposits;
+    uint expectedMaxTotalInterestOwed;
+
+    // Other vars
     uint loanCount;
     uint paidInterest;
+    uint yearSeconds = borrowing.yearSeconds();
 
     function testMath(uint[] calldata randomness) public {
 
@@ -61,17 +71,22 @@ contract BorrowingV3Test is Test {
         }
     }
 
-    function startLoan(uint tokenId, uint randomness) private {
+    function startLoan(uint tokenId, uint randomness) private validate {
         
         // Bound vars
         uint principal = bound(randomness, 1e18, 1_000_000e18);
         uint borrowerAprPct = bound(randomness, 2, 10);
         uint maxDurationYears = bound(randomness, 1, 50);
 
-        // Calculate expectations
-        uint expectedTotalPrincipal = borrowing.totalPrincipal() + principal;
-        uint expectedTotalDeposits = borrowing.totalDeposits();
-        // uint expectedMaxTotalInterestOwed = borrowing.totalPrincipal() + principal;
+        // Set expectations
+        expectedTotalPrincipal = borrowing.totalPrincipal() + principal;
+        expectedTotalDeposits = borrowing.totalDeposits();
+        UD60x18 expectedRatePerSecond = toUD60x18(borrowerAprPct).div(toUD60x18(100)).div(toUD60x18(yearSeconds));
+        uint expectedMaxDurationSeconds = maxDurationYears * yearSeconds;
+        UD60x18 expectedPaymentPerSecond = borrowing.calculatePaymentPerSecond(principal, expectedRatePerSecond, expectedMaxDurationSeconds);
+        uint expectedLoanCost = fromUD60x18(expectedPaymentPerSecond) * expectedMaxDurationSeconds;
+        uint expectedMaxUnpaidInterest = expectedLoanCost - principal;
+        expectedMaxTotalInterestOwed += expectedMaxUnpaidInterest;
         
         // Start Loan
         console.log("starting loan...");
@@ -80,14 +95,9 @@ contract BorrowingV3Test is Test {
         console.log("- maxDurationYears:", maxDurationYears);
         borrowing.startLoan(tokenId, principal, borrowerAprPct, maxDurationYears);
         console.log("loan started.\n");
-
-        // Validate expectations
-        assert(expectedTotalPrincipal == borrowing.totalPrincipal());
-        assert(expectedTotalDeposits == borrowing.totalDeposits());
-        // assert(expectedMaxTotalInterestOwed == borrowing.maxTotalInterestOwed())
     }
 
-    function skipTime(uint timeJump) private {
+    function skipTime(uint timeJump) private validate {
 
         // Bound timeJump (between 0 and 6 months)
         timeJump = bound(timeJump, 0, 6 * 30 days);
@@ -98,7 +108,7 @@ contract BorrowingV3Test is Test {
         console.log("time skipped.\n");
     }
 
-    function payLoan(uint tokenId, uint payment) private {
+    function payLoan(uint tokenId, uint payment) private validate {
         
         // Get unpaidPrincipal & interest
         (, , , , uint unpaidPrincipal, , , ) = borrowing.loans(tokenId);
@@ -114,9 +124,9 @@ contract BorrowingV3Test is Test {
         // Calculate expectations
         uint expectedInterest = borrowing.accruedInterest(tokenId);
         uint expectedRepayment = payment - expectedInterest;
-        uint expectedTotalPrincipal = borrowing.totalPrincipal() - expectedRepayment;
-        uint expectedTotalDeposits = borrowing.totalDeposits() + expectedInterest;
-        uint expectedMaxTotalInterestOwed = borrowing.maxTotalInterestOwed() - interest;
+        expectedTotalPrincipal = borrowing.totalPrincipal() - expectedRepayment;
+        expectedTotalDeposits = borrowing.totalDeposits() + expectedInterest;
+        expectedMaxTotalInterestOwed = borrowing.maxTotalInterestOwed() - interest;
 
         // Pay Loan
         console.log("making payment...");
@@ -125,17 +135,22 @@ contract BorrowingV3Test is Test {
         borrowing.payLoan(tokenId, payment);
         console.log("payment made.\n");
 
+        // If loan is paid off, return
+        (address borrower, , , , , , , ) = borrowing.loans(tokenId);
+        if (borrower == address(0)) {
+            console.log("loan paid off.\n");
+        }
+    }
+
+    modifier validate() {
+        
+        // Run
+        _;
+
         // Validate expectations
         assert(expectedTotalPrincipal == borrowing.totalPrincipal());
         assert(expectedTotalDeposits == borrowing.totalDeposits());
         assert(expectedMaxTotalInterestOwed == borrowing.maxTotalInterestOwed());
         assert(paidInterest <= borrowing.maxTotalInterestOwed());
-
-        // If loan is paid off, return
-        (address borrower, , , , , , , ) = borrowing.loans(tokenId);
-        if (borrower == address(0)) {
-            console.log("loan paid off.\n");
-            return;
-        }
     }
 }

@@ -9,7 +9,7 @@ import "forge-std/console.sol";
 contract BorrowingV3 {
 
     // Time constants
-    uint private constant yearSeconds = 365 days;
+    uint public constant yearSeconds = 365 days;
     uint private constant yearMonths = 12;
     uint private constant monthSeconds = yearSeconds / yearMonths; // Note: yearSeconds % yearMonths = 0 (no precision loss)
     
@@ -263,7 +263,7 @@ contract BorrowingV3 {
         return (block.timestamp - loan.startTime) / monthSeconds;
     }
 
-    function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) private pure returns(UD60x18 paymentPerSecond) {
+    function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) /*private*/ public pure returns(UD60x18 paymentPerSecond) {
 
         // Calculate x
         UD60x18 x = toUD60x18(1).add(ratePerSecond).powu(maxDurationSeconds);
