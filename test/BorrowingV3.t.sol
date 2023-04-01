@@ -42,9 +42,14 @@ contract BorrowingV3Test is Test {
                     // Get random tokenId
                     uint tokenId = randomness[i] % loanCount;
 
-                    // Pay Loan
-                    payLoan(tokenId, randomness[i]);
+                    if (!borrowing.defaulted(tokenId)) {
 
+                        // Pay Loan
+                        payLoan(tokenId, randomness[i]);
+
+                    } else {
+                        console.log("defaulted.\n");
+                    }
                 }
             
             // If Skip
