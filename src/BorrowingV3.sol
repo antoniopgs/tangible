@@ -126,9 +126,6 @@ contract BorrowingV3 {
         console.log("interest:", interest);
         console.log("maxTotalInterestOwed >= interest:", maxTotalInterestOwed >= interest);
 
-        // interest <= maxTotalInterestOwed
-
-
         // Update pool
         totalPrincipal -= repayment;
         totalDeposits += interest;
