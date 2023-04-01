@@ -2,13 +2,10 @@
 pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
-import "../src/BorrowingV3.sol";
+import "../script/Deploy.s.sol";
 import "forge-std/console.sol";
 
-contract BorrowingV3Test is Test {
-
-    // Protocol
-    BorrowingV3 borrowing = new BorrowingV3();
+contract BorrowingV3Test is Test, DeployScript {
 
     // Actions
     enum Action { Deposit, Withdraw, Start, Pay, Skip }

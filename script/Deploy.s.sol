@@ -7,17 +7,24 @@ import "../src/BorrowingV3.sol";
 import "../src/tUsdc.sol";
 
 contract DeployScript is Script {
-    
-    // Deploy protocol
-    BorrowingV3 borrowing = new BorrowingV3();
 
-    // Build tUsdcDefaultOperators;
-    address[] tUsdcDefaultOperators;
-    tUsdcDefaultOperators[0] = address(borrowing);
+    BorrowingV3 borrowing;
+    tUsdc tUSDC;
 
-    // Deploy tUSDC
-    tUsdc tUSDC = new tUsdc();
+    constructor() {
 
-    // Initialize protocol
-    borrowing.initialize(tUSDC);
+        // Deploy protocol
+        borrowing = new BorrowingV3();
+
+        // Build tUsdcDefaultOperators;
+        address[] memory tUsdcDefaultOperators;
+        tUsdcDefaultOperators[0] = address(borrowing);
+
+        // Deploy tUSDC
+        tUSDC = new tUsdc(tUsdcDefaultOperators);
+
+        // Initialize protocol
+        borrowing.initialize(tUSDC);
+
+    }
 }
