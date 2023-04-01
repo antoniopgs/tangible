@@ -139,7 +139,7 @@ contract BorrowingV3 {
         // Send defaulterEquity to defaulter
     }
     
-    // Views
+    // Public Views
     function defaulted(uint tokenId) public view returns(bool) {
         Loan memory loan = loans[tokenId];
         return loan.unpaidPrincipal > currentPrincipalCap(tokenId);
@@ -157,7 +157,8 @@ contract BorrowingV3 {
         return principalCap(tokenId, loanCompletedMonths(tokenId));
     }
 
-    function principalCap(uint tokenId, uint month) public view returns(uint cap) {
+    // Other Views
+    function principalCap(uint tokenId, uint month) private view returns(uint cap) {
 
         // Get loan
         Loan memory loan = loans[tokenId];
