@@ -79,8 +79,8 @@ contract BorrowingV3Test is Test {
         uint maxDurationYears = bound(randomness, 1, 50);
 
         // Set expectations
-        expectedTotalPrincipal = borrowing.totalPrincipal() + principal;
-        expectedTotalDeposits = borrowing.totalDeposits();
+        expectedTotalPrincipal += principal;
+        expectedTotalDeposits = expectedTotalDeposits; // Note: shouldn't be changed by startLoan()
         UD60x18 expectedRatePerSecond = toUD60x18(borrowerAprPct).div(toUD60x18(100)).div(toUD60x18(yearSeconds));
         uint expectedMaxDurationSeconds = maxDurationYears * yearSeconds;
         UD60x18 expectedPaymentPerSecond = borrowing.calculatePaymentPerSecond(principal, expectedRatePerSecond, expectedMaxDurationSeconds);
@@ -112,21 +112,20 @@ contract BorrowingV3Test is Test {
         
         // Get unpaidPrincipal & interest
         (, , , , uint unpaidPrincipal, , , ) = borrowing.loans(tokenId);
-        uint interest = borrowing.accruedInterest(tokenId);
+        uint expectedInterest = borrowing.accruedInterest(tokenId);
 
         // Calculate minPayment & maxPayment
-        uint minPayment = interest;
-        uint maxPayment = unpaidPrincipal + interest;
+        uint minPayment = expectedInterest;
+        uint maxPayment = unpaidPrincipal + expectedInterest;
 
         // Bound payment
         payment = bound(payment, minPayment, maxPayment);
 
         // Calculate expectations
-        uint expectedInterest = borrowing.accruedInterest(tokenId);
         uint expectedRepayment = payment - expectedInterest;
-        expectedTotalPrincipal = borrowing.totalPrincipal() - expectedRepayment;
-        expectedTotalDeposits = borrowing.totalDeposits() + expectedInterest;
-        expectedMaxTotalInterestOwed = borrowing.maxTotalInterestOwed() - interest;
+        expectedTotalPrincipal -= expectedRepayment;
+        expectedTotalDeposits += expectedInterest;
+        expectedMaxTotalInterestOwed -= expectedInterest;
 
         // Pay Loan
         console.log("making payment...");
