@@ -3,8 +3,11 @@ pragma solidity ^0.8.15;
 
 import { UD60x18, toUD60x18, fromUD60x18 } from "@prb/math/UD60x18.sol";
 import { SD59x18, toSD59x18 } from "@prb/math/SD59x18.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract BorrowingV3 {
+
+    IERC20 USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet
 
     // Time constants
     uint public constant yearSeconds = 365 days;
@@ -30,6 +33,9 @@ contract BorrowingV3 {
 
     // Loan storage
     mapping(uint => Loan) public loans;
+
+    // Libs
+    using SafeERC20 for IERC20;
 
     function deposit(uint amount) external {
         totalDeposits += amount;
@@ -121,6 +127,7 @@ contract BorrowingV3 {
         uint defaulterDebt = loan.unpaidPrincipal + interest;
 
         // Redeem (pull defaulter's entire debt)
+        USDC.safeTransferFrom(msg.sender, address(this), defaulterDebt); // Note: anyone can redeem on behalf of defaulter
 
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
@@ -145,10 +152,7 @@ contract BorrowingV3 {
         uint defaulterDebt = loan.unpaidPrincipal + interest; // Todo: add fees later
 
         // Ensure salePrice covers defaulterDebt + fees
-        require(salePrice >= defaulterDebt, "salePrice must >= defaulterDebt"); // Note: minSalePrice will rise over time. Too risky?
-
-        // Calculate defaulterEquity
-        uint defaulterEquity = salePrice - defaulterDebt;
+        require(salePrice >= defaulterDebt, "salePrice must >= defaulterDebt"); // Question: minSalePrice will rise over time. Too risky?
 
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
@@ -156,9 +160,13 @@ contract BorrowingV3 {
         assert(interest < loan.maxUnpaidInterest);
         maxTotalInterestOwed -= loan.maxUnpaidInterest;
 
-        // Clearout loan
+        // Calculate defaulterEquity
+        uint defaulterEquity = salePrice - defaulterDebt;
 
         // Send defaulterEquity to defaulter
+        USDC.safeTransfer(loan.borrower, defaulterEquity);
+
+        // Clearout loan
     }
     
     // Public Views
