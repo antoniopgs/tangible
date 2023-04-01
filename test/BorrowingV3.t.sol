@@ -46,6 +46,10 @@ contract BorrowingV3Test is Test {
         principal = bound(principal, 1e18, 1_000_000e18);
         borrowerAprPct = bound(borrowerAprPct, 2, 10);
         maxDurationYears = bound(maxDurationYears, 1, 50);
+
+        uint expectedTotalPrincipal = borrowing.totalPrincipal() + principal;
+        uint expectedTotalDeposits = borrowing.totalDeposits();
+        // uint expectedMaxTotalInterestOwed = borrowing.totalPrincipal() + principal;
         
         // Start Loan
         console.log("starting loan...");
@@ -54,6 +58,10 @@ contract BorrowingV3Test is Test {
         console.log("- maxDurationYears:", maxDurationYears);
         borrowing.startLoan(tokenId, principal, borrowerAprPct, maxDurationYears);
         console.log("loan started.\n");
+
+        assert(expectedTotalPrincipal == borrowing.totalPrincipal());
+        assert(expectedTotalDeposits == borrowing.totalDeposits());
+        // assert(expectedMaxTotalInterestOwed == borrowing.maxTotalInterestOwed())
     }
 
     function payLoan(uint tokenId, uint payment) private {

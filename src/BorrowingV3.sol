@@ -26,15 +26,12 @@ contract BorrowingV3 {
     }
 
     // Pool vars
-    uint totalPrincipal;
-    uint totalDeposits;
-    uint maxTotalInterestOwed;
+    uint public totalPrincipal;
+    uint public totalDeposits;
+    uint public maxTotalInterestOwed;
 
     // Loan storage
     mapping(uint => Loan) public loans;
-
-    // Other vars
-    UD60x18 one = toUD60x18(1);
 
     // Functions
     function startLoan(uint tokenId, uint principal, uint borrowerAprPct, uint maxDurationYears) external {
@@ -200,17 +197,17 @@ contract BorrowingV3 {
         Loan memory loan = loans[tokenId];
 
         // Get loanCompletedMonths
-        uint loanCompletedMonths = loanCompletedMonths(tokenId);
+        uint _loanCompletedMonths = loanCompletedMonths(tokenId);
 
         // Calculate loanMaxDurationMonths
         uint loanMaxDurationMonths = loan.maxDurationSeconds / yearSeconds * yearMonths;
 
         // If loan exceeded allowed months
-        if (loanCompletedMonths > loanMaxDurationMonths) {
+        if (_loanCompletedMonths > loanMaxDurationMonths) {
             return true;
         }
 
-        return loan.unpaidPrincipal > principalCap(tokenId, loanCompletedMonths);
+        return loan.unpaidPrincipal > principalCap(tokenId, _loanCompletedMonths);
     }
 
     function utilization() public view returns(UD60x18) {
@@ -246,7 +243,7 @@ contract BorrowingV3 {
         console.log("pc4");
 
         // Calculate numerator
-        SD59x18 z1 = SD59x18.wrap(int(UD60x18.unwrap(one.add(loan.ratePerSecond)))).pow(negExponent);
+        SD59x18 z1 = SD59x18.wrap(int(UD60x18.unwrap(toUD60x18(1).add(loan.ratePerSecond)))).pow(negExponent);
         SD59x18 z2 = toSD59x18(1).sub(z1);
         UD60x18 numerator = UD60x18.wrap(uint(SD59x18.unwrap(SD59x18.wrap(int(UD60x18.unwrap(loan.paymentPerSecond))).mul(z2))));
 
@@ -266,13 +263,13 @@ contract BorrowingV3 {
         return (block.timestamp - loan.startTime) / monthSeconds;
     }
 
-    function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) private view returns(UD60x18 paymentPerSecond) {
+    function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) private pure returns(UD60x18 paymentPerSecond) {
 
         // Calculate x
-        UD60x18 x = one.add(ratePerSecond).powu(maxDurationSeconds);
+        UD60x18 x = toUD60x18(1).add(ratePerSecond).powu(maxDurationSeconds);
         
         // Calculate paymentPerSecond
-        paymentPerSecond = toUD60x18(principal).mul(ratePerSecond).mul(x).div(x.sub(one));
+        paymentPerSecond = toUD60x18(principal).mul(ratePerSecond).mul(x).div(x.sub(toUD60x18(1)));
     }
 
     function accruedInterest(Loan memory loan) private view returns(uint) {
