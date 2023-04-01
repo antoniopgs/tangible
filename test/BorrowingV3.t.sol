@@ -20,7 +20,7 @@ contract BorrowingV3Test is Test {
 
     // Other vars
     uint loanCount;
-    uint paidInterest;
+    uint totalPaidInterest;
     uint yearSeconds = borrowing.yearSeconds();
 
     function testMath(uint[] calldata randomness) public {
@@ -130,7 +130,7 @@ contract BorrowingV3Test is Test {
         // Pay Loan
         console.log("making payment...");
         console.log("- payment:", payment);
-        paidInterest += expectedInterest;
+        totalPaidInterest += expectedInterest;
         borrowing.payLoan(tokenId, payment);
         console.log("payment made.\n");
 
@@ -150,6 +150,6 @@ contract BorrowingV3Test is Test {
         assert(expectedTotalPrincipal == borrowing.totalPrincipal());
         assert(expectedTotalDeposits == borrowing.totalDeposits());
         assert(expectedMaxTotalInterestOwed == borrowing.maxTotalInterestOwed());
-        assert(paidInterest <= borrowing.maxTotalInterestOwed());
+        assert(totalPaidInterest <= borrowing.maxTotalInterestOwed());
     }
 }
