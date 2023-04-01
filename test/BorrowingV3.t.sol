@@ -16,7 +16,7 @@ contract BorrowingV3Test is Test {
         // Start Loan
         console.log("starting loan...");
         startLoan(tokenId, principal, borrowerAprPct, maxDurationYears);
-        console.log("loan started.");
+        console.log("loan started.\n");
 
         for (uint i = 0; i < randomness.length; i++) {
             
@@ -26,12 +26,12 @@ contract BorrowingV3Test is Test {
             // Skip by timeJump
             console.log("skipping time by", timeJump);
             skip(timeJump);
-            console.log("time skipped.");
+            console.log("time skipped.\n");
 
             // Pay Loan (with random payment)
             console.log("making payment...");
             payLoan(tokenId, randomness[i]);
-            console.log("payment made.");
+            console.log("payment made.\n");
 
             // If loan is paid off, return
             (address borrower, , , , , , , ) = borrowing.loans(tokenId);

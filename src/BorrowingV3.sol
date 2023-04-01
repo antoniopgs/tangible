@@ -87,6 +87,7 @@ contract BorrowingV3 {
     }
 
     function payLoan(uint tokenId, uint payment) external {
+        require(!defaulted(tokenId), "can't pay loan after defaulting");
 
         console.log(0);
 
@@ -115,6 +116,7 @@ contract BorrowingV3 {
         loan.unpaidPrincipal -= repayment;
         loan.lastPaymentTime = block.timestamp;
 
+        console.log("defaulted(tokenId):", defaulted(tokenId));
         console.log(4);
         console.log("totalPrincipal:", totalPrincipal);
         console.log("repayment:", repayment);
@@ -122,6 +124,10 @@ contract BorrowingV3 {
         console.log("interest:", interest);
         console.log("maxTotalInterestOwed:", maxTotalInterestOwed);
         console.log("interest:", interest);
+        console.log("maxTotalInterestOwed >= interest:", maxTotalInterestOwed >= interest);
+
+        // interest <= maxTotalInterestOwed
+
 
         // Update pool
         totalPrincipal -= repayment;
