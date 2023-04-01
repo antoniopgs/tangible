@@ -52,7 +52,7 @@ contract BorrowingV3 {
 
         // Update pool
         totalPrincipal += principal;
-        totalInterestOwed += ;
+        // totalInterestOwed += ;
     }
 
     function payLoan(uint tokenId, uint payment) external {
@@ -175,15 +175,15 @@ contract BorrowingV3 {
         paymentPerSecond = toUD60x18(principal).mul(ratePerSecond).mul(x).div(x.sub(one));
     }
 
-    function accruedInterest(Loan memory loan) private pure returns(uint) {
+    function accruedInterest(Loan memory loan) private view returns(uint) {
         return fromUD60x18(toUD60x18(loan.unpaidPrincipal).mul(accruedRate(loan)));
     }
 
-    function accruedRate(Loan memory loan) private pure returns(UD60x18) {
-        return loan.ratePerSecond.mul(toUD60x18(lastPaymentElapsedSeconds(loan)));
+    function accruedRate(Loan memory loan) private view returns(UD60x18) {
+        return loan.ratePerSecond.mul(toUD60x18(secondsSinceLastPayment(loan)));
     }
 
-    function lastPaymentElapsedSeconds(Loan memory loan) private view returns(uint) {
+    function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
         return block.timestamp - loan.lastPaymentTime;
     }
 }
