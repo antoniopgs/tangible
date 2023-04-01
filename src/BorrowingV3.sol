@@ -54,7 +54,7 @@ contract BorrowingV3 {
         UD60x18 paymentPerSecond = calculatePaymentPerSecond(principal, ratePerSecond, maxDurationSeconds);
 
         // Calculate maxCost
-        uint maxCost = fromUD60x18(paymentPerSecond) * maxDurationSeconds;
+        uint maxCost = fromUD60x18(paymentPerSecond.mul(toUD60x18(maxDurationSeconds)));
 
         // Calculate maxUnpaidInterest
         uint maxUnpaidInterest = maxCost - principal;
