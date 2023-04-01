@@ -11,7 +11,7 @@ contract BorrowingV3Test is Test {
     BorrowingV3 borrowing = new BorrowingV3();
 
     // Actions
-    enum Action { Start, Pay, Skip }
+    enum Action { Deposit, Withdraw, Start, Pay, Skip }
     
     // Expectation Vars
     uint expectedTotalPrincipal;
@@ -32,7 +32,17 @@ contract BorrowingV3Test is Test {
             uint action = randomness[i] % (uint(type(Action).max) + 1);
 
             // If Start
-            if (action == uint(Action.Start)) {
+            if (action == uint(Action.Deposit)) {
+
+                // Deposit
+                deposit(randomness[i]);
+
+            } else if (action == uint(Action.Withdraw)) {
+
+                // Withdraw
+                withdraw(randomness[i]);
+
+            } else if (action == uint(Action.Start)) {
                 
                 // Set tokenId
                 uint tokenId = loanCount;
@@ -69,6 +79,34 @@ contract BorrowingV3Test is Test {
                 skipTime(randomness[i]);
             }
         }
+    }
+
+    function deposit(uint amount) private validate {
+
+        // Bound amount
+        amount = bound(amount, 0, 1_000_000_000);
+
+        // Set expectations
+        expectedTotalDeposits += amount;
+
+        // Deposit
+        console.log("depositing", amount);
+        borrowing.deposit(amount);
+        console.log("deposit complete.");
+    }
+
+    function withdraw(uint amount) private validate {
+
+        // Bound amount
+        amount = bound(amount, 0, borrowing.availableLiquidity());
+        
+        // Set expectations
+        expectedTotalDeposits -= amount;
+
+        // Withdraw
+        console.log("withdrawing", amount);
+        borrowing.withdraw(amount);
+        console.log("withdrawal complete.");
     }
 
     function startLoan(uint tokenId, uint randomness) private validate {
