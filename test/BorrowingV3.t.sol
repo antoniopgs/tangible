@@ -9,8 +9,9 @@ contract BorrowingV3Test is Test {
 
     enum Action { Start, Pay, Skip }
 
-    uint paidInterest;
     BorrowingV3 borrowing = new BorrowingV3();
+    uint loanCount;
+    uint paidInterest;
 
     function testMath(uint[] calldata randomness) public {
 
@@ -22,15 +23,29 @@ contract BorrowingV3Test is Test {
 
             // If Start
             if (action == uint(Action.Start)) {
+                
+                // Set tokenId
+                uint tokenId = loanCount;
 
                 // Start Loan
                 startLoan(tokenId, randomness[i]);
+
+                // Increment loanCount
+                loanCount++;
             
             // If Pay
             } else if (action == uint(Action.Pay)) {
+                
+                // If loans exist
+                if (loanCount > 0) {
 
-                // Pay Loan
-                payLoan(tokenId, randomness[i]);
+                    // Get random tokenId
+                    uint tokenId = randomness[i] % loanCount;
+
+                    // Pay Loan
+                    payLoan(tokenId, randomness[i]);
+
+                }
             
             // If Skip
             } else if (action == uint(Action.Skip)) {
