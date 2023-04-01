@@ -4,8 +4,6 @@ pragma solidity ^0.8.15;
 import { UD60x18, toUD60x18, fromUD60x18 } from "@prb/math/UD60x18.sol";
 import { SD59x18, toSD59x18 } from "@prb/math/SD59x18.sol";
 
-import "forge-std/console.sol";
-
 contract BorrowingV3 {
 
     // Time constants
@@ -223,7 +221,7 @@ contract BorrowingV3 {
     function accruedInterest(Loan memory loan) private view returns(uint) {
         return fromUD60x18(toUD60x18(loan.unpaidPrincipal).mul(accruedRate(loan)));
     }
-    
+
     function accruedInterest(uint tokenId) public view returns(uint) { // Note: made this duplicate of accruedInterest() for testing
         return accruedInterest(loans[tokenId]);
     }
