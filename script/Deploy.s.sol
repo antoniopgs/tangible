@@ -11,7 +11,7 @@ contract DeployScript is Script {
     BorrowingV3 borrowing;
     tUsdc tUSDC;
 
-    constructor() {
+    function run() internal {
 
         // Deploy protocol
         borrowing = new BorrowingV3();
