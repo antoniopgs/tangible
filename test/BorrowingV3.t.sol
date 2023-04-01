@@ -36,13 +36,6 @@ contract BorrowingV3Test is Test {
                 console.log("defaulted.\n");
                 return;
             }
-
-            // If loan is paid off, return
-            (address borrower, , , , , , , ) = borrowing.loans(tokenId);
-            if (borrower == address(0)) {
-                console.log("loan paid off.\n");
-                return;
-            }
         }
 
     }
@@ -53,8 +46,6 @@ contract BorrowingV3Test is Test {
         principal = bound(principal, 1e18, 1_000_000e18);
         borrowerAprPct = bound(borrowerAprPct, 2, 10);
         maxDurationYears = bound(maxDurationYears, 1, 50);
-
-        // console.log("s1");
         
         // Start Loan
         console.log("starting loan...");
@@ -63,8 +54,6 @@ contract BorrowingV3Test is Test {
         console.log("- maxDurationYears:", maxDurationYears);
         borrowing.startLoan(tokenId, principal, borrowerAprPct, maxDurationYears);
         console.log("loan started.\n");
-
-        // console.log("s2");
     }
 
     function payLoan(uint tokenId, uint payment) private {
@@ -80,12 +69,17 @@ contract BorrowingV3Test is Test {
         // Bound payment
         payment = bound(payment, minPayment, maxPayment);
 
-        console.log("p1");
-
         // Pay Loan
         console.log("making payment...");
         console.log("- payment:", payment);
         borrowing.payLoan(tokenId, payment);
         console.log("payment made.\n");
+
+        // If loan is paid off, return
+        (address borrower, , , , , , , ) = borrowing.loans(tokenId);
+        if (borrower == address(0)) {
+            console.log("loan paid off.\n");
+            return;
+        }
     }
 }
