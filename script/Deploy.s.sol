@@ -14,7 +14,7 @@ contract DeployScript is Script {
     constructor() {
 
         // Fork (needed for tUSDC's ERC777 registration in the ERC1820 registry)
-        vm.createSelectFork("https://eth-mainnet.alchemyapi.io/v2/");
+        vm.createSelectFork("https://mainnet.infura.io/v3/f36750d69d314e3695b7fe230bb781af");
 
         // Deploy protocol
         borrowing = new BorrowingV3();
