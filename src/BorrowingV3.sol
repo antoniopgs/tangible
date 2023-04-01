@@ -17,6 +17,7 @@ contract BorrowingV3 {
         UD60x18 paymentPerSecond;
         uint startTime;
         uint unpaidPrincipal;
+        uint maxUnpaidInterest;
         uint maxDurationSeconds;
         uint lastPaymentTime;
     }
@@ -40,19 +41,29 @@ contract BorrowingV3 {
 
         // Calculate maxDurationSeconds
         uint maxDurationSeconds = maxDurationYears * yearSeconds;
+
+        // Calculate paymentPerSecond
+        UD60x18 paymentPerSecond = calculatePaymentPerSecond(principal, ratePerSecond, maxDurationSeconds);
+
+        // Calculate maxCost
+        uint maxCost = fromUD60x18(paymentPerSecond) * maxDurationSeconds;
+
+        // Calculate maxUnpaidInterest
+        uint maxUnpaidInterest = maxCost - principal;
         
         loans[tokenId] = Loan({
             ratePerSecond: ratePerSecond,
-            paymentPerSecond: calculatePaymentPerSecond(principal, ratePerSecond, maxDurationSeconds),
+            paymentPerSecond: paymentPerSecond,
             startTime: block.timestamp,
             unpaidPrincipal: principal,
+            maxUnpaidInterest: maxUnpaidInterest,
             maxDurationSeconds: maxDurationSeconds,
             lastPaymentTime: block.timestamp // Note: no payment here, but needed so lastPaymentElapsedSeconds only counts from now
         });
 
         // Update pool
         totalPrincipal += principal;
-        // maxTotalInterestOwed += ;
+        maxTotalInterestOwed += maxUnpaidInterest;
     }
 
     function payLoan(uint tokenId, uint payment) external {
@@ -94,7 +105,7 @@ contract BorrowingV3 {
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
-        maxTotalInterestOwed -= interest; // Note: this might be off (because in startLoan() I added maxUnpaidInterest to maxTotalInterestOwed)
+        maxTotalInterestOwed -= loan.maxUnpaidInterest; // Question: or should it be "maxTotalInterestOwed -= (loan.maxUnpaidInterest - interest)?
 
         // Clearout loan
     }
@@ -121,7 +132,7 @@ contract BorrowingV3 {
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
-        maxTotalInterestOwed -= interest; // Note: this might be off (because in startLoan() I added maxUnpaidInterest to totalInterestOwed)
+        maxTotalInterestOwed -= loan.maxUnpaidInterest; // Question: or should it be "maxTotalInterestOwed -= (loan.maxUnpaidInterest - interest)?
 
         // Clearout loan
 
