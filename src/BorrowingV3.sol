@@ -126,7 +126,7 @@ contract BorrowingV3 {
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
         assert(interest < loan.maxUnpaidInterest);
-        maxTotalInterestOwed -= loan.maxUnpaidInterest; // Question: or should it be "maxTotalInterestOwed -= (loan.maxUnpaidInterest - interest)?
+        maxTotalInterestOwed -= loan.maxUnpaidInterest;
 
         // Clearout loan
     }
@@ -154,7 +154,7 @@ contract BorrowingV3 {
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
         assert(interest < loan.maxUnpaidInterest);
-        maxTotalInterestOwed -= loan.maxUnpaidInterest; // Question: or should it be "maxTotalInterestOwed -= (loan.maxUnpaidInterest - interest)?
+        maxTotalInterestOwed -= loan.maxUnpaidInterest;
 
         // Clearout loan
 
