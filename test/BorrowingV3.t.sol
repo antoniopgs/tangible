@@ -14,9 +14,7 @@ contract BorrowingV3Test is Test {
         uint tokenId = 0;
         
         // Start Loan
-        console.log("starting loan...");
         startLoan(tokenId, principal, borrowerAprPct, maxDurationYears);
-        console.log("loan started.\n");
 
         for (uint i = 0; i < randomness.length; i++) {
             
@@ -32,9 +30,7 @@ contract BorrowingV3Test is Test {
             if (!borrowing.defaulted(tokenId)) {
 
                 // Pay Loan (with random payment)
-                console.log("making payment...");
                 payLoan(tokenId, randomness[i]);
-                console.log("payment made.\n");
 
             } else {
                 console.log("defaulted.\n");
@@ -61,7 +57,12 @@ contract BorrowingV3Test is Test {
         // console.log("s1");
         
         // Start Loan
+        console.log("starting loan...");
+        console.log("- principal:", principal);
+        console.log("- borrowerAprPct:", borrowerAprPct);
+        console.log("- maxDurationYears:", maxDurationYears);
         borrowing.startLoan(tokenId, principal, borrowerAprPct, maxDurationYears);
+        console.log("loan started.\n");
 
         // console.log("s2");
     }
@@ -82,8 +83,9 @@ contract BorrowingV3Test is Test {
         console.log("p1");
 
         // Pay Loan
+        console.log("making payment...");
+        console.log("- payment:", payment);
         borrowing.payLoan(tokenId, payment);
-
-        console.log("p2");
+        console.log("payment made.\n");
     }
 }
