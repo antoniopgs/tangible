@@ -13,6 +13,7 @@ contract BorrowingV3 {
     
     // Structs
     struct Loan {
+        address borrower;
         UD60x18 ratePerSecond;
         UD60x18 paymentPerSecond;
         uint startTime;
@@ -52,6 +53,7 @@ contract BorrowingV3 {
         uint maxUnpaidInterest = maxCost - principal;
         
         loans[tokenId] = Loan({
+            borrower: msg.sender,
             ratePerSecond: ratePerSecond,
             paymentPerSecond: paymentPerSecond,
             startTime: block.timestamp,
@@ -85,6 +87,13 @@ contract BorrowingV3 {
         totalPrincipal -= repayment;
         totalDeposits += interest;
         maxTotalInterestOwed -= interest;
+
+        // If loan is paid off
+        if (loan.unpaidPrincipal == 0) {
+
+            // Clear out loan
+            loan.borrower = address(0);  
+        }
     }
 
     function redeem(uint tokenId) external {

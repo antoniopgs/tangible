@@ -8,42 +8,50 @@ contract BorrowingV3Test is Test {
 
     BorrowingV3 borrowing = new BorrowingV3();
 
-    function testStartLoan(uint deposit, uint tokenId, uint principal, uint timeJump, uint payment) external {
+    function testMath(uint[] calldata randomness, uint principal, uint borrowerAprPct, uint maxDurationYears) public {
 
-        // Bound deposit between 1 and 1 billion // Note: if deposit can be 0, utilization() will throw "div by 0"
-        deposit = bound(deposit, 1, 1_000_000_000);
-
-        // Deposit
-        borrowing.deposit(deposit);
+        uint tokenId = 0;
         
-        // Bound principal to deposit
-        principal = bound(principal, 0, deposit);
-
         // Start Loan
-        borrowing.startLoan(tokenId, principal);
+        startLoan(tokenId, principal, borrowerAprPct, maxDurationYears);
 
-        // Bound timeJump
-        timeJump = bound(timeJump, 0, 365 days);
+        for (uint i = 0; i < randomness.length; i++) {
+            
+            // Set random timeJump (between 0 and 6 months)
+            uint timeJump = bound(randomness[i], 0, 6 * 30 days);
 
-        // Skip by timeJump
-        skip(timeJump);
+            // Skip by timeJump
+            skip(timeJump);
 
-        // // Calculate expectedInterest
-        // (UD60x18 loanRatePerSecond, UD60x18 loanUnpaidPrincipal, , , , , ) = borrowing.loans(tokenId);
-        // UD60x18 expectedAccruedRate = loanRatePerSecond.mul(toUD60x18(borrowing.timeDeltaSinceLastPayment(tokenId)));
-        // UD60x18 expectedInterest = expectedAccruedRate.mul(loanUnpaidPrincipal);
-        // console.log("expectedInterest:", UD60x18.unwrap(expectedInterest));
-        // if (expectedInterest.lt(toUD60x18(1))) {
-        //     expectedInterest = toUD60x18(1);
-        // }
+            // Pay Loan (with random payment)
+            payLoan(tokenId, randomness[i]);
 
-        uint minPayment = borrowing.minimumPayment(tokenId);
-        console.log("minPayment:", minPayment);
+            // If loan is paid off, return
+            (address borrower, , , , , , , ) = borrowing.loans(tokenId);
+            if (borrower == address(0)) {
+                return;
+            }
+        }
 
-        // Bound payment between expectedInterest and principal
-        payment = bound(payment, minPayment, principal); // Question: can't it be higher than principal?
+    }
 
-        // Pay loan
+    function startLoan(uint tokenId, uint principal, uint borrowerAprPct, uint maxDurationYears) private {
+        
+        // Bound vars
+        principal = bound(principal, 0, 1_000_000);
+        borrowerAprPct = bound(borrowerAprPct, 2, 10);
+        maxDurationYears = bound(maxDurationYears, 1, 50);
+        
+        // Start Loan
+        borrowing.startLoan(tokenId, principal, borrowerAprPct, maxDurationYears);
+    }
+
+    function payLoan(uint tokenId, uint payment) private {
+
+        // Bound payment
+        // payment = bound(payment, 0, );
+
+        // Pay Loan
         borrowing.payLoan(tokenId, payment);
     }
 }
