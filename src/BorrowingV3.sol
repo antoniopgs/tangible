@@ -4,6 +4,8 @@ pragma solidity ^0.8.15;
 import { UD60x18, toUD60x18, fromUD60x18 } from "@prb/math/UD60x18.sol";
 import { SD59x18, toSD59x18 } from "@prb/math/SD59x18.sol";
 
+import "forge-std/console.sol";
+
 contract BorrowingV3 {
 
     // Time constants
@@ -37,20 +39,34 @@ contract BorrowingV3 {
     // Functions
     function startLoan(uint tokenId, uint principal, uint borrowerAprPct, uint maxDurationYears) external {
 
+        // console.log(1);
+
         // Calculate ratePerSecond
         UD60x18 ratePerSecond = toUD60x18(borrowerAprPct).div(toUD60x18(100)).div(toUD60x18(yearSeconds));
+
+        // console.log(2);
 
         // Calculate maxDurationSeconds
         uint maxDurationSeconds = maxDurationYears * yearSeconds;
 
+        // console.log(3);
+
         // Calculate paymentPerSecond
         UD60x18 paymentPerSecond = calculatePaymentPerSecond(principal, ratePerSecond, maxDurationSeconds);
+
+        // console.log(4);
 
         // Calculate maxCost
         uint maxCost = fromUD60x18(paymentPerSecond) * maxDurationSeconds;
 
+        // console.log(5);
+        // console.log("maxCost:", maxCost);
+        // console.log("principal:", principal);
+
         // Calculate maxUnpaidInterest
         uint maxUnpaidInterest = maxCost - principal;
+
+        // console.log(6);
         
         loans[tokenId] = Loan({
             borrower: msg.sender,
@@ -63,6 +79,8 @@ contract BorrowingV3 {
             lastPaymentTime: block.timestamp // Note: no payment here, but needed so lastPaymentElapsedSeconds only counts from now
         });
 
+        // console.log(7);
+
         // Update pool
         totalPrincipal += principal;
         maxTotalInterestOwed += maxUnpaidInterest;
@@ -70,23 +88,47 @@ contract BorrowingV3 {
 
     function payLoan(uint tokenId, uint payment) external {
 
+        console.log(0);
+
         // Get Loan
         Loan storage loan = loans[tokenId];
 
+        console.log(1);
+
         // Calculate interest
         uint interest = accruedInterest(loan);
+        //require(payment <= loan.unpaidPrincipal + interest, "payment must be <= unpaidPrincipal + interest");
+        //require(payment => interest, "payment must be => interest"); // Question: maybe don't calculate repayment if payment < interest?
+
+        console.log(2);
+        console.log("payment:", payment);
+        console.log("interest:", interest);
 
         // Calculate repayment
         uint repayment = payment - interest; // Question: enforce payment > interest? or allow to pay only interest with if/else?
+
+        console.log(3);
+        console.log("loan.unpaidPrincipal:", loan.unpaidPrincipal);
+        console.log("repayment:", repayment);
 
         // Update loan
         loan.unpaidPrincipal -= repayment;
         loan.lastPaymentTime = block.timestamp;
 
+        console.log(4);
+        console.log("totalPrincipal:", totalPrincipal);
+        console.log("repayment:", repayment);
+        console.log("totalDeposits:", totalDeposits);
+        console.log("interest:", interest);
+        console.log("maxTotalInterestOwed:", maxTotalInterestOwed);
+        console.log("interest:", interest);
+
         // Update pool
         totalPrincipal -= repayment;
         totalDeposits += interest;
         maxTotalInterestOwed -= interest;
+
+        console.log(5);
 
         // If loan is paid off
         if (loan.unpaidPrincipal == 0) {
@@ -202,6 +244,11 @@ contract BorrowingV3 {
 
     function accruedInterest(Loan memory loan) private view returns(uint) {
         return fromUD60x18(toUD60x18(loan.unpaidPrincipal).mul(accruedRate(loan)));
+    }
+    
+    // For testing
+    function accruedInterest(uint tokenId) public view returns(uint) {
+        return accruedInterest(loans[tokenId]);
     }
 
     function accruedRate(Loan memory loan) private view returns(UD60x18) {
