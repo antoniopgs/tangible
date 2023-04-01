@@ -116,14 +116,16 @@ contract BorrowingV3Test is Test {
         uint borrowerAprPct = bound(randomness, 2, 10);
         uint maxDurationYears = bound(randomness, 1, 50);
 
-        // Set expectations
-        expectedTotalPrincipal += principal;
-        expectedTotalDeposits = expectedTotalDeposits; // Note: shouldn't be changed by startLoan()
+        // Calculate expectedMaxUnpaidInterest
         UD60x18 expectedRatePerSecond = toUD60x18(borrowerAprPct).div(toUD60x18(100)).div(toUD60x18(yearSeconds));
         uint expectedMaxDurationSeconds = maxDurationYears * yearSeconds;
         UD60x18 expectedPaymentPerSecond = borrowing.calculatePaymentPerSecond(principal, expectedRatePerSecond, expectedMaxDurationSeconds);
-        uint expectedLoanCost = fromUD60x18(expectedPaymentPerSecond) * expectedMaxDurationSeconds;
+        uint expectedLoanCost = fromUD60x18(expectedPaymentPerSecond.mul(toUD60x18(expectedMaxDurationSeconds)));
         uint expectedMaxUnpaidInterest = expectedLoanCost - principal;
+
+        // Set expectations
+        expectedTotalPrincipal += principal;
+        expectedTotalDeposits = expectedTotalDeposits; // Note: shouldn't be changed by startLoan()
         expectedMaxTotalInterestOwed += expectedMaxUnpaidInterest;
         
         // Start Loan
@@ -192,6 +194,9 @@ contract BorrowingV3Test is Test {
 
         // Validate lenderApy
         UD60x18 lenderApy = borrowing.lenderApy();
+        console.log("borrowing.maxTotalInterestOwed():", borrowing.maxTotalInterestOwed());
+        console.log("borrowing.totalDeposits():", borrowing.totalDeposits());
+        console.log("UD60x18.unwrap(lenderApy)):", UD60x18.unwrap(lenderApy));
         assert(lenderApy.gte(toUD60x18(0)) && lenderApy.lte(toUD60x18(1)));
 
         // Validate utilization
