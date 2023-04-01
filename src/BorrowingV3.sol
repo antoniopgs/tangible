@@ -36,29 +36,17 @@ contract BorrowingV3 {
     // Functions
     function startLoan(uint tokenId, uint principal, uint borrowerAprPct, uint maxDurationYears) external {
 
-        // console.log(1);
-
         // Calculate ratePerSecond
         UD60x18 ratePerSecond = toUD60x18(borrowerAprPct).div(toUD60x18(100)).div(toUD60x18(yearSeconds));
-
-        // console.log(2);
 
         // Calculate maxDurationSeconds
         uint maxDurationSeconds = maxDurationYears * yearSeconds;
 
-        // console.log(3);
-
         // Calculate paymentPerSecond
         UD60x18 paymentPerSecond = calculatePaymentPerSecond(principal, ratePerSecond, maxDurationSeconds);
 
-        // console.log(4);
-
         // Calculate maxCost
         uint maxCost = fromUD60x18(paymentPerSecond) * maxDurationSeconds;
-
-        // console.log(5);
-        // console.log("maxCost:", maxCost);
-        // console.log("principal:", principal);
 
         // Calculate maxUnpaidInterest
         uint maxUnpaidInterest = maxCost - principal;
@@ -76,8 +64,6 @@ contract BorrowingV3 {
             lastPaymentTime: block.timestamp // Note: no payment here, but needed so lastPaymentElapsedSeconds only counts from now
         });
 
-        // console.log(7);
-
         // Update pool
         totalPrincipal += principal;
         maxTotalInterestOwed += maxUnpaidInterest;
@@ -86,49 +72,25 @@ contract BorrowingV3 {
     function payLoan(uint tokenId, uint payment) external {
         require(!defaulted(tokenId), "can't pay loan after defaulting");
 
-        console.log(0);
-
         // Get Loan
         Loan storage loan = loans[tokenId];
-
-        console.log(1);
 
         // Calculate interest
         uint interest = accruedInterest(loan);
         //require(payment <= loan.unpaidPrincipal + interest, "payment must be <= unpaidPrincipal + interest");
         //require(payment => interest, "payment must be => interest"); // Question: maybe don't calculate repayment if payment < interest?
 
-        console.log(2);
-        console.log("payment:", payment);
-        console.log("interest:", interest);
-
         // Calculate repayment
         uint repayment = payment - interest;
-
-        console.log(3);
-        console.log("loan.unpaidPrincipal:", loan.unpaidPrincipal);
-        console.log("repayment:", repayment);
 
         // Update loan
         loan.unpaidPrincipal -= repayment;
         loan.lastPaymentTime = block.timestamp;
 
-        console.log("defaulted(tokenId):", defaulted(tokenId));
-        console.log(4);
-        console.log("totalPrincipal:", totalPrincipal);
-        console.log("repayment:", repayment);
-        console.log("totalDeposits:", totalDeposits);
-        console.log("interest:", interest);
-        console.log("maxTotalInterestOwed:", maxTotalInterestOwed);
-        console.log("interest:", interest);
-        console.log("maxTotalInterestOwed >= interest:", maxTotalInterestOwed >= interest);
-
         // Update pool
         totalPrincipal -= repayment;
         totalDeposits += interest;
         maxTotalInterestOwed -= interest;
-
-        console.log(5);
 
         // If loan is paid off
         if (loan.unpaidPrincipal == 0) {
@@ -221,8 +183,6 @@ contract BorrowingV3 {
     // Other Views
     function principalCap(uint tokenId, uint month) private view returns(uint cap) {
 
-        console.log("pc1");
-
         // Get loan
         Loan memory loan = loans[tokenId];
 
@@ -230,31 +190,19 @@ contract BorrowingV3 {
         uint loanMaxDurationMonths = loan.maxDurationSeconds / yearSeconds * yearMonths;
         require(month <= loanMaxDurationMonths, "month must be <= loanMaxDurationMonths");
 
-        console.log("pc2");
-
         // Calculate elapsedSeconds
         uint elapsedSeconds = month * monthSeconds;
 
-        console.log("pc3");
-
         // Calculate negExponent
         SD59x18 negExponent = toSD59x18(int(elapsedSeconds)).sub(toSD59x18(int(loan.maxDurationSeconds))).sub(toSD59x18(1));
-
-        console.log("pc4");
 
         // Calculate numerator
         SD59x18 z1 = SD59x18.wrap(int(UD60x18.unwrap(toUD60x18(1).add(loan.ratePerSecond)))).pow(negExponent);
         SD59x18 z2 = toSD59x18(1).sub(z1);
         UD60x18 numerator = UD60x18.wrap(uint(SD59x18.unwrap(SD59x18.wrap(int(UD60x18.unwrap(loan.paymentPerSecond))).mul(z2))));
 
-        console.log("pc5");
-        console.log("UD60x18.unwrap(numerator):", UD60x18.unwrap(numerator));
-        console.log("UD60x18.unwrap(loan.ratePerSecond):", UD60x18.unwrap(loan.ratePerSecond));
-
         // Calculate cap
         cap = fromUD60x18(numerator.div(loan.ratePerSecond));
-
-        console.log("pc6");
     }
 
     // Note: truncates on purpose (to enforce payment after monthSeconds, but not every second)
@@ -276,8 +224,7 @@ contract BorrowingV3 {
         return fromUD60x18(toUD60x18(loan.unpaidPrincipal).mul(accruedRate(loan)));
     }
     
-    // For testing
-    function accruedInterest(uint tokenId) public view returns(uint) {
+    function accruedInterest(uint tokenId) public view returns(uint) { // Note: made this duplicate of accruedInterest() for testing
         return accruedInterest(loans[tokenId]);
     }
 
