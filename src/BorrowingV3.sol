@@ -38,13 +38,35 @@ contract BorrowingV3 {
     // Libs
     using SafeERC20 for IERC20;
 
-    function deposit(uint amount) external {
-        totalDeposits += amount;
+    function deposit(uint usdc) external {
+        
+        // Pull usdc from depositor
+        USDC.safeTransferFrom(msg.sender, address(this), usdc);
+
+        // Update pool
+        totalDeposits += usdc;
+        
+        // Calulate depositor tUsdc
+        uint tUsdc = usdcToTUsdc(usdc);
+
+        // Mint tUsdc to depositor
+        tUSDC.mint(msg.sender, tUsdc);
     }
 
-    function withdraw(uint amount) external {
-        totalDeposits -= amount;
+    function withdraw(uint usdc) external {
+
+        // Calulate withdrawer tUsdc
+        uint tUsdc = usdcToTUsdc(usdc);
+
+        // Burn withdrawer tUsdc
+        tUSDC.burn(msg.sender, tUsdc);
+
+        // Update pool
+        totalDeposits -= usdc;
         require(totalPrincipal <= totalDeposits, "utilization can't exceed 100%");
+
+        // Send usdc to withdrawer
+        USDC.safeTransfer(msg.sender, usdc);
     }
 
     // Functions
