@@ -58,8 +58,6 @@ contract BorrowingV3 {
 
         // Calculate maxUnpaidInterest
         uint maxUnpaidInterest = maxCost - principal;
-
-        // console.log(6);
         
         loans[tokenId] = Loan({
             borrower: msg.sender,
