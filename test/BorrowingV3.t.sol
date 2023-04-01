@@ -151,5 +151,9 @@ contract BorrowingV3Test is Test {
         assert(expectedTotalDeposits == borrowing.totalDeposits());
         assert(expectedMaxTotalInterestOwed == borrowing.maxTotalInterestOwed());
         assert(totalPaidInterest <= borrowing.maxTotalInterestOwed());
+
+        // Validate lenderApy
+        UD60x18 lenderApy = borrowing.lenderApy();
+        assert(lenderApy.gte(toUD60x18(0)) && lenderApy.lte(toUD60x18(1)));
     }
 }

@@ -31,8 +31,18 @@ contract BorrowingV3 {
     // Loan storage
     mapping(uint => Loan) public loans;
 
+    function deposit(uint amount) external {
+        totalDeposits += amount;
+    }
+
+    function withdraw(uint amount) external {
+        totalDeposits -= amount;
+        require(totalPrincipal <= totalDeposits, "utilization can't exceed 100%");
+    }
+
     // Functions
     function startLoan(uint tokenId, uint principal, uint borrowerAprPct, uint maxDurationYears) external {
+        require(principal <= availableLiquidity(), "principal must be <= availableLiquidity");
 
         // Calculate ratePerSecond
         UD60x18 ratePerSecond = toUD60x18(borrowerAprPct).div(toUD60x18(100)).div(toUD60x18(yearSeconds));
@@ -178,6 +188,10 @@ contract BorrowingV3 {
     }
 
     function lenderApy() public view returns(UD60x18) {
+        if (totalDeposits == 0) {
+            assert(maxTotalInterestOwed == 0);
+            return toUD60x18(0);
+        }
         return toUD60x18(maxTotalInterestOwed).div(toUD60x18(totalDeposits)); // Question: is this missing auto-compounding?
     }
 
@@ -234,5 +248,9 @@ contract BorrowingV3 {
 
     function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
         return block.timestamp - loan.lastPaymentTime;
+    }
+
+    function availableLiquidity() private view returns(uint) {
+        return totalDeposits - totalPrincipal;
     }
 }
