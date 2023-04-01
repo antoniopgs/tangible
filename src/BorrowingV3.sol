@@ -219,6 +219,10 @@ contract BorrowingV3 {
         // Get loan
         Loan memory loan = loans[tokenId];
 
+        // Ensure month doesn't exceed loanMaxDurationMonths
+        uint loanMaxDurationMonths = loan.maxDurationSeconds / yearSeconds * yearMonths;
+        require(month <= loanMaxDurationMonths, "month must be <= loanMaxDurationMonths");
+
         console.log("pc2");
 
         // Calculate elapsedSeconds
@@ -237,7 +241,8 @@ contract BorrowingV3 {
         UD60x18 numerator = UD60x18.wrap(uint(SD59x18.unwrap(SD59x18.wrap(int(UD60x18.unwrap(loan.paymentPerSecond))).mul(z2))));
 
         console.log("pc5");
-        // console.log("UD60x18.unwrap(z):", UD60x18.unwrap(z));
+        console.log("UD60x18.unwrap(numerator):", UD60x18.unwrap(numerator));
+        console.log("UD60x18.unwrap(loan.ratePerSecond):", UD60x18.unwrap(loan.ratePerSecond));
 
         // Calculate cap
         cap = fromUD60x18(numerator.div(loan.ratePerSecond));
