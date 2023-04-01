@@ -139,7 +139,7 @@ contract BorrowingV3 {
     }
 
     function lenderApy() public view returns(UD60x18) {
-        return toUD60x18(maxTotalInterestOwed).div(toUD60x18(totalDeposits));
+        return toUD60x18(maxTotalInterestOwed).div(toUD60x18(totalDeposits)); // Question: is this missing auto-compounding?
     }
 
     function currentPrincipalCap(uint tokenId) public view returns(uint) {
