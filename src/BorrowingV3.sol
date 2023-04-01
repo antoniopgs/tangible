@@ -184,6 +184,10 @@ contract BorrowingV3 {
     }
 
     function utilization() public view returns(UD60x18) {
+        if (totalDeposits == 0) {
+            assert(totalPrincipal == 0);
+            return toUD60x18(0);
+        }
         return toUD60x18(totalPrincipal).div(toUD60x18(totalDeposits));
     }
 
@@ -250,7 +254,7 @@ contract BorrowingV3 {
         return block.timestamp - loan.lastPaymentTime;
     }
 
-    function availableLiquidity() private view returns(uint) {
+    function availableLiquidity() /* private */ public view returns(uint) {
         return totalDeposits - totalPrincipal;
     }
 }

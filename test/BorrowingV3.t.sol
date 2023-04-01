@@ -74,7 +74,7 @@ contract BorrowingV3Test is Test {
     function startLoan(uint tokenId, uint randomness) private validate {
         
         // Bound vars
-        uint principal = bound(randomness, 1e18, 1_000_000e18);
+        uint principal = bound(randomness, 0, borrowing.availableLiquidity());
         uint borrowerAprPct = bound(randomness, 2, 10);
         uint maxDurationYears = bound(randomness, 1, 50);
 
@@ -155,5 +155,9 @@ contract BorrowingV3Test is Test {
         // Validate lenderApy
         UD60x18 lenderApy = borrowing.lenderApy();
         assert(lenderApy.gte(toUD60x18(0)) && lenderApy.lte(toUD60x18(1)));
+
+        // Validate utilization
+        UD60x18 utilization = borrowing.utilization();
+        assert(utilization.gte(toUD60x18(0)) && utilization.lte(toUD60x18(1)));
     }
 }
