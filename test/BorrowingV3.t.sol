@@ -126,15 +126,10 @@ contract BorrowingV3Test is Test {
         console.log("payment made.\n");
 
         // Validate expectations
-        console.log(1);
         assert(expectedTotalPrincipal == borrowing.totalPrincipal());
-        console.log(2);
         assert(expectedTotalDeposits == borrowing.totalDeposits());
-        console.log(3);
         assert(expectedMaxTotalInterestOwed == borrowing.maxTotalInterestOwed());
-        console.log(4);
         assert(paidInterest <= borrowing.maxTotalInterestOwed());
-        console.log(5);
 
         // If loan is paid off, return
         (address borrower, , , , , , , ) = borrowing.loans(tokenId);
