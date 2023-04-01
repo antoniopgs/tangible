@@ -198,7 +198,7 @@ contract BorrowingV3 {
     }
 
     // Other Views
-    function principalCap(uint tokenId, uint month) private view returns(uint cap) {
+    function principalCap(uint tokenId, uint month) public view returns(uint cap) {
 
         // Get loan
         Loan memory loan = loans[tokenId];
