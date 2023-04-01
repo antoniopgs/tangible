@@ -18,7 +18,7 @@ contract BorrowingV3Test is Test, DeployScript {
     // Other vars
     uint loanCount;
     uint totalPaidInterest;
-    uint yearSeconds = borrowing.yearSeconds();
+    // uint yearSeconds = borrowing.yearSeconds();
 
     function testMath(uint[] calldata randomness) public {
 
@@ -114,6 +114,7 @@ contract BorrowingV3Test is Test, DeployScript {
         uint maxDurationYears = bound(randomness, 1, 50);
 
         // Calculate expectedMaxUnpaidInterest
+        uint yearSeconds = borrowing.yearSeconds();
         UD60x18 expectedRatePerSecond = toUD60x18(borrowerAprPct).div(toUD60x18(100)).div(toUD60x18(yearSeconds));
         uint expectedMaxDurationSeconds = maxDurationYears * yearSeconds;
         UD60x18 expectedPaymentPerSecond = borrowing.calculatePaymentPerSecond(principal, expectedRatePerSecond, expectedMaxDurationSeconds);

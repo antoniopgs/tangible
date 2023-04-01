@@ -13,18 +13,24 @@ contract DeployScript is Script {
 
     constructor() {
 
+        // Fork (needed for tUSDC's ERC777 registration in the ERC1820 registry)
+        vm.createSelectFork("https://eth-mainnet.alchemyapi.io/v2/");
+
         // Deploy protocol
         borrowing = new BorrowingV3();
 
         // Build tUsdcDefaultOperators;
-        address[] memory tUsdcDefaultOperators;
+        address[] memory tUsdcDefaultOperators = new address[](1);
         tUsdcDefaultOperators[0] = address(borrowing);
+
+        console.log(1);
 
         // Deploy tUSDC
         tUSDC = new tUsdc(tUsdcDefaultOperators);
+        
+        console.log(2);
 
         // Initialize protocol
         borrowing.initialize(tUSDC);
-
     }
 }
