@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract BorrowingV3 {
 
     IERC20 USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet
+    IERC20 tUSDC;
 
     // Time constants
     uint public constant yearSeconds = 365 days;
@@ -227,6 +228,20 @@ contract BorrowingV3 {
 
         // Calculate cap
         cap = fromUD60x18(numerator.div(loan.ratePerSecond));
+    }
+
+    function usdcToTUsdc(uint usdc) public view returns(uint tUsdc) {
+        
+        // Get tUsdcSupply
+        uint tUsdcSupply = tUSDC.totalSupply();
+
+        // If tUsdcSupply or totalDeposits = 0, 1:1
+        if (tUsdcSupply == 0 || totalDeposits == 0) {
+            tUsdc = usdc;
+        }
+
+        // Calculate tUsdc
+        tUsdc = usdc * tUsdcSupply / totalDeposits;
     }
 
     // Note: truncates on purpose (to enforce payment after monthSeconds, but not every second)
