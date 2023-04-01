@@ -195,8 +195,22 @@ contract BorrowingV3 {
     
     // Public Views
     function defaulted(uint tokenId) public view returns(bool) {
+
+        // Get loan
         Loan memory loan = loans[tokenId];
-        return loan.unpaidPrincipal > currentPrincipalCap(tokenId);
+
+        // Get loanCompletedMonths
+        uint loanCompletedMonths = loanCompletedMonths(tokenId);
+
+        // Calculate loanMaxDurationMonths
+        uint loanMaxDurationMonths = loan.maxDurationSeconds / yearSeconds * yearMonths;
+
+        // If loan exceeded allowed months
+        if (loanCompletedMonths > loanMaxDurationMonths) {
+            return true;
+        }
+
+        return loan.unpaidPrincipal > principalCap(tokenId, loanCompletedMonths);
     }
 
     function utilization() public view returns(UD60x18) {
@@ -205,10 +219,6 @@ contract BorrowingV3 {
 
     function lenderApy() public view returns(UD60x18) {
         return toUD60x18(maxTotalInterestOwed).div(toUD60x18(totalDeposits)); // Question: is this missing auto-compounding?
-    }
-
-    function currentPrincipalCap(uint tokenId) public view returns(uint) {
-        return principalCap(tokenId, loanCompletedMonths(tokenId));
     }
 
     // Other Views
