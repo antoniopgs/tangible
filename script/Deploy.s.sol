@@ -9,6 +9,7 @@ import "../src/tUsdc.sol";
 contract DeployScript is Script {
 
     BorrowingV3 borrowing;
+    IERC20 USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet
     tUsdc tUSDC;
 
     constructor() {
@@ -23,12 +24,8 @@ contract DeployScript is Script {
         address[] memory tUsdcDefaultOperators = new address[](1);
         tUsdcDefaultOperators[0] = address(borrowing);
 
-        console.log(1);
-
         // Deploy tUSDC
         tUSDC = new tUsdc(tUsdcDefaultOperators);
-        
-        console.log(2);
 
         // Initialize protocol
         borrowing.initialize(tUSDC);

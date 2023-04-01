@@ -22,6 +22,8 @@ contract BorrowingV3Test is Test, DeployScript {
 
     function testMath(uint[] calldata randomness) public {
 
+        console.log("t1");
+
         // Loop actions
         for (uint i = 0; i < randomness.length; i++) {
 
@@ -86,7 +88,18 @@ contract BorrowingV3Test is Test, DeployScript {
         // Set expectations
         expectedTotalDeposits += amount;
 
+        // Get borrower
+        address borrower = makeAddr("borrower");
+
+        // Give USDC to borrower
+        deal(address(USDC), borrower, amount);
+
+        // Approve protocol to pull amount
+        vm.prank(borrower);
+        USDC.approve(address(borrowing), amount);
+
         // Deposit
+        vm.prank(borrower);
         console.log("depositing", amount);
         borrowing.deposit(amount);
         console.log("deposit complete.");
@@ -100,7 +113,15 @@ contract BorrowingV3Test is Test, DeployScript {
         // Set expectations
         expectedTotalDeposits -= amount;
 
+        // Get withdrawer
+        address withdrawer = makeAddr("withdrawer");
+
+        // Give withdrawer tUSDC
+        uint expectedTUsdcBurn = borrowing.usdcToTUsdc(amount);
+        deal(address(tUSDC), withdrawer, expectedTUsdcBurn);
+
         // Withdraw
+        vm.prank(withdrawer);
         console.log("withdrawing", amount);
         borrowing.withdraw(amount);
         console.log("withdrawal complete.");

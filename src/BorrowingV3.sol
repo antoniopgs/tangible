@@ -265,11 +265,11 @@ contract BorrowingV3 is Initializable {
 
         // If tUsdcSupply or totalDeposits = 0, 1:1
         if (tUsdcSupply == 0 || totalDeposits == 0) {
-            tUsdcAmount = usdcAmount;
+            return tUsdcAmount = usdcAmount;
         }
 
         // Calculate tUsdc
-        tUsdcAmount = usdcAmount * tUsdcSupply / totalDeposits;
+        return tUsdcAmount = usdcAmount * tUsdcSupply / totalDeposits;
     }
 
     // Note: truncates on purpose (to enforce payment after monthSeconds, but not every second)
