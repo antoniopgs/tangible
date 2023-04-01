@@ -24,7 +24,7 @@ contract BorrowingV3 {
     // Pool vars
     uint totalPrincipal;
     uint totalDeposits;
-    uint totalInterestOwed;
+    uint maxTotalInterestOwed;
 
     // Loan storage
     mapping(uint => Loan) public loans;
@@ -52,7 +52,7 @@ contract BorrowingV3 {
 
         // Update pool
         totalPrincipal += principal;
-        // totalInterestOwed += ;
+        // maxTotalInterestOwed += ;
     }
 
     function payLoan(uint tokenId, uint payment) external {
@@ -73,7 +73,7 @@ contract BorrowingV3 {
         // Update pool
         totalPrincipal -= repayment;
         totalDeposits += interest;
-        totalInterestOwed -= interest;
+        maxTotalInterestOwed -= interest;
     }
 
     function redeem(uint tokenId) external {
@@ -94,7 +94,7 @@ contract BorrowingV3 {
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
-        totalInterestOwed -= interest; // Note: this might be off (because in startLoan() I added maxUnpaidInterest to totalInterestOwed)
+        maxTotalInterestOwed -= interest; // Note: this might be off (because in startLoan() I added maxUnpaidInterest to maxTotalInterestOwed)
 
         // Clearout loan
     }
@@ -121,7 +121,7 @@ contract BorrowingV3 {
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
-        totalInterestOwed -= interest; // Note: this might be off (because in startLoan() I added maxUnpaidInterest to totalInterestOwed)
+        maxTotalInterestOwed -= interest; // Note: this might be off (because in startLoan() I added maxUnpaidInterest to totalInterestOwed)
 
         // Clearout loan
 
@@ -134,8 +134,12 @@ contract BorrowingV3 {
         return loan.unpaidPrincipal > currentPrincipalCap(tokenId);
     }
 
-    function lenderApy() public view returns(UD60x18) {
+    function utilization() public view returns(UD60x18) {
+        return toUD60x18(totalPrincipal).div(toUD60x18(totalDeposits));
+    }
 
+    function lenderApy() public view returns(UD60x18) {
+        return toUD60x18(maxTotalInterestOwed).div(toUD60x18(totalDeposits));
     }
 
     function currentPrincipalCap(uint tokenId) public view returns(uint) {
