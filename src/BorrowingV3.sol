@@ -373,6 +373,7 @@ contract BorrowingV3 is Initializable {
         return lenderApy().div(utilization());
     }
 
+    // NOTE: I'm using a curve for borrowerApr (not slopes), so this won't work
     function penaltySlope(uint tUsdcAmount) private view returns(uint usdcAmount) {
         return usdcAmount = fromUD60x18(toUD60x18(tUsdcAmount).mul(optimalUtilization.mul(weightedAvgBorrowerRate()).add(toUD60x18(1))).div(optimalUtilization.sub(toUD60x18(1))));
     }
