@@ -140,54 +140,43 @@ contract BorrowingV3Test is Test, DeployScript {
     }
 
     function startLoan(uint tokenId, uint randomness) private validate {
-
-        console.log(1);
         
         // Bound principal
         uint principal = bound(randomness, 0, borrowing.availableLiquidity());
 
-        // Bound maxDurationMonths
+        // Get monthSeconds
         uint monthSeconds = borrowing.monthSeconds();
 
-        console.log(2);
-
-        // Calculate expectedMaxUnpaidInterest
+        // Calculate expectedRatePerSecond
         uint yearSeconds = borrowing.yearSeconds();
-        console.log(3);
         UD60x18 borrowerApr = borrowing.borrowerApr();
-        console.log("UD60x18.unwrap(borrowerApr):", UD60x18.unwrap(borrowerApr));
         UD60x18 expectedRatePerSecond = borrowerApr.div(toUD60x18(yearSeconds));
-        console.log("UD60x18.unwrap(expectedRatePerSecond):", UD60x18.unwrap(expectedRatePerSecond));
 
+        // Calculate maxMaxDurationMonths
         uint maxMaxDurationMonths = fromUD60x18(log10(MAX_UD60x18).div(toUD60x18(monthSeconds).mul(log10(toUD60x18(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
-        console.log("maxMaxDurationMonths:", maxMaxDurationMonths);
-        uint maxDurationMonths = bound(randomness, 1, maxMaxDurationMonths);
-        console.log("maxDurationMonths:", maxDurationMonths);
 
-        console.log(4);
-        uint expectedMaxDurationSeconds = maxDurationMonths * monthSeconds;
-        console.log(5);
-        console.log("expectedMaxDurationSeconds:", expectedMaxDurationSeconds);
-        UD60x18 expectedPaymentPerSecond = borrowing.calculatePaymentPerSecond(principal, expectedRatePerSecond, expectedMaxDurationSeconds);
-        console.log(6);
-        uint expectedLoanCost = fromUD60x18(expectedPaymentPerSecond.mul(toUD60x18(expectedMaxDurationSeconds)));
-        console.log(7);
-        uint expectedMaxUnpaidInterest = expectedLoanCost - principal;
+        if (maxMaxDurationMonths > 0) {
+            
+            // Calculate expectedMaxUnpaidInterest
+            uint maxDurationMonths = bound(randomness, 1, maxMaxDurationMonths);
+            uint expectedMaxDurationSeconds = maxDurationMonths * monthSeconds;
+            UD60x18 expectedPaymentPerSecond = borrowing.calculatePaymentPerSecond(principal, expectedRatePerSecond, expectedMaxDurationSeconds);
+            uint expectedLoanCost = fromUD60x18(expectedPaymentPerSecond.mul(toUD60x18(expectedMaxDurationSeconds)));
+            uint expectedMaxUnpaidInterest = expectedLoanCost - principal;
 
-        console.log(3);
-
-        // Set expectations
-        expectedTotalPrincipal += principal;
-        expectedTotalDeposits = expectedTotalDeposits; // Note: shouldn't be changed by startLoan()
-        expectedMaxTotalInterestOwed += expectedMaxUnpaidInterest;
-        
-        // Start Loan
-        console.log("starting loan...");
-        console.log("- principal:", principal);
-        console.log("- UD60x18.unwrap(borrowerApr):", UD60x18.unwrap(borrowerApr));
-        console.log("- maxDurationMonths:", maxDurationMonths);
-        borrowing.startLoan(tokenId, principal, /* borrowerAprPct, */ maxDurationMonths);
-        console.log("loan started.\n");
+            // Set expectations
+            expectedTotalPrincipal += principal;
+            expectedTotalDeposits = expectedTotalDeposits; // Note: shouldn't be changed by startLoan()
+            expectedMaxTotalInterestOwed += expectedMaxUnpaidInterest;
+            
+            // Start Loan
+            console.log("starting loan...");
+            console.log("- principal:", principal);
+            console.log("- UD60x18.unwrap(borrowerApr):", UD60x18.unwrap(borrowerApr));
+            console.log("- maxDurationMonths:", maxDurationMonths);
+            borrowing.startLoan(tokenId, principal, /* borrowerAprPct, */ maxDurationMonths);
+            console.log("loan started.\n");
+        }
     }
 
     function skipTime(uint timeJump) private validate {

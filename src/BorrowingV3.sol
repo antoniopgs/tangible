@@ -313,11 +313,7 @@ contract BorrowingV3 is Initializable {
 
     function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) /*private*/ public /* pure */ view returns(UD60x18 paymentPerSecond) {
 
-        console.log("UD60x18.unwrap(utilization()):", UD60x18.unwrap(utilization()));
-        console.log("UD60x18.unwrap(borrowerApr()):", UD60x18.unwrap(borrowerApr()));
-        console.log("UD60x18.unwrap(borrowerRatePerSecond()):", UD60x18.unwrap(borrowerRatePerSecond()));
-        console.log("UD60x18.unwrap(ratePerSecond):", UD60x18.unwrap(ratePerSecond));
-        console.log("years:", maxDurationSeconds / yearSeconds);
+        console.log(1);
 
         // Calculate x
         // - (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
@@ -328,10 +324,20 @@ contract BorrowingV3 is Initializable {
         // - maxDurationMonths <= log(MAX_UD60x18) / (monthSeconds * log(1 + ratePerSecond))
         UD60x18 x = toUD60x18(1).add(ratePerSecond).powu(maxDurationSeconds);
 
-        console.log("UD60x18.unwrap(x):", UD60x18.unwrap(x));
+        console.log(2);
+
+        // principal * ratePerSecond * x <= MAX_UD60x18
+        // principal * ratePerSecond * (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
+        // principal * ratePerSecond * (1 + ratePerSecond) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18
+        // (1 + ratePerSecond) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18 / (principal * ratePerSecond)
+        // maxDurationMonths * monthSeconds <= log_(1 + ratePerSecond)_(MAX_UD60x18 / (principal * ratePerSecond))
+        // maxDurationMonths * monthSeconds <= log(MAX_UD60x18 / (principal * ratePerSecond)) / log(1 + ratePerSecond)
+        // maxDurationMonths <= (log(MAX_UD60x18 / (principal * ratePerSecond)) / log(1 + ratePerSecond)) / monthSeconds
         
         // Calculate paymentPerSecond
         paymentPerSecond = toUD60x18(principal).mul(ratePerSecond).mul(x).div(x.sub(toUD60x18(1)));
+
+        console.log(3);
     }
 
     function accruedInterest(Loan memory loan) private view returns(uint) {
