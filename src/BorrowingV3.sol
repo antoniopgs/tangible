@@ -33,6 +33,7 @@ contract BorrowingV3 is Initializable {
     uint public totalPrincipal;
     uint public totalDeposits;
     uint public maxTotalInterestOwed;
+    UD60x18 public optimalUtilization = toUD60x18(90).div(toUD60x18(100)); // Note: 90%
 
     // Loan storage
     mapping(uint => Loan) public loans;
@@ -259,6 +260,14 @@ contract BorrowingV3 is Initializable {
     }
 
     function usdcToTUsdc(uint usdcAmount) public view returns(uint tUsdcAmount) {
+
+        // If utilization <= optimalUtilization
+        if (utilization().lte(optimalUtilization)) {
+        
+        // If utilization > optimalUtilization
+        } else {
+            
+        }
         
         // Get tUsdcSupply
         uint tUsdcSupply = tUSDC.totalSupply();
