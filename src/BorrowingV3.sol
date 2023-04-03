@@ -377,4 +377,8 @@ contract BorrowingV3 is Initializable {
     function withdrawalPenalty(uint tUsdcAmount) private view returns(uint usdcAmount) {
         return tUsdcToUsdc(tUsdcAmount) - penaltySlope(tUsdcAmount);
     }
+
+    function recommendedMonthlyPayment(Loan memory loan) public view returns(uint) { // Todo: verify with math tests
+        return fromUD60x18(toUD60x18(monthSeconds).mul(loan.paymentPerSecond));
+    }
 }
