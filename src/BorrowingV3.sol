@@ -162,7 +162,7 @@ contract BorrowingV3 is Initializable {
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
         assert(interest < loan.maxUnpaidInterest);
-        maxTotalInterestOwed -= loan.maxUnpaidInterest;
+        maxTotalInterestOwed -= loan.maxUnpaidInterest; // Note: maxTotalInterestOwed -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
         // Clearout loan
     }
@@ -187,7 +187,7 @@ contract BorrowingV3 is Initializable {
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
         assert(interest < loan.maxUnpaidInterest);
-        maxTotalInterestOwed -= loan.maxUnpaidInterest;
+        maxTotalInterestOwed -= loan.maxUnpaidInterest; // Note: maxTotalInterestOwed -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
         // Calculate defaulterEquity
         uint defaulterEquity = salePrice - defaulterDebt;
