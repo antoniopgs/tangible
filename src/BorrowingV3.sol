@@ -74,15 +74,12 @@ contract BorrowingV3 is Initializable {
         // Burn withdrawer tUsdc
         tUSDC.operatorBurn(msg.sender, _tUsdc, "", "");
 
-        // Calculate withdrawerUsdc
-        uint withdrawerUsdc = utilization().lte(optimalUtilization) ? usdc : penaltySlope(_tUsdc);
-
         // Update pool
-        totalDeposits -= withdrawerUsdc;
+        totalDeposits -= usdc;
         require(totalPrincipal <= totalDeposits, "utilization can't exceed 100%");
 
-        // Send withdrawerUsdc to withdrawer
-        USDC.safeTransfer(msg.sender, withdrawerUsdc);
+        // Send usdc to withdrawer
+        USDC.safeTransfer(msg.sender, usdc);
     }
 
     // Functions
@@ -381,18 +378,5 @@ contract BorrowingV3 is Initializable {
 
     function availableLiquidity() /* private */ public view returns(uint) {
         return totalDeposits - totalPrincipal;
-    }
-
-    function weightedAvgBorrowerRate() private view returns(UD60x18) {
-        return lenderApy().div(utilization());
-    }
-
-    // NOTE: I'm using a curve for borrowerApr (not slopes), so this won't work
-    function penaltySlope(uint tUsdcAmount) private view returns(uint usdcAmount) {
-        return usdcAmount = fromUD60x18(toUD60x18(tUsdcAmount).mul(optimalUtilization.mul(weightedAvgBorrowerRate()).add(toUD60x18(1))).div(optimalUtilization.sub(toUD60x18(1))));
-    }
-
-    function recommendedMonthlyPayment(Loan memory loan) public pure returns(uint) { // Todo: verify with math tests
-        return fromUD60x18(toUD60x18(monthSeconds).mul(loan.paymentPerSecond));
     }
 }

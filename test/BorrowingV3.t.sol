@@ -9,7 +9,7 @@ import { MAX_UD60x18, log10 } from "@prb/math/UD60x18.sol";
 contract BorrowingV3Test is Test, DeployScript {
 
     // Actions
-    enum Action { Deposit, Withdraw, StartLoan, PayLoan, SkipTime, Redeem, Foreclose } // Todo: Redeem, Foreclose
+    enum Action { Deposit, Withdraw, StartLoan, PayLoan, SkipTime, Redeem, Foreclose }
     
     // Expectation Vars
     uint expectedTotalPrincipal;
