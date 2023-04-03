@@ -8,7 +8,7 @@ import "forge-std/console.sol";
 contract BorrowingV3Test is Test, DeployScript {
 
     // Actions
-    enum Action { Deposit, Withdraw, Start, Pay, Skip }
+    enum Action { Deposit, Withdraw, StartLoan, PayLoan, SkipTime } // Todo: Redeem, Foreclose
     
     // Expectation Vars
     uint expectedTotalPrincipal;
@@ -41,7 +41,7 @@ contract BorrowingV3Test is Test, DeployScript {
                 // Withdraw
                 withdraw(randomness[i]);
 
-            } else if (action == uint(Action.Start)) {
+            } else if (action == uint(Action.StartLoan)) {
                 
                 // Set tokenId
                 uint tokenId = loanCount;
@@ -53,7 +53,7 @@ contract BorrowingV3Test is Test, DeployScript {
                 loanCount++;
             
             // If Pay
-            } else if (action == uint(Action.Pay)) {
+            } else if (action == uint(Action.PayLoan)) {
                 
                 // If loans exist
                 if (loanCount > 0) {
@@ -72,7 +72,7 @@ contract BorrowingV3Test is Test, DeployScript {
                 }
             
             // If Skip
-            } else if (action == uint(Action.Skip)) {
+            } else if (action == uint(Action.SkipTime)) {
 
                 // Skip
                 skipTime(randomness[i]);
