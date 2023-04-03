@@ -284,14 +284,6 @@ contract BorrowingV3 is Initializable {
     }
 
     function usdcToTUsdc(uint usdcAmount) public view returns(uint tUsdcAmount) {
-
-        // If utilization <= optimalUtilization
-        if (utilization().lte(optimalUtilization)) {
-        
-        // If utilization > optimalUtilization
-        } else {
-            
-        }
         
         // Get tUsdcSupply
         uint tUsdcSupply = tUSDC.totalSupply();
@@ -301,8 +293,22 @@ contract BorrowingV3 is Initializable {
             return tUsdcAmount = usdcAmount;
         }
 
-        // Calculate tUsdc
+        // Calculate tUsdcAmount
         return tUsdcAmount = usdcAmount * tUsdcSupply / totalDeposits;
+    }
+
+    function tUsdcToUsdc(uint tUsdcAmount) public view returns(uint usdcAmount) {
+        
+        // Get tUsdcSupply
+        uint tUsdcSupply = tUSDC.totalSupply();
+
+        // If tUsdcSupply or totalDeposits = 0, 1:1
+        if (tUsdcSupply == 0 || totalDeposits == 0) {
+            return usdcAmount = tUsdcAmount;
+        }
+
+        // Calculate usdcAmount
+        return usdcAmount = tUsdcAmount * totalDeposits / tUsdcSupply;
     }
 
     // Note: truncates on purpose (to enforce payment after monthSeconds, but not every second)
@@ -358,5 +364,17 @@ contract BorrowingV3 is Initializable {
 
     function availableLiquidity() /* private */ public view returns(uint) {
         return totalDeposits - totalPrincipal;
+    }
+
+    function weightedAvgBorrowerRate() private view returns(UD60x18) {
+        return lenderApy().div(utilization());
+    }
+
+    function penaltySlope(uint tUsdcAmount) private view returns(uint usdcAmount) {
+        return usdcAmount = optimalUtilization.mul(weightedAvgBorrowerRate()).add(toUD60x18(1)).div(optimalUtilization.sub(toUD60x18(1)));
+    }
+
+    function withdrawalPenalty(uint tUsdcAmount) private view returns(uint usdcAmount) {
+        return tUsdcToUsdc(tUsdcAmount) - penaltySlope(tUsdcAmount);
     }
 }
