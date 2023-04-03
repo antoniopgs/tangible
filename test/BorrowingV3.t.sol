@@ -9,7 +9,7 @@ import { MAX_UD60x18, log10 } from "@prb/math/UD60x18.sol";
 contract BorrowingV3Test is Test, DeployScript {
 
     // Actions
-    enum Action { Deposit, Withdraw, StartLoan, PayLoan, SkipTime } // Todo: Redeem, Foreclose
+    enum Action { Deposit, Withdraw, StartLoan, PayLoan, SkipTime, Redeem, Foreclose } // Todo: Redeem, Foreclose
     
     // Expectation Vars
     uint expectedTotalPrincipal;
@@ -88,6 +88,48 @@ contract BorrowingV3Test is Test, DeployScript {
 
                 // Skip
                 skipTime(randomness[i]);
+
+            } else if (action == uint(Action.Redeem)) {
+
+                console.log("\nAction.Redeem");
+
+                // If loans exist
+                if (loanCount > 0) {
+
+                    // Get random tokenId
+                    uint tokenId = randomness[i] % loanCount;
+
+                    // If default
+                    // if (borrowing.defaulted(tokenId)) {
+
+                        // Redeem
+                        borrowing.redeem(tokenId);
+
+                    // } else {
+                    //     console.log("no default.\n");
+                    // }
+                }
+
+            } else if (action == uint(Action.Foreclose)) {
+
+                console.log("\nAction.Foreclose");
+
+                // If loans exist
+                if (loanCount > 0) {
+
+                    // Get random tokenId
+                    uint tokenId = randomness[i] % loanCount;
+
+                    // If default
+                    // if (borrowing.defaulted(tokenId)) {
+
+                        // Foreclose
+                        borrowing.foreclose(tokenId, randomness[i]);
+
+                    // } else {
+                    //     console.log("no default.\n");
+                    // }
+                }
             }
         }
     }
