@@ -31,35 +31,39 @@ contract BorrowingV3Test is Test, DeployScript {
             // If Start
             if (action == uint(Action.Deposit)) {
 
-                console.log("Action.Deposit");
+                console.log("\nAction.Deposit");
 
                 // Deposit
                 deposit(randomness[i]);
 
             } else if (action == uint(Action.Withdraw)) {
 
-                console.log("Action.Withdraw");
+                console.log("\nAction.Withdraw");
 
                 // Withdraw
                 withdraw(randomness[i]);
 
             } else if (action == uint(Action.StartLoan)) {
 
-                console.log("Action.StartLoan");
-                
-                // Set tokenId
-                uint tokenId = loanCount;
+                console.log("\nAction.StartLoan");
 
-                // Start Loan
-                startLoan(tokenId, randomness[i]);
+                // If utilization < 100% (can't startLoan otherwise)
+                if (borrowing.utilization().lt(toUD60x18(1))) {
 
-                // Increment loanCount
-                loanCount++;
+                    // Set tokenId
+                    uint tokenId = loanCount;
+
+                    // Start Loan
+                    startLoan(tokenId, randomness[i]);
+
+                    // Increment loanCount
+                    loanCount++;
+                }
             
             // If Pay
             } else if (action == uint(Action.PayLoan)) {
 
-                console.log("Action.PayLoan");
+                console.log("\nAction.PayLoan");
                 
                 // If loans exist
                 if (loanCount > 0) {
@@ -80,7 +84,7 @@ contract BorrowingV3Test is Test, DeployScript {
             // If Skip
             } else if (action == uint(Action.SkipTime)) {
 
-                console.log("Action.SkipTime");
+                console.log("\nAction.SkipTime");
 
                 // Skip
                 skipTime(randomness[i]);

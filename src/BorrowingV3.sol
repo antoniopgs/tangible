@@ -273,7 +273,7 @@ contract BorrowingV3 is Initializable {
 
         // If utilization == 100%
         if (_utilization.eq(toUD60x18(1))) {
-            revert("can't start loan if utilization = 100%");
+            revert("no APR. can't start loan if utilization = 100%");
         }
 
         apr = k1.add(k2.div(toUD60x18(1).sub(_utilization))); // Todo: improve precision
