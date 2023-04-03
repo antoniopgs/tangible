@@ -142,7 +142,9 @@ contract BorrowingV3Test is Test, DeployScript {
         uint principal = bound(randomness, 0, borrowing.availableLiquidity());
 
         // Bound maxDurationMonths
-        uint maxDurationMonths = bound(randomness, 1, 50 * 12); // Note: max Duration is 50 years
+        uint monthSeconds = borrowing.monthSeconds();
+        // uint maxMaxDurationMonths = log_(1 + (apr / yearSeconds))_MAX_UD60x18 / monthSeconds
+        uint maxDurationMonths = bound(randomness, 1, 30 * 12); // Note: max Duration is 50 years
 
         console.log(2);
 
@@ -152,7 +154,6 @@ contract BorrowingV3Test is Test, DeployScript {
         UD60x18 borrowerApr = borrowing.borrowerApr();
         UD60x18 expectedRatePerSecond = borrowerApr.div(toUD60x18(yearSeconds));
         console.log(4);
-        uint monthSeconds = borrowing.monthSeconds();
         uint expectedMaxDurationSeconds = maxDurationMonths * monthSeconds;
         console.log(5);
         UD60x18 expectedPaymentPerSecond = borrowing.calculatePaymentPerSecond(principal, expectedRatePerSecond, expectedMaxDurationSeconds);

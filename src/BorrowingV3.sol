@@ -312,9 +312,11 @@ contract BorrowingV3 is Initializable {
 
         // Calculate x
         // - (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
-        // - (1 + (apr / yearSeconds)) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18
-        // - maxDurationMonths * monthSeconds <= log_(1 + (apr / yearSeconds))_MAX_UD60x18 // Note: bring down apr or maxDurationMonths
-        // - maxDurationMonths <= log_(1 + (apr / yearSeconds))_MAX_UD60x18 / monthSeconds // Note: solved for maxDurationMonths (because apr depends on util)
+        // - (1 + ratePerSecond) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18
+        // - maxDurationMonths * monthSeconds <= log_(1 + ratePerSecond)_MAX_UD60x18
+        // - maxDurationMonths * monthSeconds <= log(MAX_UD60x18) / log(1 + ratePerSecond)
+        // - maxDurationMonths <= (log(MAX_UD60x18) / log(1 + ratePerSecond)) / monthSeconds // Note: ratePerSecond depends on util (so solve for maxDurationMonths)
+        // - maxDurationMonths <= monthSeconds * log(MAX_UD60x18) / log(1 + ratePerSecond)
         UD60x18 x = toUD60x18(1).add(ratePerSecond).powu(maxDurationSeconds);
 
         console.log("UD60x18.unwrap(x):", UD60x18.unwrap(x));
