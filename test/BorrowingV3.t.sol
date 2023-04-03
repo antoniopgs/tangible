@@ -4,6 +4,7 @@ pragma solidity ^0.8.15;
 import "forge-std/Test.sol";
 import "../script/Deploy.s.sol";
 import "forge-std/console.sol";
+import { MAX_UD60x18, log10 } from "@prb/math/UD60x18.sol";
 
 contract BorrowingV3Test is Test, DeployScript {
 
@@ -143,8 +144,6 @@ contract BorrowingV3Test is Test, DeployScript {
 
         // Bound maxDurationMonths
         uint monthSeconds = borrowing.monthSeconds();
-        // uint maxMaxDurationMonths = log_(1 + (apr / yearSeconds))_MAX_UD60x18 / monthSeconds
-        uint maxDurationMonths = bound(randomness, 1, 30 * 12); // Note: max Duration is 50 years
 
         console.log(2);
 
@@ -152,10 +151,19 @@ contract BorrowingV3Test is Test, DeployScript {
         uint yearSeconds = borrowing.yearSeconds();
         console.log(3);
         UD60x18 borrowerApr = borrowing.borrowerApr();
+        console.log("UD60x18.unwrap(borrowerApr):", UD60x18.unwrap(borrowerApr));
         UD60x18 expectedRatePerSecond = borrowerApr.div(toUD60x18(yearSeconds));
+        console.log("UD60x18.unwrap(expectedRatePerSecond):", UD60x18.unwrap(expectedRatePerSecond));
+
+        uint maxMaxDurationMonths = fromUD60x18(log10(MAX_UD60x18).div(toUD60x18(monthSeconds).mul(log10(toUD60x18(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
+        console.log("maxMaxDurationMonths:", maxMaxDurationMonths);
+        uint maxDurationMonths = bound(randomness, 1, maxMaxDurationMonths);
+        console.log("maxDurationMonths:", maxDurationMonths);
+
         console.log(4);
         uint expectedMaxDurationSeconds = maxDurationMonths * monthSeconds;
         console.log(5);
+        console.log("expectedMaxDurationSeconds:", expectedMaxDurationSeconds);
         UD60x18 expectedPaymentPerSecond = borrowing.calculatePaymentPerSecond(principal, expectedRatePerSecond, expectedMaxDurationSeconds);
         console.log(6);
         uint expectedLoanCost = fromUD60x18(expectedPaymentPerSecond.mul(toUD60x18(expectedMaxDurationSeconds)));
