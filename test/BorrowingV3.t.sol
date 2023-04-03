@@ -123,8 +123,12 @@ contract BorrowingV3Test is Test, DeployScript {
                     // If default
                     // if (borrowing.defaulted(tokenId)) {
 
+                        uint salePrice = randomness[i];
+                        uint protocolUsdc = USDC.balanceOf(address(borrowing));
+                        deal(address(USDC), address(borrowing), protocolUsdc + salePrice);
+
                         // Foreclose
-                        borrowing.foreclose(tokenId, randomness[i]);
+                        borrowing.foreclose(tokenId, salePrice);
 
                     // } else {
                     //     console.log("no default.\n");

@@ -175,7 +175,7 @@ contract BorrowingV3 is Initializable {
         console.log(1);
         console.log(interest);
         console.log(loan.maxUnpaidInterest);
-        assert(interest < loan.maxUnpaidInterest);
+        assert(interest <= loan.maxUnpaidInterest);
         console.log(2);
         maxTotalInterestOwed -= loan.maxUnpaidInterest; // Note: maxTotalInterestOwed -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
@@ -183,6 +183,8 @@ contract BorrowingV3 is Initializable {
     }
 
     function foreclose(uint tokenId, uint salePrice) external {
+
+        // Todo: Pull salePrice?
 
         // Get Loan
         Loan storage loan = loans[tokenId];
@@ -201,11 +203,19 @@ contract BorrowingV3 is Initializable {
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
-        assert(interest < loan.maxUnpaidInterest);
+        console.log(1);
+        console.log(interest);
+        console.log(loan.maxUnpaidInterest);
+        assert(interest <= loan.maxUnpaidInterest);
+        console.log(2);
         maxTotalInterestOwed -= loan.maxUnpaidInterest; // Note: maxTotalInterestOwed -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
+
+        console.log(3);
 
         // Calculate defaulterEquity
         uint defaulterEquity = salePrice - defaulterDebt;
+
+        console.log(4);
 
         // Send defaulterEquity to defaulter
         USDC.safeTransfer(loan.borrower, defaulterEquity);
