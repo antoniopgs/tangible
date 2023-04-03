@@ -74,15 +74,15 @@ contract BorrowingV3 is Initializable {
         // Burn withdrawer tUsdc
         tUSDC.operatorBurn(msg.sender, _tUsdc, "", "");
 
-        // Calculate receivedUsdc
-        uint receivedUsdc = usdc - withdrawalPenalty(_tUsdc);
+        // Calculate withdrawerUsdc
+        uint withdrawerUsdc = utilization().lte(optimalUtilization) ? usdc : penaltySlope(_tUsdc);
 
         // Update pool
-        totalDeposits -= receivedUsdc;
+        totalDeposits -= withdrawerUsdc;
         require(totalPrincipal <= totalDeposits, "utilization can't exceed 100%");
 
-        // Send receivedUsdc to withdrawer
-        USDC.safeTransfer(msg.sender, receivedUsdc);
+        // Send withdrawerUsdc to withdrawer
+        USDC.safeTransfer(msg.sender, withdrawerUsdc);
     }
 
     // Functions
@@ -375,16 +375,6 @@ contract BorrowingV3 is Initializable {
 
     function penaltySlope(uint tUsdcAmount) private view returns(uint usdcAmount) {
         return usdcAmount = fromUD60x18(toUD60x18(tUsdcAmount).mul(optimalUtilization.mul(weightedAvgBorrowerRate()).add(toUD60x18(1))).div(optimalUtilization.sub(toUD60x18(1))));
-    }
-
-    function withdrawalPenalty(uint tUsdcAmount) private view returns(uint penalty) {
-        
-        // If utilization <= optimal, no penalty
-        if (utilization().lte(optimalUtilization)) {
-            return pentalty = 0;
-        }
-
-        return penalty = tUsdcToUsdc(tUsdcAmount) - penaltySlope(tUsdcAmount);
     }
 
     function recommendedMonthlyPayment(Loan memory loan) public pure returns(uint) { // Todo: verify with math tests
