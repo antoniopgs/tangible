@@ -3,8 +3,9 @@ pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
 import "../script/Deploy.s.sol";
-import "forge-std/console.sol";
 import { MAX_UD60x18, log10 } from "@prb/math/UD60x18.sol";
+
+import "forge-std/console.sol";
 
 contract BorrowingV3Test is Test, DeployScript {
 
@@ -73,6 +74,8 @@ contract BorrowingV3Test is Test, DeployScript {
 
                     if (!borrowing.defaulted(tokenId)) {
 
+                        console.log("pl1");
+
                         // Pay Loan
                         payLoan(tokenId, randomness[i]);
 
@@ -100,14 +103,15 @@ contract BorrowingV3Test is Test, DeployScript {
                     uint tokenId = randomness[i] % loanCount;
 
                     // If default
-                    // if (borrowing.defaulted(tokenId)) {
+                    if (borrowing.state(tokenId) == BorrowingV3.State.Default) {
 
                         // Redeem
-                        borrowing.redeem(tokenId);
-
-                    // } else {
-                    //     console.log("no default.\n");
-                    // }
+                        redeem(tokenId);
+                    
+                    // If no default
+                    } else {
+                        console.log("no default.\n");
+                    }
                 }
 
             } else if (action == uint(Action.Foreclose)) {
@@ -121,18 +125,15 @@ contract BorrowingV3Test is Test, DeployScript {
                     uint tokenId = randomness[i] % loanCount;
 
                     // If default
-                    // if (borrowing.defaulted(tokenId)) {
-
-                        uint salePrice = randomness[i];
-                        uint protocolUsdc = USDC.balanceOf(address(borrowing));
-                        deal(address(USDC), address(borrowing), protocolUsdc + salePrice);
+                    if (borrowing.state(tokenId) == BorrowingV3.State.Default) {
 
                         // Foreclose
-                        borrowing.foreclose(tokenId, salePrice);
+                        foreclose(tokenId, randomness[i]);
 
-                    // } else {
-                    //     console.log("no default.\n");
-                    // }
+                    // If no default
+                    } else {
+                        console.log("no default.\n");
+                    }
                 }
             }
         }
@@ -269,23 +270,107 @@ contract BorrowingV3Test is Test, DeployScript {
         }
     }
 
+    function redeem(uint tokenId) private {
+
+        // If default
+        // if (borrowing.defaulted(tokenId)) {
+            
+            // // Get redeemer & unpaidPrincipal
+            (address redeemer, , , , uint unpaidPrincipal, uint maxUnpaidInterest, , ) = borrowing.loans(tokenId);
+            console.log("redeemer:", redeemer);
+            uint accruedInterest = borrowing.accruedInterest(tokenId);
+            console.log("r1");
+            uint expectedRedeemerDebt = unpaidPrincipal + accruedInterest;
+            console.log("r2");
+
+            // Give redeemer expectedRedeemerDebt
+            deal(address(USDC), redeemer, expectedRedeemerDebt);
+
+            console.log("r3");
+
+            // Redeemer approves protocol
+            vm.prank(redeemer);
+            USDC.approve(address(borrowing), expectedRedeemerDebt);
+
+            console.log("r4");
+            console.log("expectedTotalPrincipal:", expectedTotalPrincipal);
+            console.log("unpaidPrincipal:", unpaidPrincipal);
+            expectedTotalPrincipal -= unpaidPrincipal;
+            console.log("r5");
+            expectedTotalDeposits += borrowing.accruedInterest(tokenId);
+            console.log("r6");
+            expectedMaxTotalInterestOwed -= maxUnpaidInterest;
+            console.log("r7");
+
+            // Redemer redeems
+            vm.prank(redeemer);
+            console.log("redeeming...");
+            borrowing.redeem(tokenId);
+            console.log("redemption complete.");
+
+        // } else {
+        //     console.log("no default.\n");
+        // }
+    }
+
+    function foreclose(uint tokenId, uint salePrice) private {
+
+        // Get unpaidPrincipal & maxUnpaidInterest
+        (, , , , uint unpaidPrincipal, uint maxUnpaidInterest, , ) = borrowing.loans(tokenId);
+
+        // Bound salePrice
+        uint expectedDefaulterDebt = unpaidPrincipal + borrowing.accruedInterest(tokenId);
+        salePrice = bound(salePrice, expectedDefaulterDebt, 1_000_000_000 * 1e18);
+
+        console.log("F1");
+        uint protocolUsdc = USDC.balanceOf(address(borrowing));
+        deal(address(USDC), address(borrowing), protocolUsdc + salePrice, true);
+        console.log("F3");
+
+        console.log("F5");
+        console.log("expectedTotalPrincipal:", expectedTotalPrincipal);
+        console.log("unpaidPrincipal:", unpaidPrincipal);
+        expectedTotalPrincipal -= unpaidPrincipal;
+        console.log("F6");
+        expectedTotalDeposits += borrowing.accruedInterest(tokenId);
+        console.log("F7");
+        expectedMaxTotalInterestOwed -= maxUnpaidInterest;
+        console.log("F8");
+
+        // Foreclose
+        console.log("foreclosing...");
+        borrowing.foreclose(tokenId, salePrice);
+        console.log("foreclosure complete.");
+    }
+
     modifier validate() {
         
         // Run
         _;
 
         // Validate expectations
+        console.log("v1");
+        console.log("expectedTotalPrincipal:", expectedTotalPrincipal);
+        console.log("borrowing.totalPrincipal():", borrowing.totalPrincipal());
         assert(expectedTotalPrincipal == borrowing.totalPrincipal());
+        console.log("v2");
         assert(expectedTotalDeposits == borrowing.totalDeposits());
+        console.log("v3");
         assert(expectedMaxTotalInterestOwed == borrowing.maxTotalInterestOwed());
+        console.log("v4");
         assert(totalPaidInterest <= borrowing.maxTotalInterestOwed());
+        console.log("v5");
 
         // Validate lenderApy
         UD60x18 lenderApy = borrowing.lenderApy();
+        console.log("v6");
         assert(lenderApy.gte(toUD60x18(0)) /*&& lenderApy.lte(toUD60x18(1))*/); // Note: actually, lenderApy might be able to surpass 100%
+        console.log("v7");
 
         // Validate utilization
         UD60x18 utilization = borrowing.utilization();
+        console.log("v8");
         assert(utilization.gte(toUD60x18(0)) && utilization.lte(toUD60x18(1)));
+        console.log("v9");
     }
 }

@@ -11,7 +11,7 @@ import "forge-std/console.sol";
 
 contract BorrowingV3 is Initializable {
 
-    IERC20 USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet
+    IERC20 USDC;
     tUsdc tUSDC;
 
     // Time constants
@@ -48,6 +48,7 @@ contract BorrowingV3 is Initializable {
     using SafeERC20 for IERC20;
 
     function initialize(tUsdc _tUSDC) external initializer {
+        USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet
         tUSDC = _tUSDC;
     }
 
@@ -101,6 +102,9 @@ contract BorrowingV3 is Initializable {
 
         // Calculate maxUnpaidInterest
         uint maxUnpaidInterest = maxCost - principal;
+
+        console.log("tokenId:", tokenId);
+        console.log("msg.sender:", msg.sender);
         
         loans[tokenId] = Loan({
             borrower: msg.sender,
@@ -119,6 +123,7 @@ contract BorrowingV3 is Initializable {
     }
 
     function payLoan(uint tokenId, uint payment) external {
+
         require(!defaulted(tokenId), "can't pay loan after defaulting");
 
         // Get Loan
@@ -181,6 +186,8 @@ contract BorrowingV3 is Initializable {
 
     function foreclose(uint tokenId, uint salePrice) external {
 
+        console.log("f1");
+
         // Todo: Pull salePrice?
 
         // Get Loan
@@ -188,34 +195,44 @@ contract BorrowingV3 is Initializable {
 
         // Todo: Ensure State == Foreclosurable
 
+        console.log("f2");
+
         // Calculate interest
         uint interest = accruedInterest(loan);
+
+        console.log("f3");
 
         // Calculate defaulterDebt
         uint defaulterDebt = loan.unpaidPrincipal + interest; // Todo: add fees later
 
+        console.log("f4");
+
         // Ensure salePrice covers defaulterDebt + fees
         require(salePrice >= defaulterDebt, "salePrice must >= defaulterDebt"); // Question: minSalePrice will rise over time. Too risky?
+
+        console.log("f5");
 
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
-        console.log(1);
+        console.log("f6");
         console.log(interest);
         console.log(loan.maxUnpaidInterest);
         assert(interest <= loan.maxUnpaidInterest);
-        console.log(2);
+        console.log("f7");
         maxTotalInterestOwed -= loan.maxUnpaidInterest; // Note: maxTotalInterestOwed -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
-        console.log(3);
+        console.log("f8");
 
         // Calculate defaulterEquity
         uint defaulterEquity = salePrice - defaulterDebt;
 
-        console.log(4);
+        console.log("f9");
 
         // Send defaulterEquity to defaulter
         USDC.safeTransfer(loan.borrower, defaulterEquity);
+
+        console.log("f10");
 
         // Todo: Clearout loan
     }
@@ -227,7 +244,7 @@ contract BorrowingV3 is Initializable {
         Loan memory loan = loans[tokenId];
 
         // Get loanCompletedMonths
-        uint _loanCompletedMonths = loanCompletedMonths(tokenId);
+        uint _loanCompletedMonths = loanCompletedMonths(loan);
 
         // Calculate loanMaxDurationMonths
         uint loanMaxDurationMonths = loan.maxDurationSeconds / yearSeconds * yearMonths;
@@ -237,7 +254,7 @@ contract BorrowingV3 is Initializable {
             return true;
         }
 
-        return loan.unpaidPrincipal > principalCap(tokenId, _loanCompletedMonths);
+        return loan.unpaidPrincipal > principalCap(loan, _loanCompletedMonths);
     }
 
     function utilization() public view returns(UD60x18) {
@@ -257,10 +274,7 @@ contract BorrowingV3 is Initializable {
     }
 
     // Other Views
-    function principalCap(uint tokenId, uint month) public view returns(uint cap) {
-
-        // Get loan
-        Loan memory loan = loans[tokenId];
+    function principalCap(Loan memory loan, uint month) public pure returns(uint cap) {
 
         // Ensure month doesn't exceed loanMaxDurationMonths
         uint loanMaxDurationMonths = loan.maxDurationSeconds / yearSeconds * yearMonths;
@@ -326,8 +340,7 @@ contract BorrowingV3 is Initializable {
     }
 
     // Note: truncates on purpose (to enforce payment after monthSeconds, but not every second)
-    function loanCompletedMonths(uint tokenId) private view returns(uint) {
-        Loan memory loan = loans[tokenId];
+    function loanCompletedMonths(Loan memory loan) private view returns(uint) {
         return (block.timestamp - loan.startTime) / monthSeconds;
     }
 
@@ -378,5 +391,30 @@ contract BorrowingV3 is Initializable {
 
     function availableLiquidity() /* private */ public view returns(uint) {
         return totalDeposits - totalPrincipal;
+    }
+
+    // enum State { None, Mortgage, Default, Foreclosurable }
+    enum State { None, Mortgage, Default }
+
+    function state(uint tokenId) public view returns (State) {
+
+        Loan memory loan = loans[tokenId];
+        
+        // If no borrower
+        if (loan.borrower == address(0)) {
+            return State.None;
+
+        // If borrower
+        } else {
+            
+            // If default
+            if (defaulted(tokenId)) {
+                return State.Default;
+
+            // If no default
+            } else {
+                return State.Mortgage;
+            }
+        }
     }
 }
