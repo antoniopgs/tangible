@@ -18,11 +18,8 @@ contract BorrowingV3Test is Test, DeployScript {
     // Other vars
     uint loanCount;
     uint totalPaidInterest;
-    // uint yearSeconds = borrowing.yearSeconds();
 
     function testMath(uint[] calldata randomness) public {
-
-        console.log("t1");
 
         // Loop actions
         for (uint i = 0; i < randomness.length; i++) {
@@ -33,15 +30,21 @@ contract BorrowingV3Test is Test, DeployScript {
             // If Start
             if (action == uint(Action.Deposit)) {
 
+                console.log("Action.Deposit");
+
                 // Deposit
                 deposit(randomness[i]);
 
             } else if (action == uint(Action.Withdraw)) {
 
+                console.log("Action.Withdraw");
+
                 // Withdraw
                 withdraw(randomness[i]);
 
             } else if (action == uint(Action.StartLoan)) {
+
+                console.log("Action.StartLoan");
                 
                 // Set tokenId
                 uint tokenId = loanCount;
@@ -54,6 +57,8 @@ contract BorrowingV3Test is Test, DeployScript {
             
             // If Pay
             } else if (action == uint(Action.PayLoan)) {
+
+                console.log("Action.PayLoan");
                 
                 // If loans exist
                 if (loanCount > 0) {
@@ -73,6 +78,8 @@ contract BorrowingV3Test is Test, DeployScript {
             
             // If Skip
             } else if (action == uint(Action.SkipTime)) {
+
+                console.log("Action.SkipTime");
 
                 // Skip
                 skipTime(randomness[i]);
@@ -128,19 +135,33 @@ contract BorrowingV3Test is Test, DeployScript {
     }
 
     function startLoan(uint tokenId, uint randomness) private validate {
+
+        console.log(1);
         
-        // Bound vars
+        // Bound principal
         uint principal = bound(randomness, 0, borrowing.availableLiquidity());
-        uint borrowerAprPct = bound(randomness, 2, 10);
-        uint maxDurationYears = bound(randomness, 1, 50);
+
+        // Bound maxDurationMonths
+        uint maxDurationMonths = bound(randomness, 1, 50 * 12); // Note: max Duration is 50 years
+
+        console.log(2);
 
         // Calculate expectedMaxUnpaidInterest
         uint yearSeconds = borrowing.yearSeconds();
-        UD60x18 expectedRatePerSecond = toUD60x18(borrowerAprPct).div(toUD60x18(100)).div(toUD60x18(yearSeconds));
-        uint expectedMaxDurationSeconds = maxDurationYears * yearSeconds;
+        console.log(3);
+        UD60x18 borrowerApr = borrowing.borrowerApr();
+        UD60x18 expectedRatePerSecond = borrowerApr.div(toUD60x18(yearSeconds));
+        console.log(4);
+        uint monthSeconds = borrowing.monthSeconds();
+        uint expectedMaxDurationSeconds = maxDurationMonths * monthSeconds;
+        console.log(5);
         UD60x18 expectedPaymentPerSecond = borrowing.calculatePaymentPerSecond(principal, expectedRatePerSecond, expectedMaxDurationSeconds);
+        console.log(6);
         uint expectedLoanCost = fromUD60x18(expectedPaymentPerSecond.mul(toUD60x18(expectedMaxDurationSeconds)));
+        console.log(7);
         uint expectedMaxUnpaidInterest = expectedLoanCost - principal;
+
+        console.log(3);
 
         // Set expectations
         expectedTotalPrincipal += principal;
@@ -150,9 +171,9 @@ contract BorrowingV3Test is Test, DeployScript {
         // Start Loan
         console.log("starting loan...");
         console.log("- principal:", principal);
-        console.log("- borrowerAprPct:", borrowerAprPct);
-        console.log("- maxDurationYears:", maxDurationYears);
-        borrowing.startLoan(tokenId, principal, borrowerAprPct, maxDurationYears);
+        console.log("- UD60x18.unwrap(borrowerApr):", UD60x18.unwrap(borrowerApr));
+        console.log("- maxDurationMonths:", maxDurationMonths);
+        borrowing.startLoan(tokenId, principal, /* borrowerAprPct, */ maxDurationMonths);
         console.log("loan started.\n");
     }
 

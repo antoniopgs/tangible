@@ -7,15 +7,17 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./tUsdc.sol";
 
+import "forge-std/console.sol";
+
 contract BorrowingV3 is Initializable {
 
     IERC20 USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet
     tUsdc tUSDC;
 
     // Time constants
-    uint public constant yearSeconds = 365 days;
+    uint /* private */ public constant yearSeconds = 365 days; // Note: made public for testing
     uint private constant yearMonths = 12;
-    uint private constant monthSeconds = yearSeconds / yearMonths; // Note: yearSeconds % yearMonths = 0 (no precision loss)
+    uint /* private */ public constant monthSeconds = yearSeconds / yearMonths; // Note: yearSeconds % yearMonths = 0 (no precision loss)
     
     // Structs
     struct Loan {
@@ -33,7 +35,11 @@ contract BorrowingV3 is Initializable {
     uint public totalPrincipal;
     uint public totalDeposits;
     uint public maxTotalInterestOwed;
-    UD60x18 public optimalUtilization = toUD60x18(90).div(toUD60x18(100)); // Note: 90%
+    UD60x18 public optimalUtilization = toUD60x18(90).div(toUD60x18(100)); // Note: 90% // Todo: relate to k1 and k2
+
+    // Interest vars
+    UD60x18 private k1 = toUD60x18(38).div(toUD60x18(1_000)); // Note: 0.038
+    UD60x18 private k2 = toUD60x18(2).div(toUD60x18(1_000)); // Note: 0.002
 
     // Loan storage
     mapping(uint => Loan) public loans;
@@ -77,14 +83,15 @@ contract BorrowingV3 is Initializable {
     }
 
     // Functions
-    function startLoan(uint tokenId, uint principal, uint borrowerAprPct, uint maxDurationYears) external {
+    function startLoan(uint tokenId, uint principal, /* uint borrowerAprPct, */ uint maxDurationMonths) external {
         require(principal <= availableLiquidity(), "principal must be <= availableLiquidity");
 
         // Calculate ratePerSecond
-        UD60x18 ratePerSecond = toUD60x18(borrowerAprPct).div(toUD60x18(100)).div(toUD60x18(yearSeconds));
+        // UD60x18 ratePerSecond = toUD60x18(borrowerAprPct).div(toUD60x18(100)).div(toUD60x18(yearSeconds));
+        UD60x18 ratePerSecond = borrowerRatePerSecond();
 
         // Calculate maxDurationSeconds
-        uint maxDurationSeconds = maxDurationYears * yearSeconds;
+        uint maxDurationSeconds = maxDurationMonths * monthSeconds;
 
         // Calculate paymentPerSecond
         UD60x18 paymentPerSecond = calculatePaymentPerSecond(principal, ratePerSecond, maxDurationSeconds);
@@ -259,6 +266,14 @@ contract BorrowingV3 is Initializable {
         cap = fromUD60x18(numerator.div(loan.ratePerSecond));
     }
 
+    function borrowerApr() public view returns(UD60x18 apr) {
+        apr = k1.add(k2.div(toUD60x18(1).sub(utilization()))); // Todo: improve precision
+    }
+
+    function borrowerRatePerSecond() private view returns(UD60x18 ratePerSecond) {
+        ratePerSecond = borrowerApr().div(toUD60x18(yearSeconds)); // Todo: improve precision
+    }
+
     function usdcToTUsdc(uint usdcAmount) public view returns(uint tUsdcAmount) {
 
         // If utilization <= optimalUtilization
@@ -287,10 +302,22 @@ contract BorrowingV3 is Initializable {
         return (block.timestamp - loan.startTime) / monthSeconds;
     }
 
-    function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) /*private*/ public pure returns(UD60x18 paymentPerSecond) {
+    function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) /*private*/ public /* pure */ view returns(UD60x18 paymentPerSecond) {
+
+        console.log("UD60x18.unwrap(utilization()):", UD60x18.unwrap(utilization()));
+        console.log("UD60x18.unwrap(borrowerApr()):", UD60x18.unwrap(borrowerApr()));
+        console.log("UD60x18.unwrap(borrowerRatePerSecond()):", UD60x18.unwrap(borrowerRatePerSecond()));
+        console.log("UD60x18.unwrap(ratePerSecond):", UD60x18.unwrap(ratePerSecond));
+        console.log("years:", maxDurationSeconds / yearSeconds);
 
         // Calculate x
+        // - (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
+        // - (1 + (apr / yearSeconds)) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18
+        // - maxDurationMonths * monthSeconds <= log_(1 + (apr / yearSeconds))_MAX_UD60x18 // Note: bring down apr or maxDurationMonths
+        // - maxDurationMonths <= log_(1 + (apr / yearSeconds))_MAX_UD60x18 / monthSeconds // Note: solved for maxDurationMonths (because apr depends on util)
         UD60x18 x = toUD60x18(1).add(ratePerSecond).powu(maxDurationSeconds);
+
+        console.log("UD60x18.unwrap(x):", UD60x18.unwrap(x));
         
         // Calculate paymentPerSecond
         paymentPerSecond = toUD60x18(principal).mul(ratePerSecond).mul(x).div(x.sub(toUD60x18(1)));
