@@ -267,7 +267,16 @@ contract BorrowingV3 is Initializable {
     }
 
     function borrowerApr() public view returns(UD60x18 apr) {
-        apr = k1.add(k2.div(toUD60x18(1).sub(utilization()))); // Todo: improve precision
+        
+        // Get utilization
+        UD60x18 _utilization = utilization();
+
+        // If utilization == 100%
+        if (_utilization.eq(toUD60x18(1))) {
+            revert("can't start loan if utilization = 100%");
+        }
+
+        apr = k1.add(k2.div(toUD60x18(1).sub(_utilization))); // Todo: improve precision
     }
 
     function borrowerRatePerSecond() private view returns(UD60x18 ratePerSecond) {
