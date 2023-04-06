@@ -35,14 +35,14 @@ contract BorrowingV3Test is Test, DeployScript {
                 console.log("\nAction.Deposit");
 
                 // Deposit
-                deposit(randomness[i]);
+                testDeposit(randomness[i]);
 
             } else if (action == uint(Action.Withdraw)) {
 
                 console.log("\nAction.Withdraw");
 
                 // Withdraw
-                withdraw(randomness[i]);
+                testWithdraw(randomness[i]);
 
             } else if (action == uint(Action.StartLoan)) {
 
@@ -55,7 +55,7 @@ contract BorrowingV3Test is Test, DeployScript {
                     uint tokenId = loanCount;
 
                     // Start Loan
-                    startLoan(tokenId, randomness[i]);
+                    testStartLoan(tokenId, randomness[i]);
 
                     // Increment loanCount
                     loanCount++;
@@ -77,7 +77,7 @@ contract BorrowingV3Test is Test, DeployScript {
                         console.log("pl1");
 
                         // Pay Loan
-                        payLoan(tokenId, randomness[i]);
+                        testPayLoan(tokenId, randomness[i]);
 
                     } else {
                         console.log("defaulted.\n");
@@ -90,7 +90,7 @@ contract BorrowingV3Test is Test, DeployScript {
                 console.log("\nAction.SkipTime");
 
                 // Skip
-                skipTime(randomness[i]);
+                testSkip(randomness[i]);
 
             } else if (action == uint(Action.Redeem)) {
 
@@ -106,7 +106,7 @@ contract BorrowingV3Test is Test, DeployScript {
                     if (borrowing.state(tokenId) == BorrowingV3.State.Default) {
 
                         // Redeem
-                        redeem(tokenId);
+                        testRedeem(tokenId);
                     
                     // If no default
                     } else {
@@ -128,7 +128,7 @@ contract BorrowingV3Test is Test, DeployScript {
                     if (borrowing.state(tokenId) == BorrowingV3.State.Default) {
 
                         // Foreclose
-                        foreclose(tokenId, randomness[i]);
+                        testForeclose(tokenId, randomness[i]);
 
                     // If no default
                     } else {
@@ -139,7 +139,7 @@ contract BorrowingV3Test is Test, DeployScript {
         }
     }
 
-    function deposit(uint amount) private validate {
+    function testDeposit(uint amount) private validate {
 
         // Bound amount
         amount = bound(amount, 0, 1_000_000_000);
@@ -164,7 +164,7 @@ contract BorrowingV3Test is Test, DeployScript {
         console.log("deposit complete.");
     }
 
-    function withdraw(uint amount) private validate {
+    function testWithdraw(uint amount) private validate {
 
         // Bound amount
         amount = bound(amount, 0, borrowing.availableLiquidity());
@@ -186,7 +186,8 @@ contract BorrowingV3Test is Test, DeployScript {
         console.log("withdrawal complete.");
     }
 
-    function startLoan(uint tokenId, uint randomness) private validate {
+    function testStartLoan(uint tokenId, uint randomness) private validate {
+        console.log("tokenId:", tokenId);
         
         // Bound principal
         uint principal = bound(randomness, 0, borrowing.availableLiquidity());
@@ -226,7 +227,7 @@ contract BorrowingV3Test is Test, DeployScript {
         }
     }
 
-    function skipTime(uint timeJump) private validate {
+    function testSkip(uint timeJump) private validate {
 
         // Bound timeJump (between 0 and 6 months)
         timeJump = bound(timeJump, 0, 6 * 30 days);
@@ -237,7 +238,8 @@ contract BorrowingV3Test is Test, DeployScript {
         console.log("time skipped.\n");
     }
 
-    function payLoan(uint tokenId, uint payment) private validate {
+    function testPayLoan(uint tokenId, uint payment) private validate {
+        console.log("tokenId:", tokenId);
         
         // Get unpaidPrincipal & interest
         (, , , , uint unpaidPrincipal, , , ) = borrowing.loans(tokenId);
@@ -270,7 +272,8 @@ contract BorrowingV3Test is Test, DeployScript {
         }
     }
 
-    function redeem(uint tokenId) private {
+    function testRedeem(uint tokenId) private {
+        console.log("tokenId:", tokenId);
 
         // If default
         // if (borrowing.defaulted(tokenId)) {
@@ -294,6 +297,7 @@ contract BorrowingV3Test is Test, DeployScript {
 
             console.log("r4");
             console.log("expectedTotalPrincipal:", expectedTotalPrincipal);
+            console.log("borrowing.totalPrincipal():", borrowing.totalPrincipal());
             console.log("unpaidPrincipal:", unpaidPrincipal);
             expectedTotalPrincipal -= unpaidPrincipal;
             console.log("r5");
@@ -313,7 +317,8 @@ contract BorrowingV3Test is Test, DeployScript {
         // }
     }
 
-    function foreclose(uint tokenId, uint salePrice) private {
+    function testForeclose(uint tokenId, uint salePrice) private {
+        console.log("tokenId:", tokenId);
 
         // Get unpaidPrincipal & maxUnpaidInterest
         (, , , , uint unpaidPrincipal, uint maxUnpaidInterest, , ) = borrowing.loans(tokenId);
@@ -329,11 +334,15 @@ contract BorrowingV3Test is Test, DeployScript {
 
         console.log("F5");
         console.log("expectedTotalPrincipal:", expectedTotalPrincipal);
+        console.log("borrowing.totalPrincipal():", borrowing.totalPrincipal());
         console.log("unpaidPrincipal:", unpaidPrincipal);
         expectedTotalPrincipal -= unpaidPrincipal;
         console.log("F6");
         expectedTotalDeposits += borrowing.accruedInterest(tokenId);
         console.log("F7");
+        console.log("expectedMaxTotalInterestOwed:", expectedMaxTotalInterestOwed);
+        console.log("borrowing.maxTotalInterestOwed():", borrowing.maxTotalInterestOwed());
+        console.log("maxUnpaidInterest:", maxUnpaidInterest);
         expectedMaxTotalInterestOwed -= maxUnpaidInterest;
         console.log("F8");
 
@@ -343,7 +352,7 @@ contract BorrowingV3Test is Test, DeployScript {
         console.log("foreclosure complete.");
     }
 
-    modifier validate() {
+    modifier validate {
         
         // Run
         _;

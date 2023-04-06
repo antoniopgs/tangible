@@ -103,7 +103,6 @@ contract BorrowingV3 is Initializable {
         // Calculate maxUnpaidInterest
         uint maxUnpaidInterest = maxCost - principal;
 
-        console.log("tokenId:", tokenId);
         console.log("msg.sender:", msg.sender);
         
         loans[tokenId] = Loan({
@@ -174,14 +173,16 @@ contract BorrowingV3 is Initializable {
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
+        console.log("interest:", interest);
+        console.log("loan.maxUnpaidInterest:", loan.maxUnpaidInterest);
+        console.log("interest <= loan.maxUnpaidInterest:", interest <= loan.maxUnpaidInterest);
         console.log(1);
-        console.log(interest);
-        console.log(loan.maxUnpaidInterest);
         assert(interest <= loan.maxUnpaidInterest);
         console.log(2);
         maxTotalInterestOwed -= loan.maxUnpaidInterest; // Note: maxTotalInterestOwed -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
         // Todo: Clearout loan
+        loan.borrower = address(0);
     }
 
     function foreclose(uint tokenId, uint salePrice) external {
@@ -216,9 +217,12 @@ contract BorrowingV3 is Initializable {
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
         console.log("f6");
-        console.log(interest);
-        console.log(loan.maxUnpaidInterest);
+        console.log("interest", interest);
+        console.log("loan.maxUnpaidInterest:", loan.maxUnpaidInterest);
+        console.log("interest <= loan.maxUnpaidInterest:", interest <= loan.maxUnpaidInterest);
+        console.log(1);
         assert(interest <= loan.maxUnpaidInterest);
+        console.log(2);
         console.log("f7");
         maxTotalInterestOwed -= loan.maxUnpaidInterest; // Note: maxTotalInterestOwed -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
@@ -235,6 +239,7 @@ contract BorrowingV3 is Initializable {
         console.log("f10");
 
         // Todo: Clearout loan
+        loan.borrower = address(0);
     }
     
     // Public Views
