@@ -102,8 +102,6 @@ contract BorrowingV3 is Initializable {
 
         // Calculate maxUnpaidInterest
         uint maxUnpaidInterest = maxCost - principal;
-
-        console.log("msg.sender:", msg.sender);
         
         loans[tokenId] = Loan({
             borrower: msg.sender,
@@ -187,8 +185,6 @@ contract BorrowingV3 is Initializable {
 
     function foreclose(uint tokenId, uint salePrice) external {
 
-        console.log("f1");
-
         // Todo: Pull salePrice?
 
         // Get Loan
@@ -196,47 +192,31 @@ contract BorrowingV3 is Initializable {
 
         // Todo: Ensure State == Foreclosurable
 
-        console.log("f2");
-
         // Calculate interest
         uint interest = accruedInterest(loan);
-
-        console.log("f3");
 
         // Calculate defaulterDebt
         uint defaulterDebt = loan.unpaidPrincipal + interest; // Todo: add fees later
 
-        console.log("f4");
-
         // Ensure salePrice covers defaulterDebt + fees
         require(salePrice >= defaulterDebt, "salePrice must >= defaulterDebt"); // Question: minSalePrice will rise over time. Too risky?
-
-        console.log("f5");
 
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
-        console.log("f6");
         console.log("interest", interest);
         console.log("loan.maxUnpaidInterest:", loan.maxUnpaidInterest);
         console.log("interest <= loan.maxUnpaidInterest:", interest <= loan.maxUnpaidInterest);
         console.log(1);
         assert(interest <= loan.maxUnpaidInterest);
         console.log(2);
-        console.log("f7");
         maxTotalInterestOwed -= loan.maxUnpaidInterest; // Note: maxTotalInterestOwed -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
-
-        console.log("f8");
 
         // Calculate defaulterEquity
         uint defaulterEquity = salePrice - defaulterDebt;
 
-        console.log("f9");
-
         // Send defaulterEquity to defaulter
         USDC.safeTransfer(loan.borrower, defaulterEquity);
-
-        console.log("f10");
 
         // Todo: Clearout loan
         loan.borrower = address(0);
@@ -351,8 +331,6 @@ contract BorrowingV3 is Initializable {
 
     function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) /*private*/ public /* pure */ view returns(UD60x18 paymentPerSecond) {
 
-        console.log(1);
-
         // Calculate x
         // - (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
         // - (1 + ratePerSecond) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18
@@ -361,8 +339,6 @@ contract BorrowingV3 is Initializable {
         // - maxDurationMonths <= (log(MAX_UD60x18) / log(1 + ratePerSecond)) / monthSeconds // Note: ratePerSecond depends on util (so solve for maxDurationMonths)
         // - maxDurationMonths <= log(MAX_UD60x18) / (monthSeconds * log(1 + ratePerSecond))
         UD60x18 x = toUD60x18(1).add(ratePerSecond).powu(maxDurationSeconds);
-
-        console.log(2);
 
         // principal * ratePerSecond * x <= MAX_UD60x18
         // principal * ratePerSecond * (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
@@ -374,8 +350,6 @@ contract BorrowingV3 is Initializable {
         
         // Calculate paymentPerSecond
         paymentPerSecond = toUD60x18(principal).mul(ratePerSecond).mul(x).div(x.sub(toUD60x18(1)));
-
-        console.log(3);
     }
 
     function accruedInterest(Loan memory loan) private view returns(uint) {

@@ -74,8 +74,6 @@ contract BorrowingV3Test is Test, DeployScript {
 
                     if (!borrowing.defaulted(tokenId)) {
 
-                        console.log("pl1");
-
                         // Pay Loan
                         testPayLoan(tokenId, randomness[i]);
 
@@ -280,31 +278,20 @@ contract BorrowingV3Test is Test, DeployScript {
             
             // // Get redeemer & unpaidPrincipal
             (address redeemer, , , , uint unpaidPrincipal, uint maxUnpaidInterest, , ) = borrowing.loans(tokenId);
-            console.log("redeemer:", redeemer);
             uint accruedInterest = borrowing.accruedInterest(tokenId);
-            console.log("r1");
             uint expectedRedeemerDebt = unpaidPrincipal + accruedInterest;
-            console.log("r2");
 
             // Give redeemer expectedRedeemerDebt
             deal(address(USDC), redeemer, expectedRedeemerDebt);
-
-            console.log("r3");
 
             // Redeemer approves protocol
             vm.prank(redeemer);
             USDC.approve(address(borrowing), expectedRedeemerDebt);
 
-            console.log("r4");
-            console.log("expectedTotalPrincipal:", expectedTotalPrincipal);
-            console.log("borrowing.totalPrincipal():", borrowing.totalPrincipal());
-            console.log("unpaidPrincipal:", unpaidPrincipal);
+            
             expectedTotalPrincipal -= unpaidPrincipal;
-            console.log("r5");
             expectedTotalDeposits += borrowing.accruedInterest(tokenId);
-            console.log("r6");
             expectedMaxTotalInterestOwed -= maxUnpaidInterest;
-            console.log("r7");
 
             // Redemer redeems
             vm.prank(redeemer);
@@ -327,24 +314,12 @@ contract BorrowingV3Test is Test, DeployScript {
         uint expectedDefaulterDebt = unpaidPrincipal + borrowing.accruedInterest(tokenId);
         salePrice = bound(salePrice, expectedDefaulterDebt, 1_000_000_000 * 1e18);
 
-        console.log("F1");
         uint protocolUsdc = USDC.balanceOf(address(borrowing));
         deal(address(USDC), address(borrowing), protocolUsdc + salePrice, true);
-        console.log("F3");
 
-        console.log("F5");
-        console.log("expectedTotalPrincipal:", expectedTotalPrincipal);
-        console.log("borrowing.totalPrincipal():", borrowing.totalPrincipal());
-        console.log("unpaidPrincipal:", unpaidPrincipal);
         expectedTotalPrincipal -= unpaidPrincipal;
-        console.log("F6");
         expectedTotalDeposits += borrowing.accruedInterest(tokenId);
-        console.log("F7");
-        console.log("expectedMaxTotalInterestOwed:", expectedMaxTotalInterestOwed);
-        console.log("borrowing.maxTotalInterestOwed():", borrowing.maxTotalInterestOwed());
-        console.log("maxUnpaidInterest:", maxUnpaidInterest);
         expectedMaxTotalInterestOwed -= maxUnpaidInterest;
-        console.log("F8");
 
         // Foreclose
         console.log("foreclosing...");
@@ -358,28 +333,17 @@ contract BorrowingV3Test is Test, DeployScript {
         _;
 
         // Validate expectations
-        console.log("v1");
-        console.log("expectedTotalPrincipal:", expectedTotalPrincipal);
-        console.log("borrowing.totalPrincipal():", borrowing.totalPrincipal());
         assert(expectedTotalPrincipal == borrowing.totalPrincipal());
-        console.log("v2");
         assert(expectedTotalDeposits == borrowing.totalDeposits());
-        console.log("v3");
         assert(expectedMaxTotalInterestOwed == borrowing.maxTotalInterestOwed());
-        console.log("v4");
         assert(totalPaidInterest <= borrowing.maxTotalInterestOwed());
-        console.log("v5");
 
         // Validate lenderApy
         UD60x18 lenderApy = borrowing.lenderApy();
-        console.log("v6");
         assert(lenderApy.gte(toUD60x18(0)) /*&& lenderApy.lte(toUD60x18(1))*/); // Note: actually, lenderApy might be able to surpass 100%
-        console.log("v7");
 
         // Validate utilization
         UD60x18 utilization = borrowing.utilization();
-        console.log("v8");
         assert(utilization.gte(toUD60x18(0)) && utilization.lte(toUD60x18(1)));
-        console.log("v9");
     }
 }
