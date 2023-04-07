@@ -199,15 +199,19 @@ contract BorrowingV3Test is Test, DeployScript {
 
         // Calculate expectedRatePerSecond
         uint yearSeconds = borrowing.yearSeconds();
+        console.log("yearSeconds:", yearSeconds);
         UD60x18 borrowerApr = borrowing.borrowerApr();
+        console.log("UD60x18.unwrap(borrowerApr):", UD60x18.unwrap(borrowerApr));
         UD60x18 expectedRatePerSecond = borrowerApr.div(toUD60x18(yearSeconds));
-
+        console.log("UD60x18.unwrap(expectedRatePerSecond):", UD60x18.unwrap(expectedRatePerSecond));
         console.log("ts3");
 
         // Calculate maxMaxDurationMonths
-        uint maxMaxDurationMonths1 = fromUD60x18(log10(MAX_UD60x18).div(toUD60x18(monthSeconds).mul(log10(toUD60x18(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
-        uint maxMaxDurationMonths2 = fromUD60x18(log10(MAX_UD60x18.div(toUD60x18(principal).mul(expectedRatePerSecond))).div(toUD60x18(monthSeconds).mul(log10(toUD60x18(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
-        uint maxMaxDurationMonths = maxMaxDurationMonths1 < maxMaxDurationMonths2 ? maxMaxDurationMonths1 : maxMaxDurationMonths2;
+        // uint maxMaxDurationMonths1 = fromUD60x18(log10(MAX_UD60x18).div(toUD60x18(monthSeconds).mul(log10(toUD60x18(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
+        // uint maxMaxDurationMonths2 = fromUD60x18(log10(MAX_UD60x18.div(toUD60x18(principal).mul(expectedRatePerSecond))).div(toUD60x18(monthSeconds).mul(log10(toUD60x18(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
+        // uint maxMaxDurationMonths = maxMaxDurationMonths1 < maxMaxDurationMonths2 ? maxMaxDurationMonths1 : maxMaxDurationMonths2;
+        uint maxMaxDurationMonths = 25 * borrowing.yearMonths(); // 25 years = 300 months
+        console.log("maxMaxDurationMonths:", maxMaxDurationMonths);
 
         console.log("ts4");
 

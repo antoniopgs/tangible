@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import { UD60x18, toUD60x18, fromUD60x18 } from "@prb/math/UD60x18.sol";
-import { SD59x18, toSD59x18 } from "@prb/math/SD59x18.sol";
+import { SD59x18, toSD59x18, fromSD59x18 } from "@prb/math/SD59x18.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./tUsdc.sol";
@@ -16,7 +16,7 @@ contract BorrowingV3 is Initializable {
 
     // Time constants
     uint /* private */ public constant yearSeconds = 365 days; // Note: made public for testing
-    uint private constant yearMonths = 12;
+    uint /* private */ public constant yearMonths = 12;
     uint /* private */ public constant monthSeconds = yearSeconds / yearMonths; // Note: yearSeconds % yearMonths = 0 (no precision loss)
     
     // Structs
@@ -38,8 +38,9 @@ contract BorrowingV3 is Initializable {
     UD60x18 public optimalUtilization = toUD60x18(90).div(toUD60x18(100)); // Note: 90% // Todo: relate to k1 and k2
 
     // Interest vars
-    UD60x18 private k1 = toUD60x18(38).div(toUD60x18(1_000)); // Note: 0.038
-    UD60x18 private k2 = toUD60x18(2).div(toUD60x18(1_000)); // Note: 0.002
+    UD60x18 private m1 = toUD60x18(4).div(toUD60x18(100)); // Note: 0.04
+    UD60x18 private b1 = toUD60x18(3).div(toUD60x18(100)); // Note: 0.03
+    UD60x18 private m2 = toUD60x18(9); // Note: 9
 
     // Loan storage
     mapping(uint => Loan) public loans;
@@ -70,21 +71,24 @@ contract BorrowingV3 is Initializable {
     }
 
     function withdraw(uint usdc) external {
-        
-        console.log("");
-        console.log("msg.sender:", msg.sender);
-        console.log("usdc:", usdc);
-        console.log("tUSDC.balanceOf(msg.sender):", tUSDC.balanceOf(msg.sender));
-        console.log(".availableLiquidity():", availableLiquidity());
 
         // Calulate withdrawer tUsdc
         uint _tUsdc = usdcToTUsdc(usdc);
 
+        console.log("");
+        console.log("msg.sender:", msg.sender);
+        console.log("usdc:", usdc);
         console.log("_tUsdc:", _tUsdc);
+        console.log("tUSDC.balanceOf(msg.sender):", tUSDC.balanceOf(msg.sender));
+        console.log(".availableLiquidity():", availableLiquidity());
         console.log("USDC.balanceOf(this):", USDC.balanceOf(address(this)));
+        console.log("totalDeposits:", totalDeposits);
+        console.log("totalPrincipal:", totalPrincipal);
 
         // Burn withdrawer tUsdc
         tUSDC.operatorBurn(msg.sender, _tUsdc, "", "");
+
+        console.log("post burn");
 
         // Update pool
         totalDeposits -= usdc;
@@ -300,12 +304,35 @@ contract BorrowingV3 is Initializable {
         // Get utilization
         UD60x18 _utilization = utilization();
 
-        // If utilization == 100%
-        if (_utilization.eq(toUD60x18(1))) {
-            revert("no APR. can't start loan if utilization = 100%");
+        console.log("ba1");
+
+        if (_utilization.lte(toSD59x18(int(fromUD60x18(optimalUtilization))))) {
+            console.log("ba1.1");
+            apr = m1.mul(_utilization).add(b1);
+            console.log("ba1.2");
+
+        } else {
+
+            console.log("ba2.1");
+
+            // If utilization == 100%
+            if (_utilization.eq(1)) {
+                revert("no APR. can't start loan if utilization = 100%");
+
+            } else {
+                console.log("ba2.2");
+                apr = toUD60x18(uint(fromSD59x18(m2.mul(_utilization).add(b2()))));
+                console.log("ba2.3");
+            }
         }
 
-        apr = k1.add(k2.div(toUD60x18(1).sub(_utilization))); // Todo: improve precision
+        console.log("ba3");
+        assert(apr.gt(toUD60x18(0)));
+        console.log("ba4");
+    }
+
+    function b2() private view returns(SD59x18) {
+        return optimalUtilization.mul(m1.sub(m2)).add(b1);
     }
 
     function borrowerRatePerSecond() private view returns(UD60x18 ratePerSecond) {
@@ -356,6 +383,11 @@ contract BorrowingV3 is Initializable {
         // - maxDurationMonths * monthSeconds <= log(MAX_UD60x18) / log(1 + ratePerSecond)
         // - maxDurationMonths <= (log(MAX_UD60x18) / log(1 + ratePerSecond)) / monthSeconds // Note: ratePerSecond depends on util (so solve for maxDurationMonths)
         // - maxDurationMonths <= log(MAX_UD60x18) / (monthSeconds * log(1 + ratePerSecond))
+        console.log("UD60x18.unwrap(utilization()):", UD60x18.unwrap(utilization()));
+        console.log("UD60x18.unwrap(ratePerSecond):", UD60x18.unwrap(ratePerSecond));
+        console.log("UD60x18.unwrap(toUD60x18(1).add(ratePerSecond)):", UD60x18.unwrap(toUD60x18(1).add(ratePerSecond)));
+        console.log("UD60x18.unwrap(toUD60x18(1).add(ratePerSecond)):", UD60x18.unwrap(toUD60x18(1).add(ratePerSecond)));
+        console.log("maxDurationSeconds:", maxDurationSeconds);
         UD60x18 x = toUD60x18(1).add(ratePerSecond).powu(maxDurationSeconds);
 
         console.log("pps2");
