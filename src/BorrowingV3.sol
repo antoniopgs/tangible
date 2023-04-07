@@ -53,6 +53,8 @@ contract BorrowingV3 is Initializable {
     }
 
     function deposit(uint usdc) external {
+
+        console.log("msg.sender:", msg.sender);
         
         // Pull usdc from depositor
         USDC.safeTransferFrom(msg.sender, address(this), usdc);
@@ -68,9 +70,18 @@ contract BorrowingV3 is Initializable {
     }
 
     function withdraw(uint usdc) external {
+        
+        console.log("");
+        console.log("msg.sender:", msg.sender);
+        console.log("usdc:", usdc);
+        console.log("tUSDC.balanceOf(msg.sender):", tUSDC.balanceOf(msg.sender));
+        console.log(".availableLiquidity():", availableLiquidity());
 
         // Calulate withdrawer tUsdc
         uint _tUsdc = usdcToTUsdc(usdc);
+
+        console.log("_tUsdc:", _tUsdc);
+        console.log("USDC.balanceOf(this):", USDC.balanceOf(address(this)));
 
         // Burn withdrawer tUsdc
         tUSDC.operatorBurn(msg.sender, _tUsdc, "", "");
@@ -90,18 +101,23 @@ contract BorrowingV3 is Initializable {
         // Calculate ratePerSecond
         // UD60x18 ratePerSecond = toUD60x18(borrowerAprPct).div(toUD60x18(100)).div(toUD60x18(yearSeconds));
         UD60x18 ratePerSecond = borrowerRatePerSecond();
+        console.log("UD60x18.unwrap(ratePerSecond):", UD60x18.unwrap(ratePerSecond));
 
         // Calculate maxDurationSeconds
         uint maxDurationSeconds = maxDurationMonths * monthSeconds;
+        console.log("maxDurationSeconds:", maxDurationSeconds);
 
         // Calculate paymentPerSecond
         UD60x18 paymentPerSecond = calculatePaymentPerSecond(principal, ratePerSecond, maxDurationSeconds);
+        console.log("UD60x18.unwrap(paymentPerSecond):", UD60x18.unwrap(paymentPerSecond));
 
         // Calculate maxCost
         uint maxCost = fromUD60x18(paymentPerSecond.mul(toUD60x18(maxDurationSeconds)));
+        console.log("maxCost:", maxCost);
 
         // Calculate maxUnpaidInterest
         uint maxUnpaidInterest = maxCost - principal;
+        console.log("maxUnpaidInterest:", maxUnpaidInterest);
         
         loans[tokenId] = Loan({
             borrower: msg.sender,
@@ -175,7 +191,7 @@ contract BorrowingV3 is Initializable {
         console.log("loan.maxUnpaidInterest:", loan.maxUnpaidInterest);
         console.log("interest <= loan.maxUnpaidInterest:", interest <= loan.maxUnpaidInterest);
         console.log(1);
-        assert(interest <= loan.maxUnpaidInterest);
+        // assert(interest <= loan.maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
         console.log(2);
         maxTotalInterestOwed -= loan.maxUnpaidInterest; // Note: maxTotalInterestOwed -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
@@ -208,7 +224,7 @@ contract BorrowingV3 is Initializable {
         console.log("loan.maxUnpaidInterest:", loan.maxUnpaidInterest);
         console.log("interest <= loan.maxUnpaidInterest:", interest <= loan.maxUnpaidInterest);
         console.log(1);
-        assert(interest <= loan.maxUnpaidInterest);
+        // assert(interest <= loan.maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
         console.log(2);
         maxTotalInterestOwed -= loan.maxUnpaidInterest; // Note: maxTotalInterestOwed -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
@@ -331,6 +347,8 @@ contract BorrowingV3 is Initializable {
 
     function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) /*private*/ public /* pure */ view returns(UD60x18 paymentPerSecond) {
 
+        console.log("pps1");
+
         // Calculate x
         // - (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
         // - (1 + ratePerSecond) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18
@@ -340,6 +358,8 @@ contract BorrowingV3 is Initializable {
         // - maxDurationMonths <= log(MAX_UD60x18) / (monthSeconds * log(1 + ratePerSecond))
         UD60x18 x = toUD60x18(1).add(ratePerSecond).powu(maxDurationSeconds);
 
+        console.log("pps2");
+
         // principal * ratePerSecond * x <= MAX_UD60x18
         // principal * ratePerSecond * (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
         // principal * ratePerSecond * (1 + ratePerSecond) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18
@@ -347,9 +367,12 @@ contract BorrowingV3 is Initializable {
         // maxDurationMonths * monthSeconds <= log_(1 + ratePerSecond)_(MAX_UD60x18 / (principal * ratePerSecond))
         // maxDurationMonths * monthSeconds <= log(MAX_UD60x18 / (principal * ratePerSecond)) / log(1 + ratePerSecond)
         // maxDurationMonths <= (log(MAX_UD60x18 / (principal * ratePerSecond)) / log(1 + ratePerSecond)) / monthSeconds
+        // maxDurationMonths <= log(MAX_UD60x18 / (principal * ratePerSecond)) / (monthSeconds * log(1 + ratePerSecond))
         
         // Calculate paymentPerSecond
         paymentPerSecond = toUD60x18(principal).mul(ratePerSecond).mul(x).div(x.sub(toUD60x18(1)));
+
+        console.log("pps3");
     }
 
     function accruedInterest(Loan memory loan) private view returns(uint) {
