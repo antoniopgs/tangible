@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "../script/Deploy.s.sol";
 // import { MAX_UD60x18, log10 } from "@prb/math/UD60x18.sol";
 import { fromUD60x18 } from "@prb/math/UD60x18.sol";
+import "../src/lending/ILending.sol";
 
 import "forge-std/console.sol";
 
@@ -50,7 +51,7 @@ contract BorrowingV3Test is Test, DeployScript {
                 console.log("\nAction.StartLoan");
 
                 // If utilization < 100% (can't startLoan otherwise)
-                if (borrowing.utilization().lt(toUD60x18(1))) {
+                if (ILending(protocol).utilization().lt(toUD60x18(1))) {
 
                     // Set tokenId
                     uint tokenId = loanCount;
@@ -73,7 +74,7 @@ contract BorrowingV3Test is Test, DeployScript {
                     // Get random tokenId
                     uint tokenId = randomness[i] % loanCount;
 
-                    if (!borrowing.defaulted(tokenId)) {
+                    if (!protocol.defaulted(tokenId)) {
 
                         // Pay Loan
                         testPayLoan(tokenId, randomness[i]);
@@ -102,7 +103,7 @@ contract BorrowingV3Test is Test, DeployScript {
                     uint tokenId = randomness[i] % loanCount;
 
                     // If default
-                    if (borrowing.state(tokenId) == State.Status.Default) {
+                    if (protocol.state(tokenId) == State.Status.Default) {
 
                         // Redeem
                         testRedeem(tokenId);
@@ -124,7 +125,7 @@ contract BorrowingV3Test is Test, DeployScript {
                     uint tokenId = randomness[i] % loanCount;
 
                     // If default
-                    if (borrowing.state(tokenId) == State.Status.Default) {
+                    if (protocol.state(tokenId) == State.Status.Default) {
 
                         // Foreclose
                         testForeclose(tokenId, randomness[i]);
@@ -154,17 +155,17 @@ contract BorrowingV3Test is Test, DeployScript {
 
         // Approve protocol to pull amount
         vm.prank(borrower);
-        USDC.approve(address(borrowing), amount);
+        USDC.approve(address(protocol), amount);
 
         // Deposit
         vm.prank(borrower);
-        borrowing.deposit(amount);
+        protocol.deposit(amount);
     }
 
     function testWithdraw(uint amount) private validate {
 
         // Bound amount
-        amount = bound(amount, 0, borrowing.availableLiquidity());
+        amount = bound(amount, 0, protocol.availableLiquidity());
         
         // Set expectations
         expectedTotalDeposits -= amount;
@@ -173,39 +174,39 @@ contract BorrowingV3Test is Test, DeployScript {
         address withdrawer = makeAddr("withdrawer");
 
         // Give withdrawer tUSDC
-        uint expectedTUsdcBurn = borrowing.usdcToTUsdc(amount);
+        uint expectedTUsdcBurn = protocol.usdcToTUsdc(amount);
         deal(address(tUSDC), withdrawer, expectedTUsdcBurn);
 
         // Withdraw
         vm.prank(withdrawer);
-        borrowing.withdraw(amount);
+        protocol.withdraw(amount);
     }
 
     function testStartLoan(uint tokenId, uint randomness) private validate {
         
         // Bound principal
-        uint principal = bound(randomness, 0, borrowing.availableLiquidity());
+        uint principal = bound(randomness, 0, protocol.availableLiquidity());
 
         // Get monthSeconds
-        uint monthSeconds = borrowing.monthSeconds();
+        uint monthSeconds = protocol.monthSeconds();
 
         // Calculate expectedRatePerSecond
-        uint yearSeconds = borrowing.yearSeconds();
-        UD60x18 borrowerApr = borrowing.borrowerApr();
+        uint yearSeconds = protocol.yearSeconds();
+        UD60x18 borrowerApr = protocol.borrowerApr();
         UD60x18 expectedRatePerSecond = borrowerApr.div(toUD60x18(yearSeconds));
 
         // Calculate maxMaxDurationMonths
         // uint maxMaxDurationMonths1 = fromUD60x18(log10(MAX_UD60x18).div(toUD60x18(monthSeconds).mul(log10(toUD60x18(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
         // uint maxMaxDurationMonths2 = fromUD60x18(log10(MAX_UD60x18.div(toUD60x18(principal).mul(expectedRatePerSecond))).div(toUD60x18(monthSeconds).mul(log10(toUD60x18(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
         // uint maxMaxDurationMonths = maxMaxDurationMonths1 < maxMaxDurationMonths2 ? maxMaxDurationMonths1 : maxMaxDurationMonths2;
-        uint maxMaxDurationMonths = 25 * borrowing.yearMonths(); // 25 years = 300 months
+        uint maxMaxDurationMonths = 25 * protocol.yearMonths(); // 25 years = 300 months
 
         if (maxMaxDurationMonths > 0) {
             
             // Calculate expectedMaxUnpaidInterest
             uint maxDurationMonths = bound(randomness, 1, maxMaxDurationMonths);
             uint expectedMaxDurationSeconds = maxDurationMonths * monthSeconds;
-            UD60x18 expectedPaymentPerSecond = borrowing.calculatePaymentPerSecond(principal, expectedRatePerSecond, expectedMaxDurationSeconds);
+            UD60x18 expectedPaymentPerSecond = protocol.calculatePaymentPerSecond(principal, expectedRatePerSecond, expectedMaxDurationSeconds);
             uint expectedLoanCost = fromUD60x18(expectedPaymentPerSecond.mul(toUD60x18(expectedMaxDurationSeconds)));
             uint expectedMaxUnpaidInterest = expectedLoanCost - principal;
 
@@ -215,7 +216,7 @@ contract BorrowingV3Test is Test, DeployScript {
             expectedMaxTotalInterestOwed += expectedMaxUnpaidInterest;
             
             // Start Loan
-            borrowing.startLoan(tokenId, principal, /* borrowerAprPct, */ maxDurationMonths);
+            protocol.startLoan(tokenId, principal, /* borrowerAprPct, */ maxDurationMonths);
         }
     }
 
@@ -231,8 +232,8 @@ contract BorrowingV3Test is Test, DeployScript {
     function testPayLoan(uint tokenId, uint payment) private validate {
         
         // Get unpaidPrincipal & interest
-        (, , , , uint unpaidPrincipal, , , ) = borrowing.loans(tokenId);
-        uint expectedInterest = borrowing.accruedInterest(tokenId);
+        (, , , , uint unpaidPrincipal, , , ) = protocol.loans(tokenId);
+        uint expectedInterest = protocol.accruedInterest(tokenId);
 
         // Calculate minPayment & maxPayment
         uint minPayment = expectedInterest;
@@ -249,10 +250,10 @@ contract BorrowingV3Test is Test, DeployScript {
 
         // Pay Loan
         totalPaidInterest += expectedInterest;
-        borrowing.payLoan(tokenId, payment);
+        protocol.payLoan(tokenId, payment);
 
         // If loan is paid off, return
-        (address borrower, , , , , , , ) = borrowing.loans(tokenId);
+        (address borrower, , , , , , , ) = protocol.loans(tokenId);
         if (borrower == address(0)) {
             console.log("loan paid off.\n");
         }
@@ -261,11 +262,11 @@ contract BorrowingV3Test is Test, DeployScript {
     function testRedeem(uint tokenId) private {
 
         // If default
-        // if (borrowing.defaulted(tokenId)) {
+        // if (protocol.defaulted(tokenId)) {
             
             // // Get redeemer & unpaidPrincipal
-            (address redeemer, , , , uint unpaidPrincipal, uint maxUnpaidInterest, , ) = borrowing.loans(tokenId);
-            uint accruedInterest = borrowing.accruedInterest(tokenId);
+            (address redeemer, , , , uint unpaidPrincipal, uint maxUnpaidInterest, , ) = protocol.loans(tokenId);
+            uint accruedInterest = protocol.accruedInterest(tokenId);
             uint expectedRedeemerDebt = unpaidPrincipal + accruedInterest;
 
             // Give redeemer expectedRedeemerDebt
@@ -273,16 +274,16 @@ contract BorrowingV3Test is Test, DeployScript {
 
             // Redeemer approves protocol
             vm.prank(redeemer);
-            USDC.approve(address(borrowing), expectedRedeemerDebt);
+            USDC.approve(address(protocol), expectedRedeemerDebt);
 
             
             expectedTotalPrincipal -= unpaidPrincipal;
-            expectedTotalDeposits += borrowing.accruedInterest(tokenId);
+            expectedTotalDeposits += protocol.accruedInterest(tokenId);
             expectedMaxTotalInterestOwed -= maxUnpaidInterest;
 
             // Redemer redeems
             vm.prank(redeemer);
-            borrowing.redeem(tokenId);
+            protocol.redeem(tokenId);
 
         // } else {
         //     console.log("no default.\n");
@@ -292,21 +293,21 @@ contract BorrowingV3Test is Test, DeployScript {
     function testForeclose(uint tokenId, uint salePrice) private {
 
         // Get unpaidPrincipal & maxUnpaidInterest
-        (, , , , uint unpaidPrincipal, uint maxUnpaidInterest, , ) = borrowing.loans(tokenId);
+        (, , , , uint unpaidPrincipal, uint maxUnpaidInterest, , ) = protocol.loans(tokenId);
 
         // Bound salePrice
-        uint expectedDefaulterDebt = unpaidPrincipal + borrowing.accruedInterest(tokenId);
+        uint expectedDefaulterDebt = unpaidPrincipal + protocol.accruedInterest(tokenId);
         salePrice = bound(salePrice, expectedDefaulterDebt, 1_000_000_000 * 1e18);
 
-        uint protocolUsdc = USDC.balanceOf(address(borrowing));
-        deal(address(USDC), address(borrowing), protocolUsdc + salePrice, true);
+        uint protocolUsdc = USDC.balanceOf(address(protocol));
+        deal(address(USDC), address(protocol), protocolUsdc + salePrice, true);
 
         expectedTotalPrincipal -= unpaidPrincipal;
-        expectedTotalDeposits += borrowing.accruedInterest(tokenId);
+        expectedTotalDeposits += protocol.accruedInterest(tokenId);
         expectedMaxTotalInterestOwed -= maxUnpaidInterest;
 
         // Foreclose
-        borrowing.foreclose(tokenId, salePrice);
+        protocol.foreclose(tokenId, salePrice);
     }
 
     modifier validate {
@@ -315,21 +316,21 @@ contract BorrowingV3Test is Test, DeployScript {
         _;
 
         // Validate expectations
-        assert(expectedTotalPrincipal == borrowing.totalPrincipal());
-        assert(expectedTotalDeposits == borrowing.totalDeposits());
-        assert(expectedMaxTotalInterestOwed == borrowing.maxTotalInterestOwed());
+        assert(expectedTotalPrincipal == protocol.totalPrincipal());
+        assert(expectedTotalDeposits == protocol.totalDeposits());
+        assert(expectedMaxTotalInterestOwed == protocol.maxTotalInterestOwed());
         console.log("v3");
-        // assert(totalPaidInterest <= borrowing.maxTotalInterestOwed());
+        // assert(totalPaidInterest <= protocol.maxTotalInterestOwed());
         console.log("v4");
 
         // Validate lenderApy
-        UD60x18 lenderApy = borrowing.lenderApy();
+        UD60x18 lenderApy = protocol.lenderApy();
         console.log("v5");
         assert(lenderApy.gte(toUD60x18(0)) /*&& lenderApy.lte(toUD60x18(1))*/); // Note: actually, lenderApy might be able to surpass 100%
         console.log("v6");
 
         // Validate utilization
-        UD60x18 utilization = borrowing.utilization();
+        UD60x18 utilization = protocol.utilization();
         console.log("v7");
         assert(utilization.gte(toUD60x18(0)) && utilization.lte(toUD60x18(1)));
         console.log("v8");

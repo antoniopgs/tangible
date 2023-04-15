@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../state/State.sol";
+import "../state/state/State.sol";
 import "@openzeppelin/contracts/proxy/Proxy.sol";
 
 contract ProtocolProxy is State, Proxy {

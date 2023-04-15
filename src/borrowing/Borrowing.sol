@@ -2,15 +2,13 @@
 pragma solidity ^0.8.15;
 
 import "./IBorrowing.sol";
-import "../state/State.sol";
 import { fromUD60x18 } from "@prb/math/UD60x18.sol";
 import { SD59x18, toSD59x18 } from "@prb/math/SD59x18.sol";
 import { intoUD60x18 } from "@prb/math/sd59x18/Casting.sol";
 import { intoSD59x18 } from "@prb/math/ud60x18/Casting.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-
-contract Borrowing is IBorrowing, State {
+contract Borrowing is IBorrowing {
 
     // Libs
     using SafeERC20 for IERC20;

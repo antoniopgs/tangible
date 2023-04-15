@@ -2,10 +2,9 @@
 pragma solidity ^0.8.15;
 
 import "./ILending.sol";
-import "../state/State.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract Lending is ILending, State {
+contract Lending is ILending {
 
     // Libs
     using SafeERC20 for IERC20;

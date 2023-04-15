@@ -4,9 +4,9 @@ pragma solidity ^0.8.15;
 // import "./targetManager/TargetManager.sol";
 // import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 // import "../tokens/tUsdc.sol";
-// import { UD60x18, toUD60x18 } from "@prb/math/UD60x18.sol";
+import { UD60x18 } from "@prb/math/UD60x18.sol";
 
-interface State {
+interface IState {
 
     // Structs
     struct Loan {

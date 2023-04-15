@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./targetManager/TargetManager.sol";
+import "./IState.sol";
+import "../targetManager/TargetManager.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "../tokens/tUsdc.sol";
-import { UD60x18, toUD60x18 } from "@prb/math/UD60x18.sol";
+import "../../tokens/tUsdc.sol";
+import { toUD60x18 } from "@prb/math/UD60x18.sol";
 
-abstract contract State is TargetManager, Initializable {
+abstract contract State is IState, TargetManager, Initializable {
 
     // Tokens
     IERC20 USDC;
@@ -16,18 +17,6 @@ abstract contract State is TargetManager, Initializable {
     uint /* private */ public constant yearSeconds = 365 days; // Note: made public for testing
     uint /* private */ public constant yearMonths = 12;
     uint /* private */ public constant monthSeconds = yearSeconds / yearMonths; // Note: yearSeconds % yearMonths = 0 (no precision loss)
-
-    // Structs
-    struct Loan {
-        address borrower;
-        UD60x18 ratePerSecond;
-        UD60x18 paymentPerSecond;
-        uint startTime;
-        uint unpaidPrincipal;
-        uint maxUnpaidInterest;
-        uint maxDurationSeconds;
-        uint lastPaymentTime;
-    }
 
     // Pool vars
     uint public totalPrincipal;
@@ -42,9 +31,6 @@ abstract contract State is TargetManager, Initializable {
 
     // Loan storage
     mapping(uint => Loan) public loans;
-
-    // enum State { None, Mortgage, Default, Foreclosurable }
-    enum Status { None, Mortgage, Default }
 
     function initialize(tUsdc _tUSDC) external initializer {
         USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet
