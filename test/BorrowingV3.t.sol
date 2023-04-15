@@ -101,7 +101,7 @@ contract BorrowingV3Test is Test, DeployScript {
                     uint tokenId = randomness[i] % loanCount;
 
                     // If default
-                    if (borrowing.state(tokenId) == BorrowingV3.State.Default) {
+                    if (borrowing.state(tokenId) == State.Status.Default) {
 
                         // Redeem
                         testRedeem(tokenId);
@@ -123,7 +123,7 @@ contract BorrowingV3Test is Test, DeployScript {
                     uint tokenId = randomness[i] % loanCount;
 
                     // If default
-                    if (borrowing.state(tokenId) == BorrowingV3.State.Default) {
+                    if (borrowing.state(tokenId) == State.Status.Default) {
 
                         // Foreclose
                         testForeclose(tokenId, randomness[i]);

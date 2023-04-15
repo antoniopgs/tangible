@@ -3,55 +3,16 @@ pragma solidity ^0.8.15;
 
 import { intoSD59x18 } from "@prb/math/ud60x18/Casting.sol";
 import { intoUD60x18 } from "@prb/math/sd59x18/Casting.sol";
-import { UD60x18, toUD60x18, fromUD60x18 } from "@prb/math/UD60x18.sol";
+import { fromUD60x18 } from "@prb/math/UD60x18.sol";
 import { SD59x18, toSD59x18 } from "@prb/math/SD59x18.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "./tUsdc.sol";
 
-contract BorrowingV3 is Initializable {
+import "./State.sol";
 
-    IERC20 USDC;
-    tUsdc tUSDC;
-
-    // Time constants
-    uint /* private */ public constant yearSeconds = 365 days; // Note: made public for testing
-    uint /* private */ public constant yearMonths = 12;
-    uint /* private */ public constant monthSeconds = yearSeconds / yearMonths; // Note: yearSeconds % yearMonths = 0 (no precision loss)
-    
-    // Structs
-    struct Loan {
-        address borrower;
-        UD60x18 ratePerSecond;
-        UD60x18 paymentPerSecond;
-        uint startTime;
-        uint unpaidPrincipal;
-        uint maxUnpaidInterest;
-        uint maxDurationSeconds;
-        uint lastPaymentTime;
-    }
-
-    // Pool vars
-    uint public totalPrincipal;
-    uint public totalDeposits;
-    uint public maxTotalInterestOwed;
-    UD60x18 public optimalUtilization = toUD60x18(90).div(toUD60x18(100)); // Note: 90% // Todo: relate to k1 and k2
-
-    // Interest vars
-    UD60x18 private m1 = toUD60x18(4).div(toUD60x18(100)); // Note: 0.04
-    UD60x18 private b1 = toUD60x18(3).div(toUD60x18(100)); // Note: 0.03
-    UD60x18 private m2 = toUD60x18(9); // Note: 9
-
-    // Loan storage
-    mapping(uint => Loan) public loans;
+contract BorrowingV3 is State {
 
     // Libs
     using SafeERC20 for IERC20;
-
-    function initialize(tUsdc _tUSDC) external initializer {
-        USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet
-        tUSDC = _tUSDC;
-    }
 
     function deposit(uint usdc) external {
         
@@ -379,27 +340,24 @@ contract BorrowingV3 is Initializable {
         return totalDeposits - totalPrincipal;
     }
 
-    // enum State { None, Mortgage, Default, Foreclosurable }
-    enum State { None, Mortgage, Default }
-
-    function state(uint tokenId) public view returns (State) {
+    function state(uint tokenId) public view returns (Status) {
 
         Loan memory loan = loans[tokenId];
         
         // If no borrower
         if (loan.borrower == address(0)) {
-            return State.None;
+            return Status.None;
 
         // If borrower
         } else {
             
             // If default
             if (defaulted(tokenId)) {
-                return State.Default;
+                return Status.Default;
 
             // If no default
             } else {
-                return State.Mortgage;
+                return Status.Mortgage;
             }
         }
     }
