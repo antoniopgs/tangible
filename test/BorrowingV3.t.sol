@@ -138,7 +138,6 @@ contract BorrowingV3Test is Test, DeployScript {
     }
 
     function testDeposit(uint amount) private validate {
-        console.log("block.timestamp:", block.timestamp);
 
         // Bound amount
         amount = bound(amount, 0, 1_000_000_000);
@@ -158,9 +157,7 @@ contract BorrowingV3Test is Test, DeployScript {
 
         // Deposit
         vm.prank(borrower);
-        console.log("depositing", amount);
         borrowing.deposit(amount);
-        console.log("deposit complete.");
     }
 
     function testWithdraw(uint amount) private validate {
@@ -184,51 +181,32 @@ contract BorrowingV3Test is Test, DeployScript {
     }
 
     function testStartLoan(uint tokenId, uint randomness) private validate {
-        console.log("tokenId:", tokenId);
-        console.log("block.timestamp:", block.timestamp);
         
         // Bound principal
         uint principal = bound(randomness, 0, borrowing.availableLiquidity());
 
-        console.log("ts1");
-
         // Get monthSeconds
         uint monthSeconds = borrowing.monthSeconds();
 
-        console.log("ts2");
-
         // Calculate expectedRatePerSecond
         uint yearSeconds = borrowing.yearSeconds();
-        console.log("yearSeconds:", yearSeconds);
         UD60x18 borrowerApr = borrowing.borrowerApr();
-        console.log("UD60x18.unwrap(borrowerApr):", UD60x18.unwrap(borrowerApr));
         UD60x18 expectedRatePerSecond = borrowerApr.div(toUD60x18(yearSeconds));
-        console.log("UD60x18.unwrap(expectedRatePerSecond):", UD60x18.unwrap(expectedRatePerSecond));
-        console.log("ts3");
 
         // Calculate maxMaxDurationMonths
         // uint maxMaxDurationMonths1 = fromUD60x18(log10(MAX_UD60x18).div(toUD60x18(monthSeconds).mul(log10(toUD60x18(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
         // uint maxMaxDurationMonths2 = fromUD60x18(log10(MAX_UD60x18.div(toUD60x18(principal).mul(expectedRatePerSecond))).div(toUD60x18(monthSeconds).mul(log10(toUD60x18(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
         // uint maxMaxDurationMonths = maxMaxDurationMonths1 < maxMaxDurationMonths2 ? maxMaxDurationMonths1 : maxMaxDurationMonths2;
         uint maxMaxDurationMonths = 25 * borrowing.yearMonths(); // 25 years = 300 months
-        console.log("maxMaxDurationMonths:", maxMaxDurationMonths);
-
-        console.log("ts4");
 
         if (maxMaxDurationMonths > 0) {
             
             // Calculate expectedMaxUnpaidInterest
-            console.log("ts5");
             uint maxDurationMonths = bound(randomness, 1, maxMaxDurationMonths);
-            console.log("ts6");
             uint expectedMaxDurationSeconds = maxDurationMonths * monthSeconds;
-            console.log("ts7");
             UD60x18 expectedPaymentPerSecond = borrowing.calculatePaymentPerSecond(principal, expectedRatePerSecond, expectedMaxDurationSeconds);
-            console.log("ts8");
             uint expectedLoanCost = fromUD60x18(expectedPaymentPerSecond.mul(toUD60x18(expectedMaxDurationSeconds)));
-            console.log("ts9");
             uint expectedMaxUnpaidInterest = expectedLoanCost - principal;
-            console.log("ts10");
 
             // Set expectations
             expectedTotalPrincipal += principal;
@@ -236,12 +214,7 @@ contract BorrowingV3Test is Test, DeployScript {
             expectedMaxTotalInterestOwed += expectedMaxUnpaidInterest;
             
             // Start Loan
-            console.log("starting loan...");
-            console.log("- principal:", principal);
-            console.log("- UD60x18.unwrap(borrowerApr):", UD60x18.unwrap(borrowerApr));
-            console.log("- maxDurationMonths:", maxDurationMonths);
             borrowing.startLoan(tokenId, principal, /* borrowerAprPct, */ maxDurationMonths);
-            console.log("loan started.\n");
         }
     }
 
@@ -251,14 +224,10 @@ contract BorrowingV3Test is Test, DeployScript {
         timeJump = bound(timeJump, 0, 6 * 30 days);
 
         // Skip by timeJump
-        console.log("skipping time by", timeJump);
         skip(timeJump);
-        console.log("time skipped.\n");
     }
 
     function testPayLoan(uint tokenId, uint payment) private validate {
-        console.log("tokenId:", tokenId);
-        console.log("block.timestamp:", block.timestamp);
         
         // Get unpaidPrincipal & interest
         (, , , , uint unpaidPrincipal, , , ) = borrowing.loans(tokenId);
@@ -278,11 +247,8 @@ contract BorrowingV3Test is Test, DeployScript {
         expectedMaxTotalInterestOwed -= expectedInterest;
 
         // Pay Loan
-        console.log("making payment...");
-        console.log("- payment:", payment);
         totalPaidInterest += expectedInterest;
         borrowing.payLoan(tokenId, payment);
-        console.log("payment made.\n");
 
         // If loan is paid off, return
         (address borrower, , , , , , , ) = borrowing.loans(tokenId);
@@ -292,8 +258,6 @@ contract BorrowingV3Test is Test, DeployScript {
     }
 
     function testRedeem(uint tokenId) private {
-        console.log("tokenId:", tokenId);
-        console.log("block.timestamp:", block.timestamp);
 
         // If default
         // if (borrowing.defaulted(tokenId)) {
@@ -317,9 +281,7 @@ contract BorrowingV3Test is Test, DeployScript {
 
             // Redemer redeems
             vm.prank(redeemer);
-            console.log("redeeming...");
             borrowing.redeem(tokenId);
-            console.log("redemption complete.");
 
         // } else {
         //     console.log("no default.\n");
@@ -327,8 +289,6 @@ contract BorrowingV3Test is Test, DeployScript {
     }
 
     function testForeclose(uint tokenId, uint salePrice) private {
-        console.log("tokenId:", tokenId);
-        console.log("block.timestamp:", block.timestamp);
 
         // Get unpaidPrincipal & maxUnpaidInterest
         (, , , , uint unpaidPrincipal, uint maxUnpaidInterest, , ) = borrowing.loans(tokenId);
@@ -345,9 +305,7 @@ contract BorrowingV3Test is Test, DeployScript {
         expectedMaxTotalInterestOwed -= maxUnpaidInterest;
 
         // Foreclose
-        console.log("foreclosing...");
         borrowing.foreclose(tokenId, salePrice);
-        console.log("foreclosure complete.");
     }
 
     modifier validate {
@@ -359,7 +317,9 @@ contract BorrowingV3Test is Test, DeployScript {
         assert(expectedTotalPrincipal == borrowing.totalPrincipal());
         assert(expectedTotalDeposits == borrowing.totalDeposits());
         assert(expectedMaxTotalInterestOwed == borrowing.maxTotalInterestOwed());
+        console.log("v4");
         assert(totalPaidInterest <= borrowing.maxTotalInterestOwed());
+        console.log("v5");
 
         // Validate lenderApy
         UD60x18 lenderApy = borrowing.lenderApy();

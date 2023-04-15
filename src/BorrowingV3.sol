@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
+import { intoSD59x18 } from "@prb/math/ud60x18/Casting.sol";
+import { intoUD60x18 } from "@prb/math/sd59x18/Casting.sol";
 import { UD60x18, toUD60x18, fromUD60x18 } from "@prb/math/UD60x18.sol";
-import { SD59x18, toSD59x18, fromSD59x18 } from "@prb/math/SD59x18.sol";
+import { SD59x18, toSD59x18 } from "@prb/math/SD59x18.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./tUsdc.sol";
@@ -54,8 +56,6 @@ contract BorrowingV3 is Initializable {
     }
 
     function deposit(uint usdc) external {
-
-        console.log("msg.sender:", msg.sender);
         
         // Pull usdc from depositor
         USDC.safeTransferFrom(msg.sender, address(this), usdc);
@@ -75,20 +75,8 @@ contract BorrowingV3 is Initializable {
         // Calulate withdrawer tUsdc
         uint _tUsdc = usdcToTUsdc(usdc);
 
-        console.log("");
-        console.log("msg.sender:", msg.sender);
-        console.log("usdc:", usdc);
-        console.log("_tUsdc:", _tUsdc);
-        console.log("tUSDC.balanceOf(msg.sender):", tUSDC.balanceOf(msg.sender));
-        console.log(".availableLiquidity():", availableLiquidity());
-        console.log("USDC.balanceOf(this):", USDC.balanceOf(address(this)));
-        console.log("totalDeposits:", totalDeposits);
-        console.log("totalPrincipal:", totalPrincipal);
-
         // Burn withdrawer tUsdc
         tUSDC.operatorBurn(msg.sender, _tUsdc, "", "");
-
-        console.log("post burn");
 
         // Update pool
         totalDeposits -= usdc;
@@ -105,23 +93,18 @@ contract BorrowingV3 is Initializable {
         // Calculate ratePerSecond
         // UD60x18 ratePerSecond = toUD60x18(borrowerAprPct).div(toUD60x18(100)).div(toUD60x18(yearSeconds));
         UD60x18 ratePerSecond = borrowerRatePerSecond();
-        console.log("UD60x18.unwrap(ratePerSecond):", UD60x18.unwrap(ratePerSecond));
 
         // Calculate maxDurationSeconds
         uint maxDurationSeconds = maxDurationMonths * monthSeconds;
-        console.log("maxDurationSeconds:", maxDurationSeconds);
 
         // Calculate paymentPerSecond
         UD60x18 paymentPerSecond = calculatePaymentPerSecond(principal, ratePerSecond, maxDurationSeconds);
-        console.log("UD60x18.unwrap(paymentPerSecond):", UD60x18.unwrap(paymentPerSecond));
 
         // Calculate maxCost
         uint maxCost = fromUD60x18(paymentPerSecond.mul(toUD60x18(maxDurationSeconds)));
-        console.log("maxCost:", maxCost);
 
         // Calculate maxUnpaidInterest
         uint maxUnpaidInterest = maxCost - principal;
-        console.log("maxUnpaidInterest:", maxUnpaidInterest);
         
         loans[tokenId] = Loan({
             borrower: msg.sender,
@@ -191,12 +174,7 @@ contract BorrowingV3 is Initializable {
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
-        console.log("interest:", interest);
-        console.log("loan.maxUnpaidInterest:", loan.maxUnpaidInterest);
-        console.log("interest <= loan.maxUnpaidInterest:", interest <= loan.maxUnpaidInterest);
-        console.log(1);
         // assert(interest <= loan.maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
-        console.log(2);
         maxTotalInterestOwed -= loan.maxUnpaidInterest; // Note: maxTotalInterestOwed -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
         // Todo: Clearout loan
@@ -224,12 +202,7 @@ contract BorrowingV3 is Initializable {
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
-        console.log("interest", interest);
-        console.log("loan.maxUnpaidInterest:", loan.maxUnpaidInterest);
-        console.log("interest <= loan.maxUnpaidInterest:", interest <= loan.maxUnpaidInterest);
-        console.log(1);
         // assert(interest <= loan.maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
-        console.log(2);
         maxTotalInterestOwed -= loan.maxUnpaidInterest; // Note: maxTotalInterestOwed -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
         // Calculate defaulterEquity
@@ -304,35 +277,27 @@ contract BorrowingV3 is Initializable {
         // Get utilization
         UD60x18 _utilization = utilization();
 
-        console.log("ba1");
+        assert(_utilization.lte(toUD60x18(1))); // Note: utilization should never exceed 100%
 
-        if (_utilization.lte(toSD59x18(int(fromUD60x18(optimalUtilization))))) {
-            console.log("ba1.1");
+        if (_utilization.lte(optimalUtilization)) {
             apr = m1.mul(_utilization).add(b1);
-            console.log("ba1.2");
 
-        } else {
+        } else if (_utilization.gt(optimalUtilization) && _utilization.lt(toUD60x18(1))) {
+            SD59x18 x = intoSD59x18(m2.mul(_utilization));
+            apr = intoUD60x18(x.add(b2()));
 
-            console.log("ba2.1");
-
-            // If utilization == 100%
-            if (_utilization.eq(1)) {
-                revert("no APR. can't start loan if utilization = 100%");
-
-            } else {
-                console.log("ba2.2");
-                apr = toUD60x18(uint(fromSD59x18(m2.mul(_utilization).add(b2()))));
-                console.log("ba2.3");
-            }
+        } else if (_utilization.eq(toUD60x18(1))) {
+            revert("no APR. can't start loan if utilization = 100%");
         }
 
-        console.log("ba3");
         assert(apr.gt(toUD60x18(0)));
-        console.log("ba4");
+        assert(apr.lt(toUD60x18(1)));
     }
 
     function b2() private view returns(SD59x18) {
-        return optimalUtilization.mul(m1.sub(m2)).add(b1);
+        SD59x18 x = intoSD59x18(m1).sub(intoSD59x18(m2));
+        SD59x18 y = intoSD59x18(optimalUtilization).mul(x);
+        return y.add(intoSD59x18(b1));
     }
 
     function borrowerRatePerSecond() private view returns(UD60x18 ratePerSecond) {
@@ -372,9 +337,7 @@ contract BorrowingV3 is Initializable {
         return (block.timestamp - loan.startTime) / monthSeconds;
     }
 
-    function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) /*private*/ public /* pure */ view returns(UD60x18 paymentPerSecond) {
-
-        console.log("pps1");
+    function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) /*private*/ public pure returns(UD60x18 paymentPerSecond) {
 
         // Calculate x
         // - (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
@@ -383,14 +346,7 @@ contract BorrowingV3 is Initializable {
         // - maxDurationMonths * monthSeconds <= log(MAX_UD60x18) / log(1 + ratePerSecond)
         // - maxDurationMonths <= (log(MAX_UD60x18) / log(1 + ratePerSecond)) / monthSeconds // Note: ratePerSecond depends on util (so solve for maxDurationMonths)
         // - maxDurationMonths <= log(MAX_UD60x18) / (monthSeconds * log(1 + ratePerSecond))
-        console.log("UD60x18.unwrap(utilization()):", UD60x18.unwrap(utilization()));
-        console.log("UD60x18.unwrap(ratePerSecond):", UD60x18.unwrap(ratePerSecond));
-        console.log("UD60x18.unwrap(toUD60x18(1).add(ratePerSecond)):", UD60x18.unwrap(toUD60x18(1).add(ratePerSecond)));
-        console.log("UD60x18.unwrap(toUD60x18(1).add(ratePerSecond)):", UD60x18.unwrap(toUD60x18(1).add(ratePerSecond)));
-        console.log("maxDurationSeconds:", maxDurationSeconds);
         UD60x18 x = toUD60x18(1).add(ratePerSecond).powu(maxDurationSeconds);
-
-        console.log("pps2");
 
         // principal * ratePerSecond * x <= MAX_UD60x18
         // principal * ratePerSecond * (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
@@ -403,8 +359,6 @@ contract BorrowingV3 is Initializable {
         
         // Calculate paymentPerSecond
         paymentPerSecond = toUD60x18(principal).mul(ratePerSecond).mul(x).div(x.sub(toUD60x18(1)));
-
-        console.log("pps3");
     }
 
     function accruedInterest(Loan memory loan) private view returns(uint) {
