@@ -41,20 +41,18 @@ contract DeployScript is Script {
         borrowing = new Borrowing();
         lending = new Lending();
 
-        // Set borrowingSigs
-        bytes4[] memory borrowingSigs = [
-            IBorrowing.startLoan.selector,
-            IBorrowing.payLoan.selector,
-            IBorrowing.redeem.selector,
-            IBorrowing.foreclose.selector
-        ];
-        ProtocolProxy(protocol).setSelectorsTarget(borrowingSigs, address(borrowing));
+        // Set borrowingSelectors
+        bytes4[] memory borrowingSelectors = new bytes4[](4);
+        borrowingSelectors[0] = IBorrowing.startLoan.selector;
+        borrowingSelectors[1] = IBorrowing.payLoan.selector;
+        borrowingSelectors[2] = IBorrowing.redeem.selector;
+        borrowingSelectors[3] = IBorrowing.foreclose.selector;
+        ProtocolProxy(protocol).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
-        // Set borrowingSigs
-        bytes4[] memory lendingSigs = [
-            ILending.deposit.selector,
-            ILending.withdraw.selector
-        ];
-        ProtocolProxy(protocol).setSelectorsTarget(lendingSigs, address(lending));
+        // Set borrowingSelectors
+        bytes4[] memory lendingSelectors = new bytes4[](2);
+        lendingSelectors[0] = ILending.deposit.selector;
+        lendingSelectors[0] = ILending.withdraw.selector;
+        ProtocolProxy(protocol).setSelectorsTarget(lendingSelectors, address(lending));
     }
 }

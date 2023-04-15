@@ -13,7 +13,7 @@ import "../src/lending/Lending.sol"; // Note: later, further improve architectur
 
 import "forge-std/console.sol";
 
-contract BorrowingV3Test is Test, DeployScript {
+contract ProtocolTest is Test, DeployScript {
 
     // Actions
     enum Action { Deposit, Withdraw, StartLoan, PayLoan, SkipTime, Redeem, Foreclose }
