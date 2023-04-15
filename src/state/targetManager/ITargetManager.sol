@@ -6,6 +6,6 @@ import "./ITargetManager.sol";
 interface ITargetManager {
 
     function getTarget(string calldata sig) external view returns (address);
-    function setSigsTarget(string[] calldata sigsArr, address target) external;
+    function setSelectorsTarget(bytes4[] calldata selectorsArr, address target) external;
     function initializeTarget(address target) external;
 }

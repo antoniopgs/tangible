@@ -163,7 +163,9 @@ contract BorrowingV3Test is Test, DeployScript {
 
         // Deposit
         vm.prank(borrower);
+        console.log("d1");
         ILending(protocol).deposit(amount);
+        console.log("d2");
     }
 
     function testWithdraw(uint amount) private validate {

@@ -5,12 +5,17 @@ import "forge-std/Script.sol";
 import { console } from "forge-std/console.sol";
 import "../src/protocolProxy/ProtocolProxy.sol";
 import "../src/tokens/tUsdc.sol";
+import "../src/borrowing/Borrowing.sol";
+import "../src/lending/Lending.sol";
 
 contract DeployScript is Script {
 
-    address payable protocol;
     IERC20 USDC;
     tUsdc tUSDC;
+
+    address payable protocol;
+    Borrowing borrowing;
+    Lending lending;
 
     constructor() {
 
@@ -31,5 +36,25 @@ contract DeployScript is Script {
 
         // Initialize protocol
         ProtocolProxy(protocol).initialize(tUSDC);
+
+        // Deploy logic contracts
+        borrowing = new Borrowing();
+        lending = new Lending();
+
+        // Set borrowingSigs
+        bytes4[] memory borrowingSigs = [
+            IBorrowing.startLoan.selector,
+            IBorrowing.payLoan.selector,
+            IBorrowing.redeem.selector,
+            IBorrowing.foreclose.selector
+        ];
+        ProtocolProxy(protocol).setSelectorsTarget(borrowingSigs, address(borrowing));
+
+        // Set borrowingSigs
+        bytes4[] memory lendingSigs = [
+            ILending.deposit.selector,
+            ILending.withdraw.selector
+        ];
+        ProtocolProxy(protocol).setSelectorsTarget(lendingSigs, address(lending));
     }
 }

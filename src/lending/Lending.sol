@@ -5,12 +5,16 @@ import "./ILending.sol";
 import "../state/state/State.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import "forge-std/console.sol";
+
 contract Lending is ILending, State {
 
     // Libs
     using SafeERC20 for IERC20;
 
     function deposit(uint usdc) external {
+        
+        console.log("deposit...");
         
         // Pull usdc from depositor
         USDC.safeTransferFrom(msg.sender, address(this), usdc);
