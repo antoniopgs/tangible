@@ -4,6 +4,7 @@ pragma solidity ^0.8.15;
 import "forge-std/Test.sol";
 import "../script/Deploy.s.sol";
 // import { MAX_UD60x18, log10 } from "@prb/math/UD60x18.sol";
+import { fromUD60x18 } from "@prb/math/UD60x18.sol";
 
 import "forge-std/console.sol";
 

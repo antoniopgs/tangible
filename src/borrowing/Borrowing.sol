@@ -1,49 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import { intoSD59x18 } from "@prb/math/ud60x18/Casting.sol";
-import { intoUD60x18 } from "@prb/math/sd59x18/Casting.sol";
+import "./IBorrowing.sol";
+import "../state/State.sol";
 import { fromUD60x18 } from "@prb/math/UD60x18.sol";
 import { SD59x18, toSD59x18 } from "@prb/math/SD59x18.sol";
+import { intoUD60x18 } from "@prb/math/sd59x18/Casting.sol";
+import { intoSD59x18 } from "@prb/math/ud60x18/Casting.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "./State.sol";
 
-contract BorrowingV3 is State {
+contract Borrowing is IBorrowing, State {
 
     // Libs
     using SafeERC20 for IERC20;
-
-    function deposit(uint usdc) external {
-        
-        // Pull usdc from depositor
-        USDC.safeTransferFrom(msg.sender, address(this), usdc);
-
-        // Update pool
-        totalDeposits += usdc;
-        
-        // Calulate depositor tUsdc
-        uint _tUsdc = usdcToTUsdc(usdc);
-
-        // Mint tUsdc to depositor
-        tUSDC.operatorMint(msg.sender, _tUsdc);
-    }
-
-    function withdraw(uint usdc) external {
-
-        // Calulate withdrawer tUsdc
-        uint _tUsdc = usdcToTUsdc(usdc);
-
-        // Burn withdrawer tUsdc
-        tUSDC.operatorBurn(msg.sender, _tUsdc, "", "");
-
-        // Update pool
-        totalDeposits -= usdc;
-        require(totalPrincipal <= totalDeposits, "utilization can't exceed 100%");
-
-        // Send usdc to withdrawer
-        USDC.safeTransfer(msg.sender, usdc);
-    }
 
     // Functions
     function startLoan(uint tokenId, uint principal, /* uint borrowerAprPct, */ uint maxDurationMonths) external {
@@ -173,127 +143,21 @@ contract BorrowingV3 is State {
         // Todo: Clearout loan
         loan.borrower = address(0);
     }
-    
-    // Public Views
-    function defaulted(uint tokenId) public view returns(bool) {
 
-        // Get loan
-        Loan memory loan = loans[tokenId];
-
-        // Get loanCompletedMonths
-        uint _loanCompletedMonths = loanCompletedMonths(loan);
-
-        // Calculate loanMaxDurationMonths
-        uint loanMaxDurationMonths = loan.maxDurationSeconds / yearSeconds * yearMonths;
-
-        // If loan exceeded allowed months
-        if (_loanCompletedMonths > loanMaxDurationMonths) {
-            return true;
-        }
-
-        return loan.unpaidPrincipal > principalCap(loan, _loanCompletedMonths);
+    function accruedInterest(Loan memory loan) private view returns(uint) {
+        return fromUD60x18(toUD60x18(loan.unpaidPrincipal).mul(accruedRate(loan)));
     }
 
-    function utilization() public view returns(UD60x18) {
-        if (totalDeposits == 0) {
-            assert(totalPrincipal == 0);
-            return toUD60x18(0);
-        }
-        return toUD60x18(totalPrincipal).div(toUD60x18(totalDeposits));
+    function accruedInterest(uint tokenId) public view returns(uint) { // Note: made this duplicate of accruedInterest() for testing
+        return accruedInterest(loans[tokenId]);
     }
 
-    function lenderApy() public view returns(UD60x18) {
-        if (totalDeposits == 0) {
-            assert(maxTotalInterestOwed == 0);
-            return toUD60x18(0);
-        }
-        return toUD60x18(maxTotalInterestOwed).div(toUD60x18(totalDeposits)); // Question: is this missing auto-compounding?
+    function accruedRate(Loan memory loan) private view returns(UD60x18) {
+        return loan.ratePerSecond.mul(toUD60x18(secondsSinceLastPayment(loan)));
     }
 
-    // Other Views
-    function principalCap(Loan memory loan, uint month) public pure returns(uint cap) {
-
-        // Ensure month doesn't exceed loanMaxDurationMonths
-        uint loanMaxDurationMonths = loan.maxDurationSeconds / yearSeconds * yearMonths;
-        require(month <= loanMaxDurationMonths, "month must be <= loanMaxDurationMonths");
-
-        // Calculate elapsedSeconds
-        uint elapsedSeconds = month * monthSeconds;
-
-        // Calculate negExponent
-        SD59x18 negExponent = toSD59x18(int(elapsedSeconds)).sub(toSD59x18(int(loan.maxDurationSeconds))).sub(toSD59x18(1));
-
-        // Calculate numerator
-        SD59x18 z = toSD59x18(1).sub(SD59x18.wrap(int(UD60x18.unwrap(toUD60x18(1).add(loan.ratePerSecond)))).pow(negExponent));
-        UD60x18 numerator = UD60x18.wrap(uint(SD59x18.unwrap(SD59x18.wrap(int(UD60x18.unwrap(loan.paymentPerSecond))).mul(z))));
-
-        // Calculate cap
-        cap = fromUD60x18(numerator.div(loan.ratePerSecond));
-    }
-
-    function borrowerApr() public view returns(UD60x18 apr) {
-        
-        // Get utilization
-        UD60x18 _utilization = utilization();
-
-        assert(_utilization.lte(toUD60x18(1))); // Note: utilization should never exceed 100%
-
-        if (_utilization.lte(optimalUtilization)) {
-            apr = m1.mul(_utilization).add(b1);
-
-        } else if (_utilization.gt(optimalUtilization) && _utilization.lt(toUD60x18(1))) {
-            SD59x18 x = intoSD59x18(m2.mul(_utilization));
-            apr = intoUD60x18(x.add(b2()));
-
-        } else if (_utilization.eq(toUD60x18(1))) {
-            revert("no APR. can't start loan if utilization = 100%");
-        }
-
-        assert(apr.gt(toUD60x18(0)));
-        assert(apr.lt(toUD60x18(1)));
-    }
-
-    function b2() private view returns(SD59x18) {
-        SD59x18 x = intoSD59x18(m1).sub(intoSD59x18(m2));
-        SD59x18 y = intoSD59x18(optimalUtilization).mul(x);
-        return y.add(intoSD59x18(b1));
-    }
-
-    function borrowerRatePerSecond() private view returns(UD60x18 ratePerSecond) {
-        ratePerSecond = borrowerApr().div(toUD60x18(yearSeconds)); // Todo: improve precision
-    }
-
-    function usdcToTUsdc(uint usdcAmount) public view returns(uint tUsdcAmount) {
-        
-        // Get tUsdcSupply
-        uint tUsdcSupply = tUSDC.totalSupply();
-
-        // If tUsdcSupply or totalDeposits = 0, 1:1
-        if (tUsdcSupply == 0 || totalDeposits == 0) {
-            return tUsdcAmount = usdcAmount;
-        }
-
-        // Calculate tUsdcAmount
-        return tUsdcAmount = usdcAmount * tUsdcSupply / totalDeposits;
-    }
-
-    function tUsdcToUsdc(uint tUsdcAmount) public view returns(uint usdcAmount) {
-        
-        // Get tUsdcSupply
-        uint tUsdcSupply = tUSDC.totalSupply();
-
-        // If tUsdcSupply or totalDeposits = 0, 1:1
-        if (tUsdcSupply == 0 || totalDeposits == 0) {
-            return usdcAmount = tUsdcAmount;
-        }
-
-        // Calculate usdcAmount
-        return usdcAmount = tUsdcAmount * totalDeposits / tUsdcSupply;
-    }
-
-    // Note: truncates on purpose (to enforce payment after monthSeconds, but not every second)
-    function loanCompletedMonths(Loan memory loan) private view returns(uint) {
-        return (block.timestamp - loan.startTime) / monthSeconds;
+    function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
+        return block.timestamp - loan.lastPaymentTime;
     }
 
     function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) /*private*/ public pure returns(UD60x18 paymentPerSecond) {
@@ -320,24 +184,89 @@ contract BorrowingV3 is State {
         paymentPerSecond = toUD60x18(principal).mul(ratePerSecond).mul(x).div(x.sub(toUD60x18(1)));
     }
 
-    function accruedInterest(Loan memory loan) private view returns(uint) {
-        return fromUD60x18(toUD60x18(loan.unpaidPrincipal).mul(accruedRate(loan)));
+    function borrowerRatePerSecond() private view returns(UD60x18 ratePerSecond) {
+        ratePerSecond = borrowerApr().div(toUD60x18(yearSeconds)); // Todo: improve precision
     }
 
-    function accruedInterest(uint tokenId) public view returns(uint) { // Note: made this duplicate of accruedInterest() for testing
-        return accruedInterest(loans[tokenId]);
+    function borrowerApr() public view returns(UD60x18 apr) {
+        
+        // Get utilization
+        UD60x18 _utilization = utilization();
+
+        assert(_utilization.lte(toUD60x18(1))); // Note: utilization should never exceed 100%
+
+        if (_utilization.lte(optimalUtilization)) {
+            apr = m1.mul(_utilization).add(b1);
+
+        } else if (_utilization.gt(optimalUtilization) && _utilization.lt(toUD60x18(1))) {
+            SD59x18 x = intoSD59x18(m2.mul(_utilization));
+            apr = intoUD60x18(x.add(b2()));
+
+        } else if (_utilization.eq(toUD60x18(1))) {
+            revert("no APR. can't start loan if utilization = 100%");
+        }
+
+        assert(apr.gt(toUD60x18(0)));
+        assert(apr.lt(toUD60x18(1)));
     }
 
-    function accruedRate(Loan memory loan) private view returns(UD60x18) {
-        return loan.ratePerSecond.mul(toUD60x18(secondsSinceLastPayment(loan)));
+    function utilization() public view returns(UD60x18) {
+        if (totalDeposits == 0) {
+            assert(totalPrincipal == 0);
+            return toUD60x18(0);
+        }
+        return toUD60x18(totalPrincipal).div(toUD60x18(totalDeposits));
     }
 
-    function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
-        return block.timestamp - loan.lastPaymentTime;
+    function b2() private view returns(SD59x18) {
+        SD59x18 x = intoSD59x18(m1).sub(intoSD59x18(m2));
+        SD59x18 y = intoSD59x18(optimalUtilization).mul(x);
+        return y.add(intoSD59x18(b1));
     }
 
-    function availableLiquidity() /* private */ public view returns(uint) {
-        return totalDeposits - totalPrincipal;
+    function defaulted(uint tokenId) public view returns(bool) {
+
+        // Get loan
+        Loan memory loan = loans[tokenId];
+
+        // Get loanCompletedMonths
+        uint _loanCompletedMonths = loanCompletedMonths(loan);
+
+        // Calculate loanMaxDurationMonths
+        uint loanMaxDurationMonths = loan.maxDurationSeconds / yearSeconds * yearMonths;
+
+        // If loan exceeded allowed months
+        if (_loanCompletedMonths > loanMaxDurationMonths) {
+            return true;
+        }
+
+        return loan.unpaidPrincipal > principalCap(loan, _loanCompletedMonths);
+    }
+
+    // Note: truncates on purpose (to enforce payment after monthSeconds, but not every second)
+    function loanCompletedMonths(Loan memory loan) private view returns(uint) {
+        return (block.timestamp - loan.startTime) / monthSeconds;
+    }
+
+    // Other Views
+    function principalCap(Loan memory loan, uint month) public pure returns(uint cap) {
+
+        // Ensure month doesn't exceed loanMaxDurationMonths
+        uint loanMaxDurationMonths = loan.maxDurationSeconds / yearSeconds * yearMonths;
+        require(month <= loanMaxDurationMonths, "month must be <= loanMaxDurationMonths");
+
+        // Calculate elapsedSeconds
+        uint elapsedSeconds = month * monthSeconds;
+
+        // Calculate negExponent
+        SD59x18 negExponent = toSD59x18(int(elapsedSeconds)).sub(toSD59x18(int(loan.maxDurationSeconds))).sub(toSD59x18(1));
+
+        // Calculate numerator
+        SD59x18 z = toSD59x18(1).sub(SD59x18.wrap(int(UD60x18.unwrap(toUD60x18(1).add(loan.ratePerSecond)))).pow(negExponent));
+        UD60x18 numerator = UD60x18.wrap(uint(SD59x18.unwrap(SD59x18.wrap(int(UD60x18.unwrap(loan.paymentPerSecond))).mul(z))));
+
+        // Calculate cap
+        cap = fromUD60x18(numerator.div(loan.ratePerSecond));
     }
 
     function state(uint tokenId) public view returns (Status) {
@@ -360,5 +289,17 @@ contract BorrowingV3 is State {
                 return Status.Mortgage;
             }
         }
+    }
+
+    function availableLiquidity() /* private */ public view returns(uint) {
+        return totalDeposits - totalPrincipal;
+    }
+
+    function lenderApy() public view returns(UD60x18) {
+        if (totalDeposits == 0) {
+            assert(maxTotalInterestOwed == 0);
+            return toUD60x18(0);
+        }
+        return toUD60x18(maxTotalInterestOwed).div(toUD60x18(totalDeposits)); // Question: is this missing auto-compounding?
     }
 }
