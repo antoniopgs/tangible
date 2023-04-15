@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-interface IBorrowing {
+import "../state/IState.sol";
+
+interface IBorrowing is IState {
 
     // Functions
     function startLoan(uint tokenId, uint principal, /* uint borrowerAprPct, */ uint maxDurationMonths) external;

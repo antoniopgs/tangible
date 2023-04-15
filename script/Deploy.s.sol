@@ -3,12 +3,12 @@ pragma solidity ^0.8.15;
 
 import "forge-std/Script.sol";
 import { console } from "forge-std/console.sol";
-// import "../src/BorrowingV3.sol";
+import "../src/protocolProxy/ProtocolProxy.sol";
 import "../src/tokens/tUsdc.sol";
 
 contract DeployScript is Script {
 
-    BorrowingV3 borrowing;
+    ProtocolProxy protocol;
     IERC20 USDC;
     tUsdc tUSDC;
 
@@ -20,16 +20,16 @@ contract DeployScript is Script {
         USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet
 
         // Deploy protocol
-        borrowing = new BorrowingV3();
+        protocol = new ProtocolProxy();
 
         // Build tUsdcDefaultOperators;
         address[] memory tUsdcDefaultOperators = new address[](1);
-        tUsdcDefaultOperators[0] = address(borrowing);
+        tUsdcDefaultOperators[0] = address(protocol);
 
         // Deploy tUSDC
         tUSDC = new tUsdc(tUsdcDefaultOperators);
 
         // Initialize protocol
-        borrowing.initialize(tUSDC);
+        protocol.initialize(tUSDC);
     }
 }
