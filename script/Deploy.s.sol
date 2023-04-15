@@ -8,7 +8,7 @@ import "../src/tokens/tUsdc.sol";
 
 contract DeployScript is Script {
 
-    ProtocolProxy protocol;
+    address payable protocol;
     IERC20 USDC;
     tUsdc tUSDC;
 
@@ -20,7 +20,7 @@ contract DeployScript is Script {
         USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet
 
         // Deploy protocol
-        protocol = new ProtocolProxy();
+        protocol = payable(new ProtocolProxy());
 
         // Build tUsdcDefaultOperators;
         address[] memory tUsdcDefaultOperators = new address[](1);
@@ -30,6 +30,6 @@ contract DeployScript is Script {
         tUSDC = new tUsdc(tUsdcDefaultOperators);
 
         // Initialize protocol
-        protocol.initialize(tUSDC);
+        ProtocolProxy(protocol).initialize(tUSDC);
     }
 }

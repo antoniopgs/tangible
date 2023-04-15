@@ -32,7 +32,7 @@ abstract contract State is IState, TargetManager, Initializable {
     // Loan storage
     mapping(uint => Loan) public loans;
 
-    function initialize(tUsdc _tUSDC) external initializer {
+    function initialize(tUsdc _tUSDC) external initializer { // Question: maybe move this elsewhere?
         USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet
         tUSDC = _tUSDC;
     }

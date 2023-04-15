@@ -15,7 +15,7 @@ interface IBorrowing is State {
     function borrowerApr() external view returns(UD60x18 apr);
     function lenderApy() external view returns(UD60x18);
     function principalCap(Loan memory loan, uint month) external pure returns(uint cap);
-    function state(uint tokenId) external view returns (Status);
+    function status(uint tokenId) external view returns (Status);
     function utilization() external view returns(UD60x18);
     function availableLiquidity() /* private */ external view returns(uint);
 }

@@ -267,7 +267,7 @@ contract Borrowing is IBorrowing {
         cap = fromUD60x18(numerator.div(loan.ratePerSecond));
     }
 
-    function state(uint tokenId) public view returns (Status) {
+    function status(uint tokenId) public view returns (Status) {
 
         Loan memory loan = loans[tokenId];
         
