@@ -9,8 +9,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./tUsdc.sol";
 
-import "forge-std/console.sol";
-
 contract BorrowingV3 is Initializable {
 
     IERC20 USDC;
