@@ -15,16 +15,9 @@ abstract contract TargetManager is ITargetManager, Ownable {
     }
 
     function setSelectorsTarget(bytes4[] calldata selectorsArr, address target) external onlyOwner {
-        console.log("setSelectorsTarget...");
 
         for (uint256 i = 0; i < selectorsArr.length; i++) {
-            console.log("i:", i);
-            console.logBytes4(selectorsArr[i]);
-            console.log("target:", target);
-            console.log("logicTargets[selectorsArr[i]]:", logicTargets[selectorsArr[i]]);
             logicTargets[selectorsArr[i]] = target;
-            console.log("logicTargets[selectorsArr[i]]:", logicTargets[selectorsArr[i]]);
-            console.log("");
         }
     }
 

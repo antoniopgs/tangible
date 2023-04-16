@@ -42,17 +42,28 @@ contract DeployScript is Script {
         lending = new Lending();
 
         // Set borrowingSelectors
-        bytes4[] memory borrowingSelectors = new bytes4[](4);
+        bytes4[] memory borrowingSelectors = new bytes4[](14);
         borrowingSelectors[0] = IBorrowing.startLoan.selector;
         borrowingSelectors[1] = IBorrowing.payLoan.selector;
         borrowingSelectors[2] = IBorrowing.redeem.selector;
         borrowingSelectors[3] = IBorrowing.foreclose.selector;
+        borrowingSelectors[4] = IBorrowing.borrowerApr.selector;
+        borrowingSelectors[5] = IBorrowing.lenderApy.selector;
+        borrowingSelectors[6] = IBorrowing.principalCap.selector;
+        borrowingSelectors[7] = IBorrowing.status.selector;
+        borrowingSelectors[8] = IBorrowing.utilization.selector;
+        borrowingSelectors[9] = IBorrowing.availableLiquidity.selector;
+        borrowingSelectors[10] = Borrowing.calculatePaymentPerSecond.selector;
+        borrowingSelectors[11] = Borrowing.defaulted.selector;
+        borrowingSelectors[12] = State.loans.selector;
+        borrowingSelectors[13] = Borrowing.accruedInterest.selector;
         ProtocolProxy(protocol).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set borrowingSelectors
-        bytes4[] memory lendingSelectors = new bytes4[](2);
+        bytes4[] memory lendingSelectors = new bytes4[](3);
         lendingSelectors[0] = ILending.deposit.selector;
-        lendingSelectors[0] = ILending.withdraw.selector;
+        lendingSelectors[1] = ILending.withdraw.selector;
+        lendingSelectors[2] = Lending.usdcToTUsdc.selector;
         ProtocolProxy(protocol).setSelectorsTarget(lendingSelectors, address(lending));
     }
 }

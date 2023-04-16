@@ -238,12 +238,12 @@ contract ProtocolTest is Test, DeployScript {
     function testPayLoan(uint tokenId, uint payment) private validate {
         
         // Get unpaidPrincipal & interest
-        (, , , , uint unpaidPrincipal, , , ) = State(protocol).loans(tokenId);
+        State.Loan memory loan = State(protocol).loans(tokenId);
         uint expectedInterest = Borrowing(protocol).accruedInterest(tokenId);
 
         // Calculate minPayment & maxPayment
         uint minPayment = expectedInterest;
-        uint maxPayment = unpaidPrincipal + expectedInterest;
+        uint maxPayment = loan.unpaidPrincipal + expectedInterest;
 
         // Bound payment
         payment = bound(payment, minPayment, maxPayment);
@@ -259,8 +259,8 @@ contract ProtocolTest is Test, DeployScript {
         IBorrowing(protocol).payLoan(tokenId, payment);
 
         // If loan is paid off, return
-        (address borrower, , , , , , , ) = Borrowing(protocol).loans(tokenId);
-        if (borrower == address(0)) {
+        loan = State(protocol).loans(tokenId);
+        if (loan.borrower == address(0)) {
             console.log("loan paid off.\n");
         }
     }
@@ -271,24 +271,24 @@ contract ProtocolTest is Test, DeployScript {
         // if (protocol.defaulted(tokenId)) {
             
             // // Get redeemer & unpaidPrincipal
-            (address redeemer, , , , uint unpaidPrincipal, uint maxUnpaidInterest, , ) = Borrowing(protocol).loans(tokenId);
+            State.Loan memory loan = State(protocol).loans(tokenId);
             uint accruedInterest = Borrowing(protocol).accruedInterest(tokenId);
-            uint expectedRedeemerDebt = unpaidPrincipal + accruedInterest;
+            uint expectedRedeemerDebt = loan.unpaidPrincipal + accruedInterest;
 
             // Give redeemer expectedRedeemerDebt
-            deal(address(USDC), redeemer, expectedRedeemerDebt);
+            deal(address(USDC), loan.borrower, expectedRedeemerDebt);
 
             // Redeemer approves protocol
-            vm.prank(redeemer);
+            vm.prank(loan.borrower);
             USDC.approve(address(protocol), expectedRedeemerDebt);
 
             
-            expectedTotalPrincipal -= unpaidPrincipal;
+            expectedTotalPrincipal -= loan.unpaidPrincipal;
             expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
-            expectedMaxTotalInterestOwed -= maxUnpaidInterest;
+            expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
 
             // Redemer redeems
-            vm.prank(redeemer);
+            vm.prank(loan.borrower);
             IBorrowing(protocol).redeem(tokenId);
 
         // } else {
@@ -299,18 +299,18 @@ contract ProtocolTest is Test, DeployScript {
     function testForeclose(uint tokenId, uint salePrice) private {
 
         // Get unpaidPrincipal & maxUnpaidInterest
-        (, , , , uint unpaidPrincipal, uint maxUnpaidInterest, , ) = Borrowing(protocol).loans(tokenId);
+        State.Loan memory loan = Borrowing(protocol).loans(tokenId);
 
         // Bound salePrice
-        uint expectedDefaulterDebt = unpaidPrincipal + Borrowing(protocol).accruedInterest(tokenId);
+        uint expectedDefaulterDebt = loan.unpaidPrincipal + Borrowing(protocol).accruedInterest(tokenId);
         salePrice = bound(salePrice, expectedDefaulterDebt, 1_000_000_000 * 1e18);
 
         uint protocolUsdc = USDC.balanceOf(address(protocol));
         deal(address(USDC), address(protocol), protocolUsdc + salePrice, true);
 
-        expectedTotalPrincipal -= unpaidPrincipal;
+        expectedTotalPrincipal -= loan.unpaidPrincipal;
         expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
-        expectedMaxTotalInterestOwed -= maxUnpaidInterest;
+        expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
 
         // Foreclose
         IBorrowing(protocol).foreclose(tokenId, salePrice);

@@ -34,7 +34,7 @@ contract Borrowing is IBorrowing, State {
         // Calculate maxUnpaidInterest
         uint maxUnpaidInterest = maxCost - principal;
         
-        loans[tokenId] = Loan({
+        _loans[tokenId] = Loan({
             borrower: msg.sender,
             ratePerSecond: ratePerSecond,
             paymentPerSecond: paymentPerSecond,
@@ -55,7 +55,7 @@ contract Borrowing is IBorrowing, State {
         require(!defaulted(tokenId), "can't pay loan after defaulting");
 
         // Get Loan
-        Loan storage loan = loans[tokenId];
+        Loan storage loan = _loans[tokenId];
 
         // Calculate interest
         uint interest = accruedInterest(loan);
@@ -86,7 +86,7 @@ contract Borrowing is IBorrowing, State {
     function redeem(uint tokenId) external {
 
         // Get Loan
-        Loan storage loan = loans[tokenId];
+        Loan storage loan = _loans[tokenId];
 
         // Todo: Ensure State == Default
 
@@ -114,7 +114,7 @@ contract Borrowing is IBorrowing, State {
         // Todo: Pull salePrice?
 
         // Get Loan
-        Loan storage loan = loans[tokenId];
+        Loan storage loan = _loans[tokenId];
 
         // Todo: Ensure State == Foreclosurable
 
@@ -148,7 +148,7 @@ contract Borrowing is IBorrowing, State {
     }
 
     function accruedInterest(uint tokenId) public view returns(uint) { // Note: made this duplicate of accruedInterest() for testing
-        return accruedInterest(loans[tokenId]);
+        return accruedInterest(_loans[tokenId]);
     }
 
     function accruedRate(Loan memory loan) private view returns(UD60x18) {
@@ -226,7 +226,7 @@ contract Borrowing is IBorrowing, State {
     function defaulted(uint tokenId) public view returns(bool) {
 
         // Get loan
-        Loan memory loan = loans[tokenId];
+        Loan memory loan = _loans[tokenId];
 
         // Get loanCompletedMonths
         uint _loanCompletedMonths = loanCompletedMonths(loan);
@@ -270,7 +270,7 @@ contract Borrowing is IBorrowing, State {
 
     function status(uint tokenId) public view returns (Status) {
 
-        Loan memory loan = loans[tokenId];
+        Loan memory loan = _loans[tokenId];
         
         // If no borrower
         if (loan.borrower == address(0)) {
