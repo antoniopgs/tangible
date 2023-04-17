@@ -22,7 +22,7 @@ abstract contract State is IState, TargetManager, Initializable {
     uint public totalPrincipal;
     uint public totalDeposits;
     uint public maxTotalInterestOwed;
-    UD60x18 public optimalUtilization = toUD60x18(90).div(toUD60x18(100)); // Note: 90% // Todo: relate to k1 and k2
+    UD60x18 public optimalUtilization = toUD60x18(90).div(toUD60x18(100)); // Note: 90%
 
     // Interest vars
     UD60x18 internal m1 = toUD60x18(4).div(toUD60x18(100)); // Note: 0.04
@@ -34,6 +34,17 @@ abstract contract State is IState, TargetManager, Initializable {
 
     // Other vars
     uint internal redemptionWindow = 45 days;
+
+    UD60x18 internal _redemptionFeeSpread = toUD60x18(1).div(toUD60x18(100)); // Note: 1%
+    UD60x18 internal _foreclosureFeeSpread = toUD60x18(2).div(toUD60x18(100)); // Note: 2%
+
+    function redemptionFeeSpread() external view returns (UD60x18) {
+        return _redemptionFeeSpread;
+    }
+
+    function foreclosureFeeSpread() external view returns (UD60x18) {
+        return _foreclosureFeeSpread;
+    }
 
     function loans(uint tokenId) external view returns(Loan memory) {
         return _loans[tokenId];

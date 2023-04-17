@@ -90,16 +90,15 @@ contract Borrowing is IBorrowing, State {
         // Get Loan
         Loan storage loan = _loans[tokenId];
 
-        // Todo: Ensure State == Default
-
         // Calculate interest
         uint interest = accruedInterest(loan);
 
-        // Calculate defaulterDebt
+        // Calculate defaulterDebt & redemptionFee
         uint defaulterDebt = loan.unpaidPrincipal + interest;
+        uint redemptionFee = fromUD60x18(toUD60x18(defaulterDebt).mul(_redemptionFeeSpread));
 
-        // Redeem (pull defaulter's entire debt)
-        USDC.safeTransferFrom(msg.sender, address(this), defaulterDebt); // Note: anyone can redeem on behalf of defaulter
+        // Redeem (pull defaulter's entire debt + redemptionFee)
+        USDC.safeTransferFrom(msg.sender, address(this), defaulterDebt + redemptionFee); // Note: anyone can redeem on behalf of defaulter
 
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
@@ -107,7 +106,7 @@ contract Borrowing is IBorrowing, State {
         // assert(interest <= loan.maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
         maxTotalInterestOwed -= loan.maxUnpaidInterest; // Note: maxTotalInterestOwed -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
-        // Todo: Clearout loan
+        // Clearout loan
         loan.borrower = address(0);
     }
 
@@ -119,16 +118,15 @@ contract Borrowing is IBorrowing, State {
         // Get Loan
         Loan storage loan = _loans[tokenId];
 
-        // Todo: Ensure State == Foreclosurable
-
         // Calculate interest
         uint interest = accruedInterest(loan);
 
-        // Calculate defaulterDebt
-        uint defaulterDebt = loan.unpaidPrincipal + interest; // Todo: add fees later
+        // Calculate defaulterDebt // Todo: add saleFee later
+        uint defaulterDebt = loan.unpaidPrincipal + interest;
+        uint foreclosureFee = fromUD60x18(toUD60x18(defaulterDebt).mul(_foreclosureFeeSpread));
 
         // Ensure salePrice covers defaulterDebt + fees
-        require(salePrice >= defaulterDebt, "salePrice must >= defaulterDebt"); // Question: minSalePrice will rise over time. Too risky?
+        require(salePrice >= defaulterDebt + foreclosureFee, "salePrice must >= defaulterDebt + fees"); // Question: minSalePrice will rise over time. Too risky?
 
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
@@ -137,12 +135,12 @@ contract Borrowing is IBorrowing, State {
         maxTotalInterestOwed -= loan.maxUnpaidInterest; // Note: maxTotalInterestOwed -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
         // Calculate defaulterEquity
-        uint defaulterEquity = salePrice - defaulterDebt;
+        uint defaulterEquity = salePrice - defaulterDebt - foreclosureFee;
 
         // Send defaulterEquity to defaulter
         USDC.safeTransfer(loan.borrower, defaulterEquity);
 
-        // Todo: Clearout loan
+        // Clearout loan
         loan.borrower = address(0);
     }
 

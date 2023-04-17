@@ -4,8 +4,6 @@ pragma solidity ^0.8.15;
 import "./ITargetManager.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "forge-std/console.sol";
-
 abstract contract TargetManager is ITargetManager, Ownable {
 
     mapping (bytes4 => address) public logicTargets;

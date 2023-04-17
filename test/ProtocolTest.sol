@@ -274,14 +274,14 @@ contract ProtocolTest is Test, DeployScript {
             State.Loan memory loan = State(protocol).loans(tokenId);
             uint accruedInterest = Borrowing(protocol).accruedInterest(tokenId);
             uint expectedRedeemerDebt = loan.unpaidPrincipal + accruedInterest;
+            uint expectedRedemptionFee = fromUD60x18(toUD60x18(expectedRedeemerDebt).mul(Borrowing(protocol).redemptionFeeSpread()));
 
             // Give redeemer expectedRedeemerDebt
-            deal(address(USDC), loan.borrower, expectedRedeemerDebt);
+            deal(address(USDC), loan.borrower, expectedRedeemerDebt + expectedRedemptionFee);
 
             // Redeemer approves protocol
             vm.prank(loan.borrower);
-            USDC.approve(address(protocol), expectedRedeemerDebt);
-
+            USDC.approve(address(protocol), expectedRedeemerDebt + expectedRedemptionFee);
             
             expectedTotalPrincipal -= loan.unpaidPrincipal;
             expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
@@ -303,7 +303,8 @@ contract ProtocolTest is Test, DeployScript {
 
         // Bound salePrice
         uint expectedDefaulterDebt = loan.unpaidPrincipal + Borrowing(protocol).accruedInterest(tokenId);
-        salePrice = bound(salePrice, expectedDefaulterDebt, 1_000_000_000 * 1e18);
+        uint expectedForeclosureFee = fromUD60x18(toUD60x18(expectedDefaulterDebt).mul(State(protocol).foreclosureFeeSpread()));
+        salePrice = bound(salePrice, expectedDefaulterDebt + expectedForeclosureFee, 1_000_000_000 * 1e18);
 
         uint protocolUsdc = USDC.balanceOf(address(protocol));
         deal(address(USDC), address(protocol), protocolUsdc + salePrice, true);
