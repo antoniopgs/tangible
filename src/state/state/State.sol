@@ -10,7 +10,7 @@ import { toUD60x18 } from "@prb/math/UD60x18.sol";
 abstract contract State is IState, TargetManager, Initializable {
 
     // Tokens
-    IERC20 USDC;
+    IERC20 USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet
     tUsdc tUSDC;
 
     // Time constants
@@ -32,12 +32,14 @@ abstract contract State is IState, TargetManager, Initializable {
     // Loan storage
     mapping(uint => Loan) internal _loans;
 
+    // Other vars
+    uint internal redemptionWindow = 45 days;
+
     function loans(uint tokenId) external view returns(Loan memory) {
         return _loans[tokenId];
     }
 
     function initialize(tUsdc _tUSDC) external initializer { // Question: maybe move this elsewhere?
-        USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet
         tUSDC = _tUSDC;
     }
 }

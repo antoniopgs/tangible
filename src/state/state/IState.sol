@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-// import "./targetManager/TargetManager.sol";
-// import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-// import "../tokens/tUsdc.sol";
 import { UD60x18 } from "@prb/math/UD60x18.sol";
 
 interface IState {
@@ -20,6 +17,5 @@ interface IState {
         uint lastPaymentTime;
     }
 
-    // enum State { None, Mortgage, Default, Foreclosurable }
-    enum Status { None, Mortgage, Default }
+    enum Status { None, Mortgage, Default, Foreclosurable }
 }
