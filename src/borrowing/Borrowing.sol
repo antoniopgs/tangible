@@ -223,7 +223,7 @@ contract Borrowing is IBorrowing, State {
         return y.add(intoSD59x18(b1));
     }
 
-    function defaulted(uint tokenId) public view returns(bool) {
+    function defaulted(uint tokenId) private view returns(bool) {
 
         // Get loan
         Loan memory loan = _loans[tokenId];

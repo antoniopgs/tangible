@@ -42,7 +42,7 @@ contract DeployScript is Script {
         lending = new Lending();
 
         // Set borrowingSelectors
-        bytes4[] memory borrowingSelectors = new bytes4[](14);
+        bytes4[] memory borrowingSelectors = new bytes4[](13);
         borrowingSelectors[0] = IBorrowing.startLoan.selector;
         borrowingSelectors[1] = IBorrowing.payLoan.selector;
         borrowingSelectors[2] = IBorrowing.redeem.selector;
@@ -54,9 +54,8 @@ contract DeployScript is Script {
         borrowingSelectors[8] = IBorrowing.utilization.selector;
         borrowingSelectors[9] = IBorrowing.availableLiquidity.selector;
         borrowingSelectors[10] = Borrowing.calculatePaymentPerSecond.selector;
-        borrowingSelectors[11] = Borrowing.defaulted.selector;
-        borrowingSelectors[12] = State.loans.selector;
-        borrowingSelectors[13] = Borrowing.accruedInterest.selector;
+        borrowingSelectors[11] = State.loans.selector;
+        borrowingSelectors[12] = Borrowing.accruedInterest.selector;
         ProtocolProxy(protocol).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set borrowingSelectors

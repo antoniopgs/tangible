@@ -78,7 +78,7 @@ contract ProtocolTest is Test, DeployScript {
                     // Get random tokenId
                     uint tokenId = randomness[i] % loanCount;
 
-                    if (!Borrowing(protocol).defaulted(tokenId)) {
+                    if (Borrowing(protocol).status(tokenId) == IState.Status.Mortgage) {
 
                         // Pay Loan
                         testPayLoan(tokenId, randomness[i]);
