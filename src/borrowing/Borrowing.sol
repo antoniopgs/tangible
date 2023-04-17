@@ -64,8 +64,7 @@ contract Borrowing is IBorrowing, State {
         //require(payment => interest, "payment must be => interest"); // Question: maybe don't calculate repayment if payment < interest?
 
         // Calculate repayment
-        uint payLoanFee = .mul(payLoanFeeSpread);
-        uint repayment = payment - interest - payLoanFee; // Todo: Add payLoanFee
+        uint repayment = payment - interest; // Todo: Add payLoanFee // Question: should payLoanFee come off the interest to lenders? Or only come off the borrower's repayment?
 
         // Update loan
         loan.unpaidPrincipal -= repayment;
