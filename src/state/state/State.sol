@@ -35,8 +35,9 @@ abstract contract State is IState, TargetManager, Initializable {
     // Other vars
     uint internal redemptionWindow = 45 days;
 
-    UD60x18 internal _redemptionFeeSpread = toUD60x18(1).div(toUD60x18(100)); // Note: 1%
-    UD60x18 internal _foreclosureFeeSpread = toUD60x18(2).div(toUD60x18(100)); // Note: 2%
+    UD60x18 internal payLoanFeeSpread = toUD60x18(1).div(toUD60x18(100)); // Note: 1%
+    UD60x18 internal _redemptionFeeSpread = toUD60x18(2).div(toUD60x18(100)); // Note: 2%
+    UD60x18 internal _foreclosureFeeSpread = toUD60x18(3).div(toUD60x18(100)); // Note: 3%
 
     function redemptionFeeSpread() external view returns (UD60x18) {
         return _redemptionFeeSpread;
