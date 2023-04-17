@@ -103,7 +103,7 @@ contract Borrowing is IBorrowing, State {
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
-        // assert(interest <= loan.maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
+        // assert(interest <= loan.maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest? // Note: actually, now that he only has redemptionWindow to redeem, maybe I can bring this assertion back
         maxTotalUnpaidInterest -= loan.maxUnpaidInterest; // Note: maxTotalUnpaidInterest -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
         // Clearout loan
