@@ -49,7 +49,7 @@ contract Borrowing is IBorrowing, State {
 
         // Update pool
         totalPrincipal += principal;
-        maxTotalInterestOwed += maxUnpaidInterest;
+        maxTotalUnpaidInterest += maxUnpaidInterest;
     }
 
     function payLoan(uint tokenId, uint payment) external {
@@ -74,7 +74,7 @@ contract Borrowing is IBorrowing, State {
         // Update pool
         totalPrincipal -= repayment;
         totalDeposits += interest;
-        maxTotalInterestOwed -= interest;
+        maxTotalUnpaidInterest -= interest;
 
         // If loan is paid off
         if (loan.unpaidPrincipal == 0) {
@@ -104,7 +104,7 @@ contract Borrowing is IBorrowing, State {
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
         // assert(interest <= loan.maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
-        maxTotalInterestOwed -= loan.maxUnpaidInterest; // Note: maxTotalInterestOwed -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
+        maxTotalUnpaidInterest -= loan.maxUnpaidInterest; // Note: maxTotalUnpaidInterest -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
         // Clearout loan
         loan.borrower = address(0);
@@ -132,7 +132,7 @@ contract Borrowing is IBorrowing, State {
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
         // assert(interest <= loan.maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
-        maxTotalInterestOwed -= loan.maxUnpaidInterest; // Note: maxTotalInterestOwed -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
+        maxTotalUnpaidInterest -= loan.maxUnpaidInterest; // Note: maxTotalUnpaidInterest -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
         // Calculate defaulterEquity
         uint defaulterEquity = salePrice - defaulterDebt - foreclosureFee;
@@ -310,10 +310,10 @@ contract Borrowing is IBorrowing, State {
 
     function lenderApy() public view returns(UD60x18) {
         if (totalDeposits == 0) {
-            assert(maxTotalInterestOwed == 0);
+            assert(maxTotalUnpaidInterest == 0);
             return toUD60x18(0);
         }
-        return toUD60x18(maxTotalInterestOwed).div(toUD60x18(totalDeposits)); // Question: is this missing auto-compounding?
+        return toUD60x18(maxTotalUnpaidInterest).div(toUD60x18(totalDeposits)); // Question: is this missing auto-compounding?
     }
 
     // Note: gas expensive

@@ -325,7 +325,7 @@ contract ProtocolTest is Test, DeployScript {
         // Validate expectations
         assert(expectedTotalPrincipal == Borrowing(protocol).totalPrincipal());
         assert(expectedTotalDeposits == Borrowing(protocol).totalDeposits());
-        assert(expectedMaxTotalInterestOwed == Borrowing(protocol).maxTotalInterestOwed());
+        assert(expectedMaxTotalInterestOwed == Borrowing(protocol).maxTotalUnpaidInterest());
         console.log("v3");
         // assert(totalPaidInterest <= protocol.maxTotalInterestOwed());
         console.log("v4");
