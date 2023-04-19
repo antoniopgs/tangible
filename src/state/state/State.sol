@@ -3,11 +3,12 @@ pragma solidity ^0.8.15;
 
 import "./IState.sol";
 import "../targetManager/TargetManager.sol";
+import "../whitelisting/Whitelisting.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "../../tokens/tUsdc.sol";
 import { toUD60x18 } from "@prb/math/UD60x18.sol";
 
-abstract contract State is IState, TargetManager, Initializable {
+abstract contract State is IState, TargetManager, Whitelisting, Initializable {
 
     // Tokens
     IERC20 USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet

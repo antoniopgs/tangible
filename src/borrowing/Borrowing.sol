@@ -15,7 +15,7 @@ contract Borrowing is IBorrowing, State {
     using SafeERC20 for IERC20;
 
     // Functions
-    function startLoan(uint tokenId, uint principal, /* uint borrowerAprPct, */ uint maxDurationMonths) external {
+    function startLoan(uint tokenId, uint principal, /* uint borrowerAprPct, */ uint maxDurationMonths) external ifWhitelisted {
         require(status(tokenId) == Status.None, "nft already in system");
         require(principal <= availableLiquidity(), "principal must be <= availableLiquidity");
         require(maxDurationMonths >= 1, "loan maxDuration must be at least 1 month");
