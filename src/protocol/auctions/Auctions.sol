@@ -76,13 +76,13 @@ contract Auctions is IAuctions, State {
         // Todo: if State == Null vs if State == Mortgage
 
         // Calculate saleFee
-        UD60x18 saleFee = toUD60x18(_bid.propertyValue).mul(saleFeeRatio);
+        uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(saleFeeRatio));
 
         // Add saleFee to protocolMoney
-        protocolMoney = protocolMoney.add(saleFee);
+        protocolMoney += saleFee;
 
         // Send (bid.propertyValue - saleFee) to nftOwner
-        USDC.safeTransferFrom(address(this), nftOwner, fromUD60x18(toUD60x18(_bid.propertyValue).sub(saleFee)));
+        USDC.safeTransferFrom(address(this), nftOwner, _bid.propertyValue - saleFee);
 
         // If regular bid
         if (_bid.downPayment == _bid.propertyValue) {
@@ -110,16 +110,16 @@ contract Auctions is IAuctions, State {
     function loanBidActionable(Bid memory _bid) public view returns(bool) {
 
         // Calculate loanBid principal
-        UD60x18 principal = toUD60x18(_bid.propertyValue - _bid.downPayment);
+        uint principal = _bid.propertyValue - _bid.downPayment;
 
         // Calculate loanBid ltv
-        UD60x18 ltv = principal.div(toUD60x18(_bid.propertyValue));
+        UD60x18 ltv = toUD60x18(principal).div(toUD60x18(_bid.propertyValue));
 
         // Return actionability
-        return ltv.lte(maxLtv) && availableLiquidity().gte(principal);
+        return ltv.lte(maxLtv) && availableLiquidity() >= principal;
     }
 
-    function availableLiquidity() private view returns(UD60x18) {
-        return totalDeposits.sub(totalPrincipal);
+    function availableLiquidity() private view returns(uint) {
+        return totalDeposits - totalPrincipal;
     }
 }
