@@ -12,7 +12,8 @@ abstract contract TargetManager is ITargetManager, Ownable {
         return logicTargets[bytes4(keccak256(abi.encodePacked(sig)))];
     }
 
-    function setSigsTarget(bytes4[] calldata selectorsArr, address target) external onlyOwner {
+    function setSelectorsTarget(bytes4[] calldata selectorsArr, address target) external onlyOwner {
+
         for (uint256 i = 0; i < selectorsArr.length; i++) {
             logicTargets[selectorsArr[i]] = target;
         }
