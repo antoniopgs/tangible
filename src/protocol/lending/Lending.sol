@@ -11,56 +11,61 @@ contract Lending is ILending, State {
     using SafeERC20 for IERC20;
 
     function deposit(uint usdc) external {
-
-        // Pull LIQ from depositor
+        
+        // Pull usdc from depositor
         USDC.safeTransferFrom(msg.sender, address(this), usdc);
 
-        // Add usdc to totalDeposits
-        totalDeposits = totalDeposits.add(toUD60x18(usdc));
+        // Update pool
+        totalDeposits += usdc;
+        
+        // Calulate depositor tUsdc
+        uint _tUsdc = usdcToTUsdc(usdc);
 
-        // Calculate tusdc
-        uint tusdc = usdcToTusdc(usdc);
-
-        // Mint tusdc to depositor
-        tUSDC.defaultOperatorMint(msg.sender, tusdc);
-
-        // Emit event
-        emit Deposit(msg.sender, usdc, tusdc, block.timestamp);
+        // Mint tUsdc to depositor
+        tUSDC.defaultOperatorMint(msg.sender, _tUsdc);
     }
 
     function withdraw(uint usdc) external {
 
-        // Calculate tusdc
-        uint tusdc = usdcToTusdc(usdc);
+        // Calulate withdrawer tUsdc
+        uint _tUsdc = usdcToTUsdc(usdc);
 
-        // Burn tusdc from withdrawer
-        tUSDC.burn(tusdc, "");
+        // Burn withdrawer tUsdc
+        tUSDC.operatorBurn(msg.sender, _tUsdc, "", "");
 
-        // Remove usdc from totalDeposits
-        totalDeposits = totalDeposits.sub(toUD60x18(usdc));
-        require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
+        // Update pool
+        totalDeposits -= usdc;
+        require(totalPrincipal <= totalDeposits, "utilization can't exceed 100%");
 
-        // Send LIQ to withdrawer
-        USDC.safeTransfer(msg.sender, usdc); // Question: reentrancy possible?
-
-        // Emit event
-        emit Withdrawal(msg.sender, usdc, tusdc, block.timestamp);
+        // Send usdc to withdrawer
+        USDC.safeTransfer(msg.sender, usdc);
     }
 
-    function usdcToTusdcRatio() private view returns(UD60x18) {
+    function usdcToTUsdc(uint usdcAmount) public view returns(uint tUsdcAmount) {
         
-        // Get tusdcSupply
-        uint tusdcSupply = tUSDC.totalSupply();
+        // Get tUsdcSupply
+        uint tUsdcSupply = tUSDC.totalSupply();
 
-        if (tusdcSupply == 0 || totalDeposits.eq(ud(0))) {
-            return toUD60x18(1);
-
-        } else {
-            return toUD60x18(tusdcSupply).div(totalDeposits);
+        // If tUsdcSupply or totalDeposits = 0, 1:1
+        if (tUsdcSupply == 0 || totalDeposits == 0) {
+            return tUsdcAmount = usdcAmount;
         }
+
+        // Calculate tUsdcAmount
+        return tUsdcAmount = usdcAmount * tUsdcSupply / totalDeposits;
     }
 
-    function usdcToTusdc(uint usdc) private view returns(uint tusdc) {
-        tusdc = fromUD60x18(toUD60x18(usdc).mul(usdcToTusdcRatio()));
-    }   
+    function tUsdcToUsdc(uint tUsdcAmount) public view returns(uint usdcAmount) {
+        
+        // Get tUsdcSupply
+        uint tUsdcSupply = tUSDC.totalSupply();
+
+        // If tUsdcSupply or totalDeposits = 0, 1:1
+        if (tUsdcSupply == 0 || totalDeposits == 0) {
+            return usdcAmount = tUsdcAmount;
+        }
+
+        // Calculate usdcAmount
+        return usdcAmount = tUsdcAmount * totalDeposits / tUsdcSupply;
+    }
 }
