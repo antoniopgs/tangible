@@ -103,4 +103,35 @@ contract Foreclosures is IForeclosures, State {
         address highestBidder;
         sendNft(loan, highestBidder, TokenId.unwrap(tokenId));
     }
+
+    function findHighestActionableBid(TokenId tokenId) external view returns (uint highestActionableIdx) {
+
+        // Get bids
+        Bid[] memory bids = bids[tokenId];
+
+        // Loop bids
+        for (uint i = 0; i < bids.length; i++) {
+
+            // Get bid
+            Bid memory bid = bids[i];
+
+            // If bid
+            if (bid.propertyValue == bid.downPayment) {
+
+                if (bid.propertyValue > bids[highestActionableIdx].propertyValue) {
+                    highestActionableIdx = i;
+                }
+                
+            // If loan bid
+            } else if (bid.propertyValue > bid.downPayment) {
+
+                if (loanBidActionable(bid)) {
+
+                    if (bid.propertyValue > bids[highestActionableIdx].propertyValue) {
+                        highestActionableIdx = i;
+                    }
+                }
+            }
+        }
+    }
 }
