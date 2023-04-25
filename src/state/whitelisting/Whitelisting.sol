@@ -5,17 +5,18 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 abstract contract Whitelisting is Ownable {
 
-    mapping(address => bool) public whitelisted;
+    mapping(address => uint) public addressToResidentId; // Note: eResident number of 0, it will considered "falsy"
 
-    function whitelist(address[] calldata users, bool status) external onlyOwner {
+    function whitelist(address[] calldata users, uint[] calldata eResidentNumbers) external onlyOwner {
+        require(users.length == eResidentNumbers.length, "unequal array param lengths");
         
         for (uint i = 0; i < users.length; i++) {
-            whitelisted[users[i]] = status;
+            addressToResidentId[users[i]] = eResidentNumbers[i];
         }
     }
 
     modifier ifWhitelisted {
-        require(whitelisted[msg.sender], "caller not whitelisted");
+        require(addressToResidentId[msg.sender] != 0, "caller not whitelisted");
         _;
     } 
 }
