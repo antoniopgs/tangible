@@ -9,7 +9,16 @@ contract tUsdc is ERC777 {
 
     }
 
-    function operatorMint(address account, uint amount) external { // Todo: RESTRICT ACCESS LATER
+    function defaultOperatorMint(address account, uint amount) external {
+        require(isDefaultOperator(msg.sender), "caller not default operator");
         _mint(account, amount, "", "");
+    }
+
+    // Note: will return true for default operators, but false for non-default operators, so long as:
+    // - address(this) isn't msg.sender
+    // - address(this) doesn't revoke any defaultOperators
+    // - address(this) never calls authorizeOperator()
+    function isDefaultOperator(address operator) private view returns (bool) {
+        return isOperatorFor(operator, address(this));
     }
 }

@@ -22,7 +22,7 @@ contract Lending is ILending, State {
         uint _tUsdc = usdcToTUsdc(usdc);
 
         // Mint tUsdc to depositor
-        tUSDC.operatorMint(msg.sender, _tUsdc);
+        tUSDC.defaultOperatorMint(msg.sender, _tUsdc);
     }
 
     function withdraw(uint usdc) external {
