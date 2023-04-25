@@ -98,4 +98,20 @@ abstract contract State is IState, TargetManager {
         // Remove tokenId from loansTokenIds
         loansTokenIds.remove(tokenId);
     }
+
+    function loanBidActionable(Bid memory _bid) public view returns(bool) {
+
+        // Calculate loanBid principal
+        uint principal = _bid.propertyValue - _bid.downPayment;
+
+        // Calculate loanBid ltv
+        UD60x18 ltv = toUD60x18(principal).div(toUD60x18(_bid.propertyValue));
+
+        // Return actionability
+        return ltv.lte(maxLtv) && availableLiquidity() >= principal;
+    }
+
+    function availableLiquidity() private view returns(uint) {
+        return totalDeposits - totalPrincipal;
+    }
 }
