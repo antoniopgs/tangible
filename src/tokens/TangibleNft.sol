@@ -8,10 +8,10 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 contract TangibleNft is ERC721URIStorage, Ownable {
 
     // Mappings
-    mapping(address => bool) public isEResident; // Question: maybe move this to protocol
-    mapping(uint => address) public eResidentAddress; // Question: maybe move this to protocol
+    mapping(address => uint) public addressToEResident; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
+    mapping(uint => address) public eResidentToAddress;
 
-    // Vars
+    // Other Vars
     Counters.Counter private _tokenIds;
 
     // Libs
@@ -29,14 +29,26 @@ contract TangibleNft is ERC721URIStorage, Ownable {
     }
 
     function _beforeTokenTransfer(address from, address to, uint256, /* firstTokenId */ uint256 batchSize) internal override {
-        require(isEResident[to], "receiver not eResident");
+        require(isEResident(to), "receiver not eResident");
         super._beforeTokenTransfer(from, to, 0, batchSize); // is it fine to pass 0 here?
     }
 
-    function verifyEResident(uint eResidentId, address eResidentAddr) external onlyOwner {
-        require(!isEResident[eResidentAddr], "address already associated to an eResident");
-        require(eResidentAddress[eResidentId] == address(0), "eResidentId already associated to an address");
-        isEResident[eResidentAddr] = true;
-        eResidentAddress[eResidentId] = eResidentAddr;
+    function verifyEResidents(uint[] calldata eResidents, address[] calldata addrs) external onlyOwner {
+        require(eResidents.length == addrs.length, "unequal array param lengths");
+        
+        for (uint i = 0; i < eResidents.length; i++) {
+            _verifyEResident(eResidents[i], addrs[i]);
+        }
     }
+
+    function _verifyEResident(uint eResident, address addr) private {
+        require(!isEResident(addr), "address already associated to an eResident");
+        require(eResidentToAddress[eResident] == address(0), "eResident already associated to an address");
+        addressToEResident[addr] = eResident;
+        eResidentToAddress[eResident] = addr;
+    }
+
+    function isEResident(address addr) public view returns (bool) {
+        return addressToEResident[addr] != 0;
+    } 
 }
