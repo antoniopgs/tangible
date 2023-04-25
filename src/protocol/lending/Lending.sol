@@ -22,7 +22,7 @@ contract Lending is ILending, State {
         uint tusdc = usdcToTusdc(usdc);
 
         // Mint tusdc to depositor
-        tUSDC.mint(msg.sender, tusdc);
+        tUSDC.defaultOperatorMint(msg.sender, tusdc);
 
         // Emit event
         emit Deposit(msg.sender, usdc, tusdc, block.timestamp);
