@@ -12,7 +12,7 @@ import "../src/protocol/borrowing/Borrowing.sol";
 import "../src/protocol/foreclosures/Foreclosures.sol";
 import "../src/protocol/interest/Interest.sol";
 import "../src/protocol/lending/Lending.sol";
-import "../src/protocol/protocol/Protocol.sol";
+import "../src/protocol/protocolProxy/ProtocolProxy.sol";
 
 // Token Imports
 // import "../src/tokens/TangibleNft.sol"; // Note: v2
@@ -28,7 +28,7 @@ contract DeployScript is Script {
     Foreclosures foreclosures;
     Interest interest;
     Lending lending;
-    Protocol protocol;
+    ProtocolProxy protocol;
 
     // Tokens
     // TangibleNft prosperaNftContract; // Note: v2
@@ -44,7 +44,7 @@ contract DeployScript is Script {
         foreclosures = new Foreclosures();
         interest = new Interest();
         lending = new Lending();
-        protocol = new Protocol();
+        protocol = new ProtocolProxy();
 
         // Deploy Tokens
         // prosperaNftContract = new TangibleNft(); // Note: v2
