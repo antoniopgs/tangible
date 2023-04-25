@@ -6,7 +6,8 @@ import "@openzeppelin/contracts/proxy/Proxy.sol";
 
 contract ProtocolProxy is State, Proxy {
     
-    function _implementation() internal view override returns (address) {
-        return logicTargets[msg.sig];
+    function _implementation() internal view override returns (address target) {
+        target = logicTargets[msg.sig];
+        require(target != address(0), "sig has no target");
     }
 }
