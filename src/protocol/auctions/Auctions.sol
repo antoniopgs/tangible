@@ -6,6 +6,8 @@ import "../state/state/State.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../borrowing/IBorrowing.sol";
 
+import { fromUD60x18 } from "@prb/math/UD60x18.sol";
+
 contract Auctions is IAuctions, State {
 
     using SafeERC20 for IERC20;
@@ -118,6 +120,6 @@ contract Auctions is IAuctions, State {
     }
 
     function availableLiquidity() private view returns(UD60x18) {
-        return totalDeposits.sub(totalBorrowed);
+        return totalDeposits.sub(totalPrincipal);
     }
 }

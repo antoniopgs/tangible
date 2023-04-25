@@ -9,6 +9,8 @@ import "../../../tokens/TangibleNft.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
+import { toUD60x18 } from "@prb/math/UD60x18.sol";
+
 abstract contract State is IState, TargetManager {
 
     // Tokens
@@ -20,11 +22,11 @@ abstract contract State is IState, TargetManager {
     mapping(TokenId => Bid[]) bids;
     mapping(TokenId => Loan) public loans;
     EnumerableSet.UintSet internal loansTokenIds;
-    UD60x18 protocolMoney;
+    uint protocolMoney;
 
     // Pool vars
-    UD60x18 totalBorrowed;
-    UD60x18 totalDeposits;
+    uint totalPrincipal;
+    uint totalDeposits;
     UD60x18 public utilizationCap = toUD60x18(90).div(toUD60x18(100)); // 90%
 
     // Borrowing terms
@@ -54,29 +56,29 @@ abstract contract State is IState, TargetManager {
     using EnumerableSet for EnumerableSet.UintSet;
 
     function utilization() public view returns (UD60x18) {
-        return totalBorrowed.div(totalDeposits);
+        return toUD60x18(totalPrincipal).div(toUD60x18(totalDeposits));
     }
 
     // function lenderApy() public view returns (UD60x18) {
     //     interestOwed.div(totalDeposits);
     // }
 
-    function state(Loan memory loan) internal view returns (State) {
+    function status(Loan memory loan) internal view returns (Status) {
         
         // If no borrower
         if (loan.borrower == address(0)) { // Note: acceptBid() must clear-out borrower & acceptLoanBid() must update borrower
-            return State.None;
+            return Status.None;
 
         // If borrower
         } else {
             
             // If not defaulted // Note: payLoan() must clear-out borrower in finalPayment
             if (!defaulted(loan)) {
-                return State.Mortgage;
+                return Status.Mortgage;
 
             // If defaulted
             } else { // Note: foreclose() must clear-out borrower & loanForeclose() must update borrower
-                return State.Default;
+                return Status.Default;
             }
         }
     }

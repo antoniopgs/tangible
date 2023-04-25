@@ -5,13 +5,15 @@ import "./IForeclosures.sol";
 import "../state/state/State.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import { fromUD60x18 } from "@prb/math/UD60x18.sol";
+
 contract Foreclosures is IForeclosures, State {
 
     // Libs
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    function adminForeclose(TokenId tokenId, UD60x18 salePrice) external onlyOwner {
+    function adminForeclose(TokenId tokenId, uint salePrice) external onlyOwner {
         _foreclose({
             tokenId: tokenId,
             salePrice: salePrice,
@@ -47,55 +49,55 @@ contract Foreclosures is IForeclosures, State {
     // }
 
     // in order to make this work, fix functional states, so that once default happens, "defaulted" view always returns true
-    function _foreclose(TokenId tokenId, UD60x18 salePrice, UD60x18 foreclosurerCutRatio) private {
+    function _foreclose(TokenId tokenId, uint salePrice, UD60x18 foreclosurerCutRatio) private {
 
         // Get Loan
         Loan storage loan = loans[tokenId];
 
         // Ensure borrower has defaulted
-        require(state(loan) == State.Default, "no default");
+        require(status(loan) == Status.Default, "no default");
 
         // Ensure 45 days have passed since default
         require(block.timestamp >= loan.nextPaymentDeadline + 45 days, "45 days must have passed since default"); // Note: maybe add "Foreclosurable" state afterwards?
 
         // Calculate defaulterDebt
-        UD60x18 defaulterDebt = loan.balance.add(loan.unpaidInterest);
+        uint defaulterDebt = loan.balance + loan.unpaidInterest;
 
-        require(salePrice.gte(defaulterDebt), "salePrice doesn't cover defaulterDebt + fees"); // Todo: add fees later
+        require(salePrice >= defaulterDebt, "salePrice doesn't cover defaulterDebt + fees"); // Todo: add fees later
 
-        // Remove loan.balance from loan.balance & totalBorrowed
-        loan.balance = loan.balance.sub(loan.balance);
-        totalBorrowed = totalBorrowed.sub(loan.balance);
+        // Remove loan.balance from loan.balance & totalPrincipal
+        loan.balance -= 0;
+        totalPrincipal -= loan.balance;
 
         // Add unpaidInterest to totalDeposits
-        totalDeposits = totalDeposits.add(loan.unpaidInterest);
+        totalDeposits += loan.unpaidInterest;
 
         // Todo: Add Sale fee
 
         // Calculate defaulterEquity
-        UD60x18 defaulterEquity = salePrice.sub(defaulterDebt);
+        uint defaulterEquity = salePrice - defaulterDebt;
 
         // Calculate foreclosureFee
-        UD60x18 foreclosureFee = foreclosureFeeRatio.mul(defaulterEquity);
+        uint foreclosureFee = fromUD60x18(foreclosureFeeRatio.mul(toUD60x18(defaulterEquity)));
         // UD60x18 foreclosureFee = foreclosureFeeRatio.mul(loan.salePrice); // shouldn't the ratio be applied to the salePrice?
 
         // Calculate foreclosurerCut
-        UD60x18 foreclosurerCut = foreclosurerCutRatio.mul(foreclosureFee);
+        uint foreclosurerCut = fromUD60x18(foreclosurerCutRatio.mul(toUD60x18(foreclosureFee)));
 
         // Calculate protocolCut
-        UD60x18 protocolCut = foreclosureFee.sub(foreclosurerCut);
+        uint protocolCut = foreclosureFee - foreclosurerCut;
 
         // Calculate leftover
-        UD60x18 leftover = defaulterEquity.sub(foreclosureFee);
+        uint leftover = defaulterEquity - foreclosureFee;
 
         // Send foreclosurerCut to foreclosurer/caller
-        USDC.safeTransferFrom(address(this), msg.sender, fromUD60x18(foreclosurerCut));
+        USDC.safeTransferFrom(address(this), msg.sender, foreclosurerCut);
 
         // Add protocolCut to protocolMoney
-        protocolMoney = protocolMoney.add(protocolCut);
+        protocolMoney += protocolCut;
 
         // Send leftover to defaulter
-        USDC.safeTransferFrom(address(this), loan.borrower, fromUD60x18(leftover));
+        USDC.safeTransferFrom(address(this), loan.borrower, leftover);
 
         // Send Nft to highestBidder
         address highestBidder;

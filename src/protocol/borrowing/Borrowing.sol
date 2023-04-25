@@ -27,19 +27,19 @@ contract Borrowing is IBorrowing, State {
         Loan storage loan = loans[tokenId];
 
         // Ensure property has no associated loan
-        require(state(loan) == State.None, "property already has associated loan");
+        require(status(loan) == Status.None, "property already has associated loan");
 
         // Calculate principal
-        UD60x18 principal = toUD60x18(propertyValue).sub(toUD60x18(downPayment));
+        uint principal = propertyValue - downPayment;
 
         // Calculate bid ltv
-        UD60x18 ltv = principal.div(toUD60x18(propertyValue));
+        UD60x18 ltv = toUD60x18(principal).div(toUD60x18(propertyValue));
 
         // Ensure ltv <= maxLtv
         require(ltv.lte(maxLtv), "ltv can't exceeed maxLtv");
 
-        // Add principal to totalBorrowed
-        totalBorrowed = totalBorrowed.add(principal);
+        // Add principal to totalPrincipal
+        totalPrincipal += principal;
         
         // Ensure utilization <= utilizationCap
         require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
@@ -55,18 +55,18 @@ contract Borrowing is IBorrowing, State {
         UD60x18 periodRate = abi.decode(data, (UD60x18));
 
         // Calculate installment
-        UD60x18 installment = calculateInstallment(periodRate, principal);
+        uint installment = calculateInstallment(periodRate, principal);
 
         // Calculate totalLoanCost
-        UD60x18 totalLoanCost = installment.mul(toUD60x18(installmentCount));
+        uint totalLoanCost = installment * installmentCount;
 
         // Store Loan
         loans[tokenId] = Loan({
             borrower: borrower,
             balance: principal,
             periodicRate: periodRate,
-            installment: fromUD60x18(installment),
-            unpaidInterest: totalLoanCost.sub(principal),
+            installment: installment,
+            unpaidInterest: totalLoanCost - principal,
             nextPaymentDeadline: block.timestamp + periodDuration
         });
 
@@ -75,9 +75,6 @@ contract Borrowing is IBorrowing, State {
 
         // Pull downPayment from borrower
         USDC.safeTransferFrom(borrower, address(this), downPayment);
-
-        // Emit event
-        emit NewLoan(tokenId, propertyValue, fromUD60x18(principal), borrower, block.timestamp);
     }
     
     function payLoan(TokenId tokenId) external {
@@ -89,39 +86,39 @@ contract Borrowing is IBorrowing, State {
         require(msg.sender == loan.borrower, "only borrower can pay his loan");
 
         // Ensure property has active mortgage
-        require(state(loan) == State.Mortgage, "property has no active mortgage");
+        require(status(loan) == Status.Mortgage, "property has no active mortgage");
 
         // Pull installment from borrower
         USDC.safeTransferFrom(loan.borrower, address(this), loan.installment);
 
         // Calculate interest
-        UD60x18 interest = loan.periodicRate.mul(loan.balance);
+        uint interest = fromUD60x18(loan.periodicRate.mul(toUD60x18(loan.balance)));
 
         // Calculate repayment
-        UD60x18 repayment = toUD60x18(loan.installment).sub(interest);
+        uint repayment = loan.installment - interest;
 
         // Clamp repayment // Question: will this mess up APY?
-        if (repayment.gt(loan.balance)) {
+        if (repayment > loan.balance) {
             repayment = loan.balance;
         }
 
-        // Remove repayment from loan.balance & totalBorrowed
-        loan.balance = loan.balance.sub(repayment);
-        totalBorrowed = totalBorrowed.sub(repayment);
+        // Remove repayment from loan.balance & totalPrincipal
+        loan.balance -= repayment;
+        totalPrincipal -= repayment;
 
         // Clamp interest // Question: will this mess up APY?
-        if (interest.gt(loan.unpaidInterest)) {
+        if (interest > loan.unpaidInterest) {
             interest = loan.unpaidInterest;
         }
 
         // Add interest to deposits
-        totalDeposits = totalDeposits.add(interest);
+        totalDeposits += interest;
 
         // Remove interest from loan.unpaidInterest
-        loan.unpaidInterest = loan.unpaidInterest.sub(interest);
+        loan.unpaidInterest -= interest;
 
         // If loan completely paid off
-        bool loanPaid = loan.balance.eq(toUD60x18(0));
+        bool loanPaid = loan.balance == 0;
         if (loanPaid) {
 
             // Send Nft
@@ -133,18 +130,15 @@ contract Borrowing is IBorrowing, State {
             // Update loan.nextPaymentDeadline
             loan.nextPaymentDeadline += periodDuration;
         }
-
-        // Emit event
-        emit LoanPayment(tokenId, loan.borrower, block.timestamp, loanPaid);
     }
 
-    function calculateInstallment(UD60x18 periodicBorrowerRate, UD60x18 principal) private pure returns(UD60x18 installment) {
+    function calculateInstallment(UD60x18 periodicBorrowerRate, uint principal) private pure returns(uint installment) {
 
         // Calculate x
         UD60x18 x = toUD60x18(1).add(periodicBorrowerRate).pow(toUD60x18(installmentCount));
         
         // Calculate installment
-        installment = principal.mul(periodicBorrowerRate).mul(x).div(x.sub(toUD60x18(1)));
+        installment = fromUD60x18(toUD60x18(principal).mul(periodicBorrowerRate).mul(x).div(x.sub(toUD60x18(1))));
     }
 
     function redeemLoan(TokenId tokenId) external {
@@ -156,23 +150,23 @@ contract Borrowing is IBorrowing, State {
         require(msg.sender == loan.borrower, "only borrower can pay his loan");
 
         // Ensure borrower has defaulted
-        require(state(loan) == State.Default, "no default");
+        require(status(loan) == Status.Default, "no default");
 
         // Ensure redemptionWindow has passed
         require(block.timestamp >= loan.nextPaymentDeadline + redemptionWindow);
 
         // Calculate defaulterDebt
-        UD60x18 defaulterDebt = loan.balance.add(loan.unpaidInterest); // should redeemer pay all the interest? or only the interest until redemption time?
+        uint defaulterDebt = loan.balance + loan.unpaidInterest; // should redeemer pay all the interest? or only the interest until redemption time?
 
         // Redeem (pull defaulter's entire debt)
-        USDC.safeTransferFrom(loan.borrower, address(this), fromUD60x18(defaulterDebt));
+        USDC.safeTransferFrom(loan.borrower, address(this), defaulterDebt);
 
-        // Remove loan.balance from loan.balance & totalBorrowed
-        loan.balance = loan.balance.sub(loan.balance);
-        totalBorrowed = totalBorrowed.sub(loan.balance);
+        // Remove loan.balance from loan.balance & totalPrincipal
+        loan.balance = 0;
+        totalPrincipal -= loan.balance;
 
         // Add unpaidInterest to totalDeposits
-        totalDeposits = totalDeposits.add(loan.unpaidInterest);
+        totalDeposits += loan.unpaidInterest;
 
         // Send Nft to borrower
         sendNft(loan, loan.borrower, TokenId.unwrap(tokenId));
