@@ -64,8 +64,6 @@ contract ProtocolTest is Test, DeployScript {
                 console.log("\nAction.AcceptBid");
                 testAcceptBid();
 
-            } else if (action == uint(Action.StartLoan)) {
-
                 console.log("\nAction.StartLoan");
 
                 // If utilization < 100% (can't startLoan otherwise)
