@@ -58,7 +58,7 @@ contract ProtocolTest is Test, DeployScript {
 
             } else if (action == uint(Action.CancelBid)) {
                 console.log("\nAction.CancelBid");
-                testCancelBid();
+                testCancelBid(randomness[i]);
 
             } else if (action == uint(Action.AcceptBid)) {
                 console.log("\nAction.AcceptBid");
