@@ -133,7 +133,7 @@ contract ProtocolTest is Test, DeployScript {
                     uint tokenId = randomness[i] % loanCount;
 
                     // If default
-                    if (IBorrowing(protocol).status(tokenId) == IState.Status.Foreclosurable) {
+                    if (IState(protocol).status(tokenId) == IState.Status.Foreclosurable) {
 
                         // Foreclose
                         testForeclose(tokenId, randomness[i]);

@@ -64,6 +64,10 @@ abstract contract State is IState, TargetManager, Initializable {
     //     interestOwed.div(totalDeposits);
     // }
 
+    function status(uint tokenId) external view returns (Status) { // Note: for testing
+        return status(loans[TokenId.wrap(tokenId)]);
+    }
+
     function status(Loan memory loan) internal view returns (Status) {
         
         // If no borrower
@@ -77,7 +81,7 @@ abstract contract State is IState, TargetManager, Initializable {
             if (defaulted(loan)) {
                 
                 // Calculate timeSinceDefault
-                uint timeSinceDefault = block.timestamp - defaultTime(loan);
+                uint timeSinceDefault; /*= block.timestamp - defaultTime(loan);*/
 
                 if (timeSinceDefault <= redemptionWindow) {
                     return Status.Default; // Note: foreclose() must clear-out borrower & loanForeclose() must update borrower

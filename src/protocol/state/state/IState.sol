@@ -26,4 +26,6 @@ interface IState {
         uint unpaidInterest;
         uint nextPaymentDeadline;
     }
+
+    function status(uint tokenId) external view returns (Status); // Note: for testing
 }
