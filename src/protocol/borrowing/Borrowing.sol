@@ -12,16 +12,8 @@ contract Borrowing is IBorrowing, State {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    function adminStartLoan(TokenId tokenId, uint propertyValue, uint downPayment, address borrower) external onlyOwner {
-        startLoan(tokenId, propertyValue, downPayment, borrower);
-    }
-
-    function acceptBidStartLoan(TokenId tokenId, uint propertyValue, uint downPayment, address borrower) external {
+    function startLoan(TokenId tokenId, uint propertyValue, uint downPayment, address borrower) external {
         require(msg.sender == address(this), "unauthorized"); // Note: msg.sender must be address(this) because this will be called via delegatecall
-        startLoan(tokenId, propertyValue, downPayment, borrower);
-    }
-
-    function startLoan(TokenId tokenId, uint propertyValue, uint downPayment, address borrower) private {
 
         // Get Loan
         Loan storage loan = loans[tokenId];
