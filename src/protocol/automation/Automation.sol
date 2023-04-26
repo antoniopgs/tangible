@@ -5,44 +5,50 @@ import "@chainlink/contracts/AutomationCompatible.sol"; // Note: imports from ./
 import "../state/state/State.sol";
 import "../foreclosures/IForeclosures.sol";
 
-// contract Automation is AutomationCompatibleInterface, State {
+contract Automation is AutomationCompatibleInterface, State {
     
-//     // Libs
-//     using EnumerableSet for EnumerableSet.UintSet;
+    // Libs
+    using EnumerableSet for EnumerableSet.UintSet;
 
-//     function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) { // Note: maybe implement batch liquidations later
+    function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory performData) { // Note: maybe implement batch foreclosures later
 
-//         // Loop loans
-//         for (uint i = 0; i < loansTokenIds.length(); i++) {
+        // Loop loans
+        for (uint i = 0; i < loansTokenIds.length(); i++) {
 
-//             // Get tokenId
-//             uint tokenId = loansTokenIds.at(i);
+            // Get tokenId
+            uint tokenId = loansTokenIds.at(i);
 
-//             // Get loan 
-//             Loan memory loan = loans[TokenId.wrap(tokenId)];
+            // Get loan 
+            Loan memory loan = loans[TokenId.wrap(tokenId)];
 
-//             // If loan has been defaulted
-//             if (state(loan) == State.Default) {
+            // If loan is foreclosurable
+            if (status(loan) == Status.Foreclosurable) {
+                
+                // Find highestActionableBidIdx
+                uint highestActionableBidIdx = findHighestActionableBidIdx(tokenId);
 
-//                 // Return
-//                 upkeepNeeded = true;
-//                 performData = abi.encode(tokenId);
-//             }
-//         }
-//     }
+                // Update return vars
+                upkeepNeeded = true;
+                performData = abi.encode(tokenId, highestActionableBidIdx);
 
-//     function performUpkeep(bytes calldata performData) external override {
+                // Return // Note: For now, exit as soon as one is found
+                return;
+            }
+        }
+    }
+
+    function performUpkeep(bytes calldata performData) external override {
         
-//         // Decode tokenId
-//         (uint tokenId) = abi.decode(performData, (uint));
+        // Decode tokenId
+        (uint tokenId) = abi.decode(performData, (uint));
 
-//         // Chainlink Foreclose (via delegatecall)
-//         (bool success, ) = logicTargets[IForeclosures.chainlinkForeclose.selector].delegatecall(
-//             abi.encodeCall(
-//                 IForeclosures.chainlinkForeclose,
-//                 (TokenId.wrap(tokenId))
-//             )
-//         );
-//         require(success, "chainlinkForeclose delegateCall failed");
-//     }
-// }
+        // Chainlink Foreclose (via delegatecall)
+        (bool success, ) = logicTargets[IForeclosures.chainlinkForeclose.selector].delegatecall(
+            abi.encodeCall(
+                IForeclosures.chainlinkForeclose,
+                (TokenId.wrap(tokenId))
+            )
+        );
+        require(success, "chainlinkForeclose delegateCall failed");
+    }
+}

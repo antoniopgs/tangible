@@ -13,43 +13,8 @@ contract Foreclosures is IForeclosures, State {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    function adminForeclose(TokenId tokenId, uint salePrice) external onlyOwner {
-        _foreclose({
-            tokenId: tokenId,
-            salePrice: salePrice,
-            foreclosurerCutRatio: UD60x18.wrap(0) // Note: if admin foreclosure: foreclosurerCutRatio is 0
-        });
-    }
-
-    // function foreclose(TokenId tokenId) external {
-
-    //     // Get highestBid
-    //     UD60x18 highestBid;
-
-    //     // Foreclose
-    //     _foreclose({
-    //         tokenId: tokenId,
-    //         salePrice: highestBid,
-    //         foreclosurerCutRatio: foreclosurerCutRatio // Note: if regular foreclosure: use foreclosurerCutRatio
-    //     });
-    // }
-
-    // function chainlinkForeclose(TokenId tokenId) external {
-    //     require(msg.sender == address(this), "unauthorized"); // Note: msg.sender must be address(this) because this will be called via delegatecall
-
-    //     // Get highestBid
-    //     UD60x18 highestBid;
-
-    //     // Foreclose
-    //     _foreclose({
-    //         tokenId: tokenId,
-    //         salePrice: highestBid,
-    //         foreclosurerCutRatio: UD60x18.wrap(0) // Note: if chainlink foreclosure: foreclosurerCutRatio is 0 (because protocol pays LINK for it)
-    //     });
-    // }
-
-    // in order to make this work, fix functional states, so that once default happens, "defaulted" view always returns true
-    function _foreclose(TokenId tokenId, uint salePrice, UD60x18 foreclosurerCutRatio) private {
+    // Functions
+    function foreclose(TokenId tokenId, uint bidIdx) external {
 
         // Get Loan
         Loan storage loan = loans[tokenId];
@@ -57,10 +22,13 @@ contract Foreclosures is IForeclosures, State {
         // Ensure borrower has defaulted
         require(status(loan) == Status.Foreclosurable, "no default");
 
-        // Calculate defaulterDebt
-        uint defaulterDebt = loan.balance + loan.unpaidInterest;
+        // Get Bid
+        Bid memory bid = bids[tokenId][bidIdx];
 
-        require(salePrice >= defaulterDebt, "salePrice doesn't cover defaulterDebt + fees"); // Todo: add fees later
+        // Calculate defaulterDebt
+        uint defaulterDebt = loan.balance + loan.unpaidInterest; // Todo: fix defaulterDebt (and in other places too)
+
+        require(bid.propertyValue >= defaulterDebt, "bid.propertyValue doesn't cover defaulterDebt + fees"); // Todo: add fees later
 
         // Remove loan.balance from loan.balance & totalPrincipal
         loan.balance -= 0;
@@ -72,7 +40,7 @@ contract Foreclosures is IForeclosures, State {
         // Todo: Add Sale fee
 
         // Calculate defaulterEquity
-        uint defaulterEquity = salePrice - defaulterDebt;
+        uint defaulterEquity = bid.propertyValue - defaulterDebt;
 
         // Calculate foreclosureFee
         uint foreclosureFee = fromUD60x18(foreclosureFeeRatio.mul(toUD60x18(defaulterEquity)));
@@ -102,19 +70,19 @@ contract Foreclosures is IForeclosures, State {
     }
     
     // Views
-    function findHighestActionableBid(TokenId tokenId) external view returns (uint highestActionableIdx) {
+    function findHighestActionableBidIdx(TokenId tokenId) external view returns (uint highestActionableIdx) {
 
-        // Get bids
-        Bid[] memory bids = bids[tokenId];
+        // Get propertyBids
+        Bid[] memory propertyBids = bids[tokenId];
 
-        // Loop bids
-        for (uint i = 0; i < bids.length; i++) {
+        // Loop propertyBids
+        for (uint i = 0; i < propertyBids.length; i++) {
 
             // Get bid
-            Bid memory bid = bids[i];
+            Bid memory bid = propertyBids[i];
 
             // If bid has higher propertyValue and is actionable
-            if (bid.propertyValue > bids[highestActionableIdx].propertyValue && bidActionable(bid)) {
+            if (bid.propertyValue > propertyBids[highestActionableIdx].propertyValue && bidActionable(bid)) {
 
                 // Update highestActionableIdx // Note: might run into problems if nothing is returned and it defaults to 0
                 highestActionableIdx = i;
