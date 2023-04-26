@@ -170,7 +170,7 @@ contract ProtocolTest is Test, DeployScript {
             uint tokenId = bound(randomness, 0, totalSupply);
 
             // Get tokenIdBids
-            IState.Bid[] memory tokenIdBids = State(protocol).bids(tokenId);
+            IState.Bid[] memory tokenIdBids = State(protocol).bids(TokenId.wrap(tokenId));
 
             // If tokenId has bids
             if (tokenIdBids.length > 0) {
@@ -182,10 +182,10 @@ contract ProtocolTest is Test, DeployScript {
                 IState.Bid memory bid = tokenIdBids[tokenIdBidIdx];
 
                 // If bid actionable
-                if (protocol.bidActionable(bid)) {
+                if (State(protocol).bidActionable(bid)) {
 
                     // Accept Bid
-                    IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
+                    IAuctions(protocol).acceptBid(TokenId.wrap(tokenId), Idx.wrap(tokenIdBidIdx));
                 }
             }
         }
@@ -226,7 +226,7 @@ contract ProtocolTest is Test, DeployScript {
         // }
     }
 
-    // Borrower In-Loan
+    // Borrower In-Loan 
     function testPayLoan(uint randomness) private validate {
 
         // If loans exist
@@ -242,7 +242,14 @@ contract ProtocolTest is Test, DeployScript {
         }
         
         // Get unpaidPrincipal & interest
-        State.Loan memory loan = State(protocol).loans(tokenId);
+        (
+            address borrower,
+            uint installment,
+            UD60x18 periodicRate,
+            uint balance,
+            uint unpaidInterest,
+            uint nextPaymentDeadline
+        ) = State(protocol).loans(TokenId.wrap(tokenId));
         uint expectedInterest = Borrowing(protocol).accruedInterest(tokenId);
 
         // Calculate minPayment & maxPayment
