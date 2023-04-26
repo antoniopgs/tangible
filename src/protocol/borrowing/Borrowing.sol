@@ -211,11 +211,6 @@ contract Borrowing is IBorrowing, State {
         sendNft(loan, highestBidder, TokenId.unwrap(tokenId));
     }
 
-    // Views
-    function utilization() public view returns (UD60x18) {
-        return toUD60x18(totalPrincipal).div(toUD60x18(totalDeposits));
-    }
-
     // Util Functions
     function calculateInstallment(UD60x18 periodicBorrowerRate, uint principal) private pure returns(uint installment) {
 
@@ -224,5 +219,10 @@ contract Borrowing is IBorrowing, State {
         
         // Calculate installment
         installment = fromUD60x18(toUD60x18(principal).mul(periodicBorrowerRate).mul(x).div(x.sub(toUD60x18(1))));
+    }
+
+    // Views
+    function utilization() public view returns (UD60x18) {
+        return toUD60x18(totalPrincipal).div(toUD60x18(totalDeposits));
     }
 }
