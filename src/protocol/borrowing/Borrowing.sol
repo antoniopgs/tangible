@@ -156,7 +156,7 @@ contract Borrowing is IBorrowing, State {
         sendNft(loan, loan.borrower, TokenId.unwrap(tokenId));
     }
 
-    function forecloseLoan(TokenId tokenId, uint bidIdx) external {
+    function forecloseLoan(TokenId tokenId, uint bidIdx) external { // Note: bidders can call this with idx of their bid. shoudn't be a problem
 
         // Get Loan
         Loan storage loan = loans[tokenId];
