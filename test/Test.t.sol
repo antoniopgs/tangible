@@ -64,8 +64,6 @@ contract ProtocolTest is Test, DeployScript {
                 console.log("\nAction.AcceptBid");
                 testAcceptBid();
 
-                console.log("\nAction.StartLoan");
-
                 // If utilization < 100% (can't startLoan otherwise)
                 if (IBorrowing(protocol).utilization().lt(toUD60x18(1))) {
 
@@ -79,9 +77,7 @@ contract ProtocolTest is Test, DeployScript {
                     loanCount++;
                 }
             
-            // If Pay
             } else if (action == uint(Action.PayLoan)) {
-
                 console.log("\nAction.PayLoan");
                 
                 // If loans exist
@@ -101,7 +97,6 @@ contract ProtocolTest is Test, DeployScript {
                 }
 
             } else if (action == uint(Action.Redeem)) {
-
                 console.log("\nAction.Redeem");
 
                 // If loans exist
@@ -123,7 +118,6 @@ contract ProtocolTest is Test, DeployScript {
                 }
 
             } else if (action == uint(Action.Foreclose)) {
-
                 console.log("\nAction.Foreclose");
 
                 // If loans exist
@@ -180,7 +174,7 @@ contract ProtocolTest is Test, DeployScript {
     function testWithdraw(uint amount) private validate {
 
         // Bound amount
-        amount = bound(amount, 0, IBorrowing(protocol).availableLiquidity());
+        amount = bound(amount, 0, IState(protocol).availableLiquidity());
         
         // Set expectations
         expectedTotalDeposits -= amount;
@@ -214,7 +208,7 @@ contract ProtocolTest is Test, DeployScript {
     function testStartLoan(uint tokenId, uint randomness) private validate {
         
         // Bound principal
-        uint principal = bound(randomness, 0, IBorrowing(protocol).availableLiquidity());
+        uint principal = bound(randomness, 0, IState(protocol).availableLiquidity());
 
         // Get monthSeconds
         uint monthSeconds = Borrowing(protocol).monthSeconds();
@@ -367,6 +361,7 @@ contract ProtocolTest is Test, DeployScript {
         UD60x18 utilization = IBorrowing(protocol).utilization();
         console.log("v7");
         assert(utilization.gte(toUD60x18(0)) && utilization.lte(toUD60x18(1)));
+        assert(protocol.totalPrincipal() <= protocol.totalDeposits());
         console.log("v8");
     }
 }

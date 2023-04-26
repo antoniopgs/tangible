@@ -26,8 +26,8 @@ abstract contract State is IState, TargetManager, Initializable {
     uint protocolMoney;
 
     // Pool vars
-    uint totalPrincipal;
-    uint totalDeposits;
+    uint public totalPrincipal;
+    uint public totalDeposits;
     UD60x18 public utilizationCap = toUD60x18(90).div(toUD60x18(100)); // 90%
 
     // Borrowing terms
@@ -128,7 +128,7 @@ abstract contract State is IState, TargetManager, Initializable {
         return ltv.lte(maxLtv) && availableLiquidity() >= principal;
     }
 
-    function availableLiquidity() private view returns(uint) {
+    function availableLiquidity() public view returns(uint) {
         return totalDeposits - totalPrincipal;
     }
 }

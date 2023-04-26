@@ -27,5 +27,7 @@ interface IState {
         uint nextPaymentDeadline;
     }
 
+    // Views
     function status(uint tokenId) external view returns (Status); // Note: for testing
+    function availableLiquidity() external view returns(uint);
 }
