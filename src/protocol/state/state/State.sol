@@ -8,10 +8,11 @@ import "../../../tokens/tUsdc.sol";
 import "../../../tokens/TangibleNft.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 import { toUD60x18 } from "@prb/math/UD60x18.sol";
 
-abstract contract State is IState, TargetManager {
+abstract contract State is IState, TargetManager, Initializable {
 
     // Tokens
     IERC20 USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // ethereum
@@ -54,6 +55,10 @@ abstract contract State is IState, TargetManager {
     // Libs
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
+
+    function initialize(tUsdc _tUSDC) external initializer { // Question: maybe move this elsewhere?
+        tUSDC = _tUSDC;
+    }
 
     function utilization() public view returns (UD60x18) {
         return toUD60x18(totalPrincipal).div(toUD60x18(totalDeposits));
