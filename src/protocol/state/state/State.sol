@@ -131,4 +131,13 @@ abstract contract State is IState, TargetManager, Initializable {
     function availableLiquidity() public view returns(uint) {
         return totalDeposits - totalPrincipal;
     }
+
+    // // Views for Testing
+    // function loansTokenIdsLength() external view returns (uint) {
+    //     return loansTokenIds.length();
+    // }
+
+    // function loansTokenIdsAt(uint idx) external view returns (uint tokenId) {
+    //     tokenId = loansTokenIds.at(idx);
+    // }
 }

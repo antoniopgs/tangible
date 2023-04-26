@@ -54,7 +54,7 @@ contract ProtocolTest is Test, DeployScript {
 
             } else if (action == uint(Action.Bid)) {
                 console.log("\nAction.Bid");
-                testBid();
+                testBid(randomness[i]);
 
             } else if (action == uint(Action.CancelBid)) {
                 console.log("\nAction.CancelBid");
@@ -71,7 +71,7 @@ contract ProtocolTest is Test, DeployScript {
                     uint tokenId = loanCount;
 
                     // Start Loan
-                    testStartLoan(tokenId, randomness[i]);
+                    testAcceptBid(tokenId, randomness[i]);
 
                     // Increment loanCount
                     loanCount++;
@@ -192,20 +192,29 @@ contract ProtocolTest is Test, DeployScript {
     }
 
     // Borrower Pre-Loan
-    function testBid() private {
+    function testBid(uint randomness) private {
 
+        // Get random tokenId
+        uint tokenId = bound(randomness, 0, nftContract.totalSupply());
+
+        // Calculate random propertyValue 
+        uint propertyValue = bound(randomness, 0, 1_000_000_000e18); // max is 1 billion with 18 decimals
+
+        // Calculate random downPayment
+        uint downPayment = bound(randomness, 0, propertyValue);
+
+        // Bid
+        IAuctions(protocol).bid(tokenId, propertyValue, downPayment);
     }
 
     function testCancelBid() private {
 
+
+
     }
 
     // Seller
-    function testAcceptBid() private {
-
-    }
-
-    function testStartLoan(uint tokenId, uint randomness) private validate {
+    function testAcceptBid(uint tokenId, uint randomness) private validate {
         
         // Bound principal
         uint principal = bound(randomness, 0, IState(protocol).availableLiquidity());
