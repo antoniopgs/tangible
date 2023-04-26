@@ -113,23 +113,12 @@ contract Foreclosures is IForeclosures, State {
             // Get bid
             Bid memory bid = bids[i];
 
-            // If bid
-            if (bid.propertyValue == bid.downPayment) {
+            // If bid has higher propertyValue and is actionable
+            if (bid.propertyValue > bids[highestActionableIdx].propertyValue && bidActionable(bid)) {
 
-                if (bid.propertyValue > bids[highestActionableIdx].propertyValue) {
-                    highestActionableIdx = i;
-                }
-                
-            // If loan bid
-            } else if (bid.propertyValue > bid.downPayment) {
-
-                if (loanBidActionable(bid)) {
-
-                    if (bid.propertyValue > bids[highestActionableIdx].propertyValue) {
-                        highestActionableIdx = i;
-                    }
-                }
-            }
+                // Update highestActionableIdx // Note: might run into problems if nothing is returned and it defaults to 0
+                highestActionableIdx = i;
+            }    
         }
     }
 }

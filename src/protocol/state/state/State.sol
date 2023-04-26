@@ -112,6 +112,10 @@ abstract contract State is IState, TargetManager, Initializable {
         loansTokenIds.remove(tokenId);
     }
 
+    function bidActionable(Bid memory bid) public view returns(bool) {
+        return bid.propertyValue == bid.downPayment || loanBidActionable(bid);
+    }
+
     function loanBidActionable(Bid memory _bid) public view returns(bool) {
 
         // Calculate loanBid principal
