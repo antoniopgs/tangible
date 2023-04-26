@@ -16,10 +16,10 @@ contract Automation is AutomationCompatibleInterface, State {
         for (uint i = 0; i < loansTokenIds.length(); i++) {
 
             // Get tokenId
-            uint tokenId = loansTokenIds.at(i);
+            TokenId tokenId = TokenId.wrap(loansTokenIds.at(i));
 
             // Get loan 
-            Loan memory loan = loans[TokenId.wrap(tokenId)];
+            Loan memory loan = loans[tokenId];
 
             // If loan is foreclosurable
             if (status(loan) == Status.Foreclosurable) {
@@ -31,8 +31,8 @@ contract Automation is AutomationCompatibleInterface, State {
                 upkeepNeeded = true;
                 performData = abi.encode(tokenId, highestActionableBidIdx);
 
-                // Return // Note: For now, exit as soon as one is found
-                return;
+                // Break // Note: For now, exit as soon as one is found
+                break;
             }
         }
     }
@@ -43,12 +43,33 @@ contract Automation is AutomationCompatibleInterface, State {
         (uint tokenId) = abi.decode(performData, (uint));
 
         // Chainlink Foreclose (via delegatecall)
-        (bool success, ) = logicTargets[IForeclosures.chainlinkForeclose.selector].delegatecall(
+        (bool success, ) = logicTargets[IForeclosures.foreclose.selector].delegatecall(
             abi.encodeCall(
-                IForeclosures.chainlinkForeclose,
+                IForeclosures.foreclose,
                 (TokenId.wrap(tokenId))
             )
         );
         require(success, "chainlinkForeclose delegateCall failed");
+    }
+
+    // Views
+    function findHighestActionableBidIdx(TokenId tokenId) private view returns (uint highestActionableIdx) {
+
+        // Get propertyBids
+        Bid[] memory propertyBids = bids[tokenId];
+
+        // Loop propertyBids
+        for (uint i = 0; i < propertyBids.length; i++) {
+
+            // Get bid
+            Bid memory bid = propertyBids[i];
+
+            // If bid has higher propertyValue and is actionable
+            if (bid.propertyValue > propertyBids[highestActionableIdx].propertyValue && bidActionable(bid)) {
+
+                // Update highestActionableIdx // Note: might run into problems if nothing is returned and it defaults to 0
+                highestActionableIdx = i;
+            }    
+        }
     }
 }
