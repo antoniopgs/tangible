@@ -20,7 +20,7 @@ abstract contract State is IState, TargetManager, Initializable {
     TangibleNft internal prosperaNftContract;
 
     // Main Storage
-    mapping(TokenId => Bid[]) bids;
+    mapping(TokenId => Bid[]) public bids;
     mapping(TokenId => Loan) public loans;
     EnumerableSet.UintSet internal loansTokenIds;
     uint protocolMoney;

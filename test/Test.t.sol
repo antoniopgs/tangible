@@ -170,7 +170,7 @@ contract ProtocolTest is Test, DeployScript {
             uint tokenId = bound(randomness, 0, totalSupply);
 
             // Get tokenIdBids
-            IState.Bid[] memory tokenIdBids = IState(protocol).bids(tokenId);
+            IState.Bid[] memory tokenIdBids = State(protocol).bids(tokenId);
 
             // If tokenId has bids
             if (tokenIdBids.length > 0) {
