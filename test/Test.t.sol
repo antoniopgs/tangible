@@ -160,19 +160,35 @@ contract ProtocolTest is Test, DeployScript {
     // Seller
     function testAcceptBid(uint randomness) private validate {
 
-        // Get random tokenId
-        uint tokenId = bound(randomness, 0, nftContract.totalSupply());
+        // Get totalSupply
+        uint totalSupply = nftContract.totalSupply();
 
-        // Get random tokenIdBidIdx
-        uint tokenIdBidIdx;
+        // If nfts exist
+        if (totalSupply > 0) {
 
-        // If it's a loanBid and utilization = 100%, pick another
-        if (bid.propertyValue > bid.downPayment && IBorrowing(protocol).utilization().eq(toUD60x18(1))) {
+            // Get random tokenId
+            uint tokenId = bound(randomness, 0, totalSupply);
 
+            // Get tokenIdBids
+            IState.Bid[] memory tokenIdBids = IState(protocol).bids(tokenId);
+
+            // If tokenId has bids
+            if (tokenIdBids.length > 0) {
+
+                // Get random tokenIdBidIdx
+                uint tokenIdBidIdx = randomness % tokenIdBids.length;
+
+                // Get Bid
+                IState.Bid memory bid = tokenIdBids[tokenIdBidIdx];
+
+                // If bid actionable
+                if (protocol.bidActionable(bid)) {
+
+                    // Accept Bid
+                    IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
+                }
+            }
         }
-
-        // Accept Bid
-        IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
         
         // // Bound principal
         // uint principal = bound(randomness, 0, IState(protocol).availableLiquidity());
@@ -219,7 +235,7 @@ contract ProtocolTest is Test, DeployScript {
         uint tokenId = randomness % loanCount;
 
         if (Borrowing(protocol).status(tokenId) == IState.Status.Mortgage) {
-            testPayLoan(tokenId, randomness[i]);
+            testPayLoan(randomness);
 
         } else {
             console.log("defaulted.\n");
@@ -255,39 +271,45 @@ contract ProtocolTest is Test, DeployScript {
 
     function testRedeem(uint randomness) private {
 
-        // if loans exist
-
         // if defaulted loans exist
-
         // get tokenId of defaulted loan
 
-        // If default
-        // if (protocol.defaulted(tokenId)) {
-            
-            // // Get redeemer & unpaidPrincipal
-            State.Loan memory loan = State(protocol).loans(tokenId);
-            uint accruedInterest = Borrowing(protocol).accruedInterest(tokenId);
-            uint expectedRedeemerDebt = loan.unpaidPrincipal + accruedInterest;
-            uint expectedRedemptionFee = fromUD60x18(toUD60x18(expectedRedeemerDebt).mul(Borrowing(protocol).redemptionFeeSpread()));
+        // Get totalSupply
+        uint totalSupply = nftContract.totalSupply();
 
-            // Give redeemer expectedRedeemerDebt
-            deal(address(USDC), loan.borrower, expectedRedeemerDebt + expectedRedemptionFee);
+        // If nfts exist
+        if (totalSupply > 0) {
 
-            // Redeemer approves protocol
-            vm.prank(loan.borrower);
-            USDC.approve(address(protocol), expectedRedeemerDebt + expectedRedemptionFee);
-            
-            expectedTotalPrincipal -= loan.unpaidPrincipal;
-            expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
-            expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
+            // Get random tokenId
+            uint tokenId = bound(randomness, 0, totalSupply);
 
-            // Redemer redeems
-            vm.prank(loan.borrower);
-            IBorrowing(protocol).redeem(tokenId);
+            // If default
+            if (protocol.status(tokenId) == IState.Status.Defaulted) {
 
-        // } else {
-        //     console.log("no default.\n");
-        // }
+                // Get redeemer & unpaidPrincipal
+                State.Loan memory loan = State(protocol).loans(tokenId);
+                uint accruedInterest = Borrowing(protocol).accruedInterest(tokenId);
+                uint expectedRedeemerDebt = loan.unpaidPrincipal + accruedInterest;
+                uint expectedRedemptionFee = fromUD60x18(toUD60x18(expectedRedeemerDebt).mul(Borrowing(protocol).redemptionFeeSpread()));
+
+                // Give redeemer expectedRedeemerDebt
+                deal(address(USDC), loan.borrower, expectedRedeemerDebt + expectedRedemptionFee);
+
+                // Redeemer approves protocol
+                vm.prank(loan.borrower);
+                USDC.approve(address(protocol), expectedRedeemerDebt + expectedRedemptionFee);
+                
+                expectedTotalPrincipal -= loan.unpaidPrincipal;
+                expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
+                expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
+
+                // Redemer redeems
+                vm.prank(loan.borrower);
+                IBorrowing(protocol).redeem(tokenId);
+            }
+        } else {
+            console.log("no default.\n");
+        }
     }
 
     // Foreclosure
