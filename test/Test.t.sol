@@ -204,13 +204,19 @@ contract ProtocolTest is Test, DeployScript {
         uint downPayment = bound(randomness, 0, propertyValue);
 
         // Bid
-        IAuctions(protocol).bid(tokenId, propertyValue, downPayment);
+        IAuctions(protocol).bid(TokenId.wrap(tokenId), propertyValue, downPayment);
     }
 
-    function testCancelBid() private {
+    function testCancelBid(uint randomness) private {
 
+        // Get random tokenId
+        uint tokenId = bound(randomness, 0, nftContract.totalSupply());
 
+        // Get random tokenIdBidIdx
+        uint tokenIdBidIdx;
 
+        // Cancel bid tokenIdBid
+        IAuctions(protocol).cancelBid(TokenId.wrap(tokenId), Idx.wrap(tokenIdBidIdx));
     }
 
     // Seller
