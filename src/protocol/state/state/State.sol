@@ -60,10 +60,6 @@ abstract contract State is IState, TargetManager, Initializable {
         tUSDC = _tUSDC;
     }
 
-    function utilization() public view returns (UD60x18) {
-        return toUD60x18(totalPrincipal).div(toUD60x18(totalDeposits));
-    }
-
     // function lenderApy() public view returns (UD60x18) {
     //     interestOwed.div(totalDeposits);
     // }

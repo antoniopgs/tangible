@@ -12,6 +12,7 @@ contract Borrowing is IBorrowing, State {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
+    // Functions
     function startLoan(TokenId tokenId, uint propertyValue, uint downPayment, address borrower) external {
         require(msg.sender == address(this), "unauthorized"); // Note: msg.sender must be address(this) because this will be called via delegatecall
 
@@ -124,15 +125,6 @@ contract Borrowing is IBorrowing, State {
         }
     }
 
-    function calculateInstallment(UD60x18 periodicBorrowerRate, uint principal) private pure returns(uint installment) {
-
-        // Calculate x
-        UD60x18 x = toUD60x18(1).add(periodicBorrowerRate).pow(toUD60x18(installmentCount));
-        
-        // Calculate installment
-        installment = fromUD60x18(toUD60x18(principal).mul(periodicBorrowerRate).mul(x).div(x.sub(toUD60x18(1))));
-    }
-
     function redeemLoan(TokenId tokenId) external {
         
         // Get loan
@@ -162,5 +154,21 @@ contract Borrowing is IBorrowing, State {
 
         // Send Nft to borrower
         sendNft(loan, loan.borrower, TokenId.unwrap(tokenId));
+    }
+    
+
+    // Views
+    function utilization() public view returns (UD60x18) {
+        return toUD60x18(totalPrincipal).div(toUD60x18(totalDeposits));
+    }
+
+    // Util Functions
+    function calculateInstallment(UD60x18 periodicBorrowerRate, uint principal) private pure returns(uint installment) {
+
+        // Calculate x
+        UD60x18 x = toUD60x18(1).add(periodicBorrowerRate).pow(toUD60x18(installmentCount));
+        
+        // Calculate installment
+        installment = fromUD60x18(toUD60x18(principal).mul(periodicBorrowerRate).mul(x).div(x.sub(toUD60x18(1))));
     }
 }
