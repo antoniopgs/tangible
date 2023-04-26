@@ -21,7 +21,7 @@ contract ProtocolTest is Test, DeployScript {
         Bid, CancelBid, // Borrower Pre-Loan
         AcceptBid, // Seller
         PayLoan, Redeem, // Borrower In-Loan
-        Foreclose, // Protocol
+        Foreclose, // Foreclosure
         SkipTime // Util
     }
     
@@ -66,64 +66,15 @@ contract ProtocolTest is Test, DeployScript {
             
             } else if (action == uint(Action.PayLoan)) {
                 console.log("\nAction.PayLoan");
-                
-                // If loans exist
-                if (loanCount > 0) {
-
-                    // Get random tokenId
-                    uint tokenId = randomness[i] % loanCount;
-
-                    if (Borrowing(protocol).status(tokenId) == IState.Status.Mortgage) {
-
-                        // Pay Loan
-                        testPayLoan(tokenId, randomness[i]);
-
-                    } else {
-                        console.log("defaulted.\n");
-                    }
-                }
+                testPayLoan(randomness[i]);
 
             } else if (action == uint(Action.Redeem)) {
                 console.log("\nAction.Redeem");
-
-                // If loans exist
-                if (loanCount > 0) {
-
-                    // Get random tokenId
-                    uint tokenId = randomness[i] % loanCount;
-
-                    // If default
-                    if (Borrowing(protocol).status(tokenId) == IState.Status.Default) {
-
-                        // Redeem
-                        testRedeem(tokenId);
-                    
-                    // If no default
-                    } else {
-                        console.log("no default.\n");
-                    }
-                }
+                testRedeem(randomness[i]);
 
             } else if (action == uint(Action.Foreclose)) {
                 console.log("\nAction.Foreclose");
-
-                // If loans exist
-                if (loanCount > 0) {
-
-                    // Get random tokenId
-                    uint tokenId = randomness[i] % loanCount;
-
-                    // If default
-                    if (IState(protocol).status(tokenId) == IState.Status.Foreclosurable) {
-
-                        // Foreclose
-                        testForeclose(tokenId, randomness[i]);
-
-                    // If no default
-                    } else {
-                        console.log("not foreclosurable.\n");
-                    }
-                }
+                testForeclose(randomness[i]);
                 
             } else if (action == uint(Action.SkipTime)) {
                 console.log("\nAction.SkipTime");
@@ -208,7 +159,7 @@ contract ProtocolTest is Test, DeployScript {
 
     // Seller
     function testAcceptBid(uint randomness) private validate {
-        
+
         // Get random tokenId
         uint tokenId = bound(randomness, 0, nftContract.totalSupply());
 
@@ -260,7 +211,19 @@ contract ProtocolTest is Test, DeployScript {
     }
 
     // Borrower In-Loan
-    function testPayLoan(uint tokenId, uint payment) private validate {
+    function testPayLoan(uint randomness) private validate {
+
+        // If loans exist
+
+        // Get random tokenId
+        uint tokenId = randomness % loanCount;
+
+        if (Borrowing(protocol).status(tokenId) == IState.Status.Mortgage) {
+            testPayLoan(tokenId, randomness[i]);
+
+        } else {
+            console.log("defaulted.\n");
+        }
         
         // Get unpaidPrincipal & interest
         State.Loan memory loan = State(protocol).loans(tokenId);
@@ -271,7 +234,7 @@ contract ProtocolTest is Test, DeployScript {
         uint maxPayment = loan.unpaidPrincipal + expectedInterest;
 
         // Bound payment
-        payment = bound(payment, minPayment, maxPayment);
+        uint payment = bound(randomness, minPayment, maxPayment);
 
         // Calculate expectations
         uint expectedRepayment = payment - expectedInterest;
@@ -290,7 +253,13 @@ contract ProtocolTest is Test, DeployScript {
         }
     }
 
-    function testRedeem(uint tokenId) private {
+    function testRedeem(uint randomness) private {
+
+        // if loans exist
+
+        // if defaulted loans exist
+
+        // get tokenId of defaulted loan
 
         // If default
         // if (protocol.defaulted(tokenId)) {
@@ -321,8 +290,12 @@ contract ProtocolTest is Test, DeployScript {
         // }
     }
 
-    // Protocol
-    function testForeclose(uint tokenId, uint salePrice) private {
+    // Foreclosure
+    function testForeclose(uint randomness) private {
+
+        // if loans exist
+
+        // if foreclosurable loans exist
 
         // Get unpaidPrincipal & maxUnpaidInterest
         State.Loan memory loan = Borrowing(protocol).loans(tokenId);
@@ -330,7 +303,7 @@ contract ProtocolTest is Test, DeployScript {
         // Bound salePrice
         uint expectedDefaulterDebt = loan.unpaidPrincipal + Borrowing(protocol).accruedInterest(tokenId);
         uint expectedForeclosureFee = fromUD60x18(toUD60x18(expectedDefaulterDebt).mul(State(protocol).foreclosureFeeSpread()));
-        salePrice = bound(salePrice, expectedDefaulterDebt + expectedForeclosureFee, 1_000_000_000 * 1e18);
+        uint salePrice = bound(randomness, expectedDefaulterDebt + expectedForeclosureFee, 1_000_000_000 * 1e18);
 
         uint protocolUsdc = USDC.balanceOf(address(protocol));
         deal(address(USDC), address(protocol), protocolUsdc + salePrice, true);
@@ -344,10 +317,10 @@ contract ProtocolTest is Test, DeployScript {
     }
 
     // Util
-    function testSkip(uint timeJump) private validate {
+    function testSkip(uint randomness) private validate {
 
         // Bound timeJump (between 0 and 6 months)
-        timeJump = bound(timeJump, 0, 6 * 30 days);
+        uint timeJump = bound(randomness, 0, 6 * 30 days);
 
         // Skip by timeJump
         skip(timeJump);
