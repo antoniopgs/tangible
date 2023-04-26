@@ -9,7 +9,6 @@ import { console } from "forge-std/console.sol";
 import "../src/protocol/auctions/Auctions.sol"; // Note: v2
 import "../src/protocol/automation/Automation.sol"; // Note: v2
 import "../src/protocol/borrowing/Borrowing.sol";
-import "../src/protocol/foreclosures/Foreclosures.sol";
 import "../src/protocol/interest/Interest.sol";
 import "../src/protocol/lending/Lending.sol";
 import "../src/protocol/protocolProxy/ProtocolProxy.sol";
@@ -54,7 +53,6 @@ contract DeployScript is Script {
         Auctions auctions = new Auctions();
         // Automation automation = new Automation();
         Borrowing borrowing = new Borrowing();
-        Foreclosures foreclosures = new Foreclosures();
         // Interest interest = new Interest();
         Lending lending = new Lending();
 
@@ -68,16 +66,12 @@ contract DeployScript is Script {
         // Set automationSelectors
 
         // Set borrowingSelectors
-        bytes4[] memory borrowingSelectors = new bytes4[](3);
+        bytes4[] memory borrowingSelectors = new bytes4[](4);
         borrowingSelectors[0] = IBorrowing.startLoan.selector;
         borrowingSelectors[1] = IBorrowing.payLoan.selector;
         borrowingSelectors[2] = IBorrowing.redeemLoan.selector;
+        borrowingSelectors[3] = IBorrowing.forecloseLoan.selector;
         ProtocolProxy(protocol).setSelectorsTarget(borrowingSelectors, address(borrowing));
-
-        // Set foreclosureSelectors
-        bytes4[] memory foreclosureSelectors = new bytes4[](1);
-        borrowingSelectors[0] = IForeclosures.foreclose.selector;
-        ProtocolProxy(protocol).setSelectorsTarget(foreclosureSelectors, address(foreclosures));
 
         // Set interestSelectors
 

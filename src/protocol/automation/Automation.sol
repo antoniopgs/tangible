@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import "@chainlink/contracts/AutomationCompatible.sol"; // Note: imports from ./AutomationBase.sol & ./interfaces/AutomationCompatibleInterface.sol
 import "../state/state/State.sol";
-import "../foreclosures/IForeclosures.sol";
+import "../borrowing/IBorrowing.sol";
 
 contract Automation is AutomationCompatibleInterface, State {
     
@@ -40,13 +40,13 @@ contract Automation is AutomationCompatibleInterface, State {
     function performUpkeep(bytes calldata performData) external override {
         
         // Decode tokenId
-        (uint tokenId) = abi.decode(performData, (uint));
+        (TokenId tokenId, uint highestActionableBidIdx) = abi.decode(performData, (TokenId, uint));
 
-        // Chainlink Foreclose (via delegatecall)
-        (bool success, ) = logicTargets[IForeclosures.foreclose.selector].delegatecall(
+        // Foreclose (via delegatecall)
+        (bool success, ) = logicTargets[IBorrowing.forecloseLoan.selector].delegatecall(
             abi.encodeCall(
-                IForeclosures.foreclose,
-                (TokenId.wrap(tokenId))
+                IBorrowing.forecloseLoan,
+                (tokenId, highestActionableBidIdx)
             )
         );
         require(success, "chainlinkForeclose delegateCall failed");
