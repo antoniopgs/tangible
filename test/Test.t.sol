@@ -315,27 +315,40 @@ contract ProtocolTest is Test, DeployScript {
     // Foreclosure
     function testForeclose(uint randomness) private {
 
-        // if loans exist
-
         // if foreclosurable loans exist
+        // get tokenId of foreclosurable loan
 
-        // Get unpaidPrincipal & maxUnpaidInterest
-        State.Loan memory loan = Borrowing(protocol).loans(tokenId);
+        // Get totalSupply
+        uint totalSupply = nftContract.totalSupply();
 
-        // Bound salePrice
-        uint expectedDefaulterDebt = loan.unpaidPrincipal + Borrowing(protocol).accruedInterest(tokenId);
-        uint expectedForeclosureFee = fromUD60x18(toUD60x18(expectedDefaulterDebt).mul(State(protocol).foreclosureFeeSpread()));
-        uint salePrice = bound(randomness, expectedDefaulterDebt + expectedForeclosureFee, 1_000_000_000 * 1e18);
+        // If nfts exist
+        if (totalSupply > 0) {
 
-        uint protocolUsdc = USDC.balanceOf(address(protocol));
-        deal(address(USDC), address(protocol), protocolUsdc + salePrice, true);
+            // Get random tokenId
+            uint tokenId = bound(randomness, 0, totalSupply);
 
-        expectedTotalPrincipal -= loan.unpaidPrincipal;
-        expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
-        expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
+            // If foreclosurable
+            if (protocol.status(tokenId) == IState.Status.Foreclosurable) {
 
-        // Foreclose
-        IBorrowing(protocol).foreclose(tokenId, salePrice);
+                // Get unpaidPrincipal & maxUnpaidInterest
+                State.Loan memory loan = Borrowing(protocol).loans(tokenId);
+
+                // Bound salePrice
+                uint expectedDefaulterDebt = loan.unpaidPrincipal + Borrowing(protocol).accruedInterest(tokenId);
+                uint expectedForeclosureFee = fromUD60x18(toUD60x18(expectedDefaulterDebt).mul(State(protocol).foreclosureFeeSpread()));
+                uint salePrice = bound(randomness, expectedDefaulterDebt + expectedForeclosureFee, 1_000_000_000 * 1e18);
+
+                uint protocolUsdc = USDC.balanceOf(address(protocol));
+                deal(address(USDC), address(protocol), protocolUsdc + salePrice, true);
+
+                expectedTotalPrincipal -= loan.unpaidPrincipal;
+                expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
+                expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
+
+                // Foreclose
+                IBorrowing(protocol).foreclose(tokenId, salePrice);
+            }
+        }
     }
 
     // Util
