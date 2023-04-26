@@ -55,7 +55,7 @@ contract DeployScript is Script {
         // Automation automation = new Automation();
         Borrowing borrowing = new Borrowing();
         Foreclosures foreclosures = new Foreclosures();
-        Interest interest = new Interest();
+        // Interest interest = new Interest();
         Lending lending = new Lending();
 
         // Set auctionSelectors
@@ -68,22 +68,10 @@ contract DeployScript is Script {
         // Set automationSelectors
 
         // Set borrowingSelectors
-        bytes4[] memory borrowingSelectors = new bytes4[](15);
+        bytes4[] memory borrowingSelectors = new bytes4[](3);
         borrowingSelectors[0] = IBorrowing.startLoan.selector;
         borrowingSelectors[1] = IBorrowing.payLoan.selector;
-        borrowingSelectors[2] = IBorrowing.redeem.selector;
-        borrowingSelectors[3] = IBorrowing.foreclose.selector;
-        borrowingSelectors[4] = IBorrowing.borrowerApr.selector;
-        borrowingSelectors[5] = IBorrowing.lenderApy.selector;
-        borrowingSelectors[6] = IBorrowing.principalCap.selector;
-        borrowingSelectors[7] = IBorrowing.status.selector;
-        borrowingSelectors[8] = IBorrowing.utilization.selector;
-        borrowingSelectors[9] = IBorrowing.availableLiquidity.selector;
-        borrowingSelectors[10] = Borrowing.calculatePaymentPerSecond.selector;
-        borrowingSelectors[11] = State.loans.selector;
-        borrowingSelectors[12] = Borrowing.accruedInterest.selector;
-        borrowingSelectors[13] = State.redemptionFeeSpread.selector;
-        borrowingSelectors[14] = State.foreclosureFeeSpread.selector;
+        borrowingSelectors[2] = IBorrowing.redeemLoan.selector;
         ProtocolProxy(protocol).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set foreclosureSelectors
@@ -92,9 +80,6 @@ contract DeployScript is Script {
         ProtocolProxy(protocol).setSelectorsTarget(foreclosureSelectors, address(foreclosures));
 
         // Set interestSelectors
-        bytes4[] memory interestSelectors = new bytes4[](1);
-        interestSelectors[0] = IInterest.foreclose.selector;
-        ProtocolProxy(protocol).setSelectorsTarget(foreclosureSelectors, address(interest));
 
         // Set lendingSelectors
         bytes4[] memory lendingSelectors = new bytes4[](3);
