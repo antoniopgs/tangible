@@ -45,18 +45,24 @@ contract ProtocolTest is Test, DeployScript {
 
             // If Start
             if (action == uint(Action.Deposit)) {
-
                 console.log("\nAction.Deposit");
-
-                // Deposit
                 testDeposit(randomness[i]);
 
             } else if (action == uint(Action.Withdraw)) {
-
                 console.log("\nAction.Withdraw");
-
-                // Withdraw
                 testWithdraw(randomness[i]);
+
+            } else if (action == uint(Action.Bid)) {
+                console.log("\nAction.Bid");
+                testBid();
+
+            } else if (action == uint(Action.CancelBid)) {
+                console.log("\nAction.CancelBid");
+                testCancelBid();
+
+            } else if (action == uint(Action.AcceptBid)) {
+                console.log("\nAction.AcceptBid");
+                testAcceptBid();
 
             } else if (action == uint(Action.StartLoan)) {
 
@@ -95,14 +101,6 @@ contract ProtocolTest is Test, DeployScript {
                         console.log("defaulted.\n");
                     }
                 }
-            
-            // If Skip
-            } else if (action == uint(Action.SkipTime)) {
-
-                console.log("\nAction.SkipTime");
-
-                // Skip
-                testSkip(randomness[i]);
 
             } else if (action == uint(Action.Redeem)) {
 
@@ -147,6 +145,10 @@ contract ProtocolTest is Test, DeployScript {
                         console.log("not foreclosurable.\n");
                     }
                 }
+                
+            } else if (action == uint(Action.SkipTime)) {
+                console.log("\nAction.SkipTime");
+                testSkip(randomness[i]);
             }
         }
     }
