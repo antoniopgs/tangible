@@ -62,20 +62,7 @@ contract ProtocolTest is Test, DeployScript {
 
             } else if (action == uint(Action.AcceptBid)) {
                 console.log("\nAction.AcceptBid");
-                testAcceptBid();
-
-                // If utilization < 100% (can't startLoan otherwise)
-                if (IBorrowing(protocol).utilization().lt(toUD60x18(1))) {
-
-                    // Set tokenId
-                    uint tokenId = loanCount;
-
-                    // Start Loan
-                    testAcceptBid(tokenId, randomness[i]);
-
-                    // Increment loanCount
-                    loanCount++;
-                }
+                testAcceptBid(randomness[i]);
             
             } else if (action == uint(Action.PayLoan)) {
                 console.log("\nAction.PayLoan");
@@ -220,42 +207,56 @@ contract ProtocolTest is Test, DeployScript {
     }
 
     // Seller
-    function testAcceptBid(uint tokenId, uint randomness) private validate {
+    function testAcceptBid(uint randomness) private validate {
         
-        // Bound principal
-        uint principal = bound(randomness, 0, IState(protocol).availableLiquidity());
+        // Get random tokenId
+        uint tokenId = bound(randomness, 0, nftContract.totalSupply());
 
-        // Get monthSeconds
-        uint monthSeconds = Borrowing(protocol).monthSeconds();
+        // Get random tokenIdBidIdx
+        uint tokenIdBidIdx;
 
-        // Calculate expectedRatePerSecond
-        uint yearSeconds = Borrowing(protocol).yearSeconds();
-        UD60x18 borrowerApr = IBorrowing(protocol).borrowerApr();
-        UD60x18 expectedRatePerSecond = borrowerApr.div(toUD60x18(yearSeconds));
+        // If it's a loanBid and utilization = 100%, pick another
+        if (bid.propertyValue > bid.downPayment && IBorrowing(protocol).utilization().eq(toUD60x18(1))) {
 
-        // Calculate maxMaxDurationMonths
-        // uint maxMaxDurationMonths1 = fromUD60x18(log10(MAX_UD60x18).div(toUD60x18(monthSeconds).mul(log10(toUD60x18(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
-        // uint maxMaxDurationMonths2 = fromUD60x18(log10(MAX_UD60x18.div(toUD60x18(principal).mul(expectedRatePerSecond))).div(toUD60x18(monthSeconds).mul(log10(toUD60x18(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
-        // uint maxMaxDurationMonths = maxMaxDurationMonths1 < maxMaxDurationMonths2 ? maxMaxDurationMonths1 : maxMaxDurationMonths2;
-        uint maxMaxDurationMonths = 25 * Borrowing(protocol).yearMonths(); // 25 years = 300 months
-
-        if (maxMaxDurationMonths > 0) {
-            
-            // Calculate expectedMaxUnpaidInterest
-            uint maxDurationMonths = bound(randomness, 1, maxMaxDurationMonths);
-            uint expectedMaxDurationSeconds = maxDurationMonths * monthSeconds;
-            UD60x18 expectedPaymentPerSecond = Borrowing(protocol).calculatePaymentPerSecond(principal, expectedRatePerSecond, expectedMaxDurationSeconds);
-            uint expectedLoanCost = fromUD60x18(expectedPaymentPerSecond.mul(toUD60x18(expectedMaxDurationSeconds)));
-            uint expectedMaxUnpaidInterest = expectedLoanCost - principal;
-
-            // Set expectations
-            expectedTotalPrincipal += principal;
-            expectedTotalDeposits = expectedTotalDeposits; // Note: shouldn't be changed by startLoan()
-            expectedMaxTotalInterestOwed += expectedMaxUnpaidInterest;
-            
-            // Start Loan
-            IBorrowing(protocol).startLoan(tokenId, principal, /* borrowerAprPct, */ maxDurationMonths);
         }
+
+        // Accept Bid
+        IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
+        
+        // // Bound principal
+        // uint principal = bound(randomness, 0, IState(protocol).availableLiquidity());
+
+        // // Get monthSeconds
+        // uint monthSeconds = Borrowing(protocol).monthSeconds();
+
+        // // Calculate expectedRatePerSecond
+        // uint yearSeconds = Borrowing(protocol).yearSeconds();
+        // UD60x18 borrowerApr = IBorrowing(protocol).borrowerApr();
+        // UD60x18 expectedRatePerSecond = borrowerApr.div(toUD60x18(yearSeconds));
+
+        // // Calculate maxMaxDurationMonths
+        // // uint maxMaxDurationMonths1 = fromUD60x18(log10(MAX_UD60x18).div(toUD60x18(monthSeconds).mul(log10(toUD60x18(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
+        // // uint maxMaxDurationMonths2 = fromUD60x18(log10(MAX_UD60x18.div(toUD60x18(principal).mul(expectedRatePerSecond))).div(toUD60x18(monthSeconds).mul(log10(toUD60x18(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
+        // // uint maxMaxDurationMonths = maxMaxDurationMonths1 < maxMaxDurationMonths2 ? maxMaxDurationMonths1 : maxMaxDurationMonths2;
+        // uint maxMaxDurationMonths = 25 * Borrowing(protocol).yearMonths(); // 25 years = 300 months
+
+        // if (maxMaxDurationMonths > 0) {
+            
+        //     // Calculate expectedMaxUnpaidInterest
+        //     uint maxDurationMonths = bound(randomness, 1, maxMaxDurationMonths);
+        //     uint expectedMaxDurationSeconds = maxDurationMonths * monthSeconds;
+        //     UD60x18 expectedPaymentPerSecond = Borrowing(protocol).calculatePaymentPerSecond(principal, expectedRatePerSecond, expectedMaxDurationSeconds);
+        //     uint expectedLoanCost = fromUD60x18(expectedPaymentPerSecond.mul(toUD60x18(expectedMaxDurationSeconds)));
+        //     uint expectedMaxUnpaidInterest = expectedLoanCost - principal;
+
+        //     // Set expectations
+        //     expectedTotalPrincipal += principal;
+        //     expectedTotalDeposits = expectedTotalDeposits; // Note: shouldn't be changed by startLoan()
+        //     expectedMaxTotalInterestOwed += expectedMaxUnpaidInterest;
+            
+        //     // Start Loan
+        //     IBorrowing(protocol).startLoan(tokenId, principal, /* borrowerAprPct, */ maxDurationMonths);
+        // }
     }
 
     // Borrower In-Loan
