@@ -73,13 +73,21 @@ abstract contract State is IState, TargetManager, Initializable {
         // If borrower
         } else {
             
-            // If not defaulted // Note: payLoan() must clear-out borrower in finalPayment
-            if (!defaulted(loan)) {
-                return Status.Mortgage;
+            // If default // Note: payLoan() must clear-out borrower in finalPayment
+            if (defaulted(loan)) {
+                
+                // Calculate timeSinceDefault
+                uint timeSinceDefault = block.timestamp - defaultTime(loan);
 
-            // If defaulted
-            } else { // Note: foreclose() must clear-out borrower & loanForeclose() must update borrower
-                return Status.Default;
+                if (timeSinceDefault <= redemptionWindow) {
+                    return Status.Default; // Note: foreclose() must clear-out borrower & loanForeclose() must update borrower
+                } else {
+                    return Status.Foreclosurable;
+                }
+
+            // If no default
+            } else {
+                return Status.Mortgage;
             }
         }
     }

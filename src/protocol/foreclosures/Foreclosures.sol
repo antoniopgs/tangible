@@ -55,7 +55,7 @@ contract Foreclosures is IForeclosures, State {
         Loan storage loan = loans[tokenId];
 
         // Ensure borrower has defaulted
-        require(status(loan) == Status.Default, "no default");
+        require(status(loan) == Status.Foreclosurable, "no default");
 
         // Ensure 45 days have passed since default
         require(block.timestamp >= loan.nextPaymentDeadline + 45 days, "45 days must have passed since default"); // Note: maybe add "Foreclosurable" state afterwards?
@@ -103,7 +103,8 @@ contract Foreclosures is IForeclosures, State {
         address highestBidder;
         sendNft(loan, highestBidder, TokenId.unwrap(tokenId));
     }
-
+    
+    // Views
     function findHighestActionableBid(TokenId tokenId) external view returns (uint highestActionableIdx) {
 
         // Get bids
