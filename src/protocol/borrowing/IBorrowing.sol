@@ -5,7 +5,7 @@ import "../state/state/IState.sol";
 
 interface IBorrowing {
 
-    function adminStartLoan(uint tokenId, uint propertyValue, uint downPayment, address borrower) external;
+    function adminStartLoan(TokenId tokenId, uint propertyValue, uint downPayment, address borrower) external;
     function acceptBidStartLoan(TokenId tokenId, uint propertyValue, uint downPayment, address borrower) external;
     function payLoan(TokenId tokenId) external;
     function redeemLoan(TokenId tokenId) external;
