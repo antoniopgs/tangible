@@ -71,12 +71,13 @@ contract DeployScript is Script {
         ProtocolProxy(protocol).setSelectorsTarget(auctionSelectors, address(auctions));
 
         // Set automationSelectors
-        bytes4[] memory automationSelectors = new bytes4[](5);
+        bytes4[] memory automationSelectors = new bytes4[](6);
         automationSelectors[0] = IBorrowing.startLoan.selector;
         automationSelectors[1] = IBorrowing.payLoan.selector;
         automationSelectors[2] = IBorrowing.redeemLoan.selector;
         automationSelectors[3] = IBorrowing.forecloseLoan.selector;
         automationSelectors[4] = IBorrowing.utilization.selector;
+        automationSelectors[5] = Status.status.selector;
         ProtocolProxy(protocol).setSelectorsTarget(automationSelectors, address(automation));
 
         // Set borrowingSelectors

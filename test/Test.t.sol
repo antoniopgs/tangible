@@ -371,20 +371,30 @@ contract ProtocolTest is Test, DeployScript {
 
     function testRedeem(uint randomness) private validate {
 
+        console.log(1);
+
         // if defaulted loans exist
         // get tokenId of defaulted loan
 
         // Get totalSupply
         uint totalSupply = nftContract.totalSupply();
 
+        console.log(2);
+
         // If nfts exist
         if (totalSupply > 0) {
+
+            console.log(3);
 
             // Get random tokenId
             uint tokenId = bound(randomness, 0, totalSupply - 1);
 
+            console.log(4);
+
             // If default
             if (Automation(protocol).status(tokenId) == IState.Status.Default) {
+
+                console.log(5);
 
                 // Get redeemer & unpaidPrincipal
                 // State.Loan memory loan = State(protocol).loans(tokenId);
@@ -406,6 +416,8 @@ contract ProtocolTest is Test, DeployScript {
                 // Redemer redeems
                 // vm.prank(loan.borrower);
                 IBorrowing(protocol).redeemLoan(tokenId);
+
+                console.log(6);
             }
         } else {
             console.log("no default.\n");
