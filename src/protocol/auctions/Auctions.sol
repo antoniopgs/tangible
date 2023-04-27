@@ -11,8 +11,9 @@ contract Auctions is IAuctions, State {
 
     using SafeERC20 for IERC20;
 
-    function bid(uint tokenId, uint propertyValue, uint downPayment) external {
+    function bid(uint tokenId, uint propertyValue, uint downPayment, uint maxDurationMonths) external {
         require(downPayment <= propertyValue, "downPayment cannot exceed propertyValue");
+        require(maxDurationMonths >= 1 && maxDurationMonths <= maxDurationMonthsCap, "invalid maxDurationMonths");
 
         // Calculate bid ltv
         UD60x18 ltv = toUD60x18(1).sub(toUD60x18(downPayment).div(toUD60x18(propertyValue)));
@@ -30,7 +31,8 @@ contract Auctions is IAuctions, State {
             Bid({
                 bidder: msg.sender,
                 propertyValue: propertyValue,
-                downPayment: downPayment
+                downPayment: downPayment,
+                maxDurationMonths: maxDurationMonths
             })
         );
     }
@@ -64,7 +66,7 @@ contract Auctions is IAuctions, State {
     function acceptBid(uint tokenId, uint bidIdx) external {
 
         // Get nftOwner
-        address nftOwner = prosperaNftContract.ownerOf(uint.unwrap(tokenId));
+        address nftOwner = prosperaNftContract.ownerOf(tokenId);
 
         // Ensure caller is nft owner
         require(msg.sender == nftOwner, "only nft owner can accept bids");
@@ -87,7 +89,7 @@ contract Auctions is IAuctions, State {
         if (_bid.downPayment == _bid.propertyValue) {
 
             // Send NFT from nftOwner to bidder
-            prosperaNftContract.safeTransferFrom(nftOwner, _bid.bidder, uint.unwrap(tokenId));
+            prosperaNftContract.safeTransferFrom(nftOwner, _bid.bidder, tokenId);
         
         // If loan bid
         } else {
@@ -96,13 +98,13 @@ contract Auctions is IAuctions, State {
             require(loanBidActionable(_bid), "loanBid not actionable");
 
             // Pull NFT from nftOwner to protocol
-            prosperaNftContract.safeTransferFrom(nftOwner, address(this), uint.unwrap(tokenId));
+            prosperaNftContract.safeTransferFrom(nftOwner, address(this), tokenId);
 
             // Start Loan (via delegate call)
             (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
                 abi.encodeCall(
                     IBorrowing.startLoan,
-                    (tokenId, _bid.propertyValue, _bid.downPayment, _bid.bidder)
+                    (tokenId, _bid.propertyValue, _bid.downPayment, _bid.maxDurationMonths)
                 )
             );
             require(success, "startLoan delegateCall failed");

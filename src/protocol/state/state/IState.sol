@@ -13,6 +13,7 @@ interface IState {
         address bidder;
         uint propertyValue;
         uint downPayment;
+        uint maxDurationMonths;
     }
 
     struct Loan {

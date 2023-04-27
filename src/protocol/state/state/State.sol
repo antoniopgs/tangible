@@ -61,7 +61,7 @@ abstract contract State is IState, TargetManager, Initializable {
         prosperaNftContract = _prosperaNftContract;
     }
 
-    function sendNft(Loan storage loan, address receiver, uint tokenId) internal {
+    function sendNft(Loan storage loan, address receiver, uint tokenId) internal { // Todo: move to Borrowing
 
         // Send Nft to receiver
         prosperaNftContract.safeTransferFrom(address(this), receiver, tokenId);

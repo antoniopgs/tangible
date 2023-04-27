@@ -83,7 +83,7 @@ contract DeployScript is Script {
 
         // Set interestSelectors
         bytes4[] memory interestSelectors = new bytes4[](1);
-        interestSelectors[0] = IInterest.calculatePeriodRate.selector;
+        interestSelectors[0] = IInterest.borrowerRatePerSecond.selector;
         ProtocolProxy(protocol).setSelectorsTarget(interestSelectors, address(interest));
 
         // Set lendingSelectors
