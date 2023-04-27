@@ -70,6 +70,7 @@ contract Borrowing is IBorrowing, State {
 
         // Calculate installment
         uint installment = calculateInstallment(periodRate, principal);
+        assert(installment > 0);
 
         console.log("s11");
 
@@ -77,8 +78,11 @@ contract Borrowing is IBorrowing, State {
         uint totalLoanCost = installment * installmentCount;
 
         console.log("s12");
-        console.log("totalLoanCost:", totalLoanCost);
         console.log("principal:", principal);
+        console.log("installment:", installment);
+        console.log("installmentCount:", installmentCount);
+        console.log("totalLoanCost:", totalLoanCost);
+        assert(totalLoanCost > principal);
 
         // Store Loan
         _loans[tokenId] = Loan({

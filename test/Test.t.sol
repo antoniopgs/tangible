@@ -158,7 +158,7 @@ contract ProtocolTest is Test, DeployScript {
         address bidder = makeAddr("bidder");
 
         // Get random tokenId
-        uint tokenId = bound(randomness, 0, nftContract.totalSupply());
+        uint tokenId = bound(randomness, 0, nftContract.totalSupply() - 1);
 
         // Calculate random propertyValue 
         uint propertyValue = bound(randomness, 0, 1_000_000_000e18); // max is 1 billion with 18 decimals
@@ -227,7 +227,7 @@ contract ProtocolTest is Test, DeployScript {
             console.log(3);
 
             // Get random tokenId
-            uint tokenId = bound(randomness, 0, totalSupply);
+            uint tokenId = bound(randomness, 0, totalSupply - 1);
 
             console.log(4);
 
@@ -374,7 +374,7 @@ contract ProtocolTest is Test, DeployScript {
         if (totalSupply > 0) {
 
             // Get random tokenId
-            uint tokenId = bound(randomness, 0, totalSupply);
+            uint tokenId = bound(randomness, 0, totalSupply - 1);
 
             // If default
             if (IState(protocol).status(tokenId) == IState.Status.Default) {
@@ -418,7 +418,7 @@ contract ProtocolTest is Test, DeployScript {
         if (totalSupply > 0) {
 
             // Get random tokenId
-            uint tokenId = bound(randomness, 0, totalSupply);
+            uint tokenId = bound(randomness, 0, totalSupply - 1);
 
             // If foreclosurable
             if (IState(protocol).status(tokenId) == IState.Status.Foreclosurable) {
