@@ -173,12 +173,12 @@ contract ProtocolTest is Test, DeployScript {
         vm.prank(bidder);
         USDC.approve(protocol, downPayment);
 
-        // Pick maxDurationMonths
+        // Pick random maxDurationMonths
         uint maxDurationMonths = bound(randomness, 1, State(protocol).maxDurationMonthsCap());
 
         // Bidder bids
         vm.prank(bidder);
-        IAuctions(protocol).bid(tokenId, propertyValue, downPayment);
+        IAuctions(protocol).bid(tokenId, propertyValue, downPayment, maxDurationMonths);
     }
 
     function testCancelBid(uint randomness) private validate {
@@ -329,8 +329,11 @@ contract ProtocolTest is Test, DeployScript {
             // Get random tokenId
             uint tokenId = State(protocol).loansTokenIdsAt(randomIdx);
 
+            // Pick random payment
+            uint payment = bound(randomness, 0, 1_000_000_000e18);
+
             // Pay Loan
-            IBorrowing(protocol).payLoan(tokenId);
+            IBorrowing(protocol).payLoan(tokenId, payment);
 
         } else {
             console.log("loansTokenIdsLength = 0. no loans exist.");
@@ -383,7 +386,7 @@ contract ProtocolTest is Test, DeployScript {
             if (IBorrowing(protocol).status(tokenId) == IState.Status.Default) {
 
                 // Get redeemer & unpaidPrincipal
-                State.Loan memory loan = State(protocol).loans(tokenId);
+                // State.Loan memory loan = State(protocol).loans(tokenId);
                 // uint accruedInterest = Borrowing(protocol).accruedInterest(tokenId);
                 // uint expectedRedeemerDebt = loan.unpaidPrincipal + accruedInterest;
                 // uint expectedRedemptionFee = fromUD60x18(toUD60x18(expectedRedeemerDebt).mul(Borrowing(protocol).redemptionFeeSpread()));
@@ -427,7 +430,7 @@ contract ProtocolTest is Test, DeployScript {
             if (IBorrowing(protocol).status(tokenId) == IState.Status.Foreclosurable) {
 
                 // Get unpaidPrincipal & maxUnpaidInterest
-                State.Loan memory loan = Borrowing(protocol).loans(tokenId);
+                // State.Loan memory loan = Borrowing(protocol).loans(tokenId);
 
                 // // Bound salePrice
                 // uint expectedDefaulterDebt = loan.unpaidPrincipal + Borrowing(protocol).accruedInterest(tokenId);
