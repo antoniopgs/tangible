@@ -19,38 +19,36 @@ abstract contract State is IState, TargetManager, Initializable {
     tUsdc tUSDC;
     TangibleNft internal prosperaNftContract;
 
+    // Time constants
+    uint /* private */ public constant yearSeconds = 365 days; // Note: made public for testing
+    uint /* private */ public constant yearMonths = 12;
+    uint /* private */ public constant monthSeconds = yearSeconds / yearMonths; // Note: yearSeconds % yearMonths = 0 (no precision loss)
+
+    // Pool vars
+    uint public totalPrincipal;
+    uint public totalDeposits;
+    uint public maxTotalUnpaidInterest; // Todo: figure this out
+    UD60x18 public optimalUtilization = toUD60x18(90).div(toUD60x18(100)); // Note: 90%
+
+    // Interest vars
+    UD60x18 internal m1 = toUD60x18(4).div(toUD60x18(100)); // Note: 0.04
+    UD60x18 internal b1 = toUD60x18(3).div(toUD60x18(100)); // Note: 0.03
+    UD60x18 internal m2 = toUD60x18(9); // Note: 9
+
+    // Fees/Spreads
+    UD60x18 internal _payLoanFeeSpread = toUD60x18(1).div(toUD60x18(100)); // Note: 1%
+    UD60x18 internal _redemptionFeeSpread = toUD60x18(2).div(toUD60x18(100)); // Note: 2%
+    UD60x18 internal _foreclosureFeeSpread = toUD60x18(3).div(toUD60x18(100)); // Note: 3%
+
     // Main Storage
     mapping(TokenId => Bid[]) internal _bids;
     mapping(TokenId => Loan) public _loans;
     EnumerableSet.UintSet internal loansTokenIds;
     uint protocolMoney;
 
-    // Pool vars
-    uint public totalPrincipal;
-    uint public totalDeposits;
-    UD60x18 public utilizationCap = toUD60x18(90).div(toUD60x18(100)); // 90%
-
-    // Borrowing terms
-    uint internal constant loanYears = 5; // 5 "years" (each "year" will have 360 days)
-    UD60x18 public maxLtv = toUD60x18(50).div(toUD60x18(100)); // 50%
-    UD60x18 public borrowerApr = toUD60x18(5).div(toUD60x18(100)); // 5%
-
-    // Borrowing math vars
-    uint internal constant periodDuration = 30 days;
-    uint internal constant periodsPerYear = 12;
-    // UD60x18 internal immutable periodsPerYear = toUD60x18(365 days).div(toUD60x18(periodDuration)); // 365 days / 30 days = 12.1666...
-    uint internal constant yearDuration = periodsPerYear * periodDuration; // 12 * 30 = 360 days
-    uint internal constant installmentCount = loanYears * periodsPerYear; // 5 * 12 = 60 installments
-    UD60x18 internal immutable periodRate = borrowerApr.div(toUD60x18(periodsPerYear)); // 5% / 12 = 0.41666...%
-    // UD60x18 perfectLenderApy = toUD60x18(1).add(periodicBorrowerRate).pow(periodsPerYear).sub(toUD60x18(1)); // lenderApy if 100% utilization
-
-    // Auction vars
-    UD60x18 saleFeeRatio;
-
-    // Foreclosure vars
-    UD60x18 foreclosureFeeRatio;
-    UD60x18 foreclosurerCutRatio;
-    uint public redemptionWindow = 45 days;
+    // Other vars
+    uint internal redemptionWindow = 45 days;
+    UD60x18 public maxLtv = toUD60x18(50).div(toUD60x18(100)); // Note: 50%
 
     // Libs
     using SafeERC20 for IERC20;
@@ -152,5 +150,17 @@ abstract contract State is IState, TargetManager, Initializable {
 
     function tokenIdBidsLength(uint tokenId) external view returns (uint) {
         return _bids[TokenId.wrap(tokenId)].length;
+    }
+
+    function redemptionFeeSpread() external view returns (UD60x18) {
+        return _redemptionFeeSpread;
+    }
+
+    function foreclosureFeeSpread() external view returns (UD60x18) {
+        return _foreclosureFeeSpread;
+    }
+
+    function loans(uint tokenId) external view returns(Loan memory) {
+        return _loans[tokenId];
     }
 }
