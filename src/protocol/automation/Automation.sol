@@ -18,11 +18,18 @@ contract Automation is AutomationCompatibleInterface, State {
             // Get tokenId
             TokenId tokenId = TokenId.wrap(loansTokenIds.at(i));
 
-            // Get loan 
-            Loan memory loan = _loans[tokenId];
+            // Get state
+            (bool success, bytes memory data) = logicTargets[IBorrowing.status.selector].call(
+                abi.encodeCall(
+                    IBorrowing.status,
+                    (TokenId.unwrap(tokenId))
+                )
+            );
+            require(success, "couldn't get state");
+            Status status = abi.decode(data, (Status));
 
             // If loan is foreclosurable
-            if (status(loan) == Status.Foreclosurable) {
+            if (status == Status.Foreclosurable) {
                 
                 // Find highestActionableBidIdx
                 uint highestActionableBidIdx = findHighestActionableBidIdx(tokenId);
