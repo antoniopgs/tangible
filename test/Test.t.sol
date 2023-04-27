@@ -173,6 +173,9 @@ contract ProtocolTest is Test, DeployScript {
         vm.prank(bidder);
         USDC.approve(protocol, downPayment);
 
+        // Pick maxDurationMonths
+        uint maxDurationMonths = bound(randomness, 1, State(protocol).maxDurationMonthsCap());
+
         // Bidder bids
         vm.prank(bidder);
         IAuctions(protocol).bid(tokenId, propertyValue, downPayment);
@@ -377,7 +380,7 @@ contract ProtocolTest is Test, DeployScript {
             uint tokenId = bound(randomness, 0, totalSupply - 1);
 
             // If default
-            if (IState(protocol).status(tokenId) == IState.Status.Default) {
+            if (IBorrowing(protocol).status(tokenId) == IState.Status.Default) {
 
                 // Get redeemer & unpaidPrincipal
                 State.Loan memory loan = State(protocol).loans(tokenId);
@@ -421,7 +424,7 @@ contract ProtocolTest is Test, DeployScript {
             uint tokenId = bound(randomness, 0, totalSupply - 1);
 
             // If foreclosurable
-            if (IState(protocol).status(tokenId) == IState.Status.Foreclosurable) {
+            if (IBorrowing(protocol).status(tokenId) == IState.Status.Foreclosurable) {
 
                 // Get unpaidPrincipal & maxUnpaidInterest
                 State.Loan memory loan = Borrowing(protocol).loans(tokenId);

@@ -320,10 +320,6 @@ contract Borrowing is IBorrowing, State {
         }
     }
 
-    function availableLiquidity() /* private */ public view returns(uint) {
-        return totalDeposits - totalPrincipal;
-    }
-
     function lenderApy() public view returns(UD60x18) {
         if (totalDeposits == 0) {
             assert(maxTotalUnpaidInterest == 0);

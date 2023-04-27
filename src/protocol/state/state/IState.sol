@@ -29,4 +29,5 @@ interface IState {
 
     // Views
     function bids(uint tokenId) external view returns (Bid[] memory); // Note: for testing
+    function availableLiquidity() /* private */ external view returns(uint);
 }

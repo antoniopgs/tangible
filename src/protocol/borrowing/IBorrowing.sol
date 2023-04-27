@@ -16,5 +16,4 @@ interface IBorrowing is IState {
     function principalCap(Loan memory loan, uint month) external pure returns(uint cap);
     function status(uint tokenId) external view returns (Status);
     function utilization() external view returns(UD60x18);
-    function availableLiquidity() /* private */ external view returns(uint);
 }
