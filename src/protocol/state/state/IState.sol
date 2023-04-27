@@ -20,15 +20,17 @@ interface IState {
 
     struct Loan {
         address borrower;
-        uint installment;
-        UD60x18 periodicRate; // Note: might be same for every loan now, but might differ between loans later
-        uint balance;
-        uint unpaidInterest;
-        uint nextPaymentDeadline;
+        UD60x18 ratePerSecond;
+        UD60x18 paymentPerSecond;
+        uint startTime;
+        uint unpaidPrincipal;
+        uint maxUnpaidInterest;
+        uint maxDurationSeconds;
+        uint lastPaymentTime;
     }
 
     // Views
+    function availableLiquidity() external view returns(uint);
     function status(uint tokenId) external view returns (Status); // Note: for testing
     function bids(uint tokenId) external view returns (Bid[] memory); // Note: for testing
-    function availableLiquidity() external view returns(uint);
 }
