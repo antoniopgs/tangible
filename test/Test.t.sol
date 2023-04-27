@@ -56,8 +56,6 @@ contract ProtocolTest is Test, DeployScript {
             // Mint nft to nftOwner
             nftContract.mint(nftOwner, defaultTokenURI);
         }
-
-        console.log("nftContract.totalSupply():", nftContract.totalSupply());
     }
 
     // Main
@@ -130,9 +128,7 @@ contract ProtocolTest is Test, DeployScript {
 
         // Deposit
         vm.prank(borrower);
-        console.log("d1");
         ILending(protocol).deposit(amount);
-        console.log("d2");
     }
 
     function testWithdraw(uint amount) private validate {
@@ -220,10 +216,6 @@ contract ProtocolTest is Test, DeployScript {
 
         console.log(1);
 
-        console.log("protocol:", address(protocol));
-        console.log("auctions:", address(auctions));
-        console.log("lending:", address(lending));
-
         // Get totalSupply
         uint totalSupply = nftContract.totalSupply();
 
@@ -266,7 +258,6 @@ contract ProtocolTest is Test, DeployScript {
                     
                     // Get nftOwner
                     address nftOwner = nftContract.ownerOf(tokenId);
-                    console.log("nftOwner:", nftOwner);
 
                     // NftOwner approves protocol
                     vm.prank(nftOwner);
@@ -367,7 +358,7 @@ contract ProtocolTest is Test, DeployScript {
         // // If loan is paid off, return
         // loan = State(protocol).loans(tokenId);
         // if (loan.borrower == address(0)) {
-        //     console.log("loan paid off.\n");
+        // console.log("loan paid off.\n");
         // }
     }
 

@@ -17,31 +17,44 @@ contract Borrowing is IBorrowing, State {
     // Functions
     function startLoan(TokenId tokenId, uint propertyValue, uint downPayment, address borrower) external {
         console.log("s1");
-        console.log("msg.sender:", msg.sender);
-        console.log("address(this):", address(this));
-        require(msg.sender == address(this), "unauthorized"); // Note: msg.sender must be address(this) because this will be called via delegatecall
+        // Todo: review safety of this require later
+        require(prosperaNftContract.ownerOf(TokenId.unwrap(tokenId)) == address(this), "unauthorized"); // Note: nft must be owned must be address(this) because this will be called via delegatecall
         console.log("s2");
 
         // Get Loan
         Loan storage loan = _loans[tokenId];
 
+        console.log("s3");
+
         // Ensure property has no associated loan
         require(status(loan) == Status.None, "property already has associated loan");
+
+        console.log("s4");
 
         // Calculate principal
         uint principal = propertyValue - downPayment;
 
+        console.log("s5");
+
         // Calculate bid ltv
         UD60x18 ltv = toUD60x18(principal).div(toUD60x18(propertyValue));
+
+        console.log("s6");
 
         // Ensure ltv <= maxLtv
         require(ltv.lte(maxLtv), "ltv can't exceeed maxLtv");
 
+        console.log("s7");
+
         // Add principal to totalPrincipal
         totalPrincipal += principal;
+
+        console.log("s8");
         
         // Ensure utilization <= utilizationCap
         require(utilization().lte(utilizationCap), "utilization can't exceed utilizationCap");
+
+        console.log("s9");
 
         // Calculate & decode periodRate
         (bool success, bytes memory data) = logicTargets[IInterest.calculatePeriodRate.selector].delegatecall(
@@ -53,11 +66,17 @@ contract Borrowing is IBorrowing, State {
         require(success, "calculateYearlyBorrowerRate delegateCall failed");
         UD60x18 periodRate = abi.decode(data, (UD60x18));
 
+        console.log("s10");
+
         // Calculate installment
         uint installment = calculateInstallment(periodRate, principal);
 
+        console.log("s11");
+
         // Calculate totalLoanCost
         uint totalLoanCost = installment * installmentCount;
+
+        console.log("s12");
 
         // Store Loan
         _loans[tokenId] = Loan({
@@ -69,11 +88,17 @@ contract Borrowing is IBorrowing, State {
             nextPaymentDeadline: block.timestamp + periodDuration
         });
 
+        console.log("s13");
+
         // Add tokenId to loansTokenIds
         loansTokenIds.add(TokenId.unwrap(tokenId));
 
+        console.log("s14");
+
         // Pull downPayment from borrower
         USDC.safeTransferFrom(borrower, address(this), downPayment);
+
+        console.log("s15");
     }
     
     function payLoan(TokenId tokenId) external {
