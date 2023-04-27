@@ -11,7 +11,7 @@ contract Auctions is IAuctions, State {
 
     using SafeERC20 for IERC20;
 
-    function bid(TokenId tokenId, uint propertyValue, uint downPayment) external {
+    function bid(uint tokenId, uint propertyValue, uint downPayment) external {
         require(downPayment <= propertyValue, "downPayment cannot exceed propertyValue");
 
         // Calculate bid ltv
@@ -35,7 +35,7 @@ contract Auctions is IAuctions, State {
         );
     }
 
-    function cancelBid(TokenId tokenId, Idx bidIdx) external {
+    function cancelBid(uint tokenId, uint bidIdx) external {
 
         // Todo: Ensure tokenId exists?
 
@@ -43,7 +43,7 @@ contract Auctions is IAuctions, State {
         Bid[] storage propertyBids = _bids[tokenId];
 
         // Get bidToRemove
-        Bid memory bidToRemove = propertyBids[Idx.unwrap(bidIdx)];
+        Bid memory bidToRemove = propertyBids[bidIdx];
 
         // Ensure caller is bidder
         require(msg.sender == bidToRemove.bidder, "only bidder can remove his bid");
@@ -52,7 +52,7 @@ contract Auctions is IAuctions, State {
         Bid memory propertyLastBid = propertyBids[propertyBids.length - 1];
 
         // Write propertyLastBid over bidToRemove
-        propertyBids[Idx.unwrap(bidIdx)] = propertyLastBid;
+        propertyBids[bidIdx] = propertyLastBid;
 
         // Remove lastPropertyBid
         propertyBids.pop();
@@ -61,16 +61,16 @@ contract Auctions is IAuctions, State {
         USDC.safeTransfer(bidToRemove.bidder, bidToRemove.downPayment);
     }
 
-    function acceptBid(TokenId tokenId, Idx bidIdx) external {
+    function acceptBid(uint tokenId, uint bidIdx) external {
 
         // Get nftOwner
-        address nftOwner = prosperaNftContract.ownerOf(TokenId.unwrap(tokenId));
+        address nftOwner = prosperaNftContract.ownerOf(uint.unwrap(tokenId));
 
         // Ensure caller is nft owner
         require(msg.sender == nftOwner, "only nft owner can accept bids");
 
         // Get bid
-        Bid memory _bid = _bids[tokenId][Idx.unwrap(bidIdx)];
+        Bid memory _bid = _bids[tokenId][bidIdx];
 
         // Todo: if State == Null vs if State == Mortgage
 
@@ -87,7 +87,7 @@ contract Auctions is IAuctions, State {
         if (_bid.downPayment == _bid.propertyValue) {
 
             // Send NFT from nftOwner to bidder
-            prosperaNftContract.safeTransferFrom(nftOwner, _bid.bidder, TokenId.unwrap(tokenId));
+            prosperaNftContract.safeTransferFrom(nftOwner, _bid.bidder, uint.unwrap(tokenId));
         
         // If loan bid
         } else {
@@ -96,7 +96,7 @@ contract Auctions is IAuctions, State {
             require(loanBidActionable(_bid), "loanBid not actionable");
 
             // Pull NFT from nftOwner to protocol
-            prosperaNftContract.safeTransferFrom(nftOwner, address(this), TokenId.unwrap(tokenId));
+            prosperaNftContract.safeTransferFrom(nftOwner, address(this), uint.unwrap(tokenId));
 
             // Start Loan (via delegate call)
             (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(

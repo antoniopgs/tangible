@@ -16,13 +16,13 @@ contract Automation is AutomationCompatibleInterface, State {
         for (uint i = 0; i < loansTokenIds.length(); i++) {
 
             // Get tokenId
-            TokenId tokenId = TokenId.wrap(loansTokenIds.at(i));
+            uint tokenId = loansTokenIds.at(i);
 
             // Get state
             (bool success, bytes memory data) = logicTargets[IBorrowing.status.selector].call(
                 abi.encodeCall(
                     IBorrowing.status,
-                    (TokenId.unwrap(tokenId))
+                    (tokenId)
                 )
             );
             require(success, "couldn't get state");
@@ -47,7 +47,7 @@ contract Automation is AutomationCompatibleInterface, State {
     function performUpkeep(bytes calldata performData) external override {
         
         // Decode tokenId
-        (TokenId tokenId, uint highestActionableBidIdx) = abi.decode(performData, (TokenId, uint));
+        (uint tokenId, uint highestActionableBidIdx) = abi.decode(performData, (uint, uint));
 
         // Foreclose (via delegatecall)
         (bool success, ) = logicTargets[IBorrowing.forecloseLoan.selector].delegatecall(
@@ -60,7 +60,7 @@ contract Automation is AutomationCompatibleInterface, State {
     }
 
     // Views
-    function findHighestActionableBidIdx(TokenId tokenId) /*private*/ public view returns (uint highestActionableIdx) { // Note: made public for testing
+    function findHighestActionableBidIdx(uint tokenId) /*private*/ public view returns (uint highestActionableIdx) { // Note: made public for testing
 
         // Get propertyBids
         Bid[] memory propertyBids = _bids[tokenId];

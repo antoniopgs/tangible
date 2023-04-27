@@ -3,9 +3,6 @@ pragma solidity ^0.8.15;
 
 import { UD60x18 } from "@prb/math/UD60x18.sol";
 
-type TokenId is uint;
-type Idx is uint;
-
 interface IState {
 
     // Enums

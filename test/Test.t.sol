@@ -175,7 +175,7 @@ contract ProtocolTest is Test, DeployScript {
 
         // Bidder bids
         vm.prank(bidder);
-        IAuctions(protocol).bid(TokenId.wrap(tokenId), propertyValue, downPayment);
+        IAuctions(protocol).bid(tokenId, propertyValue, downPayment);
     }
 
     function testCancelBid(uint randomness) private validate {
@@ -200,7 +200,7 @@ contract ProtocolTest is Test, DeployScript {
 
                 // Bidder cancels bid
                 vm.prank(tokenIdBids[randomIdx].bidder);
-                IAuctions(protocol).cancelBid(TokenId.wrap(tokenId), Idx.wrap(randomIdx));
+                IAuctions(protocol).cancelBid(tokenId, randomIdx);
 
             } else {
                 console.log("tokenId has no bids");
@@ -265,7 +265,7 @@ contract ProtocolTest is Test, DeployScript {
 
                     // Nft Owner Accepts Bid
                     vm.prank(nftOwner);
-                    IAuctions(protocol).acceptBid(TokenId.wrap(tokenId), Idx.wrap(tokenIdBidIdx));
+                    IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
 
                     console.log(10);
                 }
@@ -327,7 +327,7 @@ contract ProtocolTest is Test, DeployScript {
             uint tokenId = State(protocol).loansTokenIdsAt(randomIdx);
 
             // Pay Loan
-            IBorrowing(protocol).payLoan(TokenId.wrap(tokenId));
+            IBorrowing(protocol).payLoan(tokenId);
 
         } else {
             console.log("loansTokenIdsLength = 0. no loans exist.");
@@ -353,7 +353,7 @@ contract ProtocolTest is Test, DeployScript {
         // Pay Loan
         // totalPaidInterest += expectedInterest;
         // IBorrowing(protocol).payLoan(tokenId, payment);
-        // IBorrowing(protocol).payLoan(TokenId.wrap(tokenId));
+        // IBorrowing(protocol).payLoan(tokenId);
 
         // // If loan is paid off, return
         // loan = State(protocol).loans(tokenId);
@@ -398,7 +398,7 @@ contract ProtocolTest is Test, DeployScript {
 
                 // Redemer redeems
                 // vm.prank(loan.borrower);
-                IBorrowing(protocol).redeemLoan(TokenId.wrap(tokenId));
+                IBorrowing(protocol).redeemLoan(tokenId);
             }
         } else {
             console.log("no default.\n");
@@ -439,10 +439,10 @@ contract ProtocolTest is Test, DeployScript {
                 // expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
                 
                 // Find highestActionableBidIdx
-                uint highestActionableBidIdx = Automation(protocol).findHighestActionableBidIdx(TokenId.wrap(tokenId));
+                uint highestActionableBidIdx = Automation(protocol).findHighestActionableBidIdx(tokenId);
 
                 // Foreclose
-                IBorrowing(protocol).forecloseLoan(TokenId.wrap(tokenId), highestActionableBidIdx);
+                IBorrowing(protocol).forecloseLoan(tokenId, highestActionableBidIdx);
             }
         }
     }

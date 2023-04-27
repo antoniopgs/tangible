@@ -5,9 +5,8 @@ import "./IBorrowing.sol";
 import "../state/state/State.sol";
 import { fromUD60x18 } from "@prb/math/UD60x18.sol";
 import { SD59x18, toSD59x18 } from "@prb/math/SD59x18.sol";
-import { intoUD60x18 } from "@prb/math/sd59x18/Casting.sol";
-import { intoSD59x18 } from "@prb/math/ud60x18/Casting.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../interest/IInterest.sol";
 
 contract Borrowing is IBorrowing, State {
 
@@ -31,9 +30,15 @@ contract Borrowing is IBorrowing, State {
         UD60x18 ltv = toUD60x18(principal).div(toUD60x18(propertyValue));
         require(ltv.lte(maxLtv), "ltv can't exceeed maxLtv");
 
-        // Calculate ratePerSecond
-        // UD60x18 ratePerSecond = toUD60x18(borrowerAprPct).div(toUD60x18(100)).div(toUD60x18(yearSeconds));
-        UD60x18 ratePerSecond = borrowerRatePerSecond();
+        // Get ratePerSecond
+        (bool success, bytes memory data) = logicTargets[IInterest.borrowerRatePerSecond.selector].call(
+            abi.encodeCall(
+                IInterest.borrowerRatePerSecond,
+                (utilization())
+            )
+        );
+        require(success, "couldn't get borrowerRatePerSecond");
+        UD60x18 ratePerSecond = abi.decode(data, (UD60x18));
 
         // Calculate maxDurationSeconds
         uint maxDurationSeconds = maxDurationMonths * monthSeconds;
@@ -50,7 +55,7 @@ contract Borrowing is IBorrowing, State {
         // Calculate maxUnpaidInterest
         uint maxUnpaidInterest = maxCost - principal;
         
-        _loans[TokenId.wrap(tokenId)] = Loan({
+        _loans[tokenId] = Loan({
             borrower: msg.sender, // Note: must be called via delegatecall for this to work
             ratePerSecond: ratePerSecond,
             paymentPerSecond: paymentPerSecond,
@@ -77,7 +82,7 @@ contract Borrowing is IBorrowing, State {
         USDC.safeTransferFrom(msg.sender, address(this), payment);
 
         // Get Loan
-        Loan storage loan = _loans[TokenId.wrap(tokenId)];
+        Loan storage loan = _loans[tokenId];
 
         // Calculate interest
         uint interest = accruedInterest(loan);
@@ -116,7 +121,7 @@ contract Borrowing is IBorrowing, State {
         require(status(tokenId) == Status.Default, "no default");
 
         // Get Loan
-        Loan storage loan = _loans[TokenId.wrap(tokenId)];
+        Loan storage loan = _loans[tokenId];
 
         // Calculate interest
         uint interest = accruedInterest(loan);
@@ -150,7 +155,7 @@ contract Borrowing is IBorrowing, State {
         // Todo: Pull salePrice?
 
         // Get Loan
-        Loan storage loan = _loans[TokenId.wrap(tokenId)];
+        Loan storage loan = _loans[tokenId];
 
         // Calculate interest
         uint interest = accruedInterest(loan);
@@ -160,7 +165,7 @@ contract Borrowing is IBorrowing, State {
         uint foreclosureFee = fromUD60x18(toUD60x18(defaulterDebt).mul(_foreclosureFeeSpread));
 
         // Get Bid
-        Bid memory bid = _bids[TokenId.wrap(tokenId)][bidIdx];
+        Bid memory bid = _bids[tokenId][bidIdx];
 
         // Ensure bid.propertyValue covers defaulterDebt + fees
         require(bid.propertyValue >= defaulterDebt + foreclosureFee, "salePrice must >= defaulterDebt + fees"); // Question: minSalePrice will rise over time. Too risky?
@@ -192,7 +197,7 @@ contract Borrowing is IBorrowing, State {
     }
 
     function accruedInterest(uint tokenId) public view returns(uint) { // Note: made this duplicate of accruedInterest() for testing
-        return accruedInterest(_loans[TokenId.wrap(tokenId)]);
+        return accruedInterest(_loans[tokenId]);
     }
 
     function accruedRate(Loan memory loan) private view returns(UD60x18) {
@@ -227,44 +232,12 @@ contract Borrowing is IBorrowing, State {
         paymentPerSecond = toUD60x18(principal).mul(ratePerSecond).mul(x).div(x.sub(toUD60x18(1)));
     }
 
-    function borrowerRatePerSecond() private view returns(UD60x18 ratePerSecond) {
-        ratePerSecond = borrowerApr().div(toUD60x18(yearSeconds)); // Todo: improve precision
-    }
-
-    function borrowerApr() public view returns(UD60x18 apr) {
-        
-        // Get utilization
-        UD60x18 _utilization = utilization();
-
-        assert(_utilization.lte(toUD60x18(1))); // Note: utilization should never exceed 100%
-
-        if (_utilization.lte(optimalUtilization)) {
-            apr = m1.mul(_utilization).add(b1);
-
-        } else if (_utilization.gt(optimalUtilization) && _utilization.lt(toUD60x18(1))) {
-            SD59x18 x = intoSD59x18(m2.mul(_utilization));
-            apr = intoUD60x18(x.add(b2()));
-
-        } else if (_utilization.eq(toUD60x18(1))) {
-            revert("no APR. can't start loan if utilization = 100%");
-        }
-
-        assert(apr.gt(toUD60x18(0)));
-        assert(apr.lt(toUD60x18(1)));
-    }
-
     function utilization() public view returns(UD60x18) {
         if (totalDeposits == 0) {
             assert(totalPrincipal == 0);
             return toUD60x18(0);
         }
         return toUD60x18(totalPrincipal).div(toUD60x18(totalDeposits));
-    }
-
-    function b2() private view returns(SD59x18) {
-        SD59x18 x = intoSD59x18(m1).sub(intoSD59x18(m2));
-        SD59x18 y = intoSD59x18(optimalUtilization).mul(x);
-        return y.add(intoSD59x18(b1));
     }
 
     function defaulted(uint tokenId) private view returns(bool) {
@@ -319,7 +292,7 @@ contract Borrowing is IBorrowing, State {
 
     function status(uint tokenId) public view returns (Status) {
 
-        Loan memory loan = _loans[TokenId.wrap(tokenId)];
+        Loan memory loan = _loans[tokenId];
         
         // If no borrower
         if (loan.borrower == address(0)) { // Note: acceptBid() must clear-out borrower & acceptLoanBid() must update borrower

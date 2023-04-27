@@ -4,5 +4,6 @@ pragma solidity ^0.8.15;
 import "@prb/math/UD60x18.sol";
 
 interface IInterest {
-    function calculatePeriodRate(UD60x18 utilization) external view returns (UD60x18);
+    function borrowerRatePerSecond(UD60x18 utilization) external view returns(UD60x18 ratePerSecond);
+    function borrowerApr(UD60x18 utilization) external view returns(UD60x18 apr);
 }

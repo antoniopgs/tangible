@@ -42,8 +42,8 @@ abstract contract State is IState, TargetManager, Initializable {
     UD60x18 internal _foreclosureFeeSpread = toUD60x18(4).div(toUD60x18(100)); // Note: 4%
 
     // Main Storage
-    mapping(TokenId => Bid[]) internal _bids;
-    mapping(TokenId => Loan) public _loans;
+    mapping(uint => Bid[]) internal _bids;
+    mapping(uint => Loan) public _loans;
     EnumerableSet.UintSet internal loansTokenIds;
     uint protocolMoney;
 
@@ -108,15 +108,15 @@ abstract contract State is IState, TargetManager, Initializable {
     }
 
     function loans(uint tokenId) external view returns (Loan memory) {
-        return _loans[TokenId.wrap(tokenId)];
+        return _loans[tokenId];
     }
 
     function bids(uint tokenId) external view returns (Bid[] memory) {
-        return _bids[TokenId.wrap(tokenId)];
+        return _bids[tokenId];
     }
 
     function tokenIdBidsLength(uint tokenId) external view returns (uint) {
-        return _bids[TokenId.wrap(tokenId)].length;
+        return _bids[tokenId].length;
     }
 
     function redemptionFeeSpread() external view returns (UD60x18) {

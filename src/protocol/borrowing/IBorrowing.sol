@@ -6,11 +6,11 @@ import "../state/state/IState.sol";
 interface IBorrowing is IState {
 
     // Functions
-    function startLoan(TokenId tokenId, uint propertyValue, uint downPayment, address borrower) external;
+    function startLoan(uint tokenId, uint propertyValue, uint downPayment, address borrower) external;
     // function startLoan(uint tokenId, uint principal, /* uint borrowerAprPct, */ uint maxDurationMonths) external;
-    function payLoan(TokenId tokenId, uint payment) external;
-    function redeemLoan(TokenId tokenId) external;
-    function forecloseLoan(TokenId tokenId, uint bidIdx) external;
+    function payLoan(uint tokenId, uint payment) external;
+    function redeemLoan(uint tokenId) external;
+    function forecloseLoan(uint tokenId, uint bidIdx) external;
 
     // Views
     function borrowerApr() external view returns(UD60x18 apr);
