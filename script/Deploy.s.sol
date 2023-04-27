@@ -7,8 +7,8 @@ import { console } from "forge-std/console.sol";
 
 // Contract Imports
 import "../src/protocol/auctions/Auctions.sol"; // Note: v2
-import "../src/protocol/automation/Automation.sol"; // Note: v2
-import "../src/protocol/borrowing/Borrowing.sol";
+// import "../src/protocol/automation/Automation.sol"; // Note: v2
+import "../src/protocol/borrowing/borrowing/Borrowing.sol";
 import "../src/protocol/interest/Interest.sol";
 import "../src/protocol/lending/Lending.sol";
 import "../src/protocol/protocolProxy/ProtocolProxy.sol";
@@ -30,7 +30,6 @@ contract DeployScript is Script {
 
     // Logic Contracts
     Auctions auctions;
-    // Automation automation;
     Borrowing borrowing;
     Interest interest;
     Lending lending;
@@ -69,8 +68,6 @@ contract DeployScript is Script {
         auctionSelectors[1] = IAuctions.cancelBid.selector;
         auctionSelectors[2] = IAuctions.acceptBid.selector;
         ProtocolProxy(protocol).setSelectorsTarget(auctionSelectors, address(auctions));
-
-        // Set automationSelectors
 
         // Set borrowingSelectors
         bytes4[] memory borrowingSelectors = new bytes4[](5);

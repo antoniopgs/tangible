@@ -7,10 +7,10 @@ import "../script/Deploy.s.sol";
 import "forge-std/console.sol";
 
 // Protocol Contracts
-import "../src/protocol/borrowing/IBorrowing.sol";
+import "../src/protocol/borrowing/borrowing/IBorrowing.sol";
 import "../src/protocol/lending/ILending.sol";
 import "../src/protocol/state/state/IState.sol";
-import "../src/protocol/borrowing/Borrowing.sol"; // Note: later, further improve architecture, to be able to remove this import
+import "../src/protocol/borrowing/borrowing/Borrowing.sol"; // Note: later, further improve architecture, to be able to remove this import
 import "../src/protocol/lending/Lending.sol"; // Note: later, further improve architecture, to be able to remove this import
 
 // Other

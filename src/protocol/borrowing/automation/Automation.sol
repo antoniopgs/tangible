@@ -2,10 +2,11 @@
 pragma solidity ^0.8.15;
 
 import "@chainlink/contracts/AutomationCompatible.sol"; // Note: imports from ./AutomationBase.sol & ./interfaces/AutomationCompatibleInterface.sol
-import "../state/state/State.sol";
-import "../borrowing/IBorrowing.sol";
+import "../status/Status.sol";
+import { SD59x18, toSD59x18 } from "@prb/math/SD59x18.sol";
+import { fromUD60x18 } from "@prb/math/UD60x18.sol";
 
-contract Automation is AutomationCompatibleInterface, State {
+abstract contract Automation is AutomationCompatibleInterface, Status {
     
     // Libs
     using EnumerableSet for EnumerableSet.UintSet;
@@ -18,18 +19,8 @@ contract Automation is AutomationCompatibleInterface, State {
             // Get tokenId
             uint tokenId = loansTokenIds.at(i);
 
-            // Get state
-            (bool success, bytes memory data) = logicTargets[IBorrowing.status.selector].call(
-                abi.encodeCall(
-                    IBorrowing.status,
-                    (tokenId)
-                )
-            );
-            require(success, "couldn't get state");
-            Status status = abi.decode(data, (Status));
-
             // If loan is foreclosurable
-            if (status == Status.Foreclosurable) {
+            if (status(tokenId) == Status.Foreclosurable) {
                 
                 // Find highestActionableBidIdx
                 uint highestActionableBidIdx = findHighestActionableBidIdx(tokenId);
