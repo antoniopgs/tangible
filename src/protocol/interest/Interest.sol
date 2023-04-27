@@ -6,7 +6,7 @@ import "../state/state/State.sol";
 
 contract Interest is IInterest, State {
 
-    function calculatePeriodRate(UD60x18 /*utilization*/) external view returns (UD60x18) {
+    function calculatePeriodRate(UD60x18 utilization) public view returns (UD60x18) {
 
         // Return periodRate
         return periodRate;

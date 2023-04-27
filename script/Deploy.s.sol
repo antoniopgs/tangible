@@ -6,85 +6,91 @@ import "forge-std/Script.sol";
 import { console } from "forge-std/console.sol";
 
 // Contract Imports
-// import "../src/protocol/auctions/Auctions.sol"; // Note: v2
-// import "../src/protocol/automation/Automation.sol"; // Note: v2
+import "../src/protocol/auctions/Auctions.sol"; // Note: v2
+import "../src/protocol/automation/Automation.sol"; // Note: v2
 import "../src/protocol/borrowing/Borrowing.sol";
-import "../src/protocol/foreclosures/Foreclosures.sol";
 import "../src/protocol/interest/Interest.sol";
 import "../src/protocol/lending/Lending.sol";
-import "../src/protocol/protocol/Protocol.sol";
+import "../src/protocol/protocolProxy/ProtocolProxy.sol";
 
 // Token Imports
-// import "../src/tokens/TangibleNft.sol"; // Note: v2
+import "../src/tokens/TangibleNft.sol"; // Note: v2
 import "../src/tokens/tUsdc.sol";
 
 
 contract DeployScript is Script {
 
-    // Contracts
-    // Auctions auctions; // Note: v2
-    // Automation automation; // Note: v2
+    // Tokens
+    IERC20 USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet
+    tUsdc tUSDC;
+    TangibleNft nftContract;
+
+    // Protocol
+    address payable protocol;
+
+    // Logic Contracts
+    Auctions auctions;
+    // Automation automation;
     Borrowing borrowing;
-    Foreclosures foreclosures;
     Interest interest;
     Lending lending;
-    Protocol protocol;
 
-    // Tokens
-    // TangibleNft prosperaNftContract; // Note: v2
-    tUsdc tUSDC;
+    constructor() {
 
-    // Functions
-    function run() public {
+        // Fork (needed for tUSDC's ERC777 registration in the ERC1820 registry)
+        vm.createSelectFork("https://mainnet.infura.io/v3/f36750d69d314e3695b7fe230bb781af");
 
-        // Deploy Contracts
-        // auctions = new Auctions(); // Note: v2
-        // automation = new Automation(); // Note: v2
-        borrowing = new Borrowing();
-        foreclosures = new Foreclosures();
-        interest = new Interest();
-        lending = new Lending();
-        protocol = new Protocol();
+        // Deploy protocol
+        protocol = payable(new ProtocolProxy());
 
-        // Deploy Tokens
-        // prosperaNftContract = new TangibleNft(); // Note: v2
+        // Build tUsdcDefaultOperators;
         address[] memory tUsdcDefaultOperators = new address[](1);
         tUsdcDefaultOperators[0] = address(protocol);
-        console.log("tUsdcDefaultOperators[0]:", tUsdcDefaultOperators[0]);
-        console.log("tUsdcDefaultOperators.length:", tUsdcDefaultOperators.length);
+
+        // Deploy tUSDC
         tUSDC = new tUsdc(tUsdcDefaultOperators);
-        console.log(4);
 
-        // Set borrowingSigs
-        bytes4[] memory borrowingSigs = new bytes4[](4);
-        borrowingSigs[0] = IBorrowing.adminStartLoan.selector;
-        borrowingSigs[1] = IBorrowing.acceptBidStartLoan.selector;
-        borrowingSigs[2] = IBorrowing.payLoan.selector;
-        borrowingSigs[3] = IBorrowing.redeemLoan.selector;
-        protocol.setSigsTarget(borrowingSigs, address(borrowing));
+        // Deploy nftContract
+        nftContract = new TangibleNft(protocol);
 
-        console.log(5);
+        // Initialize protocol
+        ProtocolProxy(protocol).initialize(tUSDC, nftContract);
 
-        // Set foreclosureSigs
-        bytes4[] memory foreclosureSigs = new bytes4[](1);
-        foreclosureSigs[0] = IForeclosures.adminForeclose.selector;
-        protocol.setSigsTarget(foreclosureSigs, address(foreclosures));
+        // Deploy logic contracts
+        auctions = new Auctions();
+        // automation = new Automation();
+        borrowing = new Borrowing();
+        interest = new Interest();
+        lending = new Lending();
 
-        console.log(6);
+        // Set auctionSelectors
+        bytes4[] memory auctionSelectors = new bytes4[](3);
+        auctionSelectors[0] = IAuctions.bid.selector;
+        auctionSelectors[1] = IAuctions.cancelBid.selector;
+        auctionSelectors[2] = IAuctions.acceptBid.selector;
+        ProtocolProxy(protocol).setSelectorsTarget(auctionSelectors, address(auctions));
 
-        // Set interestSigs
-        bytes4[] memory interestSigs = new bytes4[](1);
-        interestSigs[0] = IInterest.calculatePeriodRate.selector;
-        protocol.setSigsTarget(interestSigs, address(interest));
+        // Set automationSelectors
 
-        console.log(7);
+        // Set borrowingSelectors
+        bytes4[] memory borrowingSelectors = new bytes4[](5);
+        borrowingSelectors[0] = IBorrowing.startLoan.selector;
+        borrowingSelectors[1] = IBorrowing.payLoan.selector;
+        borrowingSelectors[2] = IBorrowing.redeemLoan.selector;
+        borrowingSelectors[3] = IBorrowing.forecloseLoan.selector;
+        borrowingSelectors[4] = IBorrowing.utilization.selector;
+        ProtocolProxy(protocol).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
-        // Set lendingSigs
-        bytes4[] memory lendingSigs = new bytes4[](2);
-        lendingSigs[0] = ILending.deposit.selector;
-        lendingSigs[1] = ILending.withdraw.selector;
-        protocol.setSigsTarget(lendingSigs, address(lending));
+        // Set interestSelectors
+        bytes4[] memory interestSelectors = new bytes4[](1);
+        interestSelectors[0] = IInterest.calculatePeriodRate.selector;
+        ProtocolProxy(protocol).setSelectorsTarget(interestSelectors, address(interest));
 
-        console.log(8);
+        // Set lendingSelectors
+        bytes4[] memory lendingSelectors = new bytes4[](3);
+        lendingSelectors[0] = ILending.deposit.selector;
+        lendingSelectors[1] = ILending.withdraw.selector;
+        lendingSelectors[2] = Lending.usdcToTUsdc.selector;
+        ProtocolProxy(protocol).setSelectorsTarget(lendingSelectors, address(lending));
     }
 }

@@ -8,8 +8,11 @@ import "../../../tokens/tUsdc.sol";
 import "../../../tokens/TangibleNft.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-abstract contract State is IState, TargetManager {
+import { toUD60x18 } from "@prb/math/UD60x18.sol";
+
+abstract contract State is IState, TargetManager, Initializable {
 
     // Tokens
     IERC20 USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // ethereum
@@ -17,14 +20,14 @@ abstract contract State is IState, TargetManager {
     TangibleNft internal prosperaNftContract;
 
     // Main Storage
-    mapping(TokenId => Bid[]) bids;
-    mapping(TokenId => Loan) public loans;
+    mapping(TokenId => Bid[]) internal _bids;
+    mapping(TokenId => Loan) public _loans;
     EnumerableSet.UintSet internal loansTokenIds;
-    UD60x18 protocolMoney;
+    uint protocolMoney;
 
     // Pool vars
-    UD60x18 totalBorrowed;
-    UD60x18 totalDeposits;
+    uint public totalPrincipal;
+    uint public totalDeposits;
     UD60x18 public utilizationCap = toUD60x18(90).div(toUD60x18(100)); // 90%
 
     // Borrowing terms
@@ -53,30 +56,39 @@ abstract contract State is IState, TargetManager {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    function utilization() public view returns (UD60x18) {
-        return totalBorrowed.div(totalDeposits);
+    function initialize(tUsdc _tUSDC, TangibleNft _prosperaNftContract) external initializer { // Question: maybe move this elsewhere?
+        tUSDC = _tUSDC;
+        prosperaNftContract = _prosperaNftContract;
     }
 
     // function lenderApy() public view returns (UD60x18) {
     //     interestOwed.div(totalDeposits);
     // }
 
-    function state(Loan memory loan) internal view returns (State) {
+    function status(Loan memory loan) internal view returns (Status) {
         
         // If no borrower
         if (loan.borrower == address(0)) { // Note: acceptBid() must clear-out borrower & acceptLoanBid() must update borrower
-            return State.None;
+            return Status.None;
 
         // If borrower
         } else {
             
-            // If not defaulted // Note: payLoan() must clear-out borrower in finalPayment
-            if (!defaulted(loan)) {
-                return State.Mortgage;
+            // If default // Note: payLoan() must clear-out borrower in finalPayment
+            if (defaulted(loan)) {
+                
+                // Calculate timeSinceDefault
+                uint timeSinceDefault; /*= block.timestamp - defaultTime(loan);*/
 
-            // If defaulted
-            } else { // Note: foreclose() must clear-out borrower & loanForeclose() must update borrower
-                return State.Default;
+                if (timeSinceDefault <= redemptionWindow) {
+                    return Status.Default; // Note: foreclose() must clear-out borrower & loanForeclose() must update borrower
+                } else {
+                    return Status.Foreclosurable;
+                }
+
+            // If no default
+            } else {
+                return Status.Mortgage;
             }
         }
     }
@@ -95,5 +107,50 @@ abstract contract State is IState, TargetManager {
 
         // Remove tokenId from loansTokenIds
         loansTokenIds.remove(tokenId);
+    }
+
+    function bidActionable(Bid memory bid) public view returns(bool) {
+        return bid.propertyValue == bid.downPayment || loanBidActionable(bid);
+    }
+
+    function loanBidActionable(Bid memory _bid) public view returns(bool) {
+
+        // Calculate loanBid principal
+        uint principal = _bid.propertyValue - _bid.downPayment;
+
+        // Calculate loanBid ltv
+        UD60x18 ltv = toUD60x18(principal).div(toUD60x18(_bid.propertyValue));
+
+        // Return actionability
+        return ltv.lte(maxLtv) && availableLiquidity() >= principal;
+    }
+
+    function availableLiquidity() public view returns(uint) {
+        return totalDeposits - totalPrincipal;
+    }
+
+    // Views for Testing
+    function loansTokenIdsLength() external view returns (uint) {
+        return loansTokenIds.length();
+    }
+
+    function loansTokenIdsAt(uint idx) external view returns (uint tokenId) {
+        tokenId = loansTokenIds.at(idx);
+    }
+
+    function loans(uint tokenId) external view returns (Loan memory) {
+        return _loans[TokenId.wrap(tokenId)];
+    }
+
+    function bids(uint tokenId) external view returns (Bid[] memory) {
+        return _bids[TokenId.wrap(tokenId)];
+    }
+
+    function status(uint tokenId) external view returns (Status) {
+        return status(_loans[TokenId.wrap(tokenId)]);
+    }
+
+    function tokenIdBidsLength(uint tokenId) external view returns (uint) {
+        return _bids[TokenId.wrap(tokenId)].length;
     }
 }
