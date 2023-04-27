@@ -261,6 +261,11 @@ contract Borrowing is IBorrowing, State {
 
     // Views
     function utilization() public view returns (UD60x18) {
+
+        if (totalDeposits == 0) {
+            return toUD60x18(0);
+        }
+
         return toUD60x18(totalPrincipal).div(toUD60x18(totalDeposits));
     }
 }

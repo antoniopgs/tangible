@@ -481,11 +481,11 @@ contract ProtocolTest is Test, DeployScript {
 
         // Validate utilization
         console.log("v6");
-        // UD60x18 utilization = IBorrowing(protocol).utilization();
+        UD60x18 utilization = IBorrowing(protocol).utilization();
         console.log("v7");
-        // assert(utilization.gte(toUD60x18(0)) && utilization.lte(toUD60x18(1)));
+        assert(utilization.gte(toUD60x18(0)) && utilization.lte(toUD60x18(1)));
         console.log("v8");
-        // assert(State(protocol).totalPrincipal() <= State(protocol).totalDeposits());
+        assert(State(protocol).totalPrincipal() <= State(protocol).totalDeposits());
         console.log("v9");
     }
 }

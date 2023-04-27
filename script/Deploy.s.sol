@@ -73,11 +73,12 @@ contract DeployScript is Script {
         // Set automationSelectors
 
         // Set borrowingSelectors
-        bytes4[] memory borrowingSelectors = new bytes4[](4);
+        bytes4[] memory borrowingSelectors = new bytes4[](5);
         borrowingSelectors[0] = IBorrowing.startLoan.selector;
         borrowingSelectors[1] = IBorrowing.payLoan.selector;
         borrowingSelectors[2] = IBorrowing.redeemLoan.selector;
         borrowingSelectors[3] = IBorrowing.forecloseLoan.selector;
+        borrowingSelectors[4] = IBorrowing.utilization.selector;
         ProtocolProxy(protocol).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set interestSelectors
