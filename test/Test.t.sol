@@ -152,7 +152,7 @@ contract ProtocolTest is Test, DeployScript {
     }
 
     // Borrower Pre-Loan
-    function testBid(uint randomness) private {
+    function testBid(uint randomness) private validate {
 
         // Get bidder
         address bidder = makeAddr("bidder");
@@ -178,7 +178,7 @@ contract ProtocolTest is Test, DeployScript {
         IAuctions(protocol).bid(TokenId.wrap(tokenId), propertyValue, downPayment);
     }
 
-    function testCancelBid(uint randomness) private {
+    function testCancelBid(uint randomness) private validate {
 
         // Get totalSupply
         uint totalSupply = nftContract.totalSupply();
@@ -362,7 +362,7 @@ contract ProtocolTest is Test, DeployScript {
         // }
     }
 
-    function testRedeem(uint randomness) private {
+    function testRedeem(uint randomness) private validate {
 
         // if defaulted loans exist
         // get tokenId of defaulted loan
@@ -406,7 +406,7 @@ contract ProtocolTest is Test, DeployScript {
     }
 
     // Foreclosure
-    function testForeclose(uint randomness) private {
+    function testForeclose(uint randomness) private validate {
 
         // if foreclosurable loans exist
         // get tokenId of foreclosurable loan
