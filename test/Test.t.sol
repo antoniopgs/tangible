@@ -494,9 +494,9 @@ contract ProtocolTest is Test, DeployScript {
 
         // Validate lenderApy
         console.log("v4");
-        // UD60x18 lenderApy = IBorrowing(protocol).lenderApy();
+        UD60x18 lenderApy = IBorrowing(protocol).lenderApy();
         console.log("v5");
-        // assert(lenderApy.gte(toUD60x18(0)) /*&& lenderApy.lte(toUD60x18(1))*/); // Note: actually, lenderApy might be able to surpass 100%
+        assert(lenderApy.gte(toUD60x18(0)) /*&& lenderApy.lte(toUD60x18(1))*/); // Note: actually, lenderApy might be able to surpass 100%
 
         // Validate utilization
         console.log("v6");

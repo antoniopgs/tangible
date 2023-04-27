@@ -74,10 +74,6 @@ abstract contract State is IState, TargetManager, Initializable {
     }
 
     // ----- Views -----
-    // function lenderApy() public view returns (UD60x18) {
-    //     interestOwed.div(totalDeposits);
-    // }
-
     function availableLiquidity() public view returns(uint) {
         return totalDeposits - totalPrincipal;
     }
