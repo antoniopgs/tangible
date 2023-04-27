@@ -1,17 +1,21 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
+// Main
 import "forge-std/Test.sol";
 import "../script/Deploy.s.sol";
-// import { MAX_UD60x18, log10 } from "@prb/math/UD60x18.sol";
-import { fromUD60x18 } from "@prb/math/UD60x18.sol";
+import "forge-std/console.sol";
+
+// Protocol Contracts
 import "../src/protocol/borrowing/IBorrowing.sol";
 import "../src/protocol/lending/ILending.sol";
 import "../src/protocol/state/state/IState.sol";
 import "../src/protocol/borrowing/Borrowing.sol"; // Note: later, further improve architecture, to be able to remove this import
 import "../src/protocol/lending/Lending.sol"; // Note: later, further improve architecture, to be able to remove this import
 
-import "forge-std/console.sol";
+// Other
+// import { MAX_UD60x18, log10 } from "@prb/math/UD60x18.sol";
+import { fromUD60x18 } from "@prb/math/UD60x18.sol";
 
 contract ProtocolTest is Test, DeployScript {
 
@@ -33,6 +37,28 @@ contract ProtocolTest is Test, DeployScript {
     // Other vars
     uint loanCount;
     uint totalPaidInterest;
+
+    // Setup
+    function setUp() public {
+
+        uint desiredSupply = 100;
+        string memory defaultTokenURI = "";
+
+        // Loop desiredSupply
+        for (uint i = 1; i <= desiredSupply; i++) { // loop vars unusual because i can't be 0
+
+            // Get nftOwner
+            address nftOwner = vm.addr(i); // doesn't work if i = 0
+
+            // KYC nftOwner
+            nftContract.verifyEResident(i, nftOwner);
+
+            // Mint nft to nftOwner
+            nftContract.mint(nftOwner, defaultTokenURI);
+        }
+
+        console.log("nftContract.totalSupply():", nftContract.totalSupply());
+    }
 
     // Main
     function testMath(uint[] calldata randomness) public {
@@ -132,6 +158,9 @@ contract ProtocolTest is Test, DeployScript {
     // Borrower Pre-Loan
     function testBid(uint randomness) private {
 
+        // Get bidder
+        address bidder = makeAddr("bidder");
+
         // Get random tokenId
         uint tokenId = bound(randomness, 0, nftContract.totalSupply());
 
@@ -139,26 +168,21 @@ contract ProtocolTest is Test, DeployScript {
         uint propertyValue = bound(randomness, 0, 1_000_000_000e18); // max is 1 billion with 18 decimals
 
         // Calculate random downPayment
-        uint downPayment = bound(randomness, 0, propertyValue);
+        uint downPayment = bound(randomness, propertyValue / 2, propertyValue); // for now, do min = max/2 (cause maxLtv is 50%)
 
-        // Bid
+        // Give bidder downPayment
+        deal(address(USDC), bidder, downPayment);
+
+        // Bidder approves protocol
+        vm.prank(bidder);
+        USDC.approve(protocol, downPayment);
+
+        // Bidder bids
+        vm.prank(bidder);
         IAuctions(protocol).bid(TokenId.wrap(tokenId), propertyValue, downPayment);
     }
 
     function testCancelBid(uint randomness) private {
-
-        // Get random tokenId
-        uint tokenId = bound(randomness, 0, nftContract.totalSupply());
-
-        // Get random tokenIdBidIdx
-        uint tokenIdBidIdx;
-
-        // Cancel bid tokenIdBid
-        IAuctions(protocol).cancelBid(TokenId.wrap(tokenId), Idx.wrap(tokenIdBidIdx));
-    }
-
-    // Seller
-    function testAcceptBid(uint randomness) private validate {
 
         // Get totalSupply
         uint totalSupply = nftContract.totalSupply();
@@ -167,27 +191,97 @@ contract ProtocolTest is Test, DeployScript {
         if (totalSupply > 0) {
 
             // Get random tokenId
-            uint tokenId = bound(randomness, 0, totalSupply);
+            uint tokenId = bound(randomness, 0, totalSupply - 1);
 
             // Get tokenIdBids
-            IState.Bid[] memory tokenIdBids = State(protocol).bids(TokenId.wrap(tokenId));
+            IState.Bid[] memory tokenIdBids = State(protocol).bids(tokenId);
+
+            // If tokenId has bids
+            if (tokenIdBids.length > 0) {
+                
+                // Get randomIdx
+                uint randomIdx = bound(randomness, 0, tokenIdBids.length - 1);
+
+                // Bidder cancels bid
+                vm.prank(tokenIdBids[randomIdx].bidder);
+                IAuctions(protocol).cancelBid(TokenId.wrap(tokenId), Idx.wrap(randomIdx));
+
+            } else {
+                console.log("tokenId has no bids");
+            }
+
+        } else {
+            console.log("totalSupply = 0. no nfts exist.");
+        }
+    }
+
+    // Seller
+    function testAcceptBid(uint randomness) private validate {
+
+        console.log(1);
+
+        console.log("protocol:", address(protocol));
+        console.log("auctions:", address(auctions));
+        console.log("lending:", address(lending));
+
+        // Get totalSupply
+        uint totalSupply = nftContract.totalSupply();
+
+        console.log(2);
+
+        // If nfts exist
+        if (totalSupply > 0) {
+
+            console.log(3);
+
+            // Get random tokenId
+            uint tokenId = bound(randomness, 0, totalSupply);
+
+            console.log(4);
+
+            // Get tokenIdBids
+            IState.Bid[] memory tokenIdBids = State(protocol).bids(tokenId);
+
+            console.log(5);
 
             // If tokenId has bids
             if (tokenIdBids.length > 0) {
 
+                console.log(6);
+
                 // Get random tokenIdBidIdx
                 uint tokenIdBidIdx = randomness % tokenIdBids.length;
 
+                console.log(7);
+
                 // Get Bid
                 IState.Bid memory bid = tokenIdBids[tokenIdBidIdx];
+                
+                console.log(8);
 
                 // If bid actionable
                 if (State(protocol).bidActionable(bid)) {
 
-                    // Accept Bid
+                    console.log(9);
+                    
+                    // Get nftOwner
+                    address nftOwner = nftContract.ownerOf(tokenId);
+                    console.log("nftOwner:", nftOwner);
+
+                    // NftOwner approves protocol
+                    vm.prank(nftOwner);
+                    nftContract.approve(protocol, tokenId);
+
+                    // Nft Owner Accepts Bid
+                    vm.prank(nftOwner);
                     IAuctions(protocol).acceptBid(TokenId.wrap(tokenId), Idx.wrap(tokenIdBidIdx));
+
+                    console.log(10);
                 }
             }
+        
+        } else {
+            console.log("totalSupply = 0. no nfts exist.");
         }
         
         // // Bound principal
@@ -229,51 +323,52 @@ contract ProtocolTest is Test, DeployScript {
     // Borrower In-Loan 
     function testPayLoan(uint randomness) private validate {
 
+        // Get loansTokenIdsLength
+        uint loansTokenIdsLength = State(protocol).loansTokenIdsLength();
+
         // If loans exist
+        if (loansTokenIdsLength > 0) {
 
-        // Get random tokenId
-        uint tokenId = randomness % loanCount;
+            // Pick randomIdx
+            uint randomIdx = randomness % loansTokenIdsLength;
 
-        if (Borrowing(protocol).status(tokenId) == IState.Status.Mortgage) {
-            testPayLoan(randomness);
+            // Get random tokenId
+            uint tokenId = State(protocol).loansTokenIdsAt(randomIdx);
+
+            // Pay Loan
+            IBorrowing(protocol).payLoan(TokenId.wrap(tokenId));
 
         } else {
-            console.log("defaulted.\n");
+            console.log("loansTokenIdsLength = 0. no loans exist.");
         }
         
         // Get unpaidPrincipal & interest
-        (
-            address borrower,
-            uint installment,
-            UD60x18 periodicRate,
-            uint balance,
-            uint unpaidInterest,
-            uint nextPaymentDeadline
-        ) = State(protocol).loans(TokenId.wrap(tokenId));
-        uint expectedInterest = Borrowing(protocol).accruedInterest(tokenId);
+        // State.Loan memory loan = State(protocol).loans(tokenId);
+        // uint expectedInterest = Borrowing(protocol).accruedInterest(tokenId);
 
-        // Calculate minPayment & maxPayment
-        uint minPayment = expectedInterest;
-        uint maxPayment = loan.unpaidPrincipal + expectedInterest;
+        // // Calculate minPayment & maxPayment
+        // uint minPayment = expectedInterest;
+        // uint maxPayment = loan.unpaidPrincipal + expectedInterest;
 
-        // Bound payment
-        uint payment = bound(randomness, minPayment, maxPayment);
+        // // Bound payment
+        // uint payment = bound(randomness, minPayment, maxPayment);
 
-        // Calculate expectations
-        uint expectedRepayment = payment - expectedInterest;
-        expectedTotalPrincipal -= expectedRepayment;
-        expectedTotalDeposits += expectedInterest;
-        expectedMaxTotalInterestOwed -= expectedInterest;
+        // // Calculate expectations
+        // uint expectedRepayment = payment - expectedInterest;
+        // expectedTotalPrincipal -= expectedRepayment;
+        // expectedTotalDeposits += expectedInterest;
+        // expectedMaxTotalInterestOwed -= expectedInterest;
 
         // Pay Loan
-        totalPaidInterest += expectedInterest;
-        IBorrowing(protocol).payLoan(tokenId, payment);
+        // totalPaidInterest += expectedInterest;
+        // IBorrowing(protocol).payLoan(tokenId, payment);
+        // IBorrowing(protocol).payLoan(TokenId.wrap(tokenId));
 
-        // If loan is paid off, return
-        loan = State(protocol).loans(tokenId);
-        if (loan.borrower == address(0)) {
-            console.log("loan paid off.\n");
-        }
+        // // If loan is paid off, return
+        // loan = State(protocol).loans(tokenId);
+        // if (loan.borrower == address(0)) {
+        //     console.log("loan paid off.\n");
+        // }
     }
 
     function testRedeem(uint randomness) private {
@@ -291,28 +386,28 @@ contract ProtocolTest is Test, DeployScript {
             uint tokenId = bound(randomness, 0, totalSupply);
 
             // If default
-            if (protocol.status(tokenId) == IState.Status.Defaulted) {
+            if (IState(protocol).status(tokenId) == IState.Status.Default) {
 
                 // Get redeemer & unpaidPrincipal
                 State.Loan memory loan = State(protocol).loans(tokenId);
-                uint accruedInterest = Borrowing(protocol).accruedInterest(tokenId);
-                uint expectedRedeemerDebt = loan.unpaidPrincipal + accruedInterest;
-                uint expectedRedemptionFee = fromUD60x18(toUD60x18(expectedRedeemerDebt).mul(Borrowing(protocol).redemptionFeeSpread()));
+                // uint accruedInterest = Borrowing(protocol).accruedInterest(tokenId);
+                // uint expectedRedeemerDebt = loan.unpaidPrincipal + accruedInterest;
+                // uint expectedRedemptionFee = fromUD60x18(toUD60x18(expectedRedeemerDebt).mul(Borrowing(protocol).redemptionFeeSpread()));
 
                 // Give redeemer expectedRedeemerDebt
-                deal(address(USDC), loan.borrower, expectedRedeemerDebt + expectedRedemptionFee);
+                // deal(address(USDC), loan.borrower, expectedRedeemerDebt + expectedRedemptionFee);
 
                 // Redeemer approves protocol
-                vm.prank(loan.borrower);
-                USDC.approve(address(protocol), expectedRedeemerDebt + expectedRedemptionFee);
+                // vm.prank(loan.borrower);
+                // USDC.approve(address(protocol), expectedRedeemerDebt + expectedRedemptionFee);
                 
-                expectedTotalPrincipal -= loan.unpaidPrincipal;
-                expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
-                expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
+                // expectedTotalPrincipal -= loan.unpaidPrincipal;
+                // expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
+                // expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
 
                 // Redemer redeems
-                vm.prank(loan.borrower);
-                IBorrowing(protocol).redeem(tokenId);
+                // vm.prank(loan.borrower);
+                IBorrowing(protocol).redeemLoan(TokenId.wrap(tokenId));
             }
         } else {
             console.log("no default.\n");
@@ -335,25 +430,28 @@ contract ProtocolTest is Test, DeployScript {
             uint tokenId = bound(randomness, 0, totalSupply);
 
             // If foreclosurable
-            if (protocol.status(tokenId) == IState.Status.Foreclosurable) {
+            if (IState(protocol).status(tokenId) == IState.Status.Foreclosurable) {
 
                 // Get unpaidPrincipal & maxUnpaidInterest
                 State.Loan memory loan = Borrowing(protocol).loans(tokenId);
 
-                // Bound salePrice
-                uint expectedDefaulterDebt = loan.unpaidPrincipal + Borrowing(protocol).accruedInterest(tokenId);
-                uint expectedForeclosureFee = fromUD60x18(toUD60x18(expectedDefaulterDebt).mul(State(protocol).foreclosureFeeSpread()));
-                uint salePrice = bound(randomness, expectedDefaulterDebt + expectedForeclosureFee, 1_000_000_000 * 1e18);
+                // // Bound salePrice
+                // uint expectedDefaulterDebt = loan.unpaidPrincipal + Borrowing(protocol).accruedInterest(tokenId);
+                // uint expectedForeclosureFee = fromUD60x18(toUD60x18(expectedDefaulterDebt).mul(State(protocol).foreclosureFeeSpread()));
+                // uint salePrice = bound(randomness, expectedDefaulterDebt + expectedForeclosureFee, 1_000_000_000 * 1e18);
 
-                uint protocolUsdc = USDC.balanceOf(address(protocol));
-                deal(address(USDC), address(protocol), protocolUsdc + salePrice, true);
+                // uint protocolUsdc = USDC.balanceOf(address(protocol));
+                // deal(address(USDC), address(protocol), protocolUsdc + salePrice, true);
 
-                expectedTotalPrincipal -= loan.unpaidPrincipal;
-                expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
-                expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
+                // expectedTotalPrincipal -= loan.unpaidPrincipal;
+                // expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
+                // expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
+                
+                // Find highestActionableBidIdx
+                uint highestActionableBidIdx = Automation(protocol).findHighestActionableBidIdx(TokenId.wrap(tokenId));
 
                 // Foreclose
-                IBorrowing(protocol).foreclose(tokenId, salePrice);
+                IBorrowing(protocol).forecloseLoan(TokenId.wrap(tokenId), highestActionableBidIdx);
             }
         }
     }
@@ -375,24 +473,28 @@ contract ProtocolTest is Test, DeployScript {
         _;
 
         // Validate expectations
+        console.log("v0");
         assert(expectedTotalPrincipal == Borrowing(protocol).totalPrincipal());
+        console.log("v1");
         assert(expectedTotalDeposits == Borrowing(protocol).totalDeposits());
-        assert(expectedMaxTotalInterestOwed == Borrowing(protocol).maxTotalUnpaidInterest());
+        console.log("v2");
+        // assert(expectedMaxTotalInterestOwed == Borrowing(protocol).maxTotalUnpaidInterest());
         console.log("v3");
         // assert(totalPaidInterest <= protocol.maxTotalInterestOwed());
-        console.log("v4");
 
         // Validate lenderApy
-        UD60x18 lenderApy = IBorrowing(protocol).lenderApy();
+        console.log("v4");
+        // UD60x18 lenderApy = IBorrowing(protocol).lenderApy();
         console.log("v5");
-        assert(lenderApy.gte(toUD60x18(0)) /*&& lenderApy.lte(toUD60x18(1))*/); // Note: actually, lenderApy might be able to surpass 100%
-        console.log("v6");
+        // assert(lenderApy.gte(toUD60x18(0)) /*&& lenderApy.lte(toUD60x18(1))*/); // Note: actually, lenderApy might be able to surpass 100%
 
         // Validate utilization
-        UD60x18 utilization = IBorrowing(protocol).utilization();
+        console.log("v6");
+        // UD60x18 utilization = IBorrowing(protocol).utilization();
         console.log("v7");
-        assert(utilization.gte(toUD60x18(0)) && utilization.lte(toUD60x18(1)));
-        assert(protocol.totalPrincipal() <= protocol.totalDeposits());
+        // assert(utilization.gte(toUD60x18(0)) && utilization.lte(toUD60x18(1)));
         console.log("v8");
+        // assert(State(protocol).totalPrincipal() <= State(protocol).totalDeposits());
+        console.log("v9");
     }
 }

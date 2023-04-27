@@ -14,12 +14,13 @@ contract TangibleNft is ERC721URIStorage, ERC721Enumerable, Ownable {
 
     // Other Vars
     Counters.Counter private _tokenIds;
+    address protocol;
 
     // Libs
     using Counters for Counters.Counter;
 
-    constructor() ERC721("Prospera Real Estate Token", "PROSPERA") {
-
+    constructor(address _protocol) ERC721("Prospera Real Estate Token", "PROSPERA") {
+        protocol = _protocol;
     }
 
     function mint(address to, string memory _tokenURI) external onlyOwner returns (uint newTokenId) {
@@ -30,7 +31,7 @@ contract TangibleNft is ERC721URIStorage, ERC721Enumerable, Ownable {
     }
 
     function _beforeTokenTransfer(address from, address to, uint256, /* firstTokenId */ uint256 batchSize) internal override(ERC721, ERC721Enumerable) {
-        require(isEResident(to), "receiver not eResident");
+        require(isEResident(to) || to == protocol, "receiver not eResident or protocol");
         super._beforeTokenTransfer(from, to, 0, batchSize); // is it fine to pass 0 here?
     }
 
@@ -38,11 +39,11 @@ contract TangibleNft is ERC721URIStorage, ERC721Enumerable, Ownable {
         require(eResidents.length == addrs.length, "unequal array param lengths");
         
         for (uint i = 0; i < eResidents.length; i++) {
-            _verifyEResident(eResidents[i], addrs[i]);
+            verifyEResident(eResidents[i], addrs[i]);
         }
     }
 
-    function _verifyEResident(uint eResident, address addr) private {
+    function verifyEResident(uint eResident, address addr) public {
         require(!isEResident(addr), "address already associated to an eResident");
         require(eResidentToAddress[eResident] == address(0), "eResident already associated to an address");
         addressToEResident[addr] = eResident;

@@ -9,7 +9,7 @@ interface IBorrowing {
     function startLoan(TokenId tokenId, uint propertyValue, uint downPayment, address borrower) external;
     function payLoan(TokenId tokenId) external;
     function redeemLoan(TokenId tokenId) external;
-    function forecloseLoan(TokenId tokenId, uint salePrice) external;
+    function forecloseLoan(TokenId tokenId, uint bidIdx) external;
 
     // Views
     function utilization() external view returns (UD60x18);

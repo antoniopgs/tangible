@@ -19,7 +19,7 @@ contract Automation is AutomationCompatibleInterface, State {
             TokenId tokenId = TokenId.wrap(loansTokenIds.at(i));
 
             // Get loan 
-            Loan memory loan = loans[tokenId];
+            Loan memory loan = _loans[tokenId];
 
             // If loan is foreclosurable
             if (status(loan) == Status.Foreclosurable) {
@@ -53,10 +53,10 @@ contract Automation is AutomationCompatibleInterface, State {
     }
 
     // Views
-    function findHighestActionableBidIdx(TokenId tokenId) private view returns (uint highestActionableIdx) {
+    function findHighestActionableBidIdx(TokenId tokenId) /*private*/ public view returns (uint highestActionableIdx) { // Note: made public for testing
 
         // Get propertyBids
-        Bid[] memory propertyBids = bids[tokenId];
+        Bid[] memory propertyBids = _bids[tokenId];
 
         // Loop propertyBids
         for (uint i = 0; i < propertyBids.length; i++) {

@@ -20,8 +20,8 @@ abstract contract State is IState, TargetManager, Initializable {
     TangibleNft internal prosperaNftContract;
 
     // Main Storage
-    mapping(TokenId => Bid[]) public bids;
-    mapping(TokenId => Loan) public loans;
+    mapping(TokenId => Bid[]) internal _bids;
+    mapping(TokenId => Loan) public _loans;
     EnumerableSet.UintSet internal loansTokenIds;
     uint protocolMoney;
 
@@ -56,17 +56,14 @@ abstract contract State is IState, TargetManager, Initializable {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    function initialize(tUsdc _tUSDC) external initializer { // Question: maybe move this elsewhere?
+    function initialize(tUsdc _tUSDC, TangibleNft _prosperaNftContract) external initializer { // Question: maybe move this elsewhere?
         tUSDC = _tUSDC;
+        prosperaNftContract = _prosperaNftContract;
     }
 
     // function lenderApy() public view returns (UD60x18) {
     //     interestOwed.div(totalDeposits);
     // }
-
-    function status(uint tokenId) external view returns (Status) { // Note: for testing
-        return status(loans[TokenId.wrap(tokenId)]);
-    }
 
     function status(Loan memory loan) internal view returns (Status) {
         
@@ -132,12 +129,28 @@ abstract contract State is IState, TargetManager, Initializable {
         return totalDeposits - totalPrincipal;
     }
 
-    // // Views for Testing
-    // function loansTokenIdsLength() external view returns (uint) {
-    //     return loansTokenIds.length();
-    // }
+    // Views for Testing
+    function loansTokenIdsLength() external view returns (uint) {
+        return loansTokenIds.length();
+    }
 
-    // function loansTokenIdsAt(uint idx) external view returns (uint tokenId) {
-    //     tokenId = loansTokenIds.at(idx);
-    // }
+    function loansTokenIdsAt(uint idx) external view returns (uint tokenId) {
+        tokenId = loansTokenIds.at(idx);
+    }
+
+    function loans(uint tokenId) external view returns (Loan memory) {
+        return _loans[TokenId.wrap(tokenId)];
+    }
+
+    function bids(uint tokenId) external view returns (Bid[] memory) {
+        return _bids[TokenId.wrap(tokenId)];
+    }
+
+    function status(uint tokenId) external view returns (Status) {
+        return status(_loans[TokenId.wrap(tokenId)]);
+    }
+
+    function tokenIdBidsLength(uint tokenId) external view returns (uint) {
+        return _bids[TokenId.wrap(tokenId)].length;
+    }
 }

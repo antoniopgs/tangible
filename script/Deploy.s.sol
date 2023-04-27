@@ -28,6 +28,13 @@ contract DeployScript is Script {
     // Protocol
     address payable protocol;
 
+    // Logic Contracts
+    Auctions auctions;
+    // Automation automation;
+    Borrowing borrowing;
+    // Interest interest;
+    Lending lending;
+
     constructor() {
 
         // Fork (needed for tUSDC's ERC777 registration in the ERC1820 registry)
@@ -43,18 +50,18 @@ contract DeployScript is Script {
         // Deploy tUSDC
         tUSDC = new tUsdc(tUsdcDefaultOperators);
 
-        // Initialize protocol
-        ProtocolProxy(protocol).initialize(tUSDC);
-
         // Deploy nftContract
-        nftContract = new TangibleNft();
+        nftContract = new TangibleNft(protocol);
+
+        // Initialize protocol
+        ProtocolProxy(protocol).initialize(tUSDC, nftContract);
 
         // Deploy logic contracts
-        Auctions auctions = new Auctions();
-        // Automation automation = new Automation();
-        Borrowing borrowing = new Borrowing();
-        // Interest interest = new Interest();
-        Lending lending = new Lending();
+        auctions = new Auctions();
+        // automation = new Automation();
+        borrowing = new Borrowing();
+        // interest = new Interest();
+        lending = new Lending();
 
         // Set auctionSelectors
         bytes4[] memory auctionSelectors = new bytes4[](3);

@@ -5,8 +5,9 @@ import "./IAuctions.sol";
 import "../state/state/State.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../borrowing/IBorrowing.sol";
-
 import { fromUD60x18 } from "@prb/math/UD60x18.sol";
+
+import "forge-std/console.sol";
 
 contract Auctions is IAuctions, State {
 
@@ -27,7 +28,7 @@ contract Auctions is IAuctions, State {
         USDC.safeTransferFrom(msg.sender, address(this), downPayment);
 
         // Add bid to tokenId bids
-        bids[tokenId].push(
+        _bids[tokenId].push(
             Bid({
                 bidder: msg.sender,
                 propertyValue: propertyValue,
@@ -41,7 +42,7 @@ contract Auctions is IAuctions, State {
         // Todo: Ensure tokenId exists?
 
         // Get propertyBids
-        Bid[] storage propertyBids = bids[tokenId];
+        Bid[] storage propertyBids = _bids[tokenId];
 
         // Get bidToRemove
         Bid memory bidToRemove = propertyBids[Idx.unwrap(bidIdx)];
@@ -59,42 +60,72 @@ contract Auctions is IAuctions, State {
         propertyBids.pop();
 
         // Send bidToRemove's downPayment from protocol to bidder
-        USDC.safeTransferFrom(address(this), bidToRemove.bidder, bidToRemove.downPayment);
+        USDC.safeTransfer(bidToRemove.bidder, bidToRemove.downPayment);
     }
 
     function acceptBid(TokenId tokenId, Idx bidIdx) external {
 
+        console.log("a1");
+        console.log("prosperaNftContract.totalSupply():", prosperaNftContract.totalSupply());
+        console.log("TokenId.unwrap(tokenId):", TokenId.unwrap(tokenId));
+
         // Get nftOwner
         address nftOwner = prosperaNftContract.ownerOf(TokenId.unwrap(tokenId));
+
+        console.log("a2");
 
         // Ensure caller is nft owner
         require(msg.sender == nftOwner, "only nft owner can accept bids");
 
+        console.log("a3");
+
         // Get bid
-        Bid memory _bid = bids[tokenId][Idx.unwrap(bidIdx)];
+        Bid memory _bid = _bids[tokenId][Idx.unwrap(bidIdx)];
+
+        console.log("a4");
 
         // Todo: if State == Null vs if State == Mortgage
 
         // Calculate saleFee
         uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(saleFeeRatio));
 
+        console.log("a5");
+
         // Add saleFee to protocolMoney
         protocolMoney += saleFee;
 
+        console.log("a6");
+
         // Send (bid.propertyValue - saleFee) to nftOwner
-        USDC.safeTransferFrom(address(this), nftOwner, _bid.propertyValue - saleFee);
+        USDC.safeTransfer(nftOwner, _bid.propertyValue - saleFee);
+
+        console.log("a7");
 
         // If regular bid
         if (_bid.downPayment == _bid.propertyValue) {
 
-            // Send NFT from protocol to bidder
-            prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, TokenId.unwrap(tokenId)); // Note: NFT COMES LATER
+            console.log("a8");
+
+            // Send NFT from nftOwner to bidder
+            prosperaNftContract.safeTransferFrom(nftOwner, _bid.bidder, TokenId.unwrap(tokenId));
+
+            console.log("a9");
         
         // If loan bid
         } else {
 
+            console.log("a10");
+
             // Ensure loan bid is actionable
             require(loanBidActionable(_bid), "loanBid not actionable");
+
+            console.log("a11");
+
+            // Pull NFT from nftOwner to protocol
+            prosperaNftContract.safeTransferFrom(nftOwner, address(this), TokenId.unwrap(tokenId));
+
+            console.log("a12");
+            console.log("prosperaNftContract.ownerOf(TokenId.unwrap(tokenId)):", prosperaNftContract.ownerOf(TokenId.unwrap(tokenId)));
 
             // Start Loan (via delegate call)
             (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
@@ -104,6 +135,8 @@ contract Auctions is IAuctions, State {
                 )
             );
             require(success, "acceptBidStartLoan delegateCall failed");
+
+            console.log("a13");
         }
     }
 }

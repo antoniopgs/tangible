@@ -6,6 +6,8 @@ import "../state/state/State.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interest/IInterest.sol";
 
+import "forge-std/console.sol";
+
 contract Borrowing is IBorrowing, State {
 
     // Libs
@@ -14,10 +16,14 @@ contract Borrowing is IBorrowing, State {
 
     // Functions
     function startLoan(TokenId tokenId, uint propertyValue, uint downPayment, address borrower) external {
+        console.log("s1");
+        console.log("msg.sender:", msg.sender);
+        console.log("address(this):", address(this));
         require(msg.sender == address(this), "unauthorized"); // Note: msg.sender must be address(this) because this will be called via delegatecall
+        console.log("s2");
 
         // Get Loan
-        Loan storage loan = loans[tokenId];
+        Loan storage loan = _loans[tokenId];
 
         // Ensure property has no associated loan
         require(status(loan) == Status.None, "property already has associated loan");
@@ -54,7 +60,7 @@ contract Borrowing is IBorrowing, State {
         uint totalLoanCost = installment * installmentCount;
 
         // Store Loan
-        loans[tokenId] = Loan({
+        _loans[tokenId] = Loan({
             borrower: borrower,
             balance: principal,
             periodicRate: periodRate,
@@ -73,7 +79,7 @@ contract Borrowing is IBorrowing, State {
     function payLoan(TokenId tokenId) external {
 
         // Load loan
-        Loan storage loan = loans[tokenId];
+        Loan storage loan = _loans[tokenId];
 
         // Ensure caller is borrower
         require(msg.sender == loan.borrower, "only borrower can pay his loan");
@@ -128,7 +134,7 @@ contract Borrowing is IBorrowing, State {
     function redeemLoan(TokenId tokenId) external {
         
         // Get loan
-        Loan storage loan = loans[tokenId];
+        Loan storage loan = _loans[tokenId];
 
         // Ensure caller is borrower
         require(msg.sender == loan.borrower, "only borrower can pay his loan");
@@ -159,13 +165,13 @@ contract Borrowing is IBorrowing, State {
     function forecloseLoan(TokenId tokenId, uint bidIdx) external { // Note: bidders can call this with idx of their bid. shoudn't be a problem
 
         // Get Loan
-        Loan storage loan = loans[tokenId];
+        Loan storage loan = _loans[tokenId];
 
         // Ensure borrower has defaulted
         require(status(loan) == Status.Foreclosurable, "no default");
 
         // Get Bid
-        Bid memory bid = bids[tokenId][bidIdx];
+        Bid memory bid = _bids[tokenId][bidIdx];
 
         // Calculate defaulterDebt
         uint defaulterDebt = loan.balance + loan.unpaidInterest; // Todo: fix defaulterDebt (and in other places too)

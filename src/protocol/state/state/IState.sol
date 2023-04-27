@@ -29,5 +29,6 @@ interface IState {
 
     // Views
     function status(uint tokenId) external view returns (Status); // Note: for testing
+    function bids(uint tokenId) external view returns (Bid[] memory); // Note: for testing
     function availableLiquidity() external view returns(uint);
 }
