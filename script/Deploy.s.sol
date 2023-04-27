@@ -32,7 +32,7 @@ contract DeployScript is Script {
     Auctions auctions;
     // Automation automation;
     Borrowing borrowing;
-    // Interest interest;
+    Interest interest;
     Lending lending;
 
     constructor() {
@@ -60,7 +60,7 @@ contract DeployScript is Script {
         auctions = new Auctions();
         // automation = new Automation();
         borrowing = new Borrowing();
-        // interest = new Interest();
+        interest = new Interest();
         lending = new Lending();
 
         // Set auctionSelectors
@@ -81,6 +81,9 @@ contract DeployScript is Script {
         ProtocolProxy(protocol).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set interestSelectors
+        bytes4[] memory interestSelectors = new bytes4[](1);
+        interestSelectors[0] = IInterest.calculatePeriodRate.selector;
+        ProtocolProxy(protocol).setSelectorsTarget(interestSelectors, address(interest));
 
         // Set lendingSelectors
         bytes4[] memory lendingSelectors = new bytes4[](3);

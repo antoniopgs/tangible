@@ -57,7 +57,7 @@ contract Borrowing is IBorrowing, State {
         console.log("s9");
 
         // Calculate & decode periodRate
-        (bool success, bytes memory data) = logicTargets[IInterest.calculatePeriodRate.selector].delegatecall(
+        (bool success, bytes memory data) = logicTargets[IInterest.calculatePeriodRate.selector].call(
             abi.encodeCall(
                 IInterest.calculatePeriodRate,
                 (utilization())
@@ -77,6 +77,8 @@ contract Borrowing is IBorrowing, State {
         uint totalLoanCost = installment * installmentCount;
 
         console.log("s12");
+        console.log("totalLoanCost:", totalLoanCost);
+        console.log("principal:", principal);
 
         // Store Loan
         _loans[tokenId] = Loan({
