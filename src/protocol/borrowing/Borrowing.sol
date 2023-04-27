@@ -69,19 +69,20 @@ contract Borrowing is IBorrowing, State {
         console.log("s10");
 
         // Calculate installment
+        console.log("UD60x18.unwrap(periodRate):", UD60x18.unwrap(periodRate));
+        console.log("principal:", principal);
         uint installment = calculateInstallment(periodRate, principal);
+        console.log("installment:", installment);
         assert(installment > 0);
 
         console.log("s11");
 
         // Calculate totalLoanCost
+        console.log("installmentCount:", installmentCount);
         uint totalLoanCost = installment * installmentCount;
+        console.log("totalLoanCost:", totalLoanCost);
 
         console.log("s12");
-        console.log("principal:", principal);
-        console.log("installment:", installment);
-        console.log("installmentCount:", installmentCount);
-        console.log("totalLoanCost:", totalLoanCost);
         assert(totalLoanCost > principal);
 
         // Store Loan

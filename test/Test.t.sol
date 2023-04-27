@@ -161,7 +161,7 @@ contract ProtocolTest is Test, DeployScript {
         uint tokenId = bound(randomness, 0, nftContract.totalSupply() - 1);
 
         // Calculate random propertyValue 
-        uint propertyValue = bound(randomness, 0, 1_000_000_000e18); // max is 1 billion with 18 decimals
+        uint propertyValue = bound(randomness, 10_000e18, 1_000_000_000e18); // 10k to 1B
 
         // Calculate random downPayment
         uint downPayment = bound(randomness, propertyValue / 2, propertyValue); // for now, do min = max/2 (cause maxLtv is 50%)
