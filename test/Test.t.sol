@@ -10,7 +10,8 @@ import "forge-std/console.sol";
 import "../src/protocol/borrowing/borrowing/IBorrowing.sol";
 import "../src/protocol/lending/ILending.sol";
 import "../src/protocol/state/state/IState.sol";
-import "../src/protocol/borrowing/borrowing/Borrowing.sol"; // Note: later, further improve architecture, to be able to remove this import
+// import "../src/protocol/borrowing/borrowing/Borrowing.sol"; // Note: later, further improve architecture, to be able to remove this import
+import "../src/protocol/borrowing/automation/Automation.sol"; // Note: later, further improve architecture, to be able to remove this import
 import "../src/protocol/lending/Lending.sol"; // Note: later, further improve architecture, to be able to remove this import
 
 // Other
@@ -383,7 +384,7 @@ contract ProtocolTest is Test, DeployScript {
             uint tokenId = bound(randomness, 0, totalSupply - 1);
 
             // If default
-            if (IBorrowing(protocol).status(tokenId) == IState.Status.Default) {
+            if (Automation(protocol).status(tokenId) == IState.Status.Default) {
 
                 // Get redeemer & unpaidPrincipal
                 // State.Loan memory loan = State(protocol).loans(tokenId);
@@ -427,7 +428,7 @@ contract ProtocolTest is Test, DeployScript {
             uint tokenId = bound(randomness, 0, totalSupply - 1);
 
             // If foreclosurable
-            if (IBorrowing(protocol).status(tokenId) == IState.Status.Foreclosurable) {
+            if (Automation(protocol).status(tokenId) == IState.Status.Foreclosurable) {
 
                 // Get unpaidPrincipal & maxUnpaidInterest
                 // State.Loan memory loan = Borrowing(protocol).loans(tokenId);

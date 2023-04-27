@@ -7,8 +7,8 @@ import { console } from "forge-std/console.sol";
 
 // Contract Imports
 import "../src/protocol/auctions/Auctions.sol"; // Note: v2
-// import "../src/protocol/automation/Automation.sol"; // Note: v2
-import "../src/protocol/borrowing/borrowing/Borrowing.sol";
+import "../src/protocol/borrowing/automation/Automation.sol"; // Note: v2
+// import "../src/protocol/borrowing/borrowing/Borrowing.sol";
 import "../src/protocol/interest/Interest.sol";
 import "../src/protocol/lending/Lending.sol";
 import "../src/protocol/protocolProxy/ProtocolProxy.sol";
@@ -30,7 +30,8 @@ contract DeployScript is Script {
 
     // Logic Contracts
     Auctions auctions;
-    Borrowing borrowing;
+    Automation automation;
+    // Borrowing borrowing;
     Interest interest;
     Lending lending;
 
@@ -57,8 +58,8 @@ contract DeployScript is Script {
 
         // Deploy logic contracts
         auctions = new Auctions();
-        // automation = new Automation();
-        borrowing = new Borrowing();
+        automation = new Automation();
+        // borrowing = new Borrowing();
         interest = new Interest();
         lending = new Lending();
 
@@ -69,14 +70,23 @@ contract DeployScript is Script {
         auctionSelectors[2] = IAuctions.acceptBid.selector;
         ProtocolProxy(protocol).setSelectorsTarget(auctionSelectors, address(auctions));
 
+        // Set automationSelectors
+        bytes4[] memory automationSelectors = new bytes4[](5);
+        automationSelectors[0] = IBorrowing.startLoan.selector;
+        automationSelectors[1] = IBorrowing.payLoan.selector;
+        automationSelectors[2] = IBorrowing.redeemLoan.selector;
+        automationSelectors[3] = IBorrowing.forecloseLoan.selector;
+        automationSelectors[4] = IBorrowing.utilization.selector;
+        ProtocolProxy(protocol).setSelectorsTarget(automationSelectors, address(automation));
+
         // Set borrowingSelectors
-        bytes4[] memory borrowingSelectors = new bytes4[](5);
-        borrowingSelectors[0] = IBorrowing.startLoan.selector;
-        borrowingSelectors[1] = IBorrowing.payLoan.selector;
-        borrowingSelectors[2] = IBorrowing.redeemLoan.selector;
-        borrowingSelectors[3] = IBorrowing.forecloseLoan.selector;
-        borrowingSelectors[4] = IBorrowing.utilization.selector;
-        ProtocolProxy(protocol).setSelectorsTarget(borrowingSelectors, address(borrowing));
+        // bytes4[] memory borrowingSelectors = new bytes4[](5);
+        // borrowingSelectors[0] = IBorrowing.startLoan.selector;
+        // borrowingSelectors[1] = IBorrowing.payLoan.selector;
+        // borrowingSelectors[2] = IBorrowing.redeemLoan.selector;
+        // borrowingSelectors[3] = IBorrowing.forecloseLoan.selector;
+        // borrowingSelectors[4] = IBorrowing.utilization.selector;
+        // ProtocolProxy(protocol).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set interestSelectors
         bytes4[] memory interestSelectors = new bytes4[](1);

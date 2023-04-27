@@ -2,11 +2,11 @@
 pragma solidity ^0.8.15;
 
 import "./IBorrowing.sol";
-import "../automation/Automation.sol";
+import "../status/Status.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../interest/IInterest.sol";
 
-contract Borrowing is IBorrowing, Automation {
+abstract contract Borrowing is IBorrowing, Status {
 
     // Libs
     using SafeERC20 for IERC20;
@@ -147,7 +147,7 @@ contract Borrowing is IBorrowing, Automation {
         loan.borrower = address(0);
     }
 
-    function forecloseLoan(uint tokenId, uint bidIdx) external { // Note: bidders can call this with idx of their bid. shoudn't be a problem
+    function forecloseLoan(uint tokenId, uint bidIdx) public { // Note: bidders can call this with idx of their bid. shoudn't be a problem
         require(status(tokenId) == Status.Foreclosurable, "nft not foreclosurable");
 
         // Todo: Pull salePrice?

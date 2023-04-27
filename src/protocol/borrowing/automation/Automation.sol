@@ -2,11 +2,11 @@
 pragma solidity ^0.8.15;
 
 import "@chainlink/contracts/AutomationCompatible.sol"; // Note: imports from ./AutomationBase.sol & ./interfaces/AutomationCompatibleInterface.sol
-import "../status/Status.sol";
+import "../borrowing/Borrowing.sol";
 import { SD59x18, toSD59x18 } from "@prb/math/SD59x18.sol";
 import { fromUD60x18 } from "@prb/math/UD60x18.sol";
 
-abstract contract Automation is AutomationCompatibleInterface, Status {
+contract Automation is AutomationCompatibleInterface, Borrowing {
     
     // Libs
     using EnumerableSet for EnumerableSet.UintSet;
@@ -41,13 +41,7 @@ abstract contract Automation is AutomationCompatibleInterface, Status {
         (uint tokenId, uint highestActionableBidIdx) = abi.decode(performData, (uint, uint));
 
         // Foreclose (via delegatecall)
-        (bool success, ) = logicTargets[IBorrowing.forecloseLoan.selector].delegatecall(
-            abi.encodeCall(
-                IBorrowing.forecloseLoan,
-                (tokenId, highestActionableBidIdx)
-            )
-        );
-        require(success, "chainlinkForeclose delegateCall failed");
+        forecloseLoan(tokenId, highestActionableBidIdx);
     }
 
     // Views
