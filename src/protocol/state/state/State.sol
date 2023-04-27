@@ -36,9 +36,10 @@ abstract contract State is IState, TargetManager, Initializable {
     UD60x18 internal m2 = toUD60x18(9); // Note: 9
 
     // Fees/Spreads
-    UD60x18 internal _payLoanFeeSpread = toUD60x18(1).div(toUD60x18(100)); // Note: 1%
-    UD60x18 internal _redemptionFeeSpread = toUD60x18(2).div(toUD60x18(100)); // Note: 2%
-    UD60x18 internal _foreclosureFeeSpread = toUD60x18(3).div(toUD60x18(100)); // Note: 3%
+    UD60x18 internal _saleFeeSpread = toUD60x18(1).div(toUD60x18(100)); // Note: 1%
+    UD60x18 internal _payLoanFeeSpread = toUD60x18(2).div(toUD60x18(100)); // Note: 2%
+    UD60x18 internal _redemptionFeeSpread = toUD60x18(3).div(toUD60x18(100)); // Note: 3%
+    UD60x18 internal _foreclosureFeeSpread = toUD60x18(4).div(toUD60x18(100)); // Note: 4%
 
     // Main Storage
     mapping(TokenId => Bid[]) internal _bids;
@@ -49,6 +50,7 @@ abstract contract State is IState, TargetManager, Initializable {
     // Other vars
     uint internal redemptionWindow = 45 days;
     UD60x18 public maxLtv = toUD60x18(50).div(toUD60x18(100)); // Note: 50%
+    uint public maxDurationMonthsCap = 120;
 
     // Libs
     using SafeERC20 for IERC20;
@@ -57,42 +59,6 @@ abstract contract State is IState, TargetManager, Initializable {
     function initialize(tUsdc _tUSDC, TangibleNft _prosperaNftContract) external initializer { // Question: maybe move this elsewhere?
         tUSDC = _tUSDC;
         prosperaNftContract = _prosperaNftContract;
-    }
-
-    // function lenderApy() public view returns (UD60x18) {
-    //     interestOwed.div(totalDeposits);
-    // }
-
-    function status(Loan memory loan) internal view returns (Status) {
-        
-        // If no borrower
-        if (loan.borrower == address(0)) { // Note: acceptBid() must clear-out borrower & acceptLoanBid() must update borrower
-            return Status.None;
-
-        // If borrower
-        } else {
-            
-            // If default // Note: payLoan() must clear-out borrower in finalPayment
-            if (defaulted(loan)) {
-                
-                // Calculate timeSinceDefault
-                uint timeSinceDefault; /*= block.timestamp - defaultTime(loan);*/
-
-                if (timeSinceDefault <= redemptionWindow) {
-                    return Status.Default; // Note: foreclose() must clear-out borrower & loanForeclose() must update borrower
-                } else {
-                    return Status.Foreclosurable;
-                }
-
-            // If no default
-            } else {
-                return Status.Mortgage;
-            }
-        }
-    }
-
-    function defaulted(Loan memory loan) private view returns (bool) {
-        return block.timestamp > loan.nextPaymentDeadline; // Note: no allowed missed payments for now to keep it simple
     }
 
     function sendNft(Loan storage loan, address receiver, uint tokenId) internal {
@@ -105,6 +71,15 @@ abstract contract State is IState, TargetManager, Initializable {
 
         // Remove tokenId from loansTokenIds
         loansTokenIds.remove(tokenId);
+    }
+
+    // ----- Views -----
+    // function lenderApy() public view returns (UD60x18) {
+    //     interestOwed.div(totalDeposits);
+    // }
+
+    function availableLiquidity() public view returns(uint) {
+        return totalDeposits - totalPrincipal;
     }
 
     function bidActionable(Bid memory bid) public view returns(bool) {
@@ -123,11 +98,7 @@ abstract contract State is IState, TargetManager, Initializable {
         return ltv.lte(maxLtv) && availableLiquidity() >= principal;
     }
 
-    function availableLiquidity() public view returns(uint) {
-        return totalDeposits - totalPrincipal;
-    }
-
-    // Views for Testing
+    // ----- Views for Testing -----
     function loansTokenIdsLength() external view returns (uint) {
         return loansTokenIds.length();
     }
@@ -144,10 +115,6 @@ abstract contract State is IState, TargetManager, Initializable {
         return _bids[TokenId.wrap(tokenId)];
     }
 
-    function status(uint tokenId) external view returns (Status) {
-        return status(_loans[TokenId.wrap(tokenId)]);
-    }
-
     function tokenIdBidsLength(uint tokenId) external view returns (uint) {
         return _bids[TokenId.wrap(tokenId)].length;
     }
@@ -158,9 +125,5 @@ abstract contract State is IState, TargetManager, Initializable {
 
     function foreclosureFeeSpread() external view returns (UD60x18) {
         return _foreclosureFeeSpread;
-    }
-
-    function loans(uint tokenId) external view returns(Loan memory) {
-        return _loans[tokenId];
     }
 }

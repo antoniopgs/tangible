@@ -75,7 +75,7 @@ contract Auctions is IAuctions, State {
         // Todo: if State == Null vs if State == Mortgage
 
         // Calculate saleFee
-        uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(saleFeeRatio));
+        uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
 
         // Add saleFee to protocolMoney
         protocolMoney += saleFee;
