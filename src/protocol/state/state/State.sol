@@ -61,18 +61,6 @@ abstract contract State is IState, TargetManager, Initializable {
         prosperaNftContract = _prosperaNftContract;
     }
 
-    function sendNft(Loan storage loan, address receiver, uint tokenId) internal { // Todo: move to Borrowing
-
-        // Send Nft to receiver
-        prosperaNftContract.safeTransferFrom(address(this), receiver, tokenId);
-
-        // Reset loan state to Null (so it can re-enter system later)
-        loan.borrower = address(0);
-
-        // Remove tokenId from loansTokenIds
-        loansTokenIds.remove(tokenId);
-    }
-
     // ----- Views -----
     function availableLiquidity() public view returns(uint) {
         return totalDeposits - totalPrincipal;

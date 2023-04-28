@@ -103,15 +103,9 @@ abstract contract Borrowing is IBorrowing, Status {
 
         // If loan is paid off
         if (loan.unpaidPrincipal == 0) {
-
-            // Remove tokenId from loansTokenIds
-            loansTokenIds.remove(tokenId);
             
-            // Send nft to borrower
-            prosperaNftContract.safeTransferFrom(address(this), loan.borrower, tokenId);
-
-            // Clear out loan
-            loan.borrower = address(0);
+            // Send nft to loan.borrower
+            sendNft(loan, loan.borrower, tokenId);
         }
     }
 
@@ -137,14 +131,8 @@ abstract contract Borrowing is IBorrowing, Status {
         // assert(interest <= loan.maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest? // Note: actually, now that he only has redemptionWindow to redeem, maybe I can bring this assertion back
         maxTotalUnpaidInterest -= loan.maxUnpaidInterest; // Note: maxTotalUnpaidInterest -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
-        // Remove tokenId from loansTokenIds
-        loansTokenIds.remove(tokenId);
-        
-        // Send nft to borrower
-        prosperaNftContract.safeTransferFrom(address(this), loan.borrower, tokenId);
-
-        // Clear out loan
-        loan.borrower = address(0);
+        // Send nft to loan.borrower
+        sendNft(loan, loan.borrower, tokenId);
     }
 
     function forecloseLoan(uint tokenId, uint bidIdx) public { // Note: bidders can call this with idx of their bid. shoudn't be a problem
@@ -180,14 +168,8 @@ abstract contract Borrowing is IBorrowing, Status {
         // Send defaulterEquity to defaulter
         USDC.safeTransfer(loan.borrower, defaulterEquity);
 
-        // Remove tokenId from loansTokenIds
-        loansTokenIds.remove(tokenId);
-        
         // Send nft to bid.bidder
-        prosperaNftContract.safeTransferFrom(address(this), bid.bidder, tokenId);
-
-        // Clear out loan
-        loan.borrower = address(0);
+        sendNft(loan, bid.bidder, tokenId);
     }
 
     function accruedInterest(Loan memory loan) private view returns(uint) {
@@ -244,5 +226,17 @@ abstract contract Borrowing is IBorrowing, Status {
             return toUD60x18(0);
         }
         return toUD60x18(maxTotalUnpaidInterest).div(toUD60x18(totalDeposits)); // Question: is this missing auto-compounding?
+    }
+
+    function sendNft(Loan storage loan, address receiver, uint tokenId) private { // Todo: move to Borrowing
+
+        // Send Nft to receiver
+        prosperaNftContract.safeTransferFrom(address(this), receiver, tokenId);
+
+        // Reset loan state to Null (so it can re-enter system later)
+        loan.borrower = address(0);
+
+        // Remove tokenId from loansTokenIds
+        loansTokenIds.remove(tokenId);
     }
 }
