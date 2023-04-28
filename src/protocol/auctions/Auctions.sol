@@ -112,8 +112,12 @@ contract Auctions is IAuctions, State {
             // Ensure loan bid is actionable
             require(loanBidActionable(_bid), "loanBid not actionable");
 
-            // Pull NFT from nftOwner to protocol
-            prosperaNftContract.safeTransferFrom(nftOwner, address(this), tokenId);
+            // If status(nft) == None, nft shouldn't be in system (so pull it)
+            if (status == Status.None) {
+
+                // Pull NFT from nftOwner to protocol
+                prosperaNftContract.safeTransferFrom(nftOwner, address(this), tokenId);
+            }
 
             // Start Loan (via delegate call)
             (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
