@@ -65,25 +65,42 @@ contract Auctions is IAuctions, State {
 
     function acceptBid(uint tokenId, uint bidIdx) external {
 
-        // Get nftOwner
-        address nftOwner = prosperaNftContract.ownerOf(tokenId);
+        // who should get sale money
+        // if none: ownerOf(tokenId)
+        // if mortage: loans(tokenId).borrower;
+        // if default: loans(tokenId).borrower
+        // if foreclosurable: loans(tokenId).borrower
 
-        // Ensure caller is nft owner
-        require(msg.sender == nftOwner, "only nft owner can accept bids");
+        // Get status
+        Status memory status = status(tokenId);
+
+        if (status == Status.None) {
+            require(msg.sender == prosperaNftContract.ownerOf(tokenId), "caller not owner");
+
+        } else if (status == Status.Mortgage) {
+            require(msg.sender == _loans[tokenId].borrower, "caller not borrower");
+
+        } else if (status == Status.Default) {
+            require(msg.sender == _loans[tokenId].borrower, "caller not borrower");
+
+        } else if (status == Status.Foreclosurable) {
+            require(msg.sender == address(this), "caller not protocol");
+        }
 
         // Get bid
         Bid memory _bid = _bids[tokenId][bidIdx];
 
-        // Todo: if State == Null vs if State == Mortgage
-
         // Calculate saleFee
         uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
 
-        // Add saleFee to protocolMoney
-        protocolMoney += saleFee;
+        // Get nftOwner
+        address nftOwner = prosperaNftContract.ownerOf(tokenId); // IF DEFAULT/MORTGAGE/FORECLOSURE, this will be the protocol itself
 
         // Send (bid.propertyValue - saleFee) to nftOwner
         USDC.safeTransfer(nftOwner, _bid.propertyValue - saleFee);
+
+        // Add saleFee to protocolMoney
+        protocolMoney += saleFee;
 
         // If regular bid
         if (_bid.downPayment == _bid.propertyValue) {
@@ -104,7 +121,7 @@ contract Auctions is IAuctions, State {
             (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
                 abi.encodeCall(
                     IBorrowing.startLoan,
-                    (tokenId, _bid.propertyValue, _bid.downPayment, _bid.maxDurationMonths)
+                    (tokenId, _bid.propertyValue - _bid.downPayment, _bid.maxDurationMonths)
                 )
             );
             require(success, "startLoan delegateCall failed");

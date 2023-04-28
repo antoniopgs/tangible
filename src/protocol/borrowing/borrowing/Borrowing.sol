@@ -5,6 +5,7 @@ import "./IBorrowing.sol";
 import "../status/Status.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../interest/IInterest.sol";
+import "../../auctions/IAuctions.sol";
 
 abstract contract Borrowing is IBorrowing, Status {
 
@@ -13,20 +14,12 @@ abstract contract Borrowing is IBorrowing, Status {
     using EnumerableSet for EnumerableSet.UintSet;
 
     // Functions
-    function startLoan(uint tokenId, uint propertyValue, uint downPayment, uint maxDurationMonths) external {
+    function startLoan(uint tokenId, uint principal, uint maxDurationMonths) external {
 
         require(prosperaNftContract.ownerOf(tokenId) == address(this), "unauthorized"); // Note: nft must be owned must be address(this) because this will be called via delegatecall // Todo: review safety of this require later
 
-        require(status(tokenId) == Status.None, "nft already in system");
+        require(status(tokenId) == Status.None, "nft already in system"); // THIS MIGHT NOT WORK
         require(maxDurationMonths >= 1 && maxDurationMonths <= maxDurationMonthsCap, "unallowed maxDurationMonths");
-
-        // Validate principal
-        uint principal = propertyValue - downPayment;
-        require(principal <= availableLiquidity(), "principal must be <= availableLiquidity");
-
-        // Validate ltv
-        UD60x18 ltv = toUD60x18(principal).div(toUD60x18(propertyValue));
-        require(ltv.lte(maxLtv), "ltv can't exceeed maxLtv");
 
         // Get ratePerSecond
         (bool success, bytes memory data) = logicTargets[IInterest.borrowerRatePerSecond.selector].call(
@@ -138,8 +131,6 @@ abstract contract Borrowing is IBorrowing, Status {
     function forecloseLoan(uint tokenId, uint bidIdx) public { // Note: bidders can call this with idx of their bid. shoudn't be a problem
         require(status(tokenId) == Status.Foreclosurable, "nft not foreclosurable");
 
-        // Todo: Pull salePrice?
-
         // Get Loan
         Loan storage loan = _loans[tokenId];
 
@@ -154,7 +145,16 @@ abstract contract Borrowing is IBorrowing, Status {
         Bid memory bid = _bids[tokenId][bidIdx];
 
         // Ensure bid.propertyValue covers defaulterDebt + fees
-        require(bid.propertyValue >= defaulterDebt + foreclosureFee, "salePrice must >= defaulterDebt + fees"); // Question: minSalePrice will rise over time. Too risky?
+        require(bid.propertyValue >= defaulterDebt + foreclosureFee, "bid.propertyValue must >= defaulterDebt + fees"); // Question: defaulterDebt will rise over time. Too risky?
+
+        // Accept bid
+        (bool success, ) = logicTargets[IAuctions.acceptBid.selector].call(
+            abi.encodeCall(
+                IAuctions.acceptBid,
+                (tokenId, bidIdx)
+            )
+        );
+        require(success, "couldn't acceptBid");
 
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
@@ -167,9 +167,6 @@ abstract contract Borrowing is IBorrowing, Status {
 
         // Send defaulterEquity to defaulter
         USDC.safeTransfer(loan.borrower, defaulterEquity);
-
-        // Send nft to bid.bidder
-        sendNft(loan, bid.bidder, tokenId);
     }
 
     function accruedInterest(Loan memory loan) private view returns(uint) {

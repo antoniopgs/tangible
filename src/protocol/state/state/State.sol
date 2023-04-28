@@ -79,7 +79,7 @@ abstract contract State is IState, TargetManager, Initializable {
         UD60x18 ltv = toUD60x18(principal).div(toUD60x18(_bid.propertyValue));
 
         // Return actionability
-        return ltv.lte(maxLtv) && availableLiquidity() >= principal;
+        return ltv.lte(maxLtv) && principal <= availableLiquidity();
     }
 
     // ----- Views for Testing -----
