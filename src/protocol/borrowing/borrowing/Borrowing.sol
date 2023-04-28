@@ -15,11 +15,8 @@ abstract contract Borrowing is IBorrowing, Status {
 
     // Functions
     function startLoan(uint tokenId, uint principal, uint maxDurationMonths) external {
-
         require(prosperaNftContract.ownerOf(tokenId) == address(this), "unauthorized"); // Note: nft must be owned must be address(this) because this will be called via delegatecall // Todo: review safety of this require later
-
         require(status(tokenId) == Status.None, "nft already in system"); // THIS MIGHT NOT WORK
-        require(maxDurationMonths >= 1 && maxDurationMonths <= maxDurationMonthsCap, "unallowed maxDurationMonths");
 
         // Get ratePerSecond
         (bool success, bytes memory data) = logicTargets[IInterest.borrowerRatePerSecond.selector].call(
@@ -40,7 +37,6 @@ abstract contract Borrowing is IBorrowing, Status {
 
         // Calculate maxCost
         uint maxCost = fromUD60x18(paymentPerSecond.mul(toUD60x18(maxDurationSeconds)));
-
         assert(maxCost > principal);
 
         // Calculate maxUnpaidInterest
@@ -59,8 +55,8 @@ abstract contract Borrowing is IBorrowing, Status {
 
         // Update pool
         totalPrincipal += principal;
-        assert(totalPrincipal <= totalDeposits);
         maxTotalUnpaidInterest += maxUnpaidInterest;
+        assert(totalPrincipal <= totalDeposits);
 
         // Add tokenId to loansTokenIds
         loansTokenIds.add(tokenId);

@@ -13,7 +13,7 @@ contract Auctions is IAuctions, State {
 
     function bid(uint tokenId, uint propertyValue, uint downPayment, uint maxDurationMonths) external {
         require(downPayment <= propertyValue, "downPayment cannot exceed propertyValue");
-        require(maxDurationMonths >= 1 && maxDurationMonths <= maxDurationMonthsCap, "invalid maxDurationMonths");
+        require(maxDurationMonths >= 1 && maxDurationMonths <= maxDurationMonthsCap, "unallowed maxDurationMonths");
 
         // Calculate bid ltv
         UD60x18 ltv = toUD60x18(1).sub(toUD60x18(downPayment).div(toUD60x18(propertyValue)));
