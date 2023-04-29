@@ -62,7 +62,14 @@ contract Auctions is IAuctions, State {
     }
 
     function acceptNoneBid(uint tokenId, uint bidIdx) external {
-        require(status(_loans[tokenId]) == Status.None, "");
+
+        // Get loan
+        Loan memory loan = _loans[tokenId];
+
+        // Get loan
+        address nftOwner = prosperaNftContract.ownerOf(tokenId);
+        
+        require(status(loan) == Status.None, "");
         require(msg.sender == nftOwner, "caller not nftOwner");
 
         // Get bid
@@ -106,6 +113,10 @@ contract Auctions is IAuctions, State {
     }
 
     function acceptMortgageBid(uint tokenId, uint bidIdx) external {
+
+        // Get loan
+        Loan memory loan = _loans[tokenId];
+
         require(status(_loans[tokenId]) == Status.Mortgage, "");
         require(msg.sender == loan.borrower, "caller not borrower");
 
@@ -122,16 +133,19 @@ contract Auctions is IAuctions, State {
 
         // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
 
+        // Calculate interest
+        uint interest = accruedInterest(loan);
+
         // Update pool (lenders get paidFirst)
         totalPrincipal -= loan.unpaidPrincipal;
-        totalDeposits += accruedInterest(loan);
-        maxTotalUnpaidInterest -= accruedInterest(loan);
+        totalDeposits += interest;
+        maxTotalUnpaidInterest -= interest;
 
         // Ensure propertyValue covers principal + interest + fees
-        require(_bid.propertyValue >= loan.unpaidPrincipal + accruedInterest(loan) + saleFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
+        require(_bid.propertyValue >= loan.unpaidPrincipal + interest + saleFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
 
         // Send propertyValue - principal - interest - saleFee to loan.borrower
-        USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - accruedInterest(loan) - saleFee);
+        USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - interest - saleFee);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
@@ -154,6 +168,10 @@ contract Auctions is IAuctions, State {
     }
 
     function acceptDefaultBid(uint tokenId, uint bidIdx) external {
+
+        // Get loan
+        Loan memory loan = _loans[tokenId];
+
         require(status(_loans[tokenId]) == Status.Default, "");
         require(msg.sender == loan.borrower, "caller not borrower");
 
@@ -171,16 +189,19 @@ contract Auctions is IAuctions, State {
 
         // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
 
+        // Calculate interest
+        uint interest = accruedInterest(loan);
+
         // Update pool (lenders get paidFirst)
         totalPrincipal -= loan.unpaidPrincipal;
-        totalDeposits += accruedInterest(loan);
-        maxTotalUnpaidInterest -= accruedInterest(loan);
+        totalDeposits += interest;
+        maxTotalUnpaidInterest -= interest;
 
         // Ensure propertyValue covers principal + interest + fees
-        require(_bid.propertyValue >= loan.unpaidPrincipal + accruedInterest(loan) + saleFee + defaultFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
+        require(_bid.propertyValue >= loan.unpaidPrincipal + interest + saleFee + defaultFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
 
         // Send propertyValue - principal - interest - saleFee - defaultFee to loan.borrower
-        USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - accruedInterest(loan) - saleFee - defaultFee);
+        USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - interest - saleFee - defaultFee);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
@@ -203,7 +224,11 @@ contract Auctions is IAuctions, State {
     }
 
     function acceptForeclosureBid(uint tokenId, uint bidIdx) external {
-        require(status(_loans[tokenId]) == Status.Foreclosurable, "");
+
+        // Get loan
+        Loan memory loan = _loans[tokenId];
+        
+        require(status(loan) == Status.Foreclosurable, "");
         require(msg.sender == address(this), "caller not protocol");
 
         // Get bid
@@ -220,16 +245,19 @@ contract Auctions is IAuctions, State {
 
         // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
 
+        // Calculate interest
+        uint interest = accruedInterest(loan);
+
         // Update pool (lenders get paidFirst)
         totalPrincipal -= loan.unpaidPrincipal;
-        totalDeposits += accruedInterest(loan);
-        maxTotalUnpaidInterest -= accruedInterest(loan);
+        totalDeposits += interest;
+        maxTotalUnpaidInterest -= interest;
 
         // Ensure propertyValue covers principal + interest + fees
-        require(_bid.propertyValue >= loan.unpaidPrincipal + accruedInterest(loan) + saleFee + defaultFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
+        require(_bid.propertyValue >= loan.unpaidPrincipal + interest + saleFee + defaultFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
 
         // Send propertyValue - principal - interest - saleFee - defaultFee to loan.borrower
-        USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - accruedInterest(loan) - saleFee - defaultFee);
+        USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - interest - saleFee - defaultFee);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
