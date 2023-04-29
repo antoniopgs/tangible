@@ -129,4 +129,34 @@ contract Auctions is IAuctions, State {
             require(success, "startLoan delegateCall failed");
         }
     }
+
+    function acceptBid2(uint tokenId, uint bidIdx, uint associatedLoanPrincipal, uint associatedLoanInterest, uint protocolFees) public {
+        
+        // Get bid
+        Bid memory _bid = _bids[tokenId][bidIdx];
+        
+        // Ensure bid is actionable
+        require(bidActionable(_bid), "bid not actionable");
+
+        // Update pool (lenders get paidFirst)
+        totalPrincipal -= associatedLoanPrincipal;
+        totalDeposits += associatedLoanInterest;
+        maxTotalUnpaidInterest -= associatedLoanInterest;
+
+        // Protocol takes fees (protocol gets paid second)
+        protocolMoney += protocolFees;
+
+        // Ensure propertyValue covers pricipal + interest + fees
+        require(_bid.propertyValue >= associatedLoanPrincipal + associatedLoanInterest + protocolFees);
+
+        // Seller/Borrower/Defaulter gets rest
+        uint rest = _bid.propertyValue - associatedLoanPrincipal - associatedLoanInterest - protocolFees;
+        
+        // If bid (no loan)
+        if (_bid.propertyValue == _bid.downPayment) {
+            
+            // Send NFT to bidder
+            prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId);
+        }
+    }
 }
