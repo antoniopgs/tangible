@@ -119,8 +119,8 @@ contract Auctions is IAuctions, State {
             protocolFees: saleFee
         })
 
-        // Send rest to nftOwner
-        USDC.safeTransfer(nftOwner, rest);
+        // Send propertyValue - saleFee to nftOwner
+        USDC.safeTransfer(nftOwner, _bid.propertyValue - saleFee);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
@@ -161,8 +161,8 @@ contract Auctions is IAuctions, State {
             protocolFees: saleFee
         })
 
-        // Send rest to loan.borrower
-        USDC.safeTransfer(_loans[tokenId].borrower, rest);
+        // Send propertyValue - principal - interest - saleFee to loan.borrower
+        USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - accruedInterest(loan) - saleFee);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
@@ -204,8 +204,8 @@ contract Auctions is IAuctions, State {
             protocolFees: saleFee + defaultFee
         })
 
-        // Send rest to loan.borrower
-        USDC.safeTransfer(_loans[tokenId].borrower, rest);
+        // Send propertyValue - principal - interest - saleFee - defaultFee to loan.borrower
+        USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - accruedInterest(loan) - saleFee - defaultFee);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
@@ -247,8 +247,8 @@ contract Auctions is IAuctions, State {
             protocolFees: saleFee + defaultFee
         })
 
-        // Send rest to loan.borrower
-        USDC.safeTransfer(_loans[tokenId].borrower, rest);
+        // Send propertyValue - principal - interest - saleFee - defaultFee to loan.borrower
+        USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - accruedInterest(loan) - saleFee - defaultFee);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
@@ -270,8 +270,5 @@ contract Auctions is IAuctions, State {
 
         // Ensure propertyValue covers principal + interest + fees
         require(_bid.propertyValue >= associatedLoanPrincipal + associatedLoanInterest + protocolFees, "propertyValue doesn't cover debt + fees"); // Question: associatedLoanInterest will rise over time. Too risky?
-
-        // Calculate rest
-        uint rest = _bid.propertyValue - associatedLoanPrincipal - associatedLoanInterest - protocolFees;
     }
 }
