@@ -110,15 +110,6 @@ contract Auctions is IAuctions, State {
         // Protocol takes fees
         protocolMoney += saleFee;
 
-        // Accept bid
-        _acceptBid({
-            tokenId: tokenId,
-            bidIdx: bidIdx,
-            associatedLoanPrincipal: 0, // Note: no loan
-            associatedLoanInterest: 0, // Note: no loan
-            protocolFees: saleFee
-        })
-
         // Send propertyValue - saleFee to nftOwner
         USDC.safeTransfer(nftOwner, _bid.propertyValue - saleFee);
 
@@ -151,15 +142,6 @@ contract Auctions is IAuctions, State {
         totalPrincipal -= associatedLoanPrincipal;
         totalDeposits += associatedLoanInterest;
         maxTotalUnpaidInterest -= associatedLoanInterest;
-
-        // Accept bid
-        _acceptBid({
-            tokenId: tokenId,
-            bidIdx: bidIdx,
-            associatedLoanPrincipal: loan.unpaidPrincipal,
-            associatedLoanInterest: accruedInterest(loan),
-            protocolFees: saleFee
-        })
 
         // Send propertyValue - principal - interest - saleFee to loan.borrower
         USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - accruedInterest(loan) - saleFee);
@@ -195,15 +177,6 @@ contract Auctions is IAuctions, State {
         totalDeposits += associatedLoanInterest;
         maxTotalUnpaidInterest -= associatedLoanInterest;
 
-        // Accept bid
-        _acceptBid({
-            tokenId: tokenId,
-            bidIdx: bidIdx,
-            associatedLoanPrincipal: loan.unpaidPrincipal,
-            associatedLoanInterest: accruedInterest(loan),
-            protocolFees: saleFee + defaultFee
-        })
-
         // Send propertyValue - principal - interest - saleFee - defaultFee to loan.borrower
         USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - accruedInterest(loan) - saleFee - defaultFee);
 
@@ -237,15 +210,6 @@ contract Auctions is IAuctions, State {
         totalPrincipal -= associatedLoanPrincipal;
         totalDeposits += associatedLoanInterest;
         maxTotalUnpaidInterest -= associatedLoanInterest;
-
-        // Accept bid
-        _acceptBid({
-            tokenId: tokenId,
-            bidIdx: bidIdx,
-            associatedLoanPrincipal: loan.unpaidPrincipal,
-            associatedLoanInterest: accruedInterest(loan),
-            protocolFees: saleFee + defaultFee
-        })
 
         // Send propertyValue - principal - interest - saleFee - defaultFee to loan.borrower
         USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - accruedInterest(loan) - saleFee - defaultFee);
