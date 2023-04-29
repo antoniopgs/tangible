@@ -133,15 +133,21 @@ abstract contract Borrowing is IBorrowing, Status {
         // Calculate interest
         uint interest = accruedInterest(loan);
 
-        // Calculate defaulterDebt // Todo: add saleFee later
+        // Calculate defaulterDebt
         uint defaulterDebt = loan.unpaidPrincipal + interest;
+
+        // Calculate fees
+        uint saleFee = fromUD60x18(toUD60x18(defaulterDebt).mul(_saleFeeSpread));
         uint foreclosureFee = fromUD60x18(toUD60x18(defaulterDebt).mul(_foreclosureFeeSpread));
 
-        // Get Bid
-        Bid memory bid = _bids[tokenId][bidIdx];
-
-        // Ensure bid.propertyValue covers defaulterDebt + fees
-        require(bid.propertyValue >= defaulterDebt + foreclosureFee, "bid.propertyValue must >= defaulterDebt + fees"); // Question: defaulterDebt will rise over time. Too risky?
+        // Accept bid
+        acceptBid2({
+            tokenId: tokenId,
+            bidIdx: bidIdx,
+            associatedLoanPrincipal: loan.unpaidPrincipal,
+            associatedLoanInterest: interest,
+            protocolFees: saleFee + foreclosureFee
+        });
 
         // Accept bid
         (bool success, ) = logicTargets[IAuctions.acceptBid.selector].call(
@@ -151,18 +157,6 @@ abstract contract Borrowing is IBorrowing, Status {
             )
         );
         require(success, "couldn't acceptBid");
-
-        // Update pool
-        totalPrincipal -= loan.unpaidPrincipal;
-        totalDeposits += interest;
-        // assert(interest <= loan.maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
-        maxTotalUnpaidInterest -= loan.maxUnpaidInterest; // Note: maxTotalUnpaidInterest -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
-
-        // Calculate defaulterEquity
-        uint defaulterEquity = bid.propertyValue - defaulterDebt - foreclosureFee;
-
-        // Send defaulterEquity to defaulter
-        USDC.safeTransfer(loan.borrower, defaulterEquity);
     }
 
     function accruedInterest(Loan memory loan) private view returns(uint) {

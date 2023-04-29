@@ -143,11 +143,13 @@ contract Auctions is IAuctions, State {
         totalDeposits += associatedLoanInterest;
         maxTotalUnpaidInterest -= associatedLoanInterest;
 
+        // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
+
         // Protocol takes fees (protocol gets paid second)
         protocolMoney += protocolFees;
 
-        // Ensure propertyValue covers pricipal + interest + fees
-        require(_bid.propertyValue >= associatedLoanPrincipal + associatedLoanInterest + protocolFees);
+        // Ensure propertyValue covers principal + interest + fees
+        require(_bid.propertyValue >= associatedLoanPrincipal + associatedLoanInterest + protocolFees, "propertyValue doesn't cover debt + fees"); // Question: associatedLoanInterest will rise over time. Too risky?
 
         // Calculate rest
         uint rest = _bid.propertyValue - associatedLoanPrincipal - associatedLoanInterest - protocolFees;
@@ -157,11 +159,14 @@ contract Auctions is IAuctions, State {
 
         // If None, send rest to nftOwner
         if (status == Status.None) {
-            USDC.safeTransfer(prosperaNftContract.ownerOf(tokenId), rest);
+            address nftOwner = prosperaNftContract.ownerOf(tokenId);
+            require(msg.sender == nftOwner, "caller not nftOwner");
+            USDC.safeTransfer(nftOwner, rest);
         
         // If Mortgage, Default or Foreclosurable, send rest to loan.borrower
         } else {
             USDC.safeTransfer(_loans[tokenId].borrower, rest);
+            require(msg.sender == _loans[tokenId].borrower, "caller not borrower");
         }
         
         // If bid (no loan)
