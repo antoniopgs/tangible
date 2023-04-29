@@ -138,6 +138,8 @@ contract Auctions is IAuctions, State {
         // Protocol takes fees
         protocolMoney += saleFee;
 
+        // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
+
         // Update pool (lenders get paidFirst)
         totalPrincipal -= associatedLoanPrincipal;
         totalDeposits += associatedLoanInterest;
@@ -171,6 +173,8 @@ contract Auctions is IAuctions, State {
 
         // Protocol takes fees
         protocolMoney += saleFee + defaultFee;
+
+        // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
 
         // Update pool (lenders get paidFirst)
         totalPrincipal -= associatedLoanPrincipal;
@@ -206,6 +210,8 @@ contract Auctions is IAuctions, State {
         // Protocol takes fees
         protocolMoney += saleFee + defaultFee;
 
+        // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
+
         // Update pool (lenders get paidFirst)
         totalPrincipal -= associatedLoanPrincipal;
         totalDeposits += associatedLoanInterest;
@@ -229,8 +235,6 @@ contract Auctions is IAuctions, State {
     }
 
     function _acceptBid(uint tokenId, uint bidIdx, uint associatedLoanPrincipal, uint associatedLoanInterest, uint protocolFees) private {
-
-        // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
 
         // Ensure propertyValue covers principal + interest + fees
         require(_bid.propertyValue >= associatedLoanPrincipal + associatedLoanInterest + protocolFees, "propertyValue doesn't cover debt + fees"); // Question: associatedLoanInterest will rise over time. Too risky?
