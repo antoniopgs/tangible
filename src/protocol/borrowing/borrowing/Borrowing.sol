@@ -121,7 +121,7 @@ abstract contract Borrowing is IBorrowing, Status {
         maxTotalUnpaidInterest -= loan.maxUnpaidInterest; // Note: maxTotalUnpaidInterest -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
         // Send nft to loan.borrower
-        sendNft(loan, loan.borrower, tokenId);
+        sendNft(loan, loan.borrower, tokenId);S
     }
 
     function forecloseLoan(uint tokenId, uint bidIdx) public { // Note: bidders can call this with idx of their bid. shoudn't be a problem

@@ -101,9 +101,14 @@ contract Auctions is IAuctions, State {
 
     function acceptNoneBid(uint tokenId, uint bidIdx) external {
         require(status(_loans[tokenId]) == Status.None, "");
+        require(msg.sender == nftOwner, "caller not nftOwner");
+        require(bidActionable(bid), "bid not actionable");
 
         // Calculate fees
         uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
+
+        // Protocol takes fees
+        protocolMoney += saleFee;
 
         // Accept bid
         _acceptBid({
@@ -113,13 +118,39 @@ contract Auctions is IAuctions, State {
             associatedLoanInterest: 0, // Note: no loan
             protocolFees: saleFee
         })
+
+        // Send rest to nftOwner
+        USDC.safeTransfer(nftOwner, rest);
+
+        // If bid
+        if (_bid.propertyValue == _bid.downPayment) {
+            
+            // Send NFT to bidder
+            prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId);
+
+        // If loan bid
+        } else {
+
+            // start new loan
+
+        }
     }
 
     function acceptMortgageBid(uint tokenId, uint bidIdx) external {
         require(status(_loans[tokenId]) == Status.Mortgage, "");
+        require(msg.sender == loan.borrower, "caller not borrower");
+        require(bidActionable(bid), "bid not actionable");
 
         // Calculate fees
         uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
+
+        // Protocol takes fees
+        protocolMoney += saleFee;
+
+        // Update pool (lenders get paidFirst)
+        totalPrincipal -= associatedLoanPrincipal;
+        totalDeposits += associatedLoanInterest;
+        maxTotalUnpaidInterest -= associatedLoanInterest;
 
         // Accept bid
         _acceptBid({
@@ -129,14 +160,40 @@ contract Auctions is IAuctions, State {
             associatedLoanInterest: accruedInterest(loan),
             protocolFees: saleFee
         })
+
+        // Send rest to loan.borrower
+        USDC.safeTransfer(_loans[tokenId].borrower, rest);
+
+        // If bid
+        if (_bid.propertyValue == _bid.downPayment) {
+            
+            // Send NFT to bidder
+            prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId);
+
+        // If loan bid
+        } else {
+
+            // start new loan
+
+        }
     }
 
     function acceptDefaultBid(uint tokenId, uint bidIdx) external {
         require(status(_loans[tokenId]) == Status.Default, "");
+        require(msg.sender == loan.borrower, "caller not borrower");
+        require(bidActionable(bid), "bid not actionable");
 
         // Calculate fees
         uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
         uint defaultFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_defaultFeeSpread));
+
+        // Protocol takes fees
+        protocolMoney += saleFee + defaultFee;
+
+        // Update pool (lenders get paidFirst)
+        totalPrincipal -= associatedLoanPrincipal;
+        totalDeposits += associatedLoanInterest;
+        maxTotalUnpaidInterest -= associatedLoanInterest;
 
         // Accept bid
         _acceptBid({
@@ -146,60 +203,75 @@ contract Auctions is IAuctions, State {
             associatedLoanInterest: accruedInterest(loan),
             protocolFees: saleFee + defaultFee
         })
+
+        // Send rest to loan.borrower
+        USDC.safeTransfer(_loans[tokenId].borrower, rest);
+
+        // If bid
+        if (_bid.propertyValue == _bid.downPayment) {
+            
+            // Send NFT to bidder
+            prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId);
+
+        // If loan bid
+        } else {
+
+            // start new loan
+
+        }
     }
 
-    function _acceptBid(uint tokenId, uint bidIdx, uint associatedLoanPrincipal, uint associatedLoanInterest, uint protocolFees) private {
-        
-        // Get bid
-        Bid memory _bid = _bids[tokenId][bidIdx];
-        
-        // Ensure bid is actionable
-        require(bidActionable(_bid), "bid not actionable");
+    function acceptForeclosureBid(uint tokenId, uint bidIdx) external {
+        require(status(_loans[tokenId]) == Status.Foreclosurable, "");
+        require(msg.sender == address(this), "caller not protocol");
+        require(bidActionable(bid), "bid not actionable");
+
+        // Calculate fees
+        uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
+        uint defaultFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_defaultFeeSpread));
+
+        // Protocol takes fees
+        protocolMoney += saleFee + defaultFee;
 
         // Update pool (lenders get paidFirst)
         totalPrincipal -= associatedLoanPrincipal;
         totalDeposits += associatedLoanInterest;
         maxTotalUnpaidInterest -= associatedLoanInterest;
 
-        // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
+        // Accept bid
+        _acceptBid({
+            tokenId: tokenId,
+            bidIdx: bidIdx,
+            associatedLoanPrincipal: loan.unpaidPrincipal,
+            associatedLoanInterest: accruedInterest(loan),
+            protocolFees: saleFee + defaultFee
+        })
 
-        // Protocol takes fees (protocol gets paid second)
-        protocolMoney += protocolFees;
+        // Send rest to loan.borrower
+        USDC.safeTransfer(_loans[tokenId].borrower, rest);
+
+        // If bid
+        if (_bid.propertyValue == _bid.downPayment) {
+            
+            // Send NFT to bidder
+            prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId);
+
+        // If loan bid
+        } else {
+
+            // start new loan
+
+        }
+    }
+
+    function _acceptBid(uint tokenId, uint bidIdx, uint associatedLoanPrincipal, uint associatedLoanInterest, uint protocolFees) private {
+
+        // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
 
         // Ensure propertyValue covers principal + interest + fees
         require(_bid.propertyValue >= associatedLoanPrincipal + associatedLoanInterest + protocolFees, "propertyValue doesn't cover debt + fees"); // Question: associatedLoanInterest will rise over time. Too risky?
 
         // Calculate rest
         uint rest = _bid.propertyValue - associatedLoanPrincipal - associatedLoanInterest - protocolFees;
-
-        // Get status
-        Status status = status(tokenId);
-
-        // If None, send rest to nftOwner
-        if (status == Status.None) {
-            address nftOwner = prosperaNftContract.ownerOf(tokenId);
-            require(msg.sender == nftOwner, "caller not nftOwner");
-            USDC.safeTransfer(nftOwner, rest);
-        
-        // If Mortgage, Default or Foreclosurable, send rest to loan.borrower
-        } else {
-            USDC.safeTransfer(_loans[tokenId].borrower, rest);
-
-            // If Foreclosurable, caller must be protocol
-            if (status == Status.Foreclosurable) {
-                require(msg.sender == address(this), "caller not protocol");
-            
-            // If Mortgage or Default, caller must be borrower
-            } else {
-                require(msg.sender == _loans[tokenId].borrower, "caller not borrower");
-            }
-        }
-        
-        // If bid (no loan)
-        if (_bid.propertyValue == _bid.downPayment) {
-            
-            // Send NFT to bidder
-            prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId);
-        }
     }
 }
