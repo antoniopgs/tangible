@@ -136,7 +136,7 @@ abstract contract Borrowing is IBorrowing, Status {
         // Calculate defaulterDebt
         uint defaulterDebt = loan.unpaidPrincipal + interest;
 
-        // Calculate fees
+        // Calculate fees // should these fees be off defaulterDebt or propertyValue?
         uint saleFee = fromUD60x18(toUD60x18(defaulterDebt).mul(_saleFeeSpread));
         uint foreclosureFee = fromUD60x18(toUD60x18(defaulterDebt).mul(_foreclosureFeeSpread));
 

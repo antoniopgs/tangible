@@ -63,42 +63,11 @@ contract Auctions is IAuctions, State {
 
     function acceptBid(uint tokenId, uint bidIdx) external {
 
-        // who should get sale money
-        // if none: ownerOf(tokenId)
-        // if mortage: loans(tokenId).borrower;
-        // if default: loans(tokenId).borrower
-        // if foreclosurable: loans(tokenId).borrower
-
-        // Get status
-        Status memory status = status(tokenId);
-
-        if (status == Status.None) {
-            require(msg.sender == prosperaNftContract.ownerOf(tokenId), "caller not owner");
-
-        } else if (status == Status.Mortgage) {
-            require(msg.sender == _loans[tokenId].borrower, "caller not borrower");
-
-        } else if (status == Status.Default) {
-            require(msg.sender == _loans[tokenId].borrower, "caller not borrower");
-
-        } else if (status == Status.Foreclosurable) {
-            require(msg.sender == address(this), "caller not protocol");
-        }
-
         // Get bid
         Bid memory _bid = _bids[tokenId][bidIdx];
 
         // Calculate saleFee
         uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
-
-        // Get nftOwner
-        address nftOwner = prosperaNftContract.ownerOf(tokenId); // IF DEFAULT/MORTGAGE/FORECLOSURE, this will be the protocol itself
-
-        // Send (bid.propertyValue - saleFee) to nftOwner
-        USDC.safeTransfer(nftOwner, _bid.propertyValue - saleFee);
-
-        // Add saleFee to protocolMoney
-        protocolMoney += saleFee;
 
         // If regular bid
         if (_bid.downPayment == _bid.propertyValue) {
@@ -130,7 +99,56 @@ contract Auctions is IAuctions, State {
         }
     }
 
-    function acceptBid2(uint tokenId, uint bidIdx, uint associatedLoanPrincipal, uint associatedLoanInterest, uint protocolFees) public {
+    function acceptNoneBid(uint tokenId, uint bidIdx) external {
+        require(status(_loans[tokenId]) == Status.None, "");
+
+        // Calculate fees
+        uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
+
+        // Accept bid
+        _acceptBid({
+            tokenId: tokenId,
+            bidIdx: bidIdx,
+            associatedLoanPrincipal: 0, // Note: no loan
+            associatedLoanInterest: 0, // Note: no loan
+            protocolFees: saleFee
+        })
+    }
+
+    function acceptMortgageBid(uint tokenId, uint bidIdx) external {
+        require(status(_loans[tokenId]) == Status.Mortgage, "");
+
+        // Calculate fees
+        uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
+
+        // Accept bid
+        _acceptBid({
+            tokenId: tokenId,
+            bidIdx: bidIdx,
+            associatedLoanPrincipal: loan.unpaidPrincipal,
+            associatedLoanInterest: accruedInterest(loan),
+            protocolFees: saleFee
+        })
+    }
+
+    function acceptDefaultBid(uint tokenId, uint bidIdx) external {
+        require(status(_loans[tokenId]) == Status.Default, "");
+
+        // Calculate fees
+        uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
+        uint defaultFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_defaultFeeSpread));
+
+        // Accept bid
+        _acceptBid({
+            tokenId: tokenId,
+            bidIdx: bidIdx,
+            associatedLoanPrincipal: loan.unpaidPrincipal,
+            associatedLoanInterest: accruedInterest(loan),
+            protocolFees: saleFee + defaultFee
+        })
+    }
+
+    function _acceptBid(uint tokenId, uint bidIdx, uint associatedLoanPrincipal, uint associatedLoanInterest, uint protocolFees) private {
         
         // Get bid
         Bid memory _bid = _bids[tokenId][bidIdx];
@@ -166,7 +184,15 @@ contract Auctions is IAuctions, State {
         // If Mortgage, Default or Foreclosurable, send rest to loan.borrower
         } else {
             USDC.safeTransfer(_loans[tokenId].borrower, rest);
-            require(msg.sender == _loans[tokenId].borrower, "caller not borrower");
+
+            // If Foreclosurable, caller must be protocol
+            if (status == Status.Foreclosurable) {
+                require(msg.sender == address(this), "caller not protocol");
+            
+            // If Mortgage or Default, caller must be borrower
+            } else {
+                require(msg.sender == _loans[tokenId].borrower, "caller not borrower");
+            }
         }
         
         // If bid (no loan)

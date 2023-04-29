@@ -39,7 +39,7 @@ abstract contract State is IState, TargetManager, Initializable {
     UD60x18 internal _saleFeeSpread = toUD60x18(1).div(toUD60x18(100)); // Note: 1%
     UD60x18 internal _payLoanFeeSpread = toUD60x18(2).div(toUD60x18(100)); // Note: 2%
     UD60x18 internal _redemptionFeeSpread = toUD60x18(3).div(toUD60x18(100)); // Note: 3%
-    UD60x18 internal _foreclosureFeeSpread = toUD60x18(4).div(toUD60x18(100)); // Note: 4%
+    UD60x18 internal _defaultFeeSpread = toUD60x18(4).div(toUD60x18(100)); // Note: 4%
 
     // Main Storage
     mapping(uint => Bid[]) internal _bids;
