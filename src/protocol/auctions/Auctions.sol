@@ -61,44 +61,6 @@ contract Auctions is IAuctions, State {
         USDC.safeTransfer(bidToRemove.bidder, bidToRemove.downPayment);
     }
 
-    function acceptBid(uint tokenId, uint bidIdx) external {
-
-        // Get bid
-        Bid memory _bid = _bids[tokenId][bidIdx];
-
-        // Calculate saleFee
-        uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
-
-        // If regular bid
-        if (_bid.downPayment == _bid.propertyValue) {
-
-            // Send NFT from nftOwner to bidder
-            prosperaNftContract.safeTransferFrom(nftOwner, _bid.bidder, tokenId);
-        
-        // If loan bid
-        } else {
-
-            // Ensure loan bid is actionable
-            require(loanBidActionable(_bid), "loanBid not actionable");
-
-            // If status(nft) == None, nft shouldn't be in system (so pull it)
-            if (status == Status.None) {
-
-                // Pull NFT from nftOwner to protocol
-                prosperaNftContract.safeTransferFrom(nftOwner, address(this), tokenId);
-            }
-
-            // Start Loan (via delegate call)
-            (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
-                abi.encodeCall(
-                    IBorrowing.startLoan,
-                    (tokenId, _bid.propertyValue - _bid.downPayment, _bid.maxDurationMonths)
-                )
-            );
-            require(success, "startLoan delegateCall failed");
-        }
-    }
-
     function acceptNoneBid(uint tokenId, uint bidIdx) external {
         require(status(_loans[tokenId]) == Status.None, "");
         require(msg.sender == nftOwner, "caller not nftOwner");
@@ -110,20 +72,32 @@ contract Auctions is IAuctions, State {
         // Protocol takes fees
         protocolMoney += saleFee;
 
+        // Ensure propertyValue covers principal + interest + fees
+        require(_bid.propertyValue >= saleFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
+
         // Send propertyValue - saleFee to nftOwner
         USDC.safeTransfer(nftOwner, _bid.propertyValue - saleFee);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
             
-            // Send NFT to bidder
-            prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId);
+            // Send NFT from nftOwner to bidder
+            prosperaNftContract.safeTransferFrom(nftOwner, _bid.bidder, tokenId);
 
         // If loan bid
         } else {
 
-            // start new loan
+            // Pull NFT from nftOwner to protocol
+            prosperaNftContract.safeTransferFrom(nftOwner, address(this), tokenId);
 
+            // start new loan
+            (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
+                abi.encodeCall(
+                    IBorrowing.startLoan,
+                    (tokenId, _bid.propertyValue - _bid.downPayment, _bid.maxDurationMonths)
+                )
+            );
+            require(success, "startLoan delegateCall failed");
         }
     }
 
@@ -145,6 +119,9 @@ contract Auctions is IAuctions, State {
         totalDeposits += associatedLoanInterest;
         maxTotalUnpaidInterest -= associatedLoanInterest;
 
+        // Ensure propertyValue covers principal + interest + fees
+        require(_bid.propertyValue >= loan.unpaidPrincipal + accruedInterest(loan) + saleFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
+
         // Send propertyValue - principal - interest - saleFee to loan.borrower
         USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - accruedInterest(loan) - saleFee);
 
@@ -158,7 +135,13 @@ contract Auctions is IAuctions, State {
         } else {
 
             // start new loan
-
+            (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
+                abi.encodeCall(
+                    IBorrowing.startLoan,
+                    (tokenId, _bid.propertyValue - _bid.downPayment, _bid.maxDurationMonths)
+                )
+            );
+            require(success, "startLoan delegateCall failed");
         }
     }
 
@@ -181,6 +164,9 @@ contract Auctions is IAuctions, State {
         totalDeposits += associatedLoanInterest;
         maxTotalUnpaidInterest -= associatedLoanInterest;
 
+        // Ensure propertyValue covers principal + interest + fees
+        require(_bid.propertyValue >= loan.unpaidPrincipal + accruedInterest(loan) + saleFee + defaultFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
+
         // Send propertyValue - principal - interest - saleFee - defaultFee to loan.borrower
         USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - accruedInterest(loan) - saleFee - defaultFee);
 
@@ -194,7 +180,13 @@ contract Auctions is IAuctions, State {
         } else {
 
             // start new loan
-
+            (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
+                abi.encodeCall(
+                    IBorrowing.startLoan,
+                    (tokenId, _bid.propertyValue - _bid.downPayment, _bid.maxDurationMonths)
+                )
+            );
+            require(success, "startLoan delegateCall failed");
         }
     }
 
@@ -217,6 +209,9 @@ contract Auctions is IAuctions, State {
         totalDeposits += associatedLoanInterest;
         maxTotalUnpaidInterest -= associatedLoanInterest;
 
+        // Ensure propertyValue covers principal + interest + fees
+        require(_bid.propertyValue >= loan.unpaidPrincipal + accruedInterest(loan) + saleFee + defaultFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
+
         // Send propertyValue - principal - interest - saleFee - defaultFee to loan.borrower
         USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - accruedInterest(loan) - saleFee - defaultFee);
 
@@ -230,13 +225,13 @@ contract Auctions is IAuctions, State {
         } else {
 
             // start new loan
-
+            (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
+                abi.encodeCall(
+                    IBorrowing.startLoan,
+                    (tokenId, _bid.propertyValue - _bid.downPayment, _bid.maxDurationMonths)
+                )
+            );
+            require(success, "startLoan delegateCall failed");
         }
-    }
-
-    function _acceptBid(uint tokenId, uint bidIdx, uint associatedLoanPrincipal, uint associatedLoanInterest, uint protocolFees) private {
-
-        // Ensure propertyValue covers principal + interest + fees
-        require(_bid.propertyValue >= associatedLoanPrincipal + associatedLoanInterest + protocolFees, "propertyValue doesn't cover debt + fees"); // Question: associatedLoanInterest will rise over time. Too risky?
     }
 }
