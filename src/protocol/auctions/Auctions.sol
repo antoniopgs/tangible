@@ -149,8 +149,20 @@ contract Auctions is IAuctions, State {
         // Ensure propertyValue covers pricipal + interest + fees
         require(_bid.propertyValue >= associatedLoanPrincipal + associatedLoanInterest + protocolFees);
 
-        // Seller/Borrower/Defaulter gets rest
+        // Calculate rest
         uint rest = _bid.propertyValue - associatedLoanPrincipal - associatedLoanInterest - protocolFees;
+
+        // Get status
+        Status status = status(tokenId);
+
+        // If None, send rest to nftOwner
+        if (status == Status.None) {
+            USDC.safeTransfer(prosperaNftContract.ownerOf(tokenId), rest);
+        
+        // If Mortgage, Default or Foreclosurable, send rest to loan.borrower
+        } else {
+            USDC.safeTransfer(_loans[tokenId].borrower, rest);
+        }
         
         // If bid (no loan)
         if (_bid.propertyValue == _bid.downPayment) {
