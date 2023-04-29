@@ -107,7 +107,7 @@ abstract contract State is IState, TargetManager, Initializable {
         return _redemptionFeeSpread;
     }
 
-    function foreclosureFeeSpread() external view returns (UD60x18) {
-        return _foreclosureFeeSpread;
+    function defaultFeeSpread() external view returns (UD60x18) {
+        return _defaultFeeSpread;
     }
 }

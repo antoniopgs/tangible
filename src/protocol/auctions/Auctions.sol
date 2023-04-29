@@ -64,7 +64,11 @@ contract Auctions is IAuctions, State {
     function acceptNoneBid(uint tokenId, uint bidIdx) external {
         require(status(_loans[tokenId]) == Status.None, "");
         require(msg.sender == nftOwner, "caller not nftOwner");
-        require(bidActionable(bid), "bid not actionable");
+
+        // Get bid
+        Bid _bid = _bids[tokenId][bidIdx];
+
+        require(bidActionable(_bid), "bid not actionable");
 
         // Calculate fees
         uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
@@ -104,7 +108,11 @@ contract Auctions is IAuctions, State {
     function acceptMortgageBid(uint tokenId, uint bidIdx) external {
         require(status(_loans[tokenId]) == Status.Mortgage, "");
         require(msg.sender == loan.borrower, "caller not borrower");
-        require(bidActionable(bid), "bid not actionable");
+
+        // Get bid
+        Bid _bid = _bids[tokenId][bidIdx];
+
+        require(bidActionable(_bid), "bid not actionable");
 
         // Calculate fees
         uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
@@ -115,9 +123,9 @@ contract Auctions is IAuctions, State {
         // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
 
         // Update pool (lenders get paidFirst)
-        totalPrincipal -= associatedLoanPrincipal;
-        totalDeposits += associatedLoanInterest;
-        maxTotalUnpaidInterest -= associatedLoanInterest;
+        totalPrincipal -= loan.unpaidPrincipal;
+        totalDeposits += accruedInterest(loan);
+        maxTotalUnpaidInterest -= accruedInterest(loan);
 
         // Ensure propertyValue covers principal + interest + fees
         require(_bid.propertyValue >= loan.unpaidPrincipal + accruedInterest(loan) + saleFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
@@ -148,7 +156,11 @@ contract Auctions is IAuctions, State {
     function acceptDefaultBid(uint tokenId, uint bidIdx) external {
         require(status(_loans[tokenId]) == Status.Default, "");
         require(msg.sender == loan.borrower, "caller not borrower");
-        require(bidActionable(bid), "bid not actionable");
+
+        // Get bid
+        Bid _bid = _bids[tokenId][bidIdx];
+
+        require(bidActionable(_bid), "bid not actionable");
 
         // Calculate fees
         uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
@@ -160,9 +172,9 @@ contract Auctions is IAuctions, State {
         // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
 
         // Update pool (lenders get paidFirst)
-        totalPrincipal -= associatedLoanPrincipal;
-        totalDeposits += associatedLoanInterest;
-        maxTotalUnpaidInterest -= associatedLoanInterest;
+        totalPrincipal -= loan.unpaidPrincipal;
+        totalDeposits += accruedInterest(loan);
+        maxTotalUnpaidInterest -= accruedInterest(loan);
 
         // Ensure propertyValue covers principal + interest + fees
         require(_bid.propertyValue >= loan.unpaidPrincipal + accruedInterest(loan) + saleFee + defaultFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
@@ -193,7 +205,11 @@ contract Auctions is IAuctions, State {
     function acceptForeclosureBid(uint tokenId, uint bidIdx) external {
         require(status(_loans[tokenId]) == Status.Foreclosurable, "");
         require(msg.sender == address(this), "caller not protocol");
-        require(bidActionable(bid), "bid not actionable");
+
+        // Get bid
+        Bid _bid = _bids[tokenId][bidIdx];
+
+        require(bidActionable(_bid), "bid not actionable");
 
         // Calculate fees
         uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
@@ -205,9 +221,9 @@ contract Auctions is IAuctions, State {
         // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
 
         // Update pool (lenders get paidFirst)
-        totalPrincipal -= associatedLoanPrincipal;
-        totalDeposits += associatedLoanInterest;
-        maxTotalUnpaidInterest -= associatedLoanInterest;
+        totalPrincipal -= loan.unpaidPrincipal;
+        totalDeposits += accruedInterest(loan);
+        maxTotalUnpaidInterest -= accruedInterest(loan);
 
         // Ensure propertyValue covers principal + interest + fees
         require(_bid.propertyValue >= loan.unpaidPrincipal + accruedInterest(loan) + saleFee + defaultFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
