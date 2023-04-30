@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-import { toUD60x18 } from "@prb/math/UD60x18.sol";
+import { toUD60x18, fromUD60x18 } from "@prb/math/UD60x18.sol";
 
 abstract contract State is IState, TargetManager, Initializable {
 
@@ -109,5 +109,21 @@ abstract contract State is IState, TargetManager, Initializable {
 
     function defaultFeeSpread() external view returns (UD60x18) {
         return _defaultFeeSpread;
+    }
+
+    function accruedInterest(Loan memory loan) private view returns(uint) {
+        return fromUD60x18(toUD60x18(loan.unpaidPrincipal).mul(accruedRate(loan)));
+    }
+
+    function accruedInterest(uint tokenId) public view returns(uint) { // Note: made this duplicate of accruedInterest() for testing
+        return accruedInterest(_loans[tokenId]);
+    }
+
+    function accruedRate(Loan memory loan) private view returns(UD60x18) {
+        return loan.ratePerSecond.mul(toUD60x18(secondsSinceLastPayment(loan)));
+    }
+
+    function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
+        return block.timestamp - loan.lastPaymentTime;
     }
 }

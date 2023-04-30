@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../state/state/IState.sol";
+import "../state/status/IStatus.sol";
 
-interface IAuctions is IState {
+interface IAuctions is IStatus {
 
     // Bidder
     function bid(uint tokenId, uint propertyValue, uint downPayment, uint maxDurationMonths) external;

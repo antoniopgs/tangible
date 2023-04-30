@@ -2,12 +2,12 @@
 pragma solidity ^0.8.15;
 
 import "./IAuctions.sol";
-import "../state/state/State.sol";
+import "../state/status/Status.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../borrowing/borrowing/IBorrowing.sol";
 import { fromUD60x18 } from "@prb/math/UD60x18.sol";
 
-contract Auctions is IAuctions, State {
+contract Auctions is IAuctions, Status {
 
     using SafeERC20 for IERC20;
 
@@ -69,11 +69,11 @@ contract Auctions is IAuctions, State {
         // Get loan
         address nftOwner = prosperaNftContract.ownerOf(tokenId);
         
-        require(status(loan) == Status.None, "");
+        require(status(tokenId) == Status.None, "");
         require(msg.sender == nftOwner, "caller not nftOwner");
 
         // Get bid
-        Bid _bid = _bids[tokenId][bidIdx];
+        Bid memory _bid = _bids[tokenId][bidIdx];
 
         require(bidActionable(_bid), "bid not actionable");
 
@@ -117,11 +117,11 @@ contract Auctions is IAuctions, State {
         // Get loan
         Loan memory loan = _loans[tokenId];
 
-        require(status(_loans[tokenId]) == Status.Mortgage, "");
+        require(status(tokenId) == Status.Mortgage, "");
         require(msg.sender == loan.borrower, "caller not borrower");
 
         // Get bid
-        Bid _bid = _bids[tokenId][bidIdx];
+        Bid memory _bid = _bids[tokenId][bidIdx];
 
         require(bidActionable(_bid), "bid not actionable");
 
@@ -172,11 +172,11 @@ contract Auctions is IAuctions, State {
         // Get loan
         Loan memory loan = _loans[tokenId];
 
-        require(status(_loans[tokenId]) == Status.Default, "");
+        require(status(tokenId) == Status.Default, "");
         require(msg.sender == loan.borrower, "caller not borrower");
 
         // Get bid
-        Bid _bid = _bids[tokenId][bidIdx];
+        Bid memory _bid = _bids[tokenId][bidIdx];
 
         require(bidActionable(_bid), "bid not actionable");
 
@@ -232,7 +232,7 @@ contract Auctions is IAuctions, State {
         require(msg.sender == address(this), "caller not protocol");
 
         // Get bid
-        Bid _bid = _bids[tokenId][bidIdx];
+        Bid memory _bid = _bids[tokenId][bidIdx];
 
         require(bidActionable(_bid), "bid not actionable");
 

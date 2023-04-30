@@ -2,10 +2,10 @@
 pragma solidity ^0.8.15;
 
 import "./IInterest.sol";
-import "../state/state/State.sol";
+import "../state/status/Status.sol";
 import { intoUD60x18 } from "@prb/math/sd59x18/Casting.sol";
 
-contract Interest is IInterest, State {
+contract Interest is IInterest, Status {
 
     function borrowerRatePerSecond(UD60x18 utilization) public view returns(UD60x18 ratePerSecond) {
         ratePerSecond = borrowerApr(utilization).div(toUD60x18(yearSeconds)); // Todo: improve precision

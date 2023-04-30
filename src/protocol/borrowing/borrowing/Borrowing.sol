@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "./IBorrowing.sol";
-import "../status/Status.sol";
+import "../../state/status/Status.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../interest/IInterest.sol";
 import "../../auctions/IAuctions.sol";
@@ -138,16 +138,7 @@ abstract contract Borrowing is IBorrowing, Status {
 
         // Calculate fees // should these fees be off defaulterDebt or propertyValue?
         uint saleFee = fromUD60x18(toUD60x18(defaulterDebt).mul(_saleFeeSpread));
-        uint foreclosureFee = fromUD60x18(toUD60x18(defaulterDebt).mul(_foreclosureFeeSpread));
-
-        // Accept bid
-        acceptBid2({
-            tokenId: tokenId,
-            bidIdx: bidIdx,
-            associatedLoanPrincipal: loan.unpaidPrincipal,
-            associatedLoanInterest: interest,
-            protocolFees: saleFee + foreclosureFee
-        });
+        uint defaultFee = fromUD60x18(toUD60x18(defaulterDebt).mul(_defaultFeeSpread));
 
         // Accept bid
         (bool success, ) = logicTargets[IAuctions.acceptBid.selector].call(
@@ -157,22 +148,6 @@ abstract contract Borrowing is IBorrowing, Status {
             )
         );
         require(success, "couldn't acceptBid");
-    }
-
-    function accruedInterest(Loan memory loan) private view returns(uint) {
-        return fromUD60x18(toUD60x18(loan.unpaidPrincipal).mul(accruedRate(loan)));
-    }
-
-    function accruedInterest(uint tokenId) public view returns(uint) { // Note: made this duplicate of accruedInterest() for testing
-        return accruedInterest(_loans[tokenId]);
-    }
-
-    function accruedRate(Loan memory loan) private view returns(UD60x18) {
-        return loan.ratePerSecond.mul(toUD60x18(secondsSinceLastPayment(loan)));
-    }
-
-    function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
-        return block.timestamp - loan.lastPaymentTime;
     }
 
     function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) /*private*/ public pure returns(UD60x18 paymentPerSecond) {
