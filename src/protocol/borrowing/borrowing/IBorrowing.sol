@@ -9,7 +9,6 @@ interface IBorrowing is IStatus {
     function startLoan(uint tokenId, uint principal, uint maxDurationMonths) external;
     function payLoan(uint tokenId, uint payment) external;
     function redeemLoan(uint tokenId) external;
-    function forecloseLoan(uint tokenId, uint bidIdx) external;
 
     // Views
     function lenderApy() external view returns(UD60x18);

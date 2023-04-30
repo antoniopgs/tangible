@@ -72,7 +72,7 @@ abstract contract Borrowing is IBorrowing, Status {
         Loan storage loan = _loans[tokenId];
 
         // Calculate interest
-        uint interest = accruedInterest(loan);
+        uint interest = accruedInterest(tokenId);
 
         //require(payment <= loan.unpaidPrincipal + interest, "payment must be <= unpaidPrincipal + interest");
         //require(payment => interest, "payment must be => interest"); // Question: maybe don't calculate repayment if payment < interest?
@@ -105,7 +105,7 @@ abstract contract Borrowing is IBorrowing, Status {
         Loan storage loan = _loans[tokenId];
 
         // Calculate interest
-        uint interest = accruedInterest(loan);
+        uint interest = accruedInterest(tokenId);
 
         // Calculate defaulterDebt & redemptionFee
         uint defaulterDebt = loan.unpaidPrincipal + interest;
@@ -122,32 +122,6 @@ abstract contract Borrowing is IBorrowing, Status {
 
         // Send nft to loan.borrower
         sendNft(loan, loan.borrower, tokenId);
-    }
-
-    function forecloseLoan(uint tokenId, uint bidIdx) public { // Note: bidders can call this with idx of their bid. shoudn't be a problem
-        require(status(tokenId) == Status.Foreclosurable, "nft not foreclosurable");
-
-        // Get Loan
-        Loan storage loan = _loans[tokenId];
-
-        // Calculate interest
-        uint interest = accruedInterest(loan);
-
-        // Calculate defaulterDebt
-        uint defaulterDebt = loan.unpaidPrincipal + interest;
-
-        // Calculate fees // should these fees be off defaulterDebt or propertyValue?
-        uint saleFee = fromUD60x18(toUD60x18(defaulterDebt).mul(_saleFeeSpread));
-        uint defaultFee = fromUD60x18(toUD60x18(defaulterDebt).mul(_defaultFeeSpread));
-
-        // Accept bid
-        (bool success, ) = logicTargets[IAuctions.acceptBid.selector].call(
-            abi.encodeCall(
-                IAuctions.acceptBid,
-                (tokenId, bidIdx)
-            )
-        );
-        require(success, "couldn't acceptBid");
     }
 
     function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) /*private*/ public pure returns(UD60x18 paymentPerSecond) {

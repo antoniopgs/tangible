@@ -134,7 +134,7 @@ contract Auctions is IAuctions, Status {
         // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
 
         // Calculate interest
-        uint interest = accruedInterest(loan);
+        uint interest = accruedInterest(tokenId);
 
         // Update pool (lenders get paidFirst)
         totalPrincipal -= loan.unpaidPrincipal;
@@ -190,7 +190,7 @@ contract Auctions is IAuctions, Status {
         // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
 
         // Calculate interest
-        uint interest = accruedInterest(loan);
+        uint interest = accruedInterest(tokenId);
 
         // Update pool (lenders get paidFirst)
         totalPrincipal -= loan.unpaidPrincipal;
@@ -228,7 +228,7 @@ contract Auctions is IAuctions, Status {
         // Get loan
         Loan memory loan = _loans[tokenId];
         
-        require(status(loan) == Status.Foreclosurable, "");
+        require(status(tokenId) == Status.Foreclosurable, "");
         require(msg.sender == address(this), "caller not protocol");
 
         // Get bid
@@ -237,8 +237,8 @@ contract Auctions is IAuctions, Status {
         require(bidActionable(_bid), "bid not actionable");
 
         // Calculate fees
-        uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
-        uint defaultFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_defaultFeeSpread));
+        uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
+        uint defaultFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_defaultFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
 
         // Protocol takes fees
         protocolMoney += saleFee + defaultFee;
@@ -246,7 +246,7 @@ contract Auctions is IAuctions, Status {
         // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
 
         // Calculate interest
-        uint interest = accruedInterest(loan);
+        uint interest = accruedInterest(tokenId);
 
         // Update pool (lenders get paidFirst)
         totalPrincipal -= loan.unpaidPrincipal;

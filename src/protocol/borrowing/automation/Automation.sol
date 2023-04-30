@@ -41,7 +41,7 @@ contract Automation is AutomationCompatibleInterface, Borrowing {
         (uint tokenId, uint highestActionableBidIdx) = abi.decode(performData, (uint, uint));
 
         // Foreclose (via delegatecall)
-        forecloseLoan(tokenId, highestActionableBidIdx);
+        acceptForeclosureBid(tokenId, highestActionableBidIdx);
     }
 
     // Views
