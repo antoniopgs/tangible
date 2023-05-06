@@ -40,8 +40,14 @@ contract Automation is AutomationCompatibleInterface, Borrowing {
         // Decode tokenId
         (uint tokenId, uint highestActionableBidIdx) = abi.decode(performData, (uint, uint));
 
-        // Foreclose (via delegatecall)
-        // acceptBid(tokenId, highestActionableBidIdx);
+        // Accept Bid
+        (bool success, ) = logicTargets[IAuctions.acceptBid.selector].call(
+            abi.encodeCall(
+                IAuctions.acceptBid,
+                (tokenId, highestActionableBidIdx)
+            )
+        );
+        require(success, "acceptBid call failed");
     }
 
     // Views
