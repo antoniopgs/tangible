@@ -375,7 +375,7 @@ contract ProtocolTest is Test, DeployScript {
             vm.prank(nftOwner);
             IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
         
-        // If status Mortgage, Default
+        // If status Mortgage, Default, Foreclosureable
         } else {
             
             // Get loan

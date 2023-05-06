@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../interest/IInterest.sol";
 import "../../auctions/IAuctions.sol";
 
+import "forge-std/console.sol";
+
 abstract contract Borrowing is IBorrowing, Status {
 
     // Libs
@@ -15,8 +17,11 @@ abstract contract Borrowing is IBorrowing, Status {
 
     // Functions
     function startLoan(uint tokenId, uint principal, uint maxDurationMonths) external {
+        console.log("sl1");
         require(prosperaNftContract.ownerOf(tokenId) == address(this), "unauthorized"); // Note: nft must be owned must be address(this) because this will be called via delegatecall // Todo: review safety of this require later
-        require(status(tokenId) == Status.None, "nft already in system"); // Note: THIS MIGHT NOT WORK
+        console.log("sl2");
+        // require(status(tokenId) == Status.None, "nft already in system"); // Note: THIS MIGHT NOT WORK
+        console.log("sl3");
 
         // Get ratePerSecond
         (bool success, bytes memory data) = logicTargets[IInterest.borrowerRatePerSecond.selector].call(
@@ -77,18 +82,27 @@ abstract contract Borrowing is IBorrowing, Status {
         //require(payment <= loan.unpaidPrincipal + interest, "payment must be <= unpaidPrincipal + interest");
         //require(payment => interest, "payment must be => interest"); // Question: maybe don't calculate repayment if payment < interest?
 
+        console.log("pl1");
+
         // Calculate repayment
         uint repayment = payment - interest; // Todo: Add payLoanFee // Question: should payLoanFee come off the interest to lenders? Or only come off the borrower's repayment?
 
         // Update loan
+        console.log("pl2");
         loan.unpaidPrincipal -= repayment;
+        console.log("pl3");
         loan.maxUnpaidInterest -= interest;
+        console.log("pl4");
         loan.lastPaymentTime = block.timestamp;
 
         // Update pool
+        console.log("pl5");
         totalPrincipal -= repayment;
+        console.log("pl6");
         totalDeposits += interest;
+        console.log("pl7");
         maxTotalUnpaidInterest -= interest;
+        console.log("pl8");
 
         // If loan is paid off
         if (loan.unpaidPrincipal == 0) {
