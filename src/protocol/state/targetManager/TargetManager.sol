@@ -18,9 +18,4 @@ abstract contract TargetManager is ITargetManager, Ownable {
             logicTargets[selectorsArr[i]] = target;
         }
     }
-
-    function initializeTarget(address target) external onlyOwner {
-        (bool success,) = target.delegatecall(abi.encodeWithSignature("initialize(address)", target));
-        require(success, "target initialization failed");
-    }
 }

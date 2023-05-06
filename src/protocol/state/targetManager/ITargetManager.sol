@@ -7,5 +7,4 @@ interface ITargetManager {
 
     function getTarget(string calldata sig) external view returns (address);
     function setSelectorsTarget(bytes4[] calldata selectorsArr, address target) external;
-    function initializeTarget(address target) external;
 }

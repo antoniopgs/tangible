@@ -75,7 +75,6 @@ contract DeployScript is Script {
         automationSelectors[0] = IBorrowing.startLoan.selector;
         automationSelectors[1] = IBorrowing.payLoan.selector;
         automationSelectors[2] = IBorrowing.redeemLoan.selector;
-        automationSelectors[3] = IBorrowing.forecloseLoan.selector;
         automationSelectors[4] = IBorrowing.utilization.selector;
         automationSelectors[5] = Status.status.selector;
         automationSelectors[6] = IBorrowing.lenderApy.selector;

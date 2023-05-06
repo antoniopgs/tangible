@@ -460,8 +460,8 @@ contract ProtocolTest is Test, DeployScript {
                 // Find highestActionableBidIdx
                 uint highestActionableBidIdx = Automation(protocol).findHighestActionableBidIdx(tokenId);
 
-                // Foreclose
-                IBorrowing(protocol).forecloseLoan(tokenId, highestActionableBidIdx);
+                // Accept Bid
+                IAuctions(protocol).acceptBid(tokenId, highestActionableBidIdx);
             }
         }
     }

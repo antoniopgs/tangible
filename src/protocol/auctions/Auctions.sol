@@ -61,12 +61,31 @@ contract Auctions is IAuctions, Status {
         USDC.safeTransfer(bidToRemove.bidder, bidToRemove.downPayment);
     }
 
-    function acceptNoneBid(uint tokenId, uint bidIdx) external {
+    function acceptBid(uint tokenId, uint bidIdx) external {
 
-        // Get loan
-        Loan memory loan = _loans[tokenId];
+        // Get status
+        Status status = status(tokenId);
 
-        // Get loan
+        if (status == Status.None) {
+            _acceptNoneBid(tokenId, bidIdx);
+
+        } else if (status == Status.Mortgage) {
+            _acceptMortgageBid(tokenId, bidIdx);
+
+        } else if (status == Status.Default) {
+            _acceptDefaultBid(tokenId, bidIdx);
+
+        } else if (status == Status.Foreclosurable) {
+            _acceptForeclosureBid(tokenId, bidIdx);
+            
+        } else {
+            revert("invalid status");
+        }
+    }
+
+    function _acceptNoneBid(uint tokenId, uint bidIdx) private {
+
+        // Get nftOwner
         address nftOwner = prosperaNftContract.ownerOf(tokenId);
         
         require(status(tokenId) == Status.None, "");
@@ -112,7 +131,7 @@ contract Auctions is IAuctions, Status {
         }
     }
 
-    function acceptMortgageBid(uint tokenId, uint bidIdx) external {
+    function _acceptMortgageBid(uint tokenId, uint bidIdx) private {
 
         // Get loan
         Loan memory loan = _loans[tokenId];
@@ -167,7 +186,7 @@ contract Auctions is IAuctions, Status {
         }
     }
 
-    function acceptDefaultBid(uint tokenId, uint bidIdx) external {
+    function _acceptDefaultBid(uint tokenId, uint bidIdx) private {
 
         // Get loan
         Loan memory loan = _loans[tokenId];
@@ -223,7 +242,7 @@ contract Auctions is IAuctions, Status {
         }
     }
 
-    function acceptForeclosureBid(uint tokenId, uint bidIdx) external {
+    function _acceptForeclosureBid(uint tokenId, uint bidIdx) private {
 
         // Get loan
         Loan memory loan = _loans[tokenId];
