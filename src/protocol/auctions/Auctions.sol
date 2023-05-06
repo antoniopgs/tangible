@@ -63,6 +63,12 @@ contract Auctions is IAuctions, Status {
 
     function acceptBid(uint tokenId, uint bidIdx) external {
 
+        // Get tokenIdBids
+        Bid[] storage tokenIdBids = _bids[tokenId];
+
+        // Ensure bid is actionable
+        require(bidActionable(tokenIdBids[bidIdx]), "bid not actionable");
+
         // Get status
         Status status = status(tokenId);
 
@@ -81,6 +87,15 @@ contract Auctions is IAuctions, Status {
         } else {
             revert("invalid status");
         }
+
+        // Get tokenIdLastBid
+        Bid memory tokenIdLastBid = tokenIdBids[tokenIdBids.length - 1];
+
+        // Write tokenIdLastBid over bidIdx
+        tokenIdBids[bidIdx] = tokenIdLastBid;
+
+        // Remove tokenIdLastBid
+        tokenIdBids.pop();
     }
 
     function _acceptNoneBid(uint tokenId, uint bidIdx) private {
@@ -93,8 +108,6 @@ contract Auctions is IAuctions, Status {
 
         // Get bid
         Bid memory _bid = _bids[tokenId][bidIdx];
-
-        require(bidActionable(_bid), "bid not actionable");
 
         // Calculate fees
         uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
@@ -147,8 +160,6 @@ contract Auctions is IAuctions, Status {
 
         // Get bid
         Bid memory _bid = _bids[tokenId][bidIdx];
-
-        require(bidActionable(_bid), "bid not actionable");
 
         // Calculate fees
         uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
@@ -212,8 +223,6 @@ contract Auctions is IAuctions, Status {
         // Get bid
         Bid memory _bid = _bids[tokenId][bidIdx];
 
-        require(bidActionable(_bid), "bid not actionable");
-
         // Calculate fees
         uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
         uint defaultFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_defaultFeeSpread));
@@ -276,8 +285,6 @@ contract Auctions is IAuctions, Status {
 
         // Get bid
         Bid memory _bid = _bids[tokenId][bidIdx];
-
-        require(bidActionable(_bid), "bid not actionable");
 
         // Calculate fees
         uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
