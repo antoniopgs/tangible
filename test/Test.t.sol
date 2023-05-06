@@ -47,18 +47,36 @@ contract ProtocolTest is Test, DeployScript {
         // Calculate random downPayment
         uint downPayment = bound(randomness, propertyValue / 2, propertyValue); // for now, do min = max/2 (cause maxLtv is 50%)
 
+        // Pick random maxDurationMonths
+        uint maxDurationMonths = bound(randomness, 1, State(protocol).maxDurationMonthsCap());
+
         // If downPayment < propertyValue
         if (downPayment < propertyValue) {
 
             // Get availableLiquidity
             uint availableLiquidity = IState(protocol).availableLiquidity();
 
-            // Bound downPayment to availableLiquidity
-            downPayment = bound(downPayment, propertyValue / 2, availableLiquidity);
-        }
+            // If downPayment > availableLiquidity
+            if (downPayment > availableLiquidity) {
+                
+                // Calculate neededLiquidity
+                uint neededLiquidity = downPayment - availableLiquidity;
 
-        // Pick random maxDurationMonths
-        uint maxDurationMonths = bound(randomness, 1, State(protocol).maxDurationMonthsCap());
+                // Get lender
+                address lender = makeAddr("lender");
+
+                // Give neededLiquidity to lender
+                deal(address(USDC), lender, neededLiquidity);
+
+                // Lender approve protocol to pull neededLiquidity
+                vm.prank(lender);
+                USDC.approve(address(protocol), neededLiquidity);
+
+                // Lender seposits neededLiquidity
+                vm.prank(lender);
+                ILending(protocol).deposit(neededLiquidity);
+            }
+        }
 
         // Give bidder downPayment
         deal(address(USDC), bidder, downPayment);
@@ -173,18 +191,18 @@ contract ProtocolTest is Test, DeployScript {
         // Set expectations
         expectedTotalDeposits += amount;
 
-        // Get borrower
-        address borrower = makeAddr("borrower");
+        // Get lender
+        address lender = makeAddr("lender");
 
-        // Give USDC to borrower
-        deal(address(USDC), borrower, amount);
+        // Give USDC to lender
+        deal(address(USDC), lender, amount);
 
         // Approve protocol to pull amount
-        vm.prank(borrower);
+        vm.prank(lender);
         USDC.approve(address(protocol), amount);
 
-        // Deposit
-        vm.prank(borrower);
+        // Lender deposits
+        vm.prank(lender);
         ILending(protocol).deposit(amount);
     }
 
@@ -261,8 +279,6 @@ contract ProtocolTest is Test, DeployScript {
     // Seller
     function testAcceptBid(uint randomness) private validate {
 
-        console.log(1);
-
         // Get totalSupply
         uint totalSupply = nftContract.totalSupply();
         assert(totalSupply > 0);
@@ -318,8 +334,6 @@ contract ProtocolTest is Test, DeployScript {
         // Nft Owner Accepts Bid
         vm.prank(nftOwner);
         IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
-
-        require(false, "testAcceptBid");
         
         // // Bound principal
         // uint principal = bound(randomness, 0, IState(protocol).availableLiquidity());
