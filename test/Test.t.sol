@@ -25,7 +25,7 @@ contract ProtocolTest is Test, DeployScript {
         Deposit, Withdraw, // Lenders
         Bid, CancelBid, // Borrower Pre-Loan
         AcceptBid, // Seller
-        PayLoan, Redeem, // Borrower In-Loan
+        PayLoan, RedeemLoan, // Borrower In-Loan
         Foreclose, // Foreclosure
         SkipTime // Util
     }
@@ -93,9 +93,9 @@ contract ProtocolTest is Test, DeployScript {
                 console.log("\nAction.PayLoan");
                 testPayLoan(randomness[i]);
 
-            } else if (action == uint(Action.Redeem)) {
+            } else if (action == uint(Action.RedeemLoan)) {
                 console.log("\nAction.Redeem");
-                testRedeem(randomness[i]);
+                testRedeemLoan(randomness[i]);
 
             } else if (action == uint(Action.Foreclose)) {
                 console.log("\nAction.Foreclose");
@@ -369,7 +369,7 @@ contract ProtocolTest is Test, DeployScript {
         // }
     }
 
-    function testRedeem(uint randomness) private validate {
+    function testRedeemLoan(uint randomness) private validate {
 
         console.log(1);
 
