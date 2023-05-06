@@ -272,6 +272,8 @@ contract ProtocolTest is Test, DeployScript {
                     IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
 
                     console.log(10);
+
+                    require(false, "testAcceptBid");
                 }
             }
         
@@ -335,6 +337,8 @@ contract ProtocolTest is Test, DeployScript {
 
             // Pay Loan
             IBorrowing(protocol).payLoan(tokenId, payment);
+
+            require(false, "testPayLoan");
 
         } else {
             console.log("loansTokenIdsLength = 0. no loans exist.");
@@ -418,6 +422,8 @@ contract ProtocolTest is Test, DeployScript {
                 IBorrowing(protocol).redeemLoan(tokenId);
 
                 console.log(6);
+
+                require(false, "testRedeemLoan");
             }
         } else {
             console.log("no default.\n");
@@ -462,6 +468,8 @@ contract ProtocolTest is Test, DeployScript {
 
                 // Accept Bid
                 IAuctions(protocol).acceptBid(tokenId, highestActionableBidIdx);
+
+                require(false, "testForeclose");
             }
         }
     }
