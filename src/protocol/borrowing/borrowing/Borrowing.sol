@@ -16,7 +16,7 @@ abstract contract Borrowing is IBorrowing, Status {
     using EnumerableSet for EnumerableSet.UintSet;
 
     // Functions
-    function startLoan(uint tokenId, uint principal, uint maxDurationMonths) external {
+    function startLoan(address borrower, uint tokenId, uint principal, uint maxDurationMonths) external {
         console.log("sl1");
         require(prosperaNftContract.ownerOf(tokenId) == address(this), "unauthorized"); // Note: nft must be owned must be address(this) because this will be called via delegatecall // Todo: review safety of this require later
         console.log("sl2");
@@ -48,7 +48,7 @@ abstract contract Borrowing is IBorrowing, Status {
         uint maxUnpaidInterest = maxCost - principal;
         
         _loans[tokenId] = Loan({
-            borrower: msg.sender, // Note: must be called via delegatecall for this to work
+            borrower: borrower, // Note: must be called via delegatecall for this to work
             ratePerSecond: ratePerSecond,
             paymentPerSecond: paymentPerSecond,
             startTime: block.timestamp,
@@ -69,6 +69,8 @@ abstract contract Borrowing is IBorrowing, Status {
 
     function payLoan(uint tokenId, uint payment) external {
         require(status(tokenId) == Status.Mortgage, "nft has no active mortgage");
+
+        console.log("pl0");
 
         // Calculate interest
         uint interest = accruedInterest(tokenId);

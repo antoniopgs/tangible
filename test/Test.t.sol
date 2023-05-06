@@ -100,6 +100,9 @@ contract ProtocolTest is Test, DeployScript {
 
         console.log("z7");
 
+        // Verify bidder
+        nftContract.verifyEResident(randomness, bidder);
+
         // Bidder approves protocol
         vm.prank(bidder);
         USDC.approve(protocol, downPayment);
@@ -128,6 +131,9 @@ contract ProtocolTest is Test, DeployScript {
 
         // Give bidder downPayment
         deal(address(USDC), bidder, downPayment);
+
+        // Verify bidder
+        nftContract.verifyEResident(randomness, bidder);
 
         // Bidder approves protocol
         vm.prank(bidder);

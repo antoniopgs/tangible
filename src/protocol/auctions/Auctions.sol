@@ -12,6 +12,7 @@ contract Auctions is IAuctions, Status {
     using SafeERC20 for IERC20;
 
     function bid(uint tokenId, uint propertyValue, uint downPayment, uint maxDurationMonths) external {
+        require(prosperaNftContract.isEResident(msg.sender), "only eResidents can bid");
         require(downPayment <= propertyValue, "downPayment cannot exceed propertyValue");
         require(maxDurationMonths >= 1 && maxDurationMonths <= maxDurationMonthsCap, "unallowed maxDurationMonths");
 
@@ -143,7 +144,7 @@ contract Auctions is IAuctions, Status {
             (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
                 abi.encodeCall(
                     IBorrowing.startLoan,
-                    (tokenId, principal, _bid.maxDurationMonths)
+                    (_bid.bidder, tokenId, principal, _bid.maxDurationMonths)
                 )
             );
             require(success, "startLoan delegateCall failed");
@@ -205,7 +206,7 @@ contract Auctions is IAuctions, Status {
             (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
                 abi.encodeCall(
                     IBorrowing.startLoan,
-                    (tokenId, principal, _bid.maxDurationMonths)
+                    (_bid.bidder, tokenId, principal, _bid.maxDurationMonths)
                 )
             );
             require(success, "startLoan delegateCall failed");
@@ -268,7 +269,7 @@ contract Auctions is IAuctions, Status {
             (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
                 abi.encodeCall(
                     IBorrowing.startLoan,
-                    (tokenId, principal, _bid.maxDurationMonths)
+                    (_bid.bidder, tokenId, principal, _bid.maxDurationMonths)
                 )
             );
             require(success, "startLoan delegateCall failed");
@@ -281,7 +282,7 @@ contract Auctions is IAuctions, Status {
         Loan memory loan = _loans[tokenId];
         
         require(status(tokenId) == Status.Foreclosurable, "status not foreclosurable"); // Question: maybe remove this? (since it's checked in acceptBid() and this function is private?)
-        require(msg.sender == address(this), "caller not protocol");
+        // require(msg.sender == address(this), "caller not protocol"); Todo: figure this out later
 
         // Get bid
         Bid memory _bid = _bids[tokenId][bidIdx];
@@ -331,7 +332,7 @@ contract Auctions is IAuctions, Status {
             (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
                 abi.encodeCall(
                     IBorrowing.startLoan,
-                    (tokenId, principal, _bid.maxDurationMonths)
+                    (_bid.bidder, tokenId, principal, _bid.maxDurationMonths)
                 )
             );
             require(success, "startLoan delegateCall failed");
