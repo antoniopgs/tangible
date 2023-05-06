@@ -334,6 +334,11 @@ contract ProtocolTest is Test, DeployScript {
         // Nft Owner Accepts Bid
         vm.prank(nftOwner);
         IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
+
+        // Update expectedTotalPrincipal
+        IState.Bid memory bid = State(protocol).bids(tokenId)[tokenIdBidIdx];
+        uint expectedPrincipal = bid.propertyValue - bid.downPayment;
+        expectedTotalPrincipal += expectedPrincipal;
         
         // // Bound principal
         // uint principal = bound(randomness, 0, IState(protocol).availableLiquidity());
