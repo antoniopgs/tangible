@@ -39,6 +39,62 @@ contract ProtocolTest is Test, DeployScript {
     uint loanCount;
     uint totalPaidInterest;
 
+    function makeActionableBid(uint tokenId, uint randomness, address bidder) private {
+
+        // Calculate random propertyValue 
+        uint propertyValue = bound(randomness, 10_000e18, 1_000_000_000e18); // 10k to 1B
+
+        // Calculate random downPayment
+        uint downPayment = bound(randomness, propertyValue / 2, propertyValue); // for now, do min = max/2 (cause maxLtv is 50%)
+
+        // If downPayment < propertyValue
+        if (downPayment < propertyValue) {
+
+            // Get availableLiquidity
+            uint availableLiquidity = IState(protocol).availableLiquidity();
+
+            // Bound downPayment to availableLiquidity
+            downPayment = bound(downPayment, propertyValue / 2, availableLiquidity);
+        }
+
+        // Pick random maxDurationMonths
+        uint maxDurationMonths = bound(randomness, 1, State(protocol).maxDurationMonthsCap());
+
+        // Give bidder downPayment
+        deal(address(USDC), bidder, downPayment);
+
+        // Bidder approves protocol
+        vm.prank(bidder);
+        USDC.approve(protocol, downPayment);
+
+        // Bidder bids
+        vm.prank(bidder);
+        IAuctions(protocol).bid(tokenId, propertyValue, downPayment, maxDurationMonths);
+    }
+
+    function makeBid(uint tokenId, uint randomness, address bidder) private {
+
+        // Calculate random propertyValue 
+        uint propertyValue = bound(randomness, 10_000e18, 1_000_000_000e18); // 10k to 1B
+
+        // Calculate random downPayment
+        uint downPayment = bound(randomness, propertyValue / 2, propertyValue); // for now, do min = max/2 (cause maxLtv is 50%)
+
+        // Pick random maxDurationMonths
+        uint maxDurationMonths = bound(randomness, 1, State(protocol).maxDurationMonthsCap());
+
+        // Give bidder downPayment
+        deal(address(USDC), bidder, downPayment);
+
+        // Bidder approves protocol
+        vm.prank(bidder);
+        USDC.approve(protocol, downPayment);
+
+        // Bidder bids
+        vm.prank(bidder);
+        IAuctions(protocol).bid(tokenId, propertyValue, downPayment, maxDurationMonths);
+    }
+
     // Setup
     function setUp() public {
 
@@ -161,25 +217,12 @@ contract ProtocolTest is Test, DeployScript {
         // Get random tokenId
         uint tokenId = bound(randomness, 0, nftContract.totalSupply() - 1);
 
-        // Calculate random propertyValue 
-        uint propertyValue = bound(randomness, 10_000e18, 1_000_000_000e18); // 10k to 1B
-
-        // Calculate random downPayment
-        uint downPayment = bound(randomness, propertyValue / 2, propertyValue); // for now, do min = max/2 (cause maxLtv is 50%)
-
-        // Give bidder downPayment
-        deal(address(USDC), bidder, downPayment);
-
-        // Bidder approves protocol
-        vm.prank(bidder);
-        USDC.approve(protocol, downPayment);
-
-        // Pick random maxDurationMonths
-        uint maxDurationMonths = bound(randomness, 1, State(protocol).maxDurationMonthsCap());
-
-        // Bidder bids
-        vm.prank(bidder);
-        IAuctions(protocol).bid(tokenId, propertyValue, downPayment, maxDurationMonths);
+        // Bid
+        makeBid({
+            tokenId: tokenId,
+            randomness: randomness,
+            bidder: bidder
+        });
     }
 
     function testCancelBid(uint randomness) private validate {
@@ -222,64 +265,61 @@ contract ProtocolTest is Test, DeployScript {
 
         // Get totalSupply
         uint totalSupply = nftContract.totalSupply();
+        assert(totalSupply > 0);
 
-        console.log(2);
+        // Get random tokenId
+        uint tokenId = bound(randomness, 0, totalSupply - 1);
 
-        // If nfts exist
-        if (totalSupply > 0) {
+        // Get tokenIdBids
+        IState.Bid[] memory tokenIdBids = State(protocol).bids(tokenId);
 
-            console.log(3);
+        uint tokenIdBidIdx;
 
-            // Get random tokenId
-            uint tokenId = bound(randomness, 0, totalSupply - 1);
+        // if tokenId has no bids
+        if (tokenIdBids.length == 0) {
 
-            console.log(4);
+            // make actionable bid on tokenId // Note: tokenIdBidIdx will be 0 (which is correct with newly added bid)
+            makeActionableBid({
+                tokenId: tokenId,
+                randomness: randomness,
+                bidder: makeAddr("bidder")
+            });
 
-            // Get tokenIdBids
-            IState.Bid[] memory tokenIdBids = State(protocol).bids(tokenId);
-
-            console.log(5);
-
-            // If tokenId has bids
-            if (tokenIdBids.length > 0) {
-
-                console.log(6);
-
-                // Get random tokenIdBidIdx
-                uint tokenIdBidIdx = randomness % tokenIdBids.length;
-
-                console.log(7);
-
-                // Get Bid
-                IState.Bid memory bid = tokenIdBids[tokenIdBidIdx];
-                
-                console.log(8);
-
-                // If bid actionable
-                if (State(protocol).bidActionable(bid)) {
-
-                    console.log(9);
-                    
-                    // Get nftOwner
-                    address nftOwner = nftContract.ownerOf(tokenId);
-
-                    // NftOwner approves protocol
-                    vm.prank(nftOwner);
-                    nftContract.approve(protocol, tokenId);
-
-                    // Nft Owner Accepts Bid
-                    vm.prank(nftOwner);
-                    IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
-
-                    console.log(10);
-
-                    require(false, "testAcceptBid");
-                }
-            }
-        
         } else {
-            console.log("totalSupply = 0. no nfts exist.");
+
+            // Get random tokenIdBidIdx
+            tokenIdBidIdx = randomness % tokenIdBids.length;
+
+            // Get Bid
+            IState.Bid memory _bid = tokenIdBids[tokenIdBidIdx];
+
+            // If bid isn't actionable
+            if (!State(protocol).bidActionable(_bid)) {
+
+                // make actionable bid on tokenId
+                makeActionableBid({
+                    tokenId: tokenId,
+                    randomness: randomness,
+                    bidder: makeAddr("bidder")
+                });
+
+                // Update tokenIdBidIdx
+                tokenIdBidIdx = tokenIdBids.length; // Note: length will increase by 1, so idx of new bid will be prev length
+            }
         }
+                    
+        // Get nftOwner
+        address nftOwner = nftContract.ownerOf(tokenId);
+
+        // NftOwner approves protocol
+        vm.prank(nftOwner);
+        nftContract.approve(protocol, tokenId);
+
+        // Nft Owner Accepts Bid
+        vm.prank(nftOwner);
+        IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
+
+        require(false, "testAcceptBid");
         
         // // Bound principal
         // uint principal = bound(randomness, 0, IState(protocol).availableLiquidity());
