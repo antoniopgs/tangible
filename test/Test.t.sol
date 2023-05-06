@@ -460,8 +460,6 @@ contract ProtocolTest is Test, DeployScript {
                 // Pay Loan
                 vm.prank(payer);
                 IBorrowing(protocol).payLoan(tokenId, payment);
-
-                require(false, "testPayLoan");
             }
 
         } else {
