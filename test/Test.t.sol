@@ -41,6 +41,8 @@ contract ProtocolTest is Test, DeployScript {
 
     function makeActionableBid(uint tokenId, uint randomness, address bidder) private {
 
+        console.log("makeActionableBid");
+
         // Calculate random propertyValue 
         uint propertyValue = bound(randomness, 10_000e18, 1_000_000_000e18); // 10k to 1B
 
@@ -50,23 +52,33 @@ contract ProtocolTest is Test, DeployScript {
         // Pick random maxDurationMonths
         uint maxDurationMonths = bound(randomness, 1, State(protocol).maxDurationMonthsCap());
 
+        console.log("z1");
+
         // If downPayment < propertyValue
         if (downPayment < propertyValue) {
 
             // Get availableLiquidity
             uint availableLiquidity = IState(protocol).availableLiquidity();
 
+            console.log("z2");
+
             // If downPayment > availableLiquidity
             if (downPayment > availableLiquidity) {
+
+                console.log("z3");
                 
                 // Calculate neededLiquidity
                 uint neededLiquidity = downPayment - availableLiquidity;
+
+                console.log("z4");
 
                 // Get lender
                 address lender = makeAddr("lender");
 
                 // Give neededLiquidity to lender
                 deal(address(USDC), lender, neededLiquidity);
+
+                console.log("z5");
 
                 // Lender approve protocol to pull neededLiquidity
                 vm.prank(lender);
@@ -75,22 +87,35 @@ contract ProtocolTest is Test, DeployScript {
                 // Lender seposits neededLiquidity
                 vm.prank(lender);
                 ILending(protocol).deposit(neededLiquidity);
+
+                // Update expectedTotalDeposits
+                expectedTotalDeposits += neededLiquidity;
+
+                console.log("z6");
             }
         }
 
         // Give bidder downPayment
         deal(address(USDC), bidder, downPayment);
 
+        console.log("z7");
+
         // Bidder approves protocol
         vm.prank(bidder);
         USDC.approve(protocol, downPayment);
 
+        console.log("z8");
+
         // Bidder bids
         vm.prank(bidder);
         IAuctions(protocol).bid(tokenId, propertyValue, downPayment, maxDurationMonths);
+
+        console.log("z9");
     }
 
     function makeBid(uint tokenId, uint randomness, address bidder) private {
+
+        console.log("makeBid");
 
         // Calculate random propertyValue 
         uint propertyValue = bound(randomness, 10_000e18, 1_000_000_000e18); // 10k to 1B
@@ -323,22 +348,45 @@ contract ProtocolTest is Test, DeployScript {
                 tokenIdBidIdx = tokenIdBids.length; // Note: length will increase by 1, so idx of new bid will be prev length
             }
         }
-                    
-        // Get nftOwner
-        address nftOwner = nftContract.ownerOf(tokenId);
 
-        // NftOwner approves protocol
-        vm.prank(nftOwner);
-        nftContract.approve(protocol, tokenId);
+        // Get status
+        IState.Status status = Status(protocol).status(tokenId);
 
-        // Nft Owner Accepts Bid
-        vm.prank(nftOwner);
-        IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
+        console.log("zz1");
 
-        // Update expectedTotalPrincipal
+        // Update expectedTotalPrincipal // Note: do it before acceptBid() (because bid will be deleted after it's accepted)
         IState.Bid memory bid = State(protocol).bids(tokenId)[tokenIdBidIdx];
         uint expectedPrincipal = bid.propertyValue - bid.downPayment;
         expectedTotalPrincipal += expectedPrincipal;
+
+        console.log("zz2");
+
+        // If status == None
+        if (status == IState.Status.None) {
+
+            // Get nftOwner
+            address nftOwner = nftContract.ownerOf(tokenId);
+
+            // NftOwner approves protocol
+            vm.prank(nftOwner);
+            nftContract.approve(protocol, tokenId);
+
+            // Nft Owner Accepts Bid
+            vm.prank(nftOwner);
+            IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
+        
+        // If status Mortgage, Default
+        } else {
+            
+            // Get loan
+            IState.Loan memory loan = Status(protocol).loans(tokenId);
+
+            // Borrower Accepts Bid
+            vm.prank(loan.borrower);
+            IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
+        }
+
+        console.log("ble");
         
         // // Bound principal
         // uint principal = bound(randomness, 0, IState(protocol).availableLiquidity());
@@ -391,13 +439,30 @@ contract ProtocolTest is Test, DeployScript {
             // Get random tokenId
             uint tokenId = State(protocol).loansTokenIdsAt(randomIdx);
 
-            // Pick random payment
-            uint payment = bound(randomness, 0, 1_000_000_000e18);
+            // Get status
+            IState.Status status = Status(protocol).status(tokenId);
 
-            // Pay Loan
-            IBorrowing(protocol).payLoan(tokenId, payment);
+            if (status == IState.Status.Mortgage) {
 
-            require(false, "testPayLoan");
+                // Pick random payment
+                uint payment = bound(randomness, 0, 1_000_000_000e18);
+
+                // Get payer
+                address payer = makeAddr("payer");
+
+                // Give payment to payer
+                deal(address(USDC), payer, payment);
+
+                // Payer approves payment for protocol
+                vm.prank(payer);
+                USDC.approve(address(protocol), payment);
+
+                // Pay Loan
+                vm.prank(payer);
+                IBorrowing(protocol).payLoan(tokenId, payment);
+
+                require(false, "testPayLoan");
+            }
 
         } else {
             console.log("loansTokenIdsLength = 0. no loans exist.");
