@@ -16,7 +16,7 @@ abstract contract Borrowing is IBorrowing, Status {
     // Functions
     function startLoan(uint tokenId, uint principal, uint maxDurationMonths) external {
         require(prosperaNftContract.ownerOf(tokenId) == address(this), "unauthorized"); // Note: nft must be owned must be address(this) because this will be called via delegatecall // Todo: review safety of this require later
-        require(status(tokenId) == Status.None, "nft already in system"); // THIS MIGHT NOT WORK
+        require(status(tokenId) == Status.None, "nft already in system"); // Note: THIS MIGHT NOT WORK
 
         // Get ratePerSecond
         (bool success, bytes memory data) = logicTargets[IInterest.borrowerRatePerSecond.selector].call(
