@@ -375,14 +375,31 @@ contract ProtocolTest is Test, DeployScript {
             vm.prank(nftOwner);
             IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
         
-        // If status Mortgage, Default, Foreclosureable
-        } else {
+        // If status == Mortgage or Default
+        } else if (status == IState.Status.Mortgage || status == IState.Status.Default) {
             
             // Get loan
             IState.Loan memory loan = Status(protocol).loans(tokenId);
 
+            // Update expectations
+            expectedTotalPrincipal -= loan.unpaidPrincipal;
+            expectedTotalDeposits += Status(protocol).accruedInterest(tokenId);
+
             // Borrower Accepts Bid
             vm.prank(loan.borrower);
+            IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
+
+        // If status == Foreclosurable
+        } else if (status == IState.Status.Foreclosurable) {
+
+            // Get loan
+            IState.Loan memory loan = Status(protocol).loans(tokenId);
+
+            // Update expectations
+            expectedTotalPrincipal -= loan.unpaidPrincipal;
+            expectedTotalDeposits += Status(protocol).accruedInterest(tokenId);
+
+            // Accepts Bid
             IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
         }
 
@@ -457,22 +474,19 @@ contract ProtocolTest is Test, DeployScript {
                 vm.prank(payer);
                 USDC.approve(address(protocol), payment);
 
-                // Pay Loan
-                vm.prank(payer);
-                IBorrowing(protocol).payLoan(tokenId, payment);
-
-                console.log("");
-                console.log("expectedTotalPrincipal:", expectedTotalPrincipal);
-                console.log("Borrowing(protocol).totalPrincipal():", Borrowing(protocol).totalPrincipal());
-                console.log(""); 
-
                 // Update expectations
-                uint expectedRepayment = payment - State(protocol).accruedInterest(tokenId);
+                uint expectedInterest = State(protocol).accruedInterest(tokenId);
+                uint expectedRepayment = payment - expectedInterest;
                 IState.Loan memory loan = State(protocol).loans(tokenId);
                 if (expectedRepayment > loan.unpaidPrincipal) {
                     expectedRepayment = loan.unpaidPrincipal;
                 }
                 expectedTotalPrincipal -= expectedRepayment;
+                expectedTotalDeposits += expectedInterest;
+
+                // Pay Loan
+                vm.prank(payer);
+                IBorrowing(protocol).payLoan(tokenId, payment);
             }
 
         } else {
@@ -627,8 +641,6 @@ contract ProtocolTest is Test, DeployScript {
 
         // Validate expectations
         console.log("v0");
-        console.log("expectedTotalPrincipal:", expectedTotalPrincipal);
-        console.log("Borrowing(protocol).totalPrincipal():", Borrowing(protocol).totalPrincipal());
         assert(expectedTotalPrincipal == Borrowing(protocol).totalPrincipal());
         console.log("v1");
         assert(expectedTotalDeposits == Borrowing(protocol).totalDeposits());
