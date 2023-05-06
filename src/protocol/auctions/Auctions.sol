@@ -103,7 +103,7 @@ contract Auctions is IAuctions, Status {
         // Get nftOwner
         address nftOwner = prosperaNftContract.ownerOf(tokenId);
         
-        require(status(tokenId) == Status.None, "");
+        require(status(tokenId) == Status.None, ""); // Question: maybe remove this? (since it's checked in acceptBid() and this function is private?)
         require(msg.sender == nftOwner, "caller not nftOwner");
 
         // Get bid
@@ -155,7 +155,7 @@ contract Auctions is IAuctions, Status {
         // Get loan
         Loan memory loan = _loans[tokenId];
 
-        require(status(tokenId) == Status.Mortgage, "");
+        require(status(tokenId) == Status.Mortgage, ""); // Question: maybe remove this? (since it's checked in acceptBid() and this function is private?)
         require(msg.sender == loan.borrower, "caller not borrower");
 
         // Get bid
@@ -217,7 +217,7 @@ contract Auctions is IAuctions, Status {
         // Get loan
         Loan memory loan = _loans[tokenId];
 
-        require(status(tokenId) == Status.Default, "");
+        require(status(tokenId) == Status.Default, ""); // Question: maybe remove this? (since it's checked in acceptBid() and this function is private?)
         require(msg.sender == loan.borrower, "caller not borrower");
 
         // Get bid
@@ -280,7 +280,7 @@ contract Auctions is IAuctions, Status {
         // Get loan
         Loan memory loan = _loans[tokenId];
         
-        require(status(tokenId) == Status.Foreclosurable, "");
+        require(status(tokenId) == Status.Foreclosurable, ""); // Question: maybe remove this? (since it's checked in acceptBid() and this function is private?)
         require(msg.sender == address(this), "caller not protocol");
 
         // Get bid
