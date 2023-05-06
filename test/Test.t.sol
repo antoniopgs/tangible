@@ -38,6 +38,7 @@ contract ProtocolTest is Test, DeployScript {
     // Other vars
     uint loanCount;
     uint totalPaidInterest;
+    uint eResidents;
 
     function makeActionableBid(uint tokenId, uint randomness, address bidder) private {
 
@@ -101,7 +102,10 @@ contract ProtocolTest is Test, DeployScript {
         console.log("z7");
 
         // Verify bidder
-        nftContract.verifyEResident(randomness, bidder);
+        console.log("pre eResidents:", eResidents);
+        eResidents ++;
+        console.log("post eResidents:", eResidents);
+        nftContract.verifyEResident(eResidents, bidder);
 
         // Bidder approves protocol
         vm.prank(bidder);
@@ -133,7 +137,10 @@ contract ProtocolTest is Test, DeployScript {
         deal(address(USDC), bidder, downPayment);
 
         // Verify bidder
-        nftContract.verifyEResident(randomness, bidder);
+        console.log("pre", eResidents);
+        eResidents ++;
+        console.log("post", eResidents);
+        nftContract.verifyEResident(eResidents, bidder);
 
         // Bidder approves protocol
         vm.prank(bidder);
@@ -153,6 +160,8 @@ contract ProtocolTest is Test, DeployScript {
         // Loop desiredSupply
         for (uint i = 1; i <= desiredSupply; i++) { // loop vars unusual because i can't be 0
 
+            console.log("i:", i);
+
             // Get nftOwner
             address nftOwner = vm.addr(i); // doesn't work if i = 0
 
@@ -162,6 +171,8 @@ contract ProtocolTest is Test, DeployScript {
             // Mint nft to nftOwner
             nftContract.mint(nftOwner, defaultTokenURI);
         }
+
+        eResidents = desiredSupply;
     }
 
     // Main
