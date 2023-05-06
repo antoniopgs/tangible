@@ -102,11 +102,14 @@ contract Auctions is IAuctions, Status {
         // Protocol takes fees
         protocolMoney += saleFee;
 
-        // Ensure propertyValue covers principal + interest + fees
-        require(_bid.propertyValue >= saleFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
+        // Ensure propertyValue covers saleFee
+        require(_bid.propertyValue >= saleFee, "propertyValue doesn't cover saleFee"); // Question: interest will rise over time. Too risky?
 
-        // Send propertyValue - saleFee to nftOwner
-        USDC.safeTransfer(nftOwner, _bid.propertyValue - saleFee);
+        // Calculate equity
+        uint equity = _bid.propertyValue - saleFee;
+
+        // Send equity to nftOwner
+        USDC.safeTransfer(nftOwner, equity);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
@@ -120,11 +123,14 @@ contract Auctions is IAuctions, Status {
             // Pull NFT from nftOwner to protocol
             prosperaNftContract.safeTransferFrom(nftOwner, address(this), tokenId);
 
+            // Calculate principal
+            uint principal = _bid.propertyValue - _bid.downPayment;
+
             // start new loan
             (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
                 abi.encodeCall(
                     IBorrowing.startLoan,
-                    (tokenId, _bid.propertyValue - _bid.downPayment, _bid.maxDurationMonths)
+                    (tokenId, principal, _bid.maxDurationMonths)
                 )
             );
             require(success, "startLoan delegateCall failed");
@@ -160,11 +166,17 @@ contract Auctions is IAuctions, Status {
         totalDeposits += interest;
         maxTotalUnpaidInterest -= interest;
 
-        // Ensure propertyValue covers principal + interest + fees
-        require(_bid.propertyValue >= loan.unpaidPrincipal + interest + saleFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
+        // Calculate debt
+        uint debt = loan.unpaidPrincipal + interest + saleFee;
 
-        // Send propertyValue - principal - interest - saleFee to loan.borrower
-        USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - interest - saleFee);
+        // Ensure propertyValue covers debt
+        require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
+
+        // Calculate equity
+        uint equity = _bid.propertyValue - debt;
+
+        // Send equity to loan.borrower
+        USDC.safeTransfer(loan.borrower, equity);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
@@ -175,11 +187,14 @@ contract Auctions is IAuctions, Status {
         // If loan bid
         } else {
 
+            // Calculate principal
+            uint principal = _bid.propertyValue - _bid.downPayment;
+
             // start new loan
             (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
                 abi.encodeCall(
                     IBorrowing.startLoan,
-                    (tokenId, _bid.propertyValue - _bid.downPayment, _bid.maxDurationMonths)
+                    (tokenId, principal, _bid.maxDurationMonths)
                 )
             );
             require(success, "startLoan delegateCall failed");
@@ -216,11 +231,17 @@ contract Auctions is IAuctions, Status {
         totalDeposits += interest;
         maxTotalUnpaidInterest -= interest;
 
-        // Ensure propertyValue covers principal + interest + fees
-        require(_bid.propertyValue >= loan.unpaidPrincipal + interest + saleFee + defaultFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
+        // Calculate debt
+        uint debt = loan.unpaidPrincipal + interest + saleFee + defaultFee;
 
-        // Send propertyValue - principal - interest - saleFee - defaultFee to loan.borrower
-        USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - interest - saleFee - defaultFee);
+        // Ensure propertyValue covers debt
+        require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt"); // Question: interest will rise over time. Too risky?
+
+        // Calculate equity
+        uint equity = _bid.propertyValue - debt;
+
+        // Send equity to loan.borrower
+        USDC.safeTransfer(loan.borrower, equity);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
@@ -231,11 +252,14 @@ contract Auctions is IAuctions, Status {
         // If loan bid
         } else {
 
+            // Calculate principal
+            uint principal = _bid.propertyValue - _bid.downPayment;
+
             // start new loan
             (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
                 abi.encodeCall(
                     IBorrowing.startLoan,
-                    (tokenId, _bid.propertyValue - _bid.downPayment, _bid.maxDurationMonths)
+                    (tokenId, principal, _bid.maxDurationMonths)
                 )
             );
             require(success, "startLoan delegateCall failed");
@@ -272,11 +296,17 @@ contract Auctions is IAuctions, Status {
         totalDeposits += interest;
         maxTotalUnpaidInterest -= interest;
 
-        // Ensure propertyValue covers principal + interest + fees
-        require(_bid.propertyValue >= loan.unpaidPrincipal + interest + saleFee + defaultFee, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
+        // Calculate debt
+        uint debt = loan.unpaidPrincipal + interest + saleFee + defaultFee;
 
-        // Send propertyValue - principal - interest - saleFee - defaultFee to loan.borrower
-        USDC.safeTransfer(_loans[tokenId].borrower, _bid.propertyValue - loan.unpaidPrincipal - interest - saleFee - defaultFee);
+        // Ensure propertyValue covers principal + interest + fees
+        require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt"); // Question: interest will rise over time. Too risky?
+
+        // Calculate equity
+        uint equity = _bid.propertyValue - debt;
+
+        // Send equity to loan.borrower
+        USDC.safeTransfer(loan.borrower, equity);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
@@ -287,11 +317,14 @@ contract Auctions is IAuctions, Status {
         // If loan bid
         } else {
 
+            // Calculate principal
+            uint principal = _bid.propertyValue - _bid.downPayment;
+
             // start new loan
             (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
                 abi.encodeCall(
                     IBorrowing.startLoan,
-                    (tokenId, _bid.propertyValue - _bid.downPayment, _bid.maxDurationMonths)
+                    (tokenId, principal, _bid.maxDurationMonths)
                 )
             );
             require(success, "startLoan delegateCall failed");
