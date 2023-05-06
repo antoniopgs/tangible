@@ -460,6 +460,19 @@ contract ProtocolTest is Test, DeployScript {
                 // Pay Loan
                 vm.prank(payer);
                 IBorrowing(protocol).payLoan(tokenId, payment);
+
+                console.log("");
+                console.log("expectedTotalPrincipal:", expectedTotalPrincipal);
+                console.log("Borrowing(protocol).totalPrincipal():", Borrowing(protocol).totalPrincipal());
+                console.log(""); 
+
+                // Update expectations
+                uint expectedRepayment = payment - State(protocol).accruedInterest(tokenId);
+                IState.Loan memory loan = State(protocol).loans(tokenId);
+                if (expectedRepayment > loan.unpaidPrincipal) {
+                    expectedRepayment = loan.unpaidPrincipal;
+                }
+                expectedTotalPrincipal -= expectedRepayment;
             }
 
         } else {
@@ -614,6 +627,8 @@ contract ProtocolTest is Test, DeployScript {
 
         // Validate expectations
         console.log("v0");
+        console.log("expectedTotalPrincipal:", expectedTotalPrincipal);
+        console.log("Borrowing(protocol).totalPrincipal():", Borrowing(protocol).totalPrincipal());
         assert(expectedTotalPrincipal == Borrowing(protocol).totalPrincipal());
         console.log("v1");
         assert(expectedTotalDeposits == Borrowing(protocol).totalDeposits());
