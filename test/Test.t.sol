@@ -657,16 +657,20 @@ contract ProtocolTest is Test, DeployScript {
                 // expectedTotalPrincipal -= loan.unpaidPrincipal;
                 // expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
                 // expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
-                
-                // Find highestActionableBidIdx
-                uint highestActionableBidIdx = Automation(protocol).findHighestActionableBidIdx(tokenId);
 
-                console.log("tf2");
+                IState.Bid[] memory tokenIdBids = IState(protocol).bids(tokenId);
+                if (tokenIdBids.length > 0) {
 
-                // Accept Bid
-                IAuctions(protocol).acceptBid(tokenId, highestActionableBidIdx);
+                    // Find highestActionableBidIdx
+                    uint highestActionableBidIdx = Automation(protocol).findHighestActionableBidIdx(tokenId);
 
-                require(false, "testForeclose");
+                    console.log("tf2");
+
+                    // Accept Bid
+                    IAuctions(protocol).acceptBid(tokenId, highestActionableBidIdx);
+
+                    require(false, "testForeclose");
+                }
             }
         }
     }
