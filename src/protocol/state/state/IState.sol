@@ -22,7 +22,7 @@ interface IState {
         UD60x18 paymentPerSecond;
         uint startTime;
         uint unpaidPrincipal;
-        uint maxUnpaidInterest;
+        // uint maxUnpaidInterest;
         uint maxDurationSeconds;
         uint lastPaymentTime;
     }

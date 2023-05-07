@@ -207,7 +207,7 @@ contract Auctions is IAuctions, Status {
         console.log("amb6");
         totalDeposits += interest;
         console.log("amb7");
-        maxTotalUnpaidInterest -= interest;
+        // maxTotalUnpaidInterest -= interest;
         console.log("amb8");
 
         // Calculate debt
@@ -282,7 +282,7 @@ contract Auctions is IAuctions, Status {
         console.log("adb6");
         totalDeposits += interest;
         console.log("adb7");
-        maxTotalUnpaidInterest -= interest;
+        // maxTotalUnpaidInterest -= interest;
         console.log("adb8");
 
         // Calculate debt
@@ -363,7 +363,9 @@ contract Auctions is IAuctions, Status {
         console.log("afb6");
         totalDeposits += interest;
         console.log("afb7");
-        maxTotalUnpaidInterest -= interest;
+        // console.log("maxTotalUnpaidInterest:", maxTotalUnpaidInterest);
+        console.log("interest:", interest);
+        // maxTotalUnpaidInterest -= interest;
         console.log("afb8");
 
         // Calculate debt

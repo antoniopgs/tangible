@@ -27,7 +27,7 @@ abstract contract State is IState, TargetManager, Initializable {
     // Pool vars
     uint public totalPrincipal;
     uint public totalDeposits;
-    uint public maxTotalUnpaidInterest; // Todo: figure this out
+    // uint public maxTotalUnpaidInterest; // Todo: figure this out
     UD60x18 public optimalUtilization = toUD60x18(90).div(toUD60x18(100)); // Note: 90%
 
     // Interest vars

@@ -592,17 +592,17 @@ contract ProtocolTest is Test, DeployScript {
                 console.log(5);
 
                 // Get redeemer & unpaidPrincipal
-                // State.Loan memory loan = State(protocol).loans(tokenId);
-                // uint accruedInterest = Borrowing(protocol).accruedInterest(tokenId);
-                // uint expectedRedeemerDebt = loan.unpaidPrincipal + accruedInterest;
-                // uint expectedRedemptionFee = fromUD60x18(toUD60x18(expectedRedeemerDebt).mul(Borrowing(protocol).redemptionFeeSpread()));
+                State.Loan memory loan = State(protocol).loans(tokenId);
+                uint accruedInterest = Borrowing(protocol).accruedInterest(tokenId);
+                uint expectedRedeemerDebt = loan.unpaidPrincipal + accruedInterest;
+                uint expectedRedemptionFee = fromUD60x18(toUD60x18(expectedRedeemerDebt).mul(Borrowing(protocol).redemptionFeeSpread()));
 
                 // Give redeemer expectedRedeemerDebt
-                // deal(address(USDC), loan.borrower, expectedRedeemerDebt + expectedRedemptionFee);
+                deal(address(USDC), loan.borrower, expectedRedeemerDebt + expectedRedemptionFee);
 
                 // Redeemer approves protocol
-                // vm.prank(loan.borrower);
-                // USDC.approve(address(protocol), expectedRedeemerDebt + expectedRedemptionFee);
+                vm.prank(loan.borrower);
+                USDC.approve(address(protocol), expectedRedeemerDebt + expectedRedemptionFee);
                 
                 // expectedTotalPrincipal -= loan.unpaidPrincipal;
                 // expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
@@ -668,8 +668,6 @@ contract ProtocolTest is Test, DeployScript {
 
                     // Accept Bid
                     IAuctions(protocol).acceptBid(tokenId, highestActionableBidIdx);
-
-                    require(false, "testForeclose");
                 }
             }
         }

@@ -45,7 +45,7 @@ abstract contract Borrowing is IBorrowing, Status {
         assert(maxCost > principal);
 
         // Calculate maxUnpaidInterest
-        uint maxUnpaidInterest = maxCost - principal;
+        // uint maxUnpaidInterest = maxCost - principal;
         
         _loans[tokenId] = Loan({
             borrower: borrower, // Note: must be called via delegatecall for this to work
@@ -53,14 +53,14 @@ abstract contract Borrowing is IBorrowing, Status {
             paymentPerSecond: paymentPerSecond,
             startTime: block.timestamp,
             unpaidPrincipal: principal,
-            maxUnpaidInterest: maxUnpaidInterest,
+            // maxUnpaidInterest: maxUnpaidInterest,
             maxDurationSeconds: maxDurationSeconds,
             lastPaymentTime: block.timestamp // Note: no payment here, but needed so lastPaymentElapsedSeconds only counts from now
         });
 
         // Update pool
         totalPrincipal += principal;
-        maxTotalUnpaidInterest += maxUnpaidInterest;
+        // maxTotalUnpaidInterest += maxUnpaidInterest;
         assert(totalPrincipal <= totalDeposits);
 
         // Add tokenId to loansTokenIds
@@ -99,7 +99,7 @@ abstract contract Borrowing is IBorrowing, Status {
         console.log("pl2");
         loan.unpaidPrincipal -= repayment;
         console.log("pl3");
-        loan.maxUnpaidInterest -= interest;
+        // loan.maxUnpaidInterest -= interest;
         console.log("pl4");
         loan.lastPaymentTime = block.timestamp;
 
@@ -109,7 +109,7 @@ abstract contract Borrowing is IBorrowing, Status {
         console.log("pl6");
         totalDeposits += interest;
         console.log("pl7");
-        maxTotalUnpaidInterest -= interest;
+        // maxTotalUnpaidInterest -= interest;
         console.log("pl8");
 
         // If loan is paid off
@@ -141,7 +141,7 @@ abstract contract Borrowing is IBorrowing, Status {
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
         // assert(interest <= loan.maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest? // Note: actually, now that he only has redemptionWindow to redeem, maybe I can bring this assertion back
-        maxTotalUnpaidInterest -= loan.maxUnpaidInterest; // Note: maxTotalUnpaidInterest -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
+        //  -= loan.maxUnpaidInterest; // Note: maxTotalUnpaidInterest -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
 
         // Send nft to loan.borrower
         sendNft(loan, loan.borrower, tokenId);
@@ -180,11 +180,11 @@ abstract contract Borrowing is IBorrowing, Status {
     }
 
     function lenderApy() public view returns(UD60x18) {
-        if (totalDeposits == 0) {
-            assert(maxTotalUnpaidInterest == 0);
-            return toUD60x18(0);
-        }
-        return toUD60x18(maxTotalUnpaidInterest).div(toUD60x18(totalDeposits)); // Question: is this missing auto-compounding?
+    //     if (totalDeposits == 0) {
+    //         assert(maxTotalUnpaidInterest == 0);
+    //         return toUD60x18(0);
+    //     }
+    //     return toUD60x18(maxTotalUnpaidInterest).div(toUD60x18(totalDeposits)); // Question: is this missing auto-compounding?
     }
 
     function sendNft(Loan storage loan, address receiver, uint tokenId) private { // Todo: move to Borrowing
