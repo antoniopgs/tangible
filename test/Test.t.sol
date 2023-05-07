@@ -493,27 +493,14 @@ contract ProtocolTest is Test, DeployScript {
 
             if (status == IState.Status.Mortgage) {
 
-                console.log("tpl231");
-
-                // Pick random payment
-                uint payment = bound(randomness, 0, 1_000_000_000e18);
-
-                console.log("tpl232");
-
-                // Get payer
-                address payer = makeAddr("payer");
-
-                // Give payment to payer
-                deal(address(USDC), payer, payment);
-
-                // Payer approves payment for protocol
-                vm.prank(payer);
-                USDC.approve(address(protocol), payment);
-
                 // Update expectations
                 console.log("tpl233");
                 uint expectedInterest = State(protocol).accruedInterest(tokenId);
-                console.log("tpl234");
+                console.log("tpl238");
+
+                // Pick random payment
+                uint payment = bound(randomness, expectedInterest + 1, 1_000_000_000e18);
+
                 uint expectedRepayment = payment - expectedInterest;
                 console.log("tpl235");
                 IState.Loan memory loan = State(protocol).loans(tokenId);
@@ -524,7 +511,16 @@ contract ProtocolTest is Test, DeployScript {
                 expectedTotalPrincipal -= expectedRepayment;
                 console.log("tpl237");
                 expectedTotalDeposits += expectedInterest;
-                console.log("tpl238");
+
+                // Get payer
+                address payer = makeAddr("payer");
+
+                // Give payment to payer
+                deal(address(USDC), payer, payment);
+
+                // Payer approves payment for protocol
+                vm.prank(payer);
+                USDC.approve(address(protocol), payment);
 
                 // Pay Loan
                 vm.prank(payer);
