@@ -66,6 +66,8 @@ contract Auctions is IAuctions, Status {
 
     function acceptBid(uint tokenId, uint bidIdx) external {
 
+        console.log("ab0");
+
         // Get tokenIdBids
         Bid[] storage tokenIdBids = _bids[tokenId];
 

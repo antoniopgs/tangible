@@ -633,11 +633,15 @@ contract ProtocolTest is Test, DeployScript {
         // If nfts exist
         if (totalSupply > 0) {
 
+            console.log("tf0");
+
             // Get random tokenId
             uint tokenId = bound(randomness, 0, totalSupply - 1);
 
             // If foreclosurable
             if (Automation(protocol).status(tokenId) == IState.Status.Foreclosurable) {
+
+                console.log("tf1");
 
                 // Get unpaidPrincipal & maxUnpaidInterest
                 // State.Loan memory loan = Borrowing(protocol).loans(tokenId);
@@ -656,6 +660,8 @@ contract ProtocolTest is Test, DeployScript {
                 
                 // Find highestActionableBidIdx
                 uint highestActionableBidIdx = Automation(protocol).findHighestActionableBidIdx(tokenId);
+
+                console.log("tf2");
 
                 // Accept Bid
                 IAuctions(protocol).acceptBid(tokenId, highestActionableBidIdx);
