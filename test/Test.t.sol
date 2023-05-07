@@ -101,11 +101,13 @@ contract ProtocolTest is Test, DeployScript {
 
         console.log("z7");
 
-        // Verify bidder
-        console.log("pre eResidents:", eResidents);
-        eResidents ++;
-        console.log("post eResidents:", eResidents);
-        nftContract.verifyEResident(eResidents, bidder);
+        // If bidder not eResident
+        if (!nftContract.isEResident(bidder)) {
+
+            // Verify bidder
+            eResidents ++;
+            nftContract.verifyEResident(eResidents, bidder);
+        }
 
         // Bidder approves protocol
         vm.prank(bidder);
@@ -136,11 +138,13 @@ contract ProtocolTest is Test, DeployScript {
         // Give bidder downPayment
         deal(address(USDC), bidder, downPayment);
 
-        // Verify bidder
-        console.log("pre", eResidents);
-        eResidents ++;
-        console.log("post", eResidents);
-        nftContract.verifyEResident(eResidents, bidder);
+        // If bidder not eResident
+        if (!nftContract.isEResident(bidder)) {
+
+            // Verify bidder
+            eResidents ++;
+            nftContract.verifyEResident(eResidents, bidder);
+        }
 
         // Bidder approves protocol
         vm.prank(bidder);
@@ -166,13 +170,12 @@ contract ProtocolTest is Test, DeployScript {
             address nftOwner = vm.addr(i); // doesn't work if i = 0
 
             // KYC nftOwner
-            nftContract.verifyEResident(i, nftOwner);
+            eResidents ++;
+            nftContract.verifyEResident(eResidents, nftOwner);
 
             // Mint nft to nftOwner
             nftContract.mint(nftOwner, defaultTokenURI);
         }
-
-        eResidents = desiredSupply;
     }
 
     // Main
