@@ -464,25 +464,41 @@ contract ProtocolTest is Test, DeployScript {
     // Borrower In-Loan 
     function testPayLoan(uint randomness) private validate {
 
+        console.log("tpl1");
+
         // Get loansTokenIdsLength
         uint loansTokenIdsLength = State(protocol).loansTokenIdsLength();
+
+        console.log("tpl2");
 
         // If loans exist
         if (loansTokenIdsLength > 0) {
 
+            console.log("tpl20");
+
             // Pick randomIdx
             uint randomIdx = randomness % loansTokenIdsLength;
+
+            console.log("tpl21");
 
             // Get random tokenId
             uint tokenId = State(protocol).loansTokenIdsAt(randomIdx);
 
+            console.log("tpl22");
+
             // Get status
             IState.Status status = Status(protocol).status(tokenId);
 
+            console.log("tpl23");
+
             if (status == IState.Status.Mortgage) {
+
+                console.log("tpl231");
 
                 // Pick random payment
                 uint payment = bound(randomness, 0, 1_000_000_000e18);
+
+                console.log("tpl232");
 
                 // Get payer
                 address payer = makeAddr("payer");
@@ -495,19 +511,29 @@ contract ProtocolTest is Test, DeployScript {
                 USDC.approve(address(protocol), payment);
 
                 // Update expectations
+                console.log("tpl233");
                 uint expectedInterest = State(protocol).accruedInterest(tokenId);
+                console.log("tpl234");
                 uint expectedRepayment = payment - expectedInterest;
+                console.log("tpl235");
                 IState.Loan memory loan = State(protocol).loans(tokenId);
                 if (expectedRepayment > loan.unpaidPrincipal) {
                     expectedRepayment = loan.unpaidPrincipal;
                 }
+                console.log("tpl236");
                 expectedTotalPrincipal -= expectedRepayment;
+                console.log("tpl237");
                 expectedTotalDeposits += expectedInterest;
+                console.log("tpl238");
 
                 // Pay Loan
                 vm.prank(payer);
                 IBorrowing(protocol).payLoan(tokenId, payment);
+
+                console.log("tpl235");
             }
+
+            console.log("tpl3");
 
         } else {
             console.log("loansTokenIdsLength = 0. no loans exist.");

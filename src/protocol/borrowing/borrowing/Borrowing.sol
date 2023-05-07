@@ -68,6 +68,7 @@ abstract contract Borrowing is IBorrowing, Status {
     }
 
     function payLoan(uint tokenId, uint payment) external {
+        console.log("pl00");
         require(status(tokenId) == Status.Mortgage, "nft has no active mortgage");
 
         console.log("pl0");
@@ -80,20 +81,19 @@ abstract contract Borrowing is IBorrowing, Status {
 
         console.log("pl1");
 
-        // Calculate repayment
-        uint repayment = payment - interest; // Todo: Add payLoanFee // Question: should payLoanFee come off the interest to lenders? Or only come off the borrower's repayment?
-
         // Get Loan
         Loan storage loan = _loans[tokenId];
 
         // Bound payment
-        if (repayment > loan.unpaidPrincipal) {
+        if (payment > loan.unpaidPrincipal + interest) {
             payment = loan.unpaidPrincipal + interest;
-            repayment = loan.unpaidPrincipal;
         }
 
         // Pull payment from msg.sender
         USDC.safeTransferFrom(msg.sender, address(this), payment);
+
+        // Calculate repayment
+        uint repayment = payment - interest; // Todo: Add payLoanFee // Question: should payLoanFee come off the interest to lenders? Or only come off the borrower's repayment?
 
         // Update loan
         console.log("pl2");
