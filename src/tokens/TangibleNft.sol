@@ -35,15 +35,7 @@ contract TangibleNft is ERC721URIStorage, ERC721Enumerable, Ownable {
         super._beforeTokenTransfer(from, to, 0, batchSize); // is it fine to pass 0 here?
     }
 
-    function verifyEResidents(uint[] calldata eResidents, address[] calldata addrs) external onlyOwner {
-        require(eResidents.length == addrs.length, "unequal array param lengths");
-        
-        for (uint i = 0; i < eResidents.length; i++) {
-            verifyEResident(eResidents[i], addrs[i]);
-        }
-    }
-
-    function verifyEResident(uint eResident, address addr) public {
+    function verifyEResident(uint eResident, address addr) public { // Todo: limit access later
         require(!isEResident(addr), "address already associated to an eResident");
         require(eResidentToAddress[eResident] == address(0), "eResident already associated to an address");
         addressToEResident[addr] = eResident;
