@@ -23,13 +23,6 @@ contract TangibleNft is ERC721URIStorage, ERC721Enumerable, Ownable {
         protocol = _protocol;
     }
 
-    function mint(address to, string memory _tokenURI) external onlyOwner returns (uint newTokenId) {
-        newTokenId = _tokenIds.current();
-        _safeMint(to, newTokenId);
-        _setTokenURI(newTokenId, _tokenURI);
-        _tokenIds.increment();
-    }
-
     function _beforeTokenTransfer(address from, address to, uint256, /* firstTokenId */ uint256 batchSize) internal override(ERC721, ERC721Enumerable) {
         require(isEResident(to) || to == protocol, "receiver not eResident or protocol");
         super._beforeTokenTransfer(from, to, 0, batchSize); // is it fine to pass 0 here?
@@ -42,11 +35,19 @@ contract TangibleNft is ERC721URIStorage, ERC721Enumerable, Ownable {
         eResidentToAddress[eResident] = addr;
     }
 
+    function mint(address to, string memory _tokenURI) external returns (uint newTokenId) { // Todo: limit access later
+        newTokenId = _tokenIds.current();
+        _safeMint(to, newTokenId);
+        _setTokenURI(newTokenId, _tokenURI);
+        _tokenIds.increment();
+    }
+
+    // ----- VIEWS -----
     function isEResident(address addr) public view returns (bool) {
         return addressToEResident[addr] != 0;
-    } 
+    }
 
-    // Necessary Overrides
+    // ----- NECESSARY OVERRIDES -----
     function _burn(uint256 tokenId) internal virtual override(ERC721, ERC721URIStorage) {
         super._burn(tokenId);
     }
