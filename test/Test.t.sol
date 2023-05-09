@@ -164,8 +164,6 @@ contract ProtocolTest is Test, DeployScript {
         // Loop desiredSupply
         for (uint i = 1; i <= desiredSupply; i++) { // loop vars unusual because i can't be 0
 
-            console.log("i:", i);
-
             // Get nftOwner
             address nftOwner = vm.addr(i); // doesn't work if i = 0
 
@@ -602,7 +600,8 @@ contract ProtocolTest is Test, DeployScript {
 
                 // Redeemer approves protocol
                 vm.prank(loan.borrower);
-                USDC.approve(address(protocol), expectedRedeemerDebt + expectedRedemptionFee);
+                // USDC.approve(address(protocol), expectedRedeemerDebt + expectedRedemptionFee);
+                USDC.approve(address(protocol), type(uint).max);
                 
                 // expectedTotalPrincipal -= loan.unpaidPrincipal;
                 // expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);

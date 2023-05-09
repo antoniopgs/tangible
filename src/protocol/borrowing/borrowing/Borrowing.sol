@@ -7,8 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../interest/IInterest.sol";
 import "../../auctions/IAuctions.sol";
 
-import "forge-std/console.sol";
-
 abstract contract Borrowing is IBorrowing, Status {
 
     // Libs
@@ -17,11 +15,8 @@ abstract contract Borrowing is IBorrowing, Status {
 
     // Functions
     function startLoan(address borrower, uint tokenId, uint principal, uint maxDurationMonths) external {
-        console.log("sl1");
         require(prosperaNftContract.ownerOf(tokenId) == address(this), "unauthorized"); // Note: nft must be owned must be address(this) because this will be called via delegatecall // Todo: review safety of this require later
-        console.log("sl2");
         // require(status(tokenId) == Status.None, "nft already in system"); // Note: THIS MIGHT NOT WORK
-        console.log("sl3");
 
         // Get ratePerSecond
         (bool success, bytes memory data) = logicTargets[IInterest.borrowerRatePerSecond.selector].call(
@@ -68,18 +63,13 @@ abstract contract Borrowing is IBorrowing, Status {
     }
 
     function payLoan(uint tokenId, uint payment) external {
-        console.log("pl00");
         require(status(tokenId) == Status.Mortgage, "nft has no active mortgage");
-
-        console.log("pl0");
 
         // Calculate interest
         uint interest = accruedInterest(tokenId);
 
         //require(payment <= loan.unpaidPrincipal + interest, "payment must be <= unpaidPrincipal + interest");
         //require(payment => interest, "payment must be => interest"); // Question: maybe don't calculate repayment if payment < interest?
-
-        console.log("pl1");
 
         // Get Loan
         Loan storage loan = _loans[tokenId];
@@ -96,21 +86,14 @@ abstract contract Borrowing is IBorrowing, Status {
         uint repayment = payment - interest; // Todo: Add payLoanFee // Question: should payLoanFee come off the interest to lenders? Or only come off the borrower's repayment?
 
         // Update loan
-        console.log("pl2");
         loan.unpaidPrincipal -= repayment;
-        console.log("pl3");
         // loan.maxUnpaidInterest -= interest;
-        console.log("pl4");
         loan.lastPaymentTime = block.timestamp;
 
         // Update pool
-        console.log("pl5");
         totalPrincipal -= repayment;
-        console.log("pl6");
         totalDeposits += interest;
-        console.log("pl7");
         // maxTotalUnpaidInterest -= interest;
-        console.log("pl8");
 
         // If loan is paid off
         if (loan.unpaidPrincipal == 0) {
@@ -118,7 +101,6 @@ abstract contract Borrowing is IBorrowing, Status {
             // Send nft to loan.borrower
             sendNft(loan, loan.borrower, tokenId);
         }
-        console.log("pl9");
     }
 
     function redeemLoan(uint tokenId) external {
