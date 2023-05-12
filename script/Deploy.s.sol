@@ -6,16 +6,16 @@ import "forge-std/Script.sol";
 import { console } from "forge-std/console.sol";
 
 // Contract Imports
-import "../src/protocol/auctions/Auctions.sol"; // Note: v2
-import "../src/protocol/borrowing/automation/Automation.sol"; // Note: v2
-// import "../src/protocol/borrowing/borrowing/Borrowing.sol";
-import "../src/protocol/interest/Interest.sol";
-import "../src/protocol/lending/Lending.sol";
-import "../src/protocol/protocolProxy/ProtocolProxy.sol";
+import "../contracts/protocol/auctions/Auctions.sol"; // Note: v2
+import "../contracts/protocol/borrowing/automation/Automation.sol"; // Note: v2
+// import "../contracts/protocol/borrowing/borrowing/Borrowing.sol";
+import "../contracts/protocol/interest/Interest.sol";
+import "../contracts/protocol/lending/Lending.sol";
+import "../contracts/protocol/protocolProxy/ProtocolProxy.sol";
 
 // Token Imports
-import "../src/tokens/TangibleNft.sol"; // Note: v2
-import "../src/tokens/tUsdc.sol";
+import "../contracts/tokens/TangibleNft.sol"; // Note: v2
+import "../contracts/tokens/tUsdc.sol";
 
 
 contract DeployScript is Script {

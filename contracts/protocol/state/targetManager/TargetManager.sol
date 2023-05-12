@@ -8,10 +8,6 @@ abstract contract TargetManager is ITargetManager, Ownable {
 
     mapping (bytes4 => address) public logicTargets;
 
-    function getTarget(string calldata sig) external view returns (address) {
-        return logicTargets[bytes4(keccak256(abi.encodePacked(sig)))];
-    }
-
     function setSelectorsTarget(bytes4[] calldata selectorsArr, address target) external onlyOwner {
 
         for (uint256 i = 0; i < selectorsArr.length; i++) {

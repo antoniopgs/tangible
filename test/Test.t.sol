@@ -7,12 +7,12 @@ import "../script/Deploy.s.sol";
 import "forge-std/console.sol";
 
 // Protocol Contracts
-import "../src/protocol/borrowing/borrowing/IBorrowing.sol";
-import "../src/protocol/lending/ILending.sol";
-import "../src/protocol/state/state/IState.sol";
-// import "../src/protocol/borrowing/borrowing/Borrowing.sol"; // Note: later, further improve architecture, to be able to remove this import
-import "../src/protocol/borrowing/automation/Automation.sol"; // Note: later, further improve architecture, to be able to remove this import
-import "../src/protocol/lending/Lending.sol"; // Note: later, further improve architecture, to be able to remove this import
+import "../contracts/protocol/borrowing/borrowing/IBorrowing.sol";
+import "../contracts/protocol/lending/ILending.sol";
+import "../contracts/protocol/state/state/IState.sol";
+// import "../contracts/protocol/borrowing/borrowing/Borrowing.sol"; // Note: later, further improve architecture, to be able to remove this import
+import "../contracts/protocol/borrowing/automation/Automation.sol"; // Note: later, further improve architecture, to be able to remove this import
+import "../contracts/protocol/lending/Lending.sol"; // Note: later, further improve architecture, to be able to remove this import
 
 // Other
 // import { MAX_UD60x18, log10 } from "@prb/math/UD60x18.sol";
@@ -211,7 +211,7 @@ contract ProtocolTest is Test, DeployScript {
                 testPayLoan(randomness[i]);
 
             } else if (action == uint(Action.RedeemLoan)) {
-                console.log("\nAction.Redeem");
+                console.log("\nAction.RedeemLoan");
                 testRedeemLoan(randomness[i]);
 
             } else if (action == uint(Action.Foreclose)) {
