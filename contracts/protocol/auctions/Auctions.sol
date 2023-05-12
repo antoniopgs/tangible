@@ -70,97 +70,66 @@ contract Auctions is IAuctions, Status {
         // Ensure bid is actionable
         require(bidActionable(tokenIdBids[bidIdx]), "bid not actionable");
 
-        // Get bid
-        Bid memory _bid = _bids[tokenId][bidIdx];
-
-        // Calculate saleFee
-        uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread));
-        uint debt = saleFee;
-        protocolMoney += saleFee;
-
         // Get status
         Status status = status(tokenId);
 
         if (status == Status.None) {
-            require(msg.sender == prosperaNftContract.ownerOf(tokenId), "caller not nftOwner");
             _acceptNoneBid(tokenId, bidIdx);
 
         } else if (status == Status.Mortgage) {
-            require(msg.sender == loan.borrower, "caller not borrower");
             _acceptMortgageBid(tokenId, bidIdx);
 
         } else if (status == Status.Default) {
-            require(msg.sender == loan.borrower, "caller not borrower");
             _acceptDefaultBid(tokenId, bidIdx);
 
         } else if (status == Status.Foreclosurable) {
-            // require(msg.sender == address(this), "caller not protocol");
             _acceptForeclosureBid(tokenId, bidIdx);
             
         } else {
             revert("invalid status");
         }
 
-        if (status == Status.Mortgage || status == Status.Default || status == Status.Foreclosurable) {
+        // Delete accepted bid
+        deleteBid(tokenIdBids, bidIdx);
+    }
 
-            // Get loan
-            Loan memory loan = _loans[tokenId];
+    function _acceptNoneBid(uint tokenId, uint bidIdx) private {
 
-            // Calculate interest
-            uint interest = accruedInterest(tokenId);
+        // Get nftOwner
+        address nftOwner = prosperaNftContract.ownerOf(tokenId);
+        
+        require(status(tokenId) == Status.None, "status not none"); // Question: maybe remove this? (since it's checked in acceptBid() and this function is private?)
+        require(msg.sender == nftOwner, "caller not nftOwner");
 
-            // Update debt
-            debt += loan.unpaidPrincipal + interest;
+        // Get bid
+        Bid memory _bid = _bids[tokenId][bidIdx];
 
-            // Update Pool
-            totalPrincipal -= loan.unpaidPrincipal;
-            totalDeposits += interest;
-            // maxTotalUnpaidInterest -= interest;
+        // Calculate fees
+        uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread));
 
-            if (status == Status.Default || status = Status.Foreclosurable) {
+        // Protocol takes fees
+        protocolMoney += saleFee;
 
-                // Calculate defaultFee
-                uint defaultFee = convert(convert(_bid.propertyValue).mul(_defaultFeeSpread));
-                debt += defaultFee;
-                protocolMoney += defaultFee;
-            }
-
-            // Send equity to loan.borrower
-            USDC.safeTransfer(loan.borrower, equity);
-
-        } else if (status == Status.None) {
-
-            // Send equity to nftOwner
-            USDC.safeTransfer(nftOwner, equity);
-        }
-
-        require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt"); // Question: interest will rise over time. Too risky?
+        // Ensure propertyValue covers saleFee
+        require(_bid.propertyValue >= saleFee, "propertyValue doesn't cover saleFee"); // Question: interest will rise over time. Too risky?
 
         // Calculate equity
-        uint equity = _bid.propertyValue - debt;
+        uint equity = _bid.propertyValue - saleFee;
+
+        // Send equity to nftOwner
+        USDC.safeTransfer(nftOwner, equity);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
+            
+            // Send NFT from nftOwner to bidder
+            prosperaNftContract.safeTransferFrom(nftOwner, _bid.bidder, tokenId);
 
-            if (status == Status.None) {
-
-                // Send NFT from nftOwner to bidder
-                prosperaNftContract.safeTransferFrom(nftOwner, _bid.bidder, tokenId);
-
-            } else {
-
-                // Send NFT to bidder
-                prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId);
-            }
-        
         // If loan bid
         } else {
 
-            if (status == Status.None) {
-
-                // Pull NFT from nftOwner to protocol
-                prosperaNftContract.safeTransferFrom(nftOwner, address(this), tokenId);
-            }
+            // Pull NFT from nftOwner to protocol
+            prosperaNftContract.safeTransferFrom(nftOwner, address(this), tokenId);
 
             // Calculate principal
             uint principal = _bid.propertyValue - _bid.downPayment;
@@ -174,9 +143,194 @@ contract Auctions is IAuctions, Status {
             );
             require(success, "startLoan delegateCall failed");
         }
+    }
 
-        // Delete accepted bid
-        deleteBid(tokenIdBids, bidIdx);
+    function _acceptMortgageBid(uint tokenId, uint bidIdx) private {
+
+        // Get loan
+        Loan memory loan = _loans[tokenId];
+
+        require(status(tokenId) == Status.Mortgage, "status not mortgage"); // Question: maybe remove this? (since it's checked in acceptBid() and this function is private?)
+        require(msg.sender == loan.borrower, "caller not borrower");
+
+        // Get bid
+        Bid memory _bid = _bids[tokenId][bidIdx];
+
+        // Calculate fees
+        uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread));
+
+        // Protocol takes fees
+        protocolMoney += saleFee;
+
+        // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
+
+        // Calculate interest
+        uint interest = accruedInterest(tokenId);
+
+        // Update pool (lenders get paidFirst)
+        totalPrincipal -= loan.unpaidPrincipal;
+        totalDeposits += interest;
+        // maxTotalUnpaidInterest -= interest;
+
+        // Calculate debt
+        uint debt = loan.unpaidPrincipal + interest + saleFee;
+
+        // Ensure propertyValue covers debt
+        require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
+
+        // Calculate equity
+        uint equity = _bid.propertyValue - debt;
+
+        // Send equity to loan.borrower
+        USDC.safeTransfer(loan.borrower, equity);
+
+        // If bid
+        if (_bid.propertyValue == _bid.downPayment) {
+            
+            // Send NFT to bidder
+            prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId);
+
+        // If loan bid
+        } else {
+
+            // Calculate principal
+            uint principal = _bid.propertyValue - _bid.downPayment;
+
+            // start new loan
+            (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
+                abi.encodeCall(
+                    IBorrowing.startLoan,
+                    (_bid.bidder, tokenId, principal, _bid.maxDurationMonths)
+                )
+            );
+            require(success, "startLoan delegateCall failed");
+        }
+    }
+
+    function _acceptDefaultBid(uint tokenId, uint bidIdx) private {
+
+        // Get loan
+        Loan memory loan = _loans[tokenId];
+
+        require(status(tokenId) == Status.Default, "status not default"); // Question: maybe remove this? (since it's checked in acceptBid() and this function is private?)
+        require(msg.sender == loan.borrower, "caller not borrower");
+
+        // Get bid
+        Bid memory _bid = _bids[tokenId][bidIdx];
+
+        // Calculate fees
+        uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread));
+        uint defaultFee = convert(convert(_bid.propertyValue).mul(_defaultFeeSpread));
+
+        // Protocol takes fees
+        protocolMoney += saleFee + defaultFee;
+
+        // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
+
+        // Calculate interest
+        uint interest = accruedInterest(tokenId);
+
+        // Update pool (lenders get paidFirst)
+        totalPrincipal -= loan.unpaidPrincipal;
+        totalDeposits += interest;
+        // maxTotalUnpaidInterest -= interest;
+
+        // Calculate debt
+        uint debt = loan.unpaidPrincipal + interest + saleFee + defaultFee;
+
+        // Ensure propertyValue covers debt
+        require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt"); // Question: interest will rise over time. Too risky?
+
+        // Calculate equity
+        uint equity = _bid.propertyValue - debt;
+
+        // Send equity to loan.borrower
+        USDC.safeTransfer(loan.borrower, equity);
+
+        // If bid
+        if (_bid.propertyValue == _bid.downPayment) {
+            
+            // Send NFT to bidder
+            prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId);
+
+        // If loan bid
+        } else {
+
+            // Calculate principal
+            uint principal = _bid.propertyValue - _bid.downPayment;
+
+            // start new loan
+            (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
+                abi.encodeCall(
+                    IBorrowing.startLoan,
+                    (_bid.bidder, tokenId, principal, _bid.maxDurationMonths)
+                )
+            );
+            require(success, "startLoan delegateCall failed");
+        }
+    }
+
+    function _acceptForeclosureBid(uint tokenId, uint bidIdx) private {
+
+        // Get loan
+        Loan memory loan = _loans[tokenId];
+        
+        require(status(tokenId) == Status.Foreclosurable, "status not foreclosurable"); // Question: maybe remove this? (since it's checked in acceptBid() and this function is private?)
+        // require(msg.sender == address(this), "caller not protocol"); Todo: figure this out later
+
+        // Get bid
+        Bid memory _bid = _bids[tokenId][bidIdx];
+
+        // Calculate fees
+        uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
+        uint defaultFee = convert(convert(_bid.propertyValue).mul(_defaultFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
+
+        // Protocol takes fees
+        protocolMoney += saleFee + defaultFee;
+
+        // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
+
+        // Calculate interest
+        uint interest = accruedInterest(tokenId);
+
+        // Update pool (lenders get paidFirst)
+        totalPrincipal -= loan.unpaidPrincipal;
+        totalDeposits += interest;
+        // maxTotalUnpaidInterest -= interest;
+
+        // Calculate debt
+        uint debt = loan.unpaidPrincipal + interest + saleFee + defaultFee;
+
+        // Ensure propertyValue covers principal + interest + fees
+        require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt"); // Question: interest will rise over time. Too risky?
+
+        // Calculate equity
+        uint equity = _bid.propertyValue - debt;
+
+        // Send equity to loan.borrower
+        USDC.safeTransfer(loan.borrower, equity);
+
+        // If bid
+        if (_bid.propertyValue == _bid.downPayment) {
+            
+            // Send NFT to bidder
+            prosperaNftContract.safeTransferFrom(address(this), _bid.bidder, tokenId);
+
+        // If loan bid
+        } else {
+
+            // Calculate principal
+            uint principal = _bid.propertyValue - _bid.downPayment;
+
+            // start new loan
+            (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
+                abi.encodeCall(
+                    IBorrowing.startLoan,
+                    (_bid.bidder, tokenId, principal, _bid.maxDurationMonths)
+                )
+            );
+            require(success, "startLoan delegateCall failed");
+        }
     }
 
     function deleteBid(Bid[] storage tokenIdBids, uint idxToRemove) private {
