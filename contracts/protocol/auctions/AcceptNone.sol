@@ -7,23 +7,37 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../borrowing/borrowing/IBorrowing.sol";
 import { convert } from "@prb/math/src/UD60x18.sol";
 
+import "forge-std/console.sol";
+
 contract AcceptNone is Status {
 
     using SafeERC20 for IERC20;
 
     function acceptNoneBid(uint tokenId, uint bidIdx) external {
 
+        console.log("anb0");
+        console.log("tokenId:", tokenId);
+        console.log("address(prosperaNftContract):", address(prosperaNftContract));
+
         // Get nftOwner
         address nftOwner = prosperaNftContract.ownerOf(tokenId);
+
+        console.log("anb1");
         
         require(status(tokenId) == Status.None, "status not none"); // Question: maybe remove this? (since it's checked in acceptBid() and this function is private?)
         require(msg.sender == nftOwner, "caller not nftOwner");
 
+        console.log("anb2");
+
         // Get bid
         Bid memory _bid = _bids[tokenId][bidIdx];
 
+        console.log("anb3");
+
         // Calculate fees
         uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread));
+
+        console.log("anb4");
 
         // Protocol takes fees
         protocolMoney += saleFee;
