@@ -16,7 +16,7 @@ import "../contracts/protocol/lending/Lending.sol"; // Note: later, further impr
 
 // Other
 // import { MAX_UD60x18, log10 } from "@prb/math/src/UD60x18.sol";
-import { fromUD60x18 } from "@prb/math/src/UD60x18.sol";
+import { convert } from "@prb/math/src/UD60x18.sol";
 
 contract ProtocolTest is Test, DeployScript {
 
@@ -432,11 +432,11 @@ contract ProtocolTest is Test, DeployScript {
         // // Calculate expectedRatePerSecond
         // uint yearSeconds = Borrowing(protocol).yearSeconds();
         // UD60x18 borrowerApr = IBorrowing(protocol).borrowerApr();
-        // UD60x18 expectedRatePerSecond = borrowerApr.div(toUD60x18(yearSeconds));
+        // UD60x18 expectedRatePerSecond = borrowerApr.div(convert(yearSeconds));
 
         // // Calculate maxMaxDurationMonths
-        // // uint maxMaxDurationMonths1 = fromUD60x18(log10(MAX_UD60x18).div(toUD60x18(monthSeconds).mul(log10(toUD60x18(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
-        // // uint maxMaxDurationMonths2 = fromUD60x18(log10(MAX_UD60x18.div(toUD60x18(principal).mul(expectedRatePerSecond))).div(toUD60x18(monthSeconds).mul(log10(toUD60x18(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
+        // // uint maxMaxDurationMonths1 = convert(log10(MAX_UD60x18).div(convert(monthSeconds).mul(log10(convert(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
+        // // uint maxMaxDurationMonths2 = convert(log10(MAX_UD60x18.div(convert(principal).mul(expectedRatePerSecond))).div(convert(monthSeconds).mul(log10(convert(1).add(expectedRatePerSecond))))); // Note: explained in calculatePaymentPerSecond()
         // // uint maxMaxDurationMonths = maxMaxDurationMonths1 < maxMaxDurationMonths2 ? maxMaxDurationMonths1 : maxMaxDurationMonths2;
         // uint maxMaxDurationMonths = 25 * Borrowing(protocol).yearMonths(); // 25 years = 300 months
 
@@ -446,7 +446,7 @@ contract ProtocolTest is Test, DeployScript {
         //     uint maxDurationMonths = bound(randomness, 1, maxMaxDurationMonths);
         //     uint expectedMaxDurationSeconds = maxDurationMonths * monthSeconds;
         //     UD60x18 expectedPaymentPerSecond = Borrowing(protocol).calculatePaymentPerSecond(principal, expectedRatePerSecond, expectedMaxDurationSeconds);
-        //     uint expectedLoanCost = fromUD60x18(expectedPaymentPerSecond.mul(toUD60x18(expectedMaxDurationSeconds)));
+        //     uint expectedLoanCost = convert(expectedPaymentPerSecond.mul(convert(expectedMaxDurationSeconds)));
         //     uint expectedMaxUnpaidInterest = expectedLoanCost - principal;
 
         //     // Set expectations
@@ -593,7 +593,7 @@ contract ProtocolTest is Test, DeployScript {
                 State.Loan memory loan = State(protocol).loans(tokenId);
                 uint accruedInterest = Borrowing(protocol).accruedInterest(tokenId);
                 uint expectedRedeemerDebt = loan.unpaidPrincipal + accruedInterest;
-                uint expectedRedemptionFee = fromUD60x18(toUD60x18(expectedRedeemerDebt).mul(Borrowing(protocol).redemptionFeeSpread()));
+                uint expectedRedemptionFee = convert(convert(expectedRedeemerDebt).mul(Borrowing(protocol).redemptionFeeSpread()));
 
                 // Give redeemer expectedRedeemerDebt
                 deal(address(USDC), loan.borrower, expectedRedeemerDebt + expectedRedemptionFee);
@@ -647,7 +647,7 @@ contract ProtocolTest is Test, DeployScript {
 
                 // // Bound salePrice
                 // uint expectedDefaulterDebt = loan.unpaidPrincipal + Borrowing(protocol).accruedInterest(tokenId);
-                // uint expectedForeclosureFee = fromUD60x18(toUD60x18(expectedDefaulterDebt).mul(State(protocol).foreclosureFeeSpread()));
+                // uint expectedForeclosureFee = convert(convert(expectedDefaulterDebt).mul(State(protocol).foreclosureFeeSpread()));
                 // uint salePrice = bound(randomness, expectedDefaulterDebt + expectedForeclosureFee, 1_000_000_000 * 1e18);
 
                 // uint protocolUsdc = USDC.balanceOf(address(protocol));
@@ -702,13 +702,13 @@ contract ProtocolTest is Test, DeployScript {
         console.log("v4");
         UD60x18 lenderApy = IBorrowing(protocol).lenderApy();
         console.log("v5");
-        assert(lenderApy.gte(toUD60x18(0)) /*&& lenderApy.lte(toUD60x18(1))*/); // Note: actually, lenderApy might be able to surpass 100%
+        assert(lenderApy.gte(convert(uint(0))) /*&& lenderApy.lte(convert(1))*/); // Note: actually, lenderApy might be able to surpass 100%
 
         // Validate utilization
         console.log("v6");
         UD60x18 utilization = IBorrowing(protocol).utilization();
         console.log("v7");
-        assert(utilization.gte(toUD60x18(0)) && utilization.lte(toUD60x18(1)));
+        assert(utilization.gte(convert(uint(0))) && utilization.lte(convert(uint(1))));
         console.log("v8");
         assert(State(protocol).totalPrincipal() <= State(protocol).totalDeposits());
         console.log("v9");
