@@ -1,5 +1,3 @@
-const { ethers } = require("hardhat");
-
 const getMnemonicTeam = async () => {
 
   // Get tangibleTeam
