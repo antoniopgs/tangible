@@ -78,12 +78,14 @@ contract Auctions is IAuctions, Status {
 
         // Calculate saleFee
         uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread));
+        uint debt = saleFee;
         protocolMoney += saleFee;
 
         if (status == Status.Default || Status.Foreclosurable) {
 
             // Calculate defaultFee
             uint defaultFee = convert(convert(_bid.propertyValue).mul(_defaultFeeSpread));
+            debt += defaultFee;
             protocolMoney += defaultFee;
         }
 
@@ -95,11 +97,17 @@ contract Auctions is IAuctions, Status {
             // Calculate interest
             uint interest = accruedInterest(tokenId);
 
+            // Update debt
+            debt += loan.unpaidPrincipal + interest;
+
             // Update Pool
             totalPrincipal -= loan.unpaidPrincipal;
             totalDeposits += interest;
             // maxTotalUnpaidInterest -= interest;
         }
+
+        // Calculate equity
+        uint equity = _bid.propertyValue - debt;
 
         if (status == Status.None) {
             require(msg.sender == prosperaNftContract.ownerOf(tokenId), "caller not nftOwner");
@@ -165,7 +173,7 @@ contract Auctions is IAuctions, Status {
         require(_bid.propertyValue >= saleFee, "propertyValue doesn't cover saleFee"); // Question: interest will rise over time. Too risky?
 
         // Calculate equity
-        uint equity = _bid.propertyValue - saleFee;
+        // uint equity = _bid.propertyValue - saleFee;
 
         // Send equity to nftOwner
         USDC.safeTransfer(nftOwner, equity);
@@ -224,13 +232,13 @@ contract Auctions is IAuctions, Status {
         // maxTotalUnpaidInterest -= interest;
 
         // Calculate debt
-        uint debt = loan.unpaidPrincipal + interest + saleFee;
+        // uint debt = loan.unpaidPrincipal + interest + saleFee;
 
         // Ensure propertyValue covers debt
         require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
 
         // Calculate equity
-        uint equity = _bid.propertyValue - debt;
+        // uint equity = _bid.propertyValue - debt;
 
         // Send equity to loan.borrower
         USDC.safeTransfer(loan.borrower, equity);
@@ -287,13 +295,13 @@ contract Auctions is IAuctions, Status {
         // maxTotalUnpaidInterest -= interest;
 
         // Calculate debt
-        uint debt = loan.unpaidPrincipal + interest + saleFee + defaultFee;
+        // uint debt = loan.unpaidPrincipal + interest + saleFee + defaultFee;
 
         // Ensure propertyValue covers debt
         require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt"); // Question: interest will rise over time. Too risky?
 
         // Calculate equity
-        uint equity = _bid.propertyValue - debt;
+        // uint equity = _bid.propertyValue - debt;
 
         // Send equity to loan.borrower
         USDC.safeTransfer(loan.borrower, equity);
@@ -350,13 +358,13 @@ contract Auctions is IAuctions, Status {
         // maxTotalUnpaidInterest -= interest;
 
         // Calculate debt
-        uint debt = loan.unpaidPrincipal + interest + saleFee + defaultFee;
+        // uint debt = loan.unpaidPrincipal + interest + saleFee + defaultFee;
 
         // Ensure propertyValue covers principal + interest + fees
         require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt"); // Question: interest will rise over time. Too risky?
 
         // Calculate equity
-        uint equity = _bid.propertyValue - debt;
+        // uint equity = _bid.propertyValue - debt;
 
         // Send equity to loan.borrower
         USDC.safeTransfer(loan.borrower, equity);
