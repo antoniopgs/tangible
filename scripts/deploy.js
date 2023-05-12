@@ -1,10 +1,10 @@
 const getMnemonicTeam = async () => {
 
   // Get tangibleTeam
-  const tangibleTeamAddress = ethers.Wallet.fromMnemonic(process.env.MNEMONIC).address;
+  const teamAddress = ethers.Wallet.fromMnemonic(process.env.MNEMONIC).address;
 
   // Return fungifyTeam signer
-  return (await ethers.getSigner(tangibleTeamAddress));
+  return (await ethers.getSigner(teamAddress));
 }
 
 const deployContract = async (_factoryName, _signer, _constructorParams = null) => {
@@ -31,8 +31,8 @@ module.exports = deploy = async () => {
   // ---------- MAIN ----------
 
   // Get team
-  // const team = await getMnemonicFungifyTeam();
-  const team = await ethers.getSigner();
+  const team = await getMnemonicTeam();
+  // const team = await ethers.getSigner();
 
   // proxy
   const proxy = await deployContract("ProtocolProxy", team);

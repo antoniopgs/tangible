@@ -4,6 +4,7 @@
     "@chainlink/contracts": "^0.6.1",
     "@openzeppelin/contracts": "^4.8.3",
     "@prb/math": "^4.0.0",
+    "dotenv": "^16.0.3",
     "hardhat": "^2.14.0",
     "hardhat-contract-sizer": "^2.8.0"
   },
