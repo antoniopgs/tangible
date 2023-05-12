@@ -9,6 +9,8 @@ const getMnemonicTeam = async () => {
 
 module.exports = deploy = async () => {
 
+  // ---------- MAIN ----------
+
   // Get team
   // const team = await getMnemonicFungifyTeam();
   const team = await ethers.getSigner();
@@ -25,6 +27,8 @@ module.exports = deploy = async () => {
   // TangibleNft
   const TangibleNft = await ethers.getContractFactory("TangibleNft");
   const tangibleNft = await TangibleNft.connect(team).deploy(protocolProxy.address);
+
+  // ---------- MOCKS ----------
 
   // MockUsdc
   const MockUsdc = await ethers.getContractFactory("MockUsdc");
