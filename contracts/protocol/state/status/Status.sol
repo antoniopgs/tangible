@@ -2,8 +2,10 @@
 pragma solidity ^0.8.15;
 
 import "..//state/State.sol";
-import { SD59x18, toSD59x18 } from "@prb/math/src/SD59x18.sol";
-import { fromUD60x18 } from "@prb/math/src/UD60x18.sol";
+import { SD59x18, convert } from "@prb/math/src/SD59x18.sol";
+import { convert } from "@prb/math/src/UD60x18.sol";
+import { intoUD60x18 } from "@prb/math/src/sd59x18/Casting.sol";
+import { intoSD59x18 } from "@prb/math/src/ud60x18/Casting.sol";
 
 abstract contract Status is State {
     
@@ -76,14 +78,14 @@ abstract contract Status is State {
         uint elapsedSeconds = month * monthSeconds;
 
         // Calculate negExponent
-        SD59x18 negExponent = toSD59x18(int(elapsedSeconds)).sub(toSD59x18(int(loan.maxDurationSeconds))).sub(toSD59x18(1));
+        SD59x18 negExponent = convert(int(elapsedSeconds)).sub(convert(int(loan.maxDurationSeconds))).sub(convert(int(1)));
 
         // Calculate numerator
-        SD59x18 z = toSD59x18(1).sub(SD59x18.wrap(int(UD60x18.unwrap(toUD60x18(1).add(loan.ratePerSecond)))).pow(negExponent));
-        UD60x18 numerator = UD60x18.wrap(uint(SD59x18.unwrap(SD59x18.wrap(int(UD60x18.unwrap(loan.paymentPerSecond))).mul(z))));
+        SD59x18 z = convert(int(1)).sub(intoSD59x18(convert(uint(1)).add(loan.ratePerSecond)).pow(negExponent));
+        UD60x18 numerator = intoUD60x18(intoSD59x18(loan.paymentPerSecond).mul(z));
 
         // Calculate cap
-        cap = fromUD60x18(numerator.div(loan.ratePerSecond));
+        cap = convert(numerator.div(loan.ratePerSecond));
     }
 
     // Note: gas expensive

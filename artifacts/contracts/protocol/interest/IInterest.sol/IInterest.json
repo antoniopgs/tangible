@@ -1,0 +1,49 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IInterest",
+  "sourceName": "contracts/protocol/interest/IInterest.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "UD60x18",
+          "name": "utilization",
+          "type": "uint256"
+        }
+      ],
+      "name": "borrowerApr",
+      "outputs": [
+        {
+          "internalType": "UD60x18",
+          "name": "apr",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "UD60x18",
+          "name": "utilization",
+          "type": "uint256"
+        }
+      ],
+      "name": "borrowerRatePerSecond",
+      "outputs": [
+        {
+          "internalType": "UD60x18",
+          "name": "ratePerSecond",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

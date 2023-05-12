@@ -33,10 +33,10 @@ abstract contract Borrowing is IBorrowing, Status {
 
         // Calculate paymentPerSecond
         UD60x18 paymentPerSecond = calculatePaymentPerSecond(principal, ratePerSecond, maxDurationSeconds);
-        assert(paymentPerSecond.gt(toUD60x18(0)));
+        assert(paymentPerSecond.gt(convert(uint(0))));
 
         // Calculate maxCost
-        uint maxCost = fromUD60x18(paymentPerSecond.mul(toUD60x18(maxDurationSeconds)));
+        uint maxCost = convert(paymentPerSecond.mul(convert(maxDurationSeconds)));
         assert(maxCost > principal);
 
         // Calculate maxUnpaidInterest
@@ -114,7 +114,7 @@ abstract contract Borrowing is IBorrowing, Status {
 
         // Calculate defaulterDebt & redemptionFee
         uint defaulterDebt = loan.unpaidPrincipal + interest;
-        uint redemptionFee = fromUD60x18(toUD60x18(defaulterDebt).mul(_redemptionFeeSpread));
+        uint redemptionFee = convert(convert(defaulterDebt).mul(_redemptionFeeSpread));
 
         // Redeem (pull defaulter's entire debt + redemptionFee)
         USDC.safeTransferFrom(msg.sender, address(this), defaulterDebt + redemptionFee); // Note: anyone can redeem on behalf of defaulter
@@ -138,7 +138,7 @@ abstract contract Borrowing is IBorrowing, Status {
         // - maxDurationMonths * monthSeconds <= log(MAX_UD60x18) / log(1 + ratePerSecond)
         // - maxDurationMonths <= (log(MAX_UD60x18) / log(1 + ratePerSecond)) / monthSeconds // Note: ratePerSecond depends on util (so solve for maxDurationMonths)
         // - maxDurationMonths <= log(MAX_UD60x18) / (monthSeconds * log(1 + ratePerSecond))
-        UD60x18 x = toUD60x18(1).add(ratePerSecond).powu(maxDurationSeconds);
+        UD60x18 x = convert(uint(1)).add(ratePerSecond).powu(maxDurationSeconds);
 
         // principal * ratePerSecond * x <= MAX_UD60x18
         // principal * ratePerSecond * (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
@@ -150,23 +150,23 @@ abstract contract Borrowing is IBorrowing, Status {
         // maxDurationMonths <= log(MAX_UD60x18 / (principal * ratePerSecond)) / (monthSeconds * log(1 + ratePerSecond))
         
         // Calculate paymentPerSecond
-        paymentPerSecond = toUD60x18(principal).mul(ratePerSecond).mul(x).div(x.sub(toUD60x18(1)));
+        paymentPerSecond = convert(principal).mul(ratePerSecond).mul(x).div(x.sub(convert(uint(1))));
     }
 
     function utilization() public view returns(UD60x18) {
         if (totalDeposits == 0) {
             assert(totalPrincipal == 0);
-            return toUD60x18(0);
+            return convert(uint(0));
         }
-        return toUD60x18(totalPrincipal).div(toUD60x18(totalDeposits));
+        return convert(totalPrincipal).div(convert(totalDeposits));
     }
 
     function lenderApy() public view returns(UD60x18) {
     //     if (totalDeposits == 0) {
     //         assert(maxTotalUnpaidInterest == 0);
-    //         return toUD60x18(0);
+    //         return convert(0);
     //     }
-    //     return toUD60x18(maxTotalUnpaidInterest).div(toUD60x18(totalDeposits)); // Question: is this missing auto-compounding?
+    //     return convert(maxTotalUnpaidInterest).div(convert(totalDeposits)); // Question: is this missing auto-compounding?
     }
 
     function sendNft(Loan storage loan, address receiver, uint tokenId) private { // Todo: move to Borrowing

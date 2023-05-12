@@ -5,7 +5,7 @@ import "./IAuctions.sol";
 import "../state/status/Status.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../borrowing/borrowing/IBorrowing.sol";
-import { fromUD60x18 } from "@prb/math/src/UD60x18.sol";
+import { convert } from "@prb/math/src/UD60x18.sol";
 
 contract Auctions is IAuctions, Status {
 
@@ -17,7 +17,7 @@ contract Auctions is IAuctions, Status {
         require(maxDurationMonths >= 1 && maxDurationMonths <= maxDurationMonthsCap, "unallowed maxDurationMonths");
 
         // Validate ltv
-        UD60x18 ltv = toUD60x18(1).sub(toUD60x18(downPayment).div(toUD60x18(propertyValue)));
+        UD60x18 ltv = convert(uint(1)).sub(convert(downPayment).div(convert(propertyValue)));
         require(ltv.lte(maxLtv), "ltv cannot exceed maxLtv");
 
         // Todo: Ensure tokenId exists?
@@ -111,7 +111,7 @@ contract Auctions is IAuctions, Status {
         Bid memory _bid = _bids[tokenId][bidIdx];
 
         // Calculate fees
-        uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
+        uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread));
 
         // Protocol takes fees
         protocolMoney += saleFee;
@@ -163,7 +163,7 @@ contract Auctions is IAuctions, Status {
         Bid memory _bid = _bids[tokenId][bidIdx];
 
         // Calculate fees
-        uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
+        uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread));
 
         // Protocol takes fees
         protocolMoney += saleFee;
@@ -225,8 +225,8 @@ contract Auctions is IAuctions, Status {
         Bid memory _bid = _bids[tokenId][bidIdx];
 
         // Calculate fees
-        uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread));
-        uint defaultFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_defaultFeeSpread));
+        uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread));
+        uint defaultFee = convert(convert(_bid.propertyValue).mul(_defaultFeeSpread));
 
         // Protocol takes fees
         protocolMoney += saleFee + defaultFee;
@@ -288,8 +288,8 @@ contract Auctions is IAuctions, Status {
         Bid memory _bid = _bids[tokenId][bidIdx];
 
         // Calculate fees
-        uint saleFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
-        uint defaultFee = fromUD60x18(toUD60x18(_bid.propertyValue).mul(_defaultFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
+        uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
+        uint defaultFee = convert(convert(_bid.propertyValue).mul(_defaultFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
 
         // Protocol takes fees
         protocolMoney += saleFee + defaultFee;
