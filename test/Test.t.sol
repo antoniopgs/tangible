@@ -15,8 +15,8 @@ import "../contracts/protocol/borrowing/automation/Automation.sol"; // Note: lat
 import "../contracts/protocol/lending/Lending.sol"; // Note: later, further improve architecture, to be able to remove this import
 
 // Other
-// import { MAX_UD60x18, log10 } from "@prb/math/UD60x18.sol";
-import { fromUD60x18 } from "@prb/math/UD60x18.sol";
+// import { MAX_UD60x18, log10 } from "@prb/math/src/UD60x18.sol";
+import { fromUD60x18 } from "@prb/math/src/UD60x18.sol";
 
 contract ProtocolTest is Test, DeployScript {
 

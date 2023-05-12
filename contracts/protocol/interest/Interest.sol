@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import "./IInterest.sol";
 import "../state/status/Status.sol";
-import { intoUD60x18 } from "@prb/math/sd59x18/Casting.sol";
+import { intoUD60x18 } from "@prb/math/src/sd59x18/Casting.sol";
 
 contract Interest is IInterest, Status {
 

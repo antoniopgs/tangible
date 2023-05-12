@@ -5,7 +5,7 @@ import "./IAuctions.sol";
 import "../state/status/Status.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../borrowing/borrowing/IBorrowing.sol";
-import { fromUD60x18 } from "@prb/math/UD60x18.sol";
+import { fromUD60x18 } from "@prb/math/src/UD60x18.sol";
 
 contract Auctions is IAuctions, Status {
 
