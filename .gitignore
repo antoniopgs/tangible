@@ -12,3 +12,4 @@ node_modules
 .env
 deployments/hardhat
 deployments/localhost
+artifacts
