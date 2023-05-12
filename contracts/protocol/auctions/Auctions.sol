@@ -73,30 +73,56 @@ contract Auctions is IAuctions, Status {
         // Get status
         Status status = status(tokenId);
 
+        // Get bid
+        Bid memory _bid = _bids[tokenId][bidIdx];
+
+        // Calculate saleFee
+        uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread));
+        protocolMoney += saleFee;
+
+        if (status == Status.Default || Status.Foreclosurable) {
+
+            // Calculate defaultFee
+            uint defaultFee = convert(convert(_bid.propertyValue).mul(_defaultFeeSpread));
+            protocolMoney += defaultFee;
+        }
+
+        if (status == Status.Mortgage || status == Status.Default || status == Status.Foreclosurable) {
+
+            // Get loan
+            Loan memory loan = _loans[tokenId];
+
+            // Calculate interest
+            uint interest = accruedInterest(tokenId);
+
+            // Update Pool
+            totalPrincipal -= loan.unpaidPrincipal;
+            totalDeposits += interest;
+            // maxTotalUnpaidInterest -= interest;
+        }
+
         if (status == Status.None) {
+            require(msg.sender == prosperaNftContract.ownerOf(tokenId), "caller not nftOwner");
             _acceptNoneBid(tokenId, bidIdx);
 
         } else if (status == Status.Mortgage) {
+            require(msg.sender == loan.borrower, "caller not borrower");
             _acceptMortgageBid(tokenId, bidIdx);
 
         } else if (status == Status.Default) {
+            require(msg.sender == loan.borrower, "caller not borrower");
             _acceptDefaultBid(tokenId, bidIdx);
 
         } else if (status == Status.Foreclosurable) {
+            // require(msg.sender == address(this), "caller not protocol");
             _acceptForeclosureBid(tokenId, bidIdx);
             
         } else {
             revert("invalid status");
         }
 
-        // Get tokenIdLastBid
-        Bid memory tokenIdLastBid = tokenIdBids[tokenIdBids.length - 1];
-
-        // Write tokenIdLastBid over bidIdx
-        tokenIdBids[bidIdx] = tokenIdLastBid;
-
-        // Remove tokenIdLastBid
-        tokenIdBids.pop();
+        // Delete accepted bid
+        deleteBid(tokenIdBids, bidIdx);
     }
 
     function _acceptNoneBid(uint tokenId, uint bidIdx) private {
@@ -105,16 +131,16 @@ contract Auctions is IAuctions, Status {
         address nftOwner = prosperaNftContract.ownerOf(tokenId);
         
         require(status(tokenId) == Status.None, "status not none"); // Question: maybe remove this? (since it's checked in acceptBid() and this function is private?)
-        require(msg.sender == nftOwner, "caller not nftOwner");
+        // require(msg.sender == nftOwner, "caller not nftOwner");
 
         // Get bid
-        Bid memory _bid = _bids[tokenId][bidIdx];
+        // Bid memory _bid = _bids[tokenId][bidIdx];
 
         // Calculate fees
-        uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread));
+        // uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread));
 
         // Protocol takes fees
-        protocolMoney += saleFee;
+        // protocolMoney += saleFee;
 
         // Ensure propertyValue covers saleFee
         require(_bid.propertyValue >= saleFee, "propertyValue doesn't cover saleFee"); // Question: interest will rise over time. Too risky?
@@ -154,28 +180,28 @@ contract Auctions is IAuctions, Status {
     function _acceptMortgageBid(uint tokenId, uint bidIdx) private {
 
         // Get loan
-        Loan memory loan = _loans[tokenId];
+        // Loan memory loan = _loans[tokenId];
 
         require(status(tokenId) == Status.Mortgage, "status not mortgage"); // Question: maybe remove this? (since it's checked in acceptBid() and this function is private?)
-        require(msg.sender == loan.borrower, "caller not borrower");
+        // require(msg.sender == loan.borrower, "caller not borrower");
 
         // Get bid
-        Bid memory _bid = _bids[tokenId][bidIdx];
+        // Bid memory _bid = _bids[tokenId][bidIdx];
 
         // Calculate fees
-        uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread));
+        // uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread));
 
         // Protocol takes fees
-        protocolMoney += saleFee;
+        // protocolMoney += saleFee;
 
         // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
 
         // Calculate interest
-        uint interest = accruedInterest(tokenId);
+        // uint interest = accruedInterest(tokenId);
 
         // Update pool (lenders get paidFirst)
-        totalPrincipal -= loan.unpaidPrincipal;
-        totalDeposits += interest;
+        // totalPrincipal -= loan.unpaidPrincipal;
+        // totalDeposits += interest;
         // maxTotalUnpaidInterest -= interest;
 
         // Calculate debt
@@ -216,29 +242,29 @@ contract Auctions is IAuctions, Status {
     function _acceptDefaultBid(uint tokenId, uint bidIdx) private {
 
         // Get loan
-        Loan memory loan = _loans[tokenId];
+        // Loan memory loan = _loans[tokenId];
 
         require(status(tokenId) == Status.Default, "status not default"); // Question: maybe remove this? (since it's checked in acceptBid() and this function is private?)
-        require(msg.sender == loan.borrower, "caller not borrower");
+        // require(msg.sender == loan.borrower, "caller not borrower");
 
         // Get bid
-        Bid memory _bid = _bids[tokenId][bidIdx];
+        // Bid memory _bid = _bids[tokenId][bidIdx];
 
         // Calculate fees
-        uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread));
-        uint defaultFee = convert(convert(_bid.propertyValue).mul(_defaultFeeSpread));
+        // uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread));
+        // uint defaultFee = convert(convert(_bid.propertyValue).mul(_defaultFeeSpread));
 
         // Protocol takes fees
-        protocolMoney += saleFee + defaultFee;
+        // protocolMoney += saleFee + defaultFee;
 
         // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
 
         // Calculate interest
-        uint interest = accruedInterest(tokenId);
+        // uint interest = accruedInterest(tokenId);
 
         // Update pool (lenders get paidFirst)
-        totalPrincipal -= loan.unpaidPrincipal;
-        totalDeposits += interest;
+        // totalPrincipal -= loan.unpaidPrincipal;
+        // totalDeposits += interest;
         // maxTotalUnpaidInterest -= interest;
 
         // Calculate debt
@@ -279,29 +305,29 @@ contract Auctions is IAuctions, Status {
     function _acceptForeclosureBid(uint tokenId, uint bidIdx) private {
 
         // Get loan
-        Loan memory loan = _loans[tokenId];
+        // Loan memory loan = _loans[tokenId];
         
         require(status(tokenId) == Status.Foreclosurable, "status not foreclosurable"); // Question: maybe remove this? (since it's checked in acceptBid() and this function is private?)
         // require(msg.sender == address(this), "caller not protocol"); Todo: figure this out later
 
         // Get bid
-        Bid memory _bid = _bids[tokenId][bidIdx];
+        // Bid memory _bid = _bids[tokenId][bidIdx];
 
         // Calculate fees
-        uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
-        uint defaultFee = convert(convert(_bid.propertyValue).mul(_defaultFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
+        // uint saleFee = convert(convert(_bid.propertyValue).mul(_saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
+        // uint defaultFee = convert(convert(_bid.propertyValue).mul(_defaultFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
 
         // Protocol takes fees
-        protocolMoney += saleFee + defaultFee;
+        // protocolMoney += saleFee + defaultFee;
 
         // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
 
         // Calculate interest
-        uint interest = accruedInterest(tokenId);
+        // uint interest = accruedInterest(tokenId);
 
         // Update pool (lenders get paidFirst)
-        totalPrincipal -= loan.unpaidPrincipal;
-        totalDeposits += interest;
+        // totalPrincipal -= loan.unpaidPrincipal;
+        // totalDeposits += interest;
         // maxTotalUnpaidInterest -= interest;
 
         // Calculate debt
@@ -337,5 +363,17 @@ contract Auctions is IAuctions, Status {
             );
             require(success, "startLoan delegateCall failed");
         }
+    }
+
+    function deleteBid(Bid[] storage tokenIdBids, uint idxToRemove) private {
+
+        // Get tokenIdLastBid
+        Bid memory tokenIdLastBid = tokenIdBids[tokenIdBids.length - 1];
+
+        // Write tokenIdLastBid over idxToRemove
+        tokenIdBids[idxToRemove] = tokenIdLastBid;
+
+        // Remove tokenIdLastBid
+        tokenIdBids.pop();
     }
 }
