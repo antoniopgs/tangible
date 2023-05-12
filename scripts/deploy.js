@@ -64,60 +64,93 @@ module.exports = deploy = async () => {
   // ---------- SELECTORS ------------
 
   // Auctions
+  console.log("");
+  console.log("setting auctionSelectors...");
+  const Auctions = await ethers.getContractFactory("Auctions");
   const auctionSelectors = [
     Auctions.interface.getSighash("bid"),
     Auctions.interface.getSighash("cancelBid"),
     Auctions.interface.getSighash("acceptBid")
   ];
   proxy.connect(team).setSelectorsTarget(auctionSelectors, auctions.address);
+  console.log("auctionSelectors set.");
 
   // Automation
+  console.log("");
+  console.log("setting automationSelectors...");
+  const Automation = await ethers.getContractFactory("Automation");
   const automationSelectors = [
-    Borrowing.interface.getSighash("startLoan"),
-    Borrowing.interface.getSighash("payLoan"),
-    Borrowing.interface.getSighash("redeemLoan"),
-    Borrowing.interface.getSighash("utilization"),
-    Borrowing.interface.getSighash("status"),
-    Borrowing.interface.getSighash("lenderApy"),
+    Automation.interface.getSighash("startLoan"),
+    Automation.interface.getSighash("payLoan"),
+    Automation.interface.getSighash("redeemLoan"),
+    Automation.interface.getSighash("utilization"),
+    Automation.interface.getSighash("status"),
+    Automation.interface.getSighash("lenderApy"),
     Automation.interface.getSighash("findHighestActionableBidIdx")
   ];
   proxy.connect(team).setSelectorsTarget(automationSelectors, automation.address);
+  console.log("automationSelectors set.");
 
   // Borrowing
+  // console.log("setting borrowingSelectors...");
   // const borrowingSelectors = [];
   // proxy.connect(team).setSelectorsTarget(borrowingSelectors, borrowing.address);
 
   // Interest
+  console.log("");
+  console.log("setting interestSelectors...");
+  const Interest = await ethers.getContractFactory("Interest");
   const interestSelectors = [
     Interest.interface.getSighash("borrowerRatePerSecond"),
   ];
   proxy.connect(team).setSelectorsTarget(interestSelectors, interest.address);
+  console.log("interestSelectors set.");
   
   // Lending
+  console.log("");
+  console.log("setting lendingSelectors...");
+  const Lending = await ethers.getContractFactory("Lending");
   const lendingSelectors = [
     Lending.interface.getSighash("deposit"),
     Lending.interface.getSighash("withdraw"),
     Lending.interface.getSighash("usdcToTUsdc")
   ];
   proxy.connect(team).setSelectorsTarget(lendingSelectors, lending.address);
+  console.log("lendingSelectors set.");
 
   // ---------- BID ACCEPTANCE SELECTORS ----------
 
   // acceptNoneSelectors
-  const acceptNoneSelectors = [ AcceptDefault.interface.getSighash("acceptNoneBid") ];
+  console.log("");
+  console.log("setting acceptNoneSelectors...");
+  const AcceptNone = await ethers.getContractFactory("AcceptNone");
+  const acceptNoneSelectors = [ AcceptNone.interface.getSighash("acceptNoneBid") ];
   proxy.connect(team).setSelectorsTarget(acceptNoneSelectors, acceptNone.address);
+  console.log("acceptNoneSelectors set.");
 
   // acceptMortgageSelectors
-  const acceptMortgageSelectors = [ AcceptDefault.interface.getSighash("acceptMortgageBid") ];
+  console.log("");
+  console.log("setting acceptMortgageSelectors...");
+  const AcceptMortgage = await ethers.getContractFactory("AcceptMortgage");
+  const acceptMortgageSelectors = [ AcceptMortgage.interface.getSighash("acceptMortgageBid") ];
   proxy.connect(team).setSelectorsTarget(acceptMortgageSelectors, acceptMortgage.address);
+  console.log("acceptMortgageSelectors set.");
 
   // acceptDefaultSelectors
+  console.log("");
+  console.log("setting acceptDefaultSelectors...");
+  const AcceptDefault = await ethers.getContractFactory("AcceptDefault");
   const acceptDefaultSelectors = [ AcceptDefault.interface.getSighash("acceptDefaultBid") ];
   proxy.connect(team).setSelectorsTarget(acceptDefaultSelectors, acceptDefault.address);
+  console.log("acceptDefaultSelectors set.");
 
   // acceptForeclosurableSelectors
+  console.log("");
+  console.log("setting acceptForeclosurableSelectors...");
+  const AcceptForeclosurable = await ethers.getContractFactory("AcceptForeclosurable");
   const acceptForeclosurableSelectors = [ AcceptForeclosurable.interface.getSighash("acceptForeclosurableBid") ];
   proxy.connect(team).setSelectorsTarget(acceptForeclosurableSelectors, acceptForeclosurable.address);
+  console.log("acceptForeclosurableSelectors set.");
 
   return {
     team: team,
