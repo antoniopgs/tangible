@@ -19,6 +19,12 @@ module.exports = deploy = async () => {
   const ProtocolProxy = await ethers.getContractFactory("ProtocolProxy");
   const protocolProxy = await ProtocolProxy.connect(team).deploy();
 
+  // ---------- TOKENS ----------
+
+  // MockUsdc
+  const MockUsdc = await ethers.getContractFactory("MockUsdc");
+  const mockUsdc = await MockUsdc.connect(team).deploy();
+
   // tUsdc
   const TUsdc = await ethers.getContractFactory("tUsdc");
   const tUsdcDefaultOperators = [ protocolProxy.address ];
@@ -28,11 +34,10 @@ module.exports = deploy = async () => {
   const TangibleNft = await ethers.getContractFactory("TangibleNft");
   const tangibleNft = await TangibleNft.connect(team).deploy(protocolProxy.address);
 
-  // ---------- MOCKS ----------
+  // ---------- INITIALIZE ----------
 
-  // MockUsdc
-  const MockUsdc = await ethers.getContractFactory("MockUsdc");
-  const mockUsdc = await MockUsdc.connect(team).deploy();
+  // Initialize ProtocolProxy
+  protocolProxy.connect(team).initialize(mockUsdc.address, tUsdc.address, tangibleNft.address);
 
   // ---------- IMPLEMENTATIONS ----------
 
@@ -56,6 +61,23 @@ module.exports = deploy = async () => {
   const Lending = await ethers.getContractFactory("Lending");
   const lending = await Lending.connect(team).deploy();
 
+  // ---------- BID ACCEPTANCE IMPLEMENTATIONS ----------
+
+  // AcceptNone
+  const AcceptNone = await ethers.getContractFactory("AcceptNone");
+  const acceptNone = await AcceptNone.connect(team).deploy();
+
+  // AcceptMortgage
+  const AcceptMortgage = await ethers.getContractFactory("AcceptMortgage");
+  const acceptMortgage = await AcceptMortgage.connect(team).deploy();
+
+  // AcceptDefault
+  const AcceptDefault = await ethers.getContractFactory("AcceptDefault");
+  const acceptDefault = await AcceptDefault.connect(team).deploy();
+
+  // AcceptForeclosurable
+  const AcceptForeclosurable = await ethers.getContractFactory("AcceptForeclosurable");
+  const acceptForeclosurable = await AcceptForeclosurable.connect(team).deploy();
 
   // ---------- SELECTORS ------------
 
@@ -78,4 +100,22 @@ module.exports = deploy = async () => {
   // Lending
   const lendingSelectors = [];
   protocolProxy.connect(team).setSelectorsTarget(lendingSelectors, lending.address);
+
+  // ---------- BID ACCEPTANCE SELECTORS ----------
+
+  // acceptNoneSelectors
+  const acceptNoneSelectors = [];
+  protocolProxy.connect(team).setSelectorsTarget(acceptNoneSelectors, acceptNone.address);
+
+  // acceptMortgageSelectors
+  const acceptMortgageSelectors = [];
+  protocolProxy.connect(team).setSelectorsTarget(acceptMortgageSelectors, acceptMortgage.address);
+
+  // acceptDefaultSelectors
+  const acceptDefaultSelectors = [];
+  protocolProxy.connect(team).setSelectorsTarget(acceptDefaultSelectors, acceptDefault.address);
+
+  // acceptForeclosurableSelectors
+  const acceptForeclosurableSelectors = [];
+  protocolProxy.connect(team).setSelectorsTarget(acceptForeclosurableSelectors, acceptForeclosurable.address);
 }

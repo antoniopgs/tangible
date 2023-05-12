@@ -15,7 +15,7 @@ import { convert } from "@prb/math/src/UD60x18.sol";
 abstract contract State is IState, TargetManager, Initializable {
 
     // Tokens
-    IERC20 USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // ethereum
+    IERC20 USDC; /* = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // ethereum */
     tUsdc tUSDC;
     TangibleNft internal prosperaNftContract;
 
@@ -56,7 +56,8 @@ abstract contract State is IState, TargetManager, Initializable {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    function initialize(tUsdc _tUSDC, TangibleNft _prosperaNftContract) external initializer { // Question: maybe move this elsewhere?
+    function initialize(IERC20 _USDC, tUsdc _tUSDC, TangibleNft _prosperaNftContract) external initializer { // Question: maybe move this elsewhere?
+        USDC = _USDC;
         tUSDC = _tUSDC;
         prosperaNftContract = _prosperaNftContract;
     }
