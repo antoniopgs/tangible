@@ -35,6 +35,12 @@ contract DeployScript is Script {
     Interest interest;
     Lending lending;
 
+    // Bid acceptance contracts
+    AcceptNone acceptNone;
+    AcceptMortgage acceptMortgage;
+    AcceptDefault acceptDefault;
+    AcceptForeclosurable acceptForeclosurable;
+
     constructor() {
 
         // Fork (needed for tUSDC's ERC777 registration in the ERC1820 registry)
@@ -62,6 +68,12 @@ contract DeployScript is Script {
         // borrowing = new Borrowing();
         interest = new Interest();
         lending = new Lending();
+
+        // Deploy bid acceptance contracts
+        acceptNone = new AcceptNone();
+        acceptMortgage = new AcceptMortgage();
+        acceptDefault = new AcceptDefault();
+        acceptForeclosurable = new AcceptForeclosurable();
 
         // Set auctionSelectors
         bytes4[] memory auctionSelectors = new bytes4[](3);
@@ -101,5 +113,27 @@ contract DeployScript is Script {
         lendingSelectors[1] = ILending.withdraw.selector;
         lendingSelectors[2] = Lending.usdcToTUsdc.selector;
         ProtocolProxy(protocol).setSelectorsTarget(lendingSelectors, address(lending));
+
+        // ---------- BID ACCEPTANCE SELECTORS ----------
+
+        // Set acceptNoneSelectors
+        bytes4[] memory acceptNoneSelectors = new bytes4[](1);
+        acceptNoneSelectors[0] = AcceptNone.acceptNoneBid.selector;
+        ProtocolProxy(protocol).setSelectorsTarget(acceptNoneSelectors, address(acceptNone));
+        
+        // Set acceptMortageSelectors
+        bytes4[] memory acceptMortageSelectors = new bytes4[](1);
+        acceptMortageSelectors[0] = AcceptMortgage.acceptMortgageBid.selector;
+        ProtocolProxy(protocol).setSelectorsTarget(acceptMortageSelectors, address(acceptMortgage));
+
+        // Set acceptDefaultSelectors
+        bytes4[] memory acceptDefaultSelectors = new bytes4[](1);
+        acceptDefaultSelectors[0] = AcceptDefault.acceptDefaultBid.selector;
+        ProtocolProxy(protocol).setSelectorsTarget(acceptDefaultSelectors, address(acceptDefault));
+
+        // Set acceptForeclosurableSelectors
+        bytes4[] memory acceptForeclosurableSelectors = new bytes4[](1);
+        acceptForeclosurableSelectors[0] = AcceptForeclosurable.acceptForeclosurableBid.selector;
+        ProtocolProxy(protocol).setSelectorsTarget(acceptForeclosurableSelectors, address(acceptForeclosurable));
     }
 }
