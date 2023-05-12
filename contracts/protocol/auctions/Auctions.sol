@@ -121,6 +121,25 @@ contract Auctions is IAuctions, Status {
             revert("invalid status");
         }
 
+        // If bid
+        if (_bid.propertyValue == _bid.downPayment) {
+        
+        // If loan bid
+        } else {
+
+            // Calculate principal
+            uint principal = _bid.propertyValue - _bid.downPayment;
+
+            // start new loan
+            (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
+                abi.encodeCall(
+                    IBorrowing.startLoan,
+                    (_bid.bidder, tokenId, principal, _bid.maxDurationMonths)
+                )
+            );
+            require(success, "startLoan delegateCall failed");
+        }
+
         // Delete accepted bid
         deleteBid(tokenIdBids, bidIdx);
     }
@@ -164,16 +183,16 @@ contract Auctions is IAuctions, Status {
             prosperaNftContract.safeTransferFrom(nftOwner, address(this), tokenId);
 
             // Calculate principal
-            uint principal = _bid.propertyValue - _bid.downPayment;
+            // uint principal = _bid.propertyValue - _bid.downPayment;
 
             // start new loan
-            (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
-                abi.encodeCall(
-                    IBorrowing.startLoan,
-                    (_bid.bidder, tokenId, principal, _bid.maxDurationMonths)
-                )
-            );
-            require(success, "startLoan delegateCall failed");
+            // (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
+            //     abi.encodeCall(
+            //         IBorrowing.startLoan,
+            //         (_bid.bidder, tokenId, principal, _bid.maxDurationMonths)
+            //     )
+            // );
+            // require(success, "startLoan delegateCall failed");
         }
     }
 
@@ -226,16 +245,16 @@ contract Auctions is IAuctions, Status {
         } else {
 
             // Calculate principal
-            uint principal = _bid.propertyValue - _bid.downPayment;
+            // uint principal = _bid.propertyValue - _bid.downPayment;
 
             // start new loan
-            (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
-                abi.encodeCall(
-                    IBorrowing.startLoan,
-                    (_bid.bidder, tokenId, principal, _bid.maxDurationMonths)
-                )
-            );
-            require(success, "startLoan delegateCall failed");
+            // (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
+            //     abi.encodeCall(
+            //         IBorrowing.startLoan,
+            //         (_bid.bidder, tokenId, principal, _bid.maxDurationMonths)
+            //     )
+            // );
+            // require(success, "startLoan delegateCall failed");
         }
     }
 
@@ -289,16 +308,16 @@ contract Auctions is IAuctions, Status {
         } else {
 
             // Calculate principal
-            uint principal = _bid.propertyValue - _bid.downPayment;
+            // uint principal = _bid.propertyValue - _bid.downPayment;
 
             // start new loan
-            (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
-                abi.encodeCall(
-                    IBorrowing.startLoan,
-                    (_bid.bidder, tokenId, principal, _bid.maxDurationMonths)
-                )
-            );
-            require(success, "startLoan delegateCall failed");
+            // (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
+            //     abi.encodeCall(
+            //         IBorrowing.startLoan,
+            //         (_bid.bidder, tokenId, principal, _bid.maxDurationMonths)
+            //     )
+            // );
+            // require(success, "startLoan delegateCall failed");
         }
     }
 
@@ -352,16 +371,16 @@ contract Auctions is IAuctions, Status {
         } else {
 
             // Calculate principal
-            uint principal = _bid.propertyValue - _bid.downPayment;
+            // uint principal = _bid.propertyValue - _bid.downPayment;
 
             // start new loan
-            (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
-                abi.encodeCall(
-                    IBorrowing.startLoan,
-                    (_bid.bidder, tokenId, principal, _bid.maxDurationMonths)
-                )
-            );
-            require(success, "startLoan delegateCall failed");
+            // (bool success, ) = logicTargets[IBorrowing.startLoan.selector].delegatecall(
+            //     abi.encodeCall(
+            //         IBorrowing.startLoan,
+            //         (_bid.bidder, tokenId, principal, _bid.maxDurationMonths)
+            //     )
+            // );
+            // require(success, "startLoan delegateCall failed");
         }
     }
 
