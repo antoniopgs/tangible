@@ -1,4 +1,3 @@
-require("@nomiclabs/hardhat-ethers");
 const { ethers } = require("hardhat");
 
 const getMnemonicTeam = async () => {
@@ -12,7 +11,8 @@ const getMnemonicTeam = async () => {
 
 const deployContract = async (_factoryName, _signer, _constructorParams = null) => {
 
-  console.log(`Deploying ${Factory}...`);
+  console.log("");
+  console.log(`Deploying ${_factoryName}...`);
   console.log("Getting Factory...");
 
   // Get Factory
@@ -24,7 +24,6 @@ const deployContract = async (_factoryName, _signer, _constructorParams = null) 
   const contract = await Factory.connect(_signer).deploy(_constructorParams);
 
   console.log(`Contract deployed at ${contract.address}`);
-  console.log("");
 
   return contract;
 }
@@ -41,15 +40,15 @@ module.exports = deploy = async () => {
   const proxy = await deployContract("ProtocolProxy", team);
 
   // ---------- TOKENS ----------
-  const mockUsdc = await deployContract("MockUsd", team);
+  const mockUsdc = await deployContract("MockUsdc", team);
   const tUsdcDefaultOperators = [ proxy.address ];
-  const tUsdc = deployContract("tUsdc", team, tUsdcDefaultOperators);
-  const tangibleNft = await deployContract("TangibleNft", team);
+  const tUsdc = await deployContract("tUsdc", team, tUsdcDefaultOperators);
+  const tangibleNft = await deployContract("TangibleNft", team, proxy.address);
 
   // ---------- INITIALIZE ----------
 
   // Initialize proxy
-  proxy.connect(team).initialize(mockUsdc.address, tUsdc.address, tangibleNft.address);
+  await proxy.connect(team).initialize(mockUsdc.address, tUsdc.address, tangibleNft.address);
 
   // ---------- IMPLEMENTATIONS ----------
   const auctions = await deployContract("Auctions", team);

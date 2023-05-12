@@ -1,4 +1,5 @@
 require('hardhat-contract-sizer');
+require("@nomiclabs/hardhat-waffle");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {

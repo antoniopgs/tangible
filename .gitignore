@@ -8,3 +8,7 @@ out/
 /broadcast/*/31337/
 
 .DS_Store
+node_modules
+.env
+deployments/hardhat
+deployments/localhost
