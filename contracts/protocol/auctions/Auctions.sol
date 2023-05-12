@@ -106,6 +106,8 @@ contract Auctions is IAuctions, Status {
             // maxTotalUnpaidInterest -= interest;
         }
 
+        require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt"); // Question: interest will rise over time. Too risky?
+
         // Calculate equity
         uint equity = _bid.propertyValue - debt;
 
@@ -170,7 +172,7 @@ contract Auctions is IAuctions, Status {
         // protocolMoney += saleFee;
 
         // Ensure propertyValue covers saleFee
-        require(_bid.propertyValue >= saleFee, "propertyValue doesn't cover saleFee"); // Question: interest will rise over time. Too risky?
+        // require(_bid.propertyValue >= saleFee, "propertyValue doesn't cover saleFee"); // Question: interest will rise over time. Too risky?
 
         // Calculate equity
         // uint equity = _bid.propertyValue - saleFee;
@@ -235,7 +237,7 @@ contract Auctions is IAuctions, Status {
         // uint debt = loan.unpaidPrincipal + interest + saleFee;
 
         // Ensure propertyValue covers debt
-        require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
+        // require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt + fees"); // Question: interest will rise over time. Too risky?
 
         // Calculate equity
         // uint equity = _bid.propertyValue - debt;
@@ -298,7 +300,7 @@ contract Auctions is IAuctions, Status {
         // uint debt = loan.unpaidPrincipal + interest + saleFee + defaultFee;
 
         // Ensure propertyValue covers debt
-        require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt"); // Question: interest will rise over time. Too risky?
+        // require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt"); // Question: interest will rise over time. Too risky?
 
         // Calculate equity
         // uint equity = _bid.propertyValue - debt;
@@ -361,7 +363,7 @@ contract Auctions is IAuctions, Status {
         // uint debt = loan.unpaidPrincipal + interest + saleFee + defaultFee;
 
         // Ensure propertyValue covers principal + interest + fees
-        require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt"); // Question: interest will rise over time. Too risky?
+        // require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt"); // Question: interest will rise over time. Too risky?
 
         // Calculate equity
         // uint equity = _bid.propertyValue - debt;
