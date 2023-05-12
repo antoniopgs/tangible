@@ -70,9 +70,6 @@ contract Auctions is IAuctions, Status {
         // Ensure bid is actionable
         require(bidActionable(tokenIdBids[bidIdx]), "bid not actionable");
 
-        // Get status
-        Status status = status(tokenId);
-
         // Get bid
         Bid memory _bid = _bids[tokenId][bidIdx];
 
@@ -81,35 +78,8 @@ contract Auctions is IAuctions, Status {
         uint debt = saleFee;
         protocolMoney += saleFee;
 
-        if (status == Status.Default || Status.Foreclosurable) {
-
-            // Calculate defaultFee
-            uint defaultFee = convert(convert(_bid.propertyValue).mul(_defaultFeeSpread));
-            debt += defaultFee;
-            protocolMoney += defaultFee;
-        }
-
-        if (status == Status.Mortgage || status == Status.Default || status == Status.Foreclosurable) {
-
-            // Get loan
-            Loan memory loan = _loans[tokenId];
-
-            // Calculate interest
-            uint interest = accruedInterest(tokenId);
-
-            // Update debt
-            debt += loan.unpaidPrincipal + interest;
-
-            // Update Pool
-            totalPrincipal -= loan.unpaidPrincipal;
-            totalDeposits += interest;
-            // maxTotalUnpaidInterest -= interest;
-        }
-
-        require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt"); // Question: interest will rise over time. Too risky?
-
-        // Calculate equity
-        uint equity = _bid.propertyValue - debt;
+        // Get status
+        Status status = status(tokenId);
 
         if (status == Status.None) {
             require(msg.sender == prosperaNftContract.ownerOf(tokenId), "caller not nftOwner");
@@ -130,6 +100,36 @@ contract Auctions is IAuctions, Status {
         } else {
             revert("invalid status");
         }
+
+        if (status == Status.Mortgage || status == Status.Default || status == Status.Foreclosurable) {
+
+            // Get loan
+            Loan memory loan = _loans[tokenId];
+
+            // Calculate interest
+            uint interest = accruedInterest(tokenId);
+
+            // Update debt
+            debt += loan.unpaidPrincipal + interest;
+
+            // Update Pool
+            totalPrincipal -= loan.unpaidPrincipal;
+            totalDeposits += interest;
+            // maxTotalUnpaidInterest -= interest;
+
+            if (status == Status.Default || status = Status.Foreclosurable) {
+
+                // Calculate defaultFee
+                uint defaultFee = convert(convert(_bid.propertyValue).mul(_defaultFeeSpread));
+                debt += defaultFee;
+                protocolMoney += defaultFee;
+            }
+        }
+
+        require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt"); // Question: interest will rise over time. Too risky?
+
+        // Calculate equity
+        uint equity = _bid.propertyValue - debt;
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
