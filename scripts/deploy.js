@@ -72,7 +72,7 @@ module.exports = deploy = async () => {
     Auctions.interface.getSighash("cancelBid"),
     Auctions.interface.getSighash("acceptBid")
   ];
-  proxy.connect(team).setSelectorsTarget(auctionSelectors, auctions.address);
+  await proxy.connect(team).setSelectorsTarget(auctionSelectors, auctions.address);
   console.log("auctionSelectors set.");
 
   // Automation
@@ -88,13 +88,13 @@ module.exports = deploy = async () => {
     Automation.interface.getSighash("lenderApy"),
     Automation.interface.getSighash("findHighestActionableBidIdx")
   ];
-  proxy.connect(team).setSelectorsTarget(automationSelectors, automation.address);
+  await proxy.connect(team).setSelectorsTarget(automationSelectors, automation.address);
   console.log("automationSelectors set.");
 
   // Borrowing
   // console.log("setting borrowingSelectors...");
   // const borrowingSelectors = [];
-  // proxy.connect(team).setSelectorsTarget(borrowingSelectors, borrowing.address);
+  // await proxy.connect(team).setSelectorsTarget(borrowingSelectors, borrowing.address);
 
   // Interest
   console.log("");
@@ -103,7 +103,7 @@ module.exports = deploy = async () => {
   const interestSelectors = [
     Interest.interface.getSighash("borrowerRatePerSecond"),
   ];
-  proxy.connect(team).setSelectorsTarget(interestSelectors, interest.address);
+  await proxy.connect(team).setSelectorsTarget(interestSelectors, interest.address);
   console.log("interestSelectors set.");
   
   // Lending
@@ -115,7 +115,7 @@ module.exports = deploy = async () => {
     Lending.interface.getSighash("withdraw"),
     Lending.interface.getSighash("usdcToTUsdc")
   ];
-  proxy.connect(team).setSelectorsTarget(lendingSelectors, lending.address);
+  await proxy.connect(team).setSelectorsTarget(lendingSelectors, lending.address);
   console.log("lendingSelectors set.");
 
   // ---------- BID ACCEPTANCE SELECTORS ----------
@@ -125,7 +125,7 @@ module.exports = deploy = async () => {
   console.log("setting acceptNoneSelectors...");
   const AcceptNone = await ethers.getContractFactory("AcceptNone");
   const acceptNoneSelectors = [ AcceptNone.interface.getSighash("acceptNoneBid") ];
-  proxy.connect(team).setSelectorsTarget(acceptNoneSelectors, acceptNone.address);
+  await proxy.connect(team).setSelectorsTarget(acceptNoneSelectors, acceptNone.address);
   console.log("acceptNoneSelectors set.");
 
   // acceptMortgageSelectors
@@ -133,7 +133,7 @@ module.exports = deploy = async () => {
   console.log("setting acceptMortgageSelectors...");
   const AcceptMortgage = await ethers.getContractFactory("AcceptMortgage");
   const acceptMortgageSelectors = [ AcceptMortgage.interface.getSighash("acceptMortgageBid") ];
-  proxy.connect(team).setSelectorsTarget(acceptMortgageSelectors, acceptMortgage.address);
+  await proxy.connect(team).setSelectorsTarget(acceptMortgageSelectors, acceptMortgage.address);
   console.log("acceptMortgageSelectors set.");
 
   // acceptDefaultSelectors
@@ -141,7 +141,7 @@ module.exports = deploy = async () => {
   console.log("setting acceptDefaultSelectors...");
   const AcceptDefault = await ethers.getContractFactory("AcceptDefault");
   const acceptDefaultSelectors = [ AcceptDefault.interface.getSighash("acceptDefaultBid") ];
-  proxy.connect(team).setSelectorsTarget(acceptDefaultSelectors, acceptDefault.address);
+  await proxy.connect(team).setSelectorsTarget(acceptDefaultSelectors, acceptDefault.address);
   console.log("acceptDefaultSelectors set.");
 
   // acceptForeclosurableSelectors
@@ -149,7 +149,7 @@ module.exports = deploy = async () => {
   console.log("setting acceptForeclosurableSelectors...");
   const AcceptForeclosurable = await ethers.getContractFactory("AcceptForeclosurable");
   const acceptForeclosurableSelectors = [ AcceptForeclosurable.interface.getSighash("acceptForeclosurableBid") ];
-  proxy.connect(team).setSelectorsTarget(acceptForeclosurableSelectors, acceptForeclosurable.address);
+  await proxy.connect(team).setSelectorsTarget(acceptForeclosurableSelectors, acceptForeclosurable.address);
   console.log("acceptForeclosurableSelectors set.");
 
   return {
