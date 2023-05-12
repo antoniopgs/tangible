@@ -12,8 +12,6 @@ import "./AcceptMortgage.sol";
 import "./AcceptDefault.sol";
 import "./AcceptForeclosurable.sol";
 
-import "forge-std/console.sol";
-
 contract Auctions is IAuctions, Status {
 
     using SafeERC20 for IERC20;
@@ -71,9 +69,6 @@ contract Auctions is IAuctions, Status {
 
     function acceptBid(uint tokenId, uint bidIdx) external {
 
-        console.log("");
-        console.log("acceptBid...");
-
         // Get tokenIdBids
         Bid[] storage tokenIdBids = _bids[tokenId];
 
@@ -84,8 +79,6 @@ contract Auctions is IAuctions, Status {
         Status status = status(tokenId);
 
         if (status == Status.None) {
-            console.log("none");
-            // AcceptNone(logicTargets[AcceptNone.acceptNoneBid.selector]).acceptNoneBid(tokenId, bidIdx);
             (bool success, ) = logicTargets[AcceptNone.acceptNoneBid.selector].delegatecall(
                 abi.encodeCall(
                     AcceptNone.acceptNoneBid,
@@ -95,8 +88,6 @@ contract Auctions is IAuctions, Status {
             require(success, "acceptNoneBid() call failed");
 
         } else if (status == Status.Mortgage) {
-            console.log("mortgage");
-            // AcceptMortgage(logicTargets[AcceptMortgage.acceptMortgageBid.selector]).acceptMortgageBid(tokenId, bidIdx);
             (bool success, ) = logicTargets[AcceptMortgage.acceptMortgageBid.selector].delegatecall(
                 abi.encodeCall(
                     AcceptMortgage.acceptMortgageBid,
@@ -106,8 +97,6 @@ contract Auctions is IAuctions, Status {
             require(success, "acceptMortgageBid() call failed");
 
         } else if (status == Status.Default) {
-            console.log("default");
-            // AcceptDefault(logicTargets[AcceptDefault.acceptDefaultBid.selector]).acceptDefaultBid(tokenId, bidIdx);
             (bool success, ) = logicTargets[AcceptDefault.acceptDefaultBid.selector].delegatecall(
                 abi.encodeCall(
                     AcceptDefault.acceptDefaultBid,
@@ -117,8 +106,6 @@ contract Auctions is IAuctions, Status {
             require(success, "acceptDefaultBid() call failed");
 
         } else if (status == Status.Foreclosurable) {
-            console.log("foreclosurable");
-            // AcceptForeclosurable(logicTargets[AcceptForeclosurable.acceptForeclosurableBid.selector]).acceptForeclosurableBid(tokenId, bidIdx);
             (bool success, ) = logicTargets[AcceptForeclosurable.acceptForeclosurableBid.selector].delegatecall(
                 abi.encodeCall(
                     AcceptForeclosurable.acceptForeclosurableBid,

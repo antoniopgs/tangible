@@ -378,6 +378,11 @@
     {
       "inputs": [
         {
+          "internalType": "contract IERC20",
+          "name": "_USDC",
+          "type": "address"
+        },
+        {
           "internalType": "contract tUsdc",
           "name": "_tUSDC",
           "type": "address"
