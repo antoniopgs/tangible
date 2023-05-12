@@ -124,6 +124,14 @@ contract Auctions is IAuctions, Status {
                 debt += defaultFee;
                 protocolMoney += defaultFee;
             }
+
+            // Send equity to loan.borrower
+            USDC.safeTransfer(loan.borrower, equity);
+
+        } else if (status == Status.None) {
+
+            // Send equity to nftOwner
+            USDC.safeTransfer(nftOwner, equity);
         }
 
         require(_bid.propertyValue >= debt, "propertyValue doesn't cover debt"); // Question: interest will rise over time. Too risky?
@@ -178,7 +186,7 @@ contract Auctions is IAuctions, Status {
         // uint equity = _bid.propertyValue - saleFee;
 
         // Send equity to nftOwner
-        USDC.safeTransfer(nftOwner, equity);
+        // USDC.safeTransfer(nftOwner, equity);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
@@ -243,7 +251,7 @@ contract Auctions is IAuctions, Status {
         // uint equity = _bid.propertyValue - debt;
 
         // Send equity to loan.borrower
-        USDC.safeTransfer(loan.borrower, equity);
+        // USDC.safeTransfer(loan.borrower, equity);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
@@ -306,7 +314,7 @@ contract Auctions is IAuctions, Status {
         // uint equity = _bid.propertyValue - debt;
 
         // Send equity to loan.borrower
-        USDC.safeTransfer(loan.borrower, equity);
+        // USDC.safeTransfer(loan.borrower, equity);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
@@ -369,7 +377,7 @@ contract Auctions is IAuctions, Status {
         // uint equity = _bid.propertyValue - debt;
 
         // Send equity to loan.borrower
-        USDC.safeTransfer(loan.borrower, equity);
+        // USDC.safeTransfer(loan.borrower, equity);
 
         // If bid
         if (_bid.propertyValue == _bid.downPayment) {
