@@ -124,6 +124,8 @@ contract Auctions is IAuctions, Status {
 
         // Delete accepted bid
         deleteBid(tokenIdBids, bidIdx);
+
+        emit AcceptBid(tokenId, bidIdx, status);
     }
 
     function deleteBid(Bid[] storage tokenIdBids, uint idxToRemove) private {
