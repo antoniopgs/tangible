@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract TangibleNft is ERC721URIStorage, ERC721Enumerable, Ownable {
 
+    event VerifyEResident();
+
     // Mappings
     mapping(address => uint) public addressToEResident; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
     mapping(uint => address) public eResidentToAddress;

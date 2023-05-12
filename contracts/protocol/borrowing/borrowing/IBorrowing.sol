@@ -5,6 +5,10 @@ import "../../state/status/IStatus.sol";
 
 interface IBorrowing is IStatus {
 
+    event StartLoan();
+    event PayLoan();
+    event RedeemLoan();
+
     // Functions
     function startLoan(address borrower, uint tokenId, uint principal, uint maxDurationMonths) external;
     function payLoan(uint tokenId, uint payment) external;

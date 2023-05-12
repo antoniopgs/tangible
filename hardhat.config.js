@@ -11,14 +11,14 @@ module.exports = {
       }
     },
     polygonMumbai: {
-      url: "https://polygon-mumbai.g.alchemy.com/v2/aK8s83vhhzG8PbGyJqLi160PgWD_9IbX",
-      accounts: {
-        mnemonic: process.env.MNEMONIC,
-        path: "m/44'/60'/0'/0",
-        initialIndex: 0,
-        count: 20,
-        passphrase: "",
-      }
+      url: "https://polygon-mumbai.g.alchemy.com/v2/aK8s83vhhzG8PbGyJqLi160PgWD_9IbX"
+      // accounts: {
+      //   mnemonic: process.env.MNEMONIC,
+      //   path: "m/44'/60'/0'/0",
+      //   initialIndex: 0,
+      //   count: 20,
+      //   passphrase: "",
+      // }
     }
   },
   contractSizer: {
