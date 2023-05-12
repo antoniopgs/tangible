@@ -14,14 +14,15 @@ import "../contracts/protocol/lending/Lending.sol";
 import "../contracts/protocol/protocolProxy/ProtocolProxy.sol";
 
 // Token Imports
-import "../contracts/tokens/TangibleNft.sol"; // Note: v2
+import "../contracts/mock/MockUsdc.sol";
 import "../contracts/tokens/tUsdc.sol";
+import "../contracts/tokens/TangibleNft.sol"; // Note: v2
 
 
 contract DeployScript is Script {
 
     // Tokens
-    IERC20 USDC = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet
+    IERC20 USDC; /* = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet */
     tUsdc tUSDC;
     TangibleNft nftContract;
 
@@ -53,6 +54,9 @@ contract DeployScript is Script {
         address[] memory tUsdcDefaultOperators = new address[](1);
         tUsdcDefaultOperators[0] = address(protocol);
 
+        // Deploy mockUSDC
+        USDC = new MockUsdc();
+
         // Deploy tUSDC
         tUSDC = new tUsdc(tUsdcDefaultOperators);
 
@@ -60,7 +64,7 @@ contract DeployScript is Script {
         nftContract = new TangibleNft(protocol);
 
         // Initialize protocol
-        ProtocolProxy(protocol).initialize(tUSDC, nftContract);
+        ProtocolProxy(protocol).initialize(USDC, tUSDC, nftContract);
 
         // Deploy logic contracts
         auctions = new Auctions();
