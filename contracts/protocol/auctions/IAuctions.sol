@@ -5,9 +5,9 @@ import "../state/status/IStatus.sol";
 
 interface IAuctions is IStatus {
 
-    event NewBid(address bidder);
-    event CancelBid(address bidder);
-    event AcceptBid(address caller);
+    event NewBid(address bidder, uint tokenId, uint propertyValue, uint downPayment, uint maxDurationMonths, UD60x18 ltv);
+    event CancelBid(address bidder, uint tokenId, uint bidIdx);
+    event AcceptBid();
 
     // Bidder
     function bid(uint tokenId, uint propertyValue, uint downPayment, uint maxDurationMonths) external;

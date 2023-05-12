@@ -39,6 +39,8 @@ contract Auctions is IAuctions, Status {
                 maxDurationMonths: maxDurationMonths
             })
         );
+
+        emit NewBid(msg.sender, tokenId, propertyValue, downPayment, maxDurationMonths, ltv);
     }
 
     function cancelBid(uint tokenId, uint bidIdx) external {
@@ -65,6 +67,8 @@ contract Auctions is IAuctions, Status {
 
         // Send bidToRemove's downPayment from protocol to bidder
         USDC.safeTransfer(bidToRemove.bidder, bidToRemove.downPayment);
+
+        emit CancelBid(msg.sender, tokenId, bidIdx);
     }
 
     function acceptBid(uint tokenId, uint bidIdx) external {

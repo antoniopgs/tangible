@@ -60,6 +60,8 @@ abstract contract Borrowing is IBorrowing, Status {
 
         // Add tokenId to loansTokenIds
         loansTokenIds.add(tokenId);
+
+        emit StartLoan(borrower, tokenId, principal, maxDurationMonths, ratePerSecond, maxDurationSeconds, paymentPerSecond, maxCost, block.timestamp);
     }
 
     function payLoan(uint tokenId, uint payment) external {
@@ -96,11 +98,16 @@ abstract contract Borrowing is IBorrowing, Status {
         // maxTotalUnpaidInterest -= interest;
 
         // If loan is paid off
+        bool paidOff;
         if (loan.unpaidPrincipal == 0) {
+
+            paidOff = true;
             
             // Send nft to loan.borrower
             sendNft(loan, loan.borrower, tokenId);
         }
+
+        emit PayLoan(msg.sender, tokenId, payment, interest, repayment, block.timestamp, paidOff);
     }
 
     function redeemLoan(uint tokenId) external {
@@ -117,7 +124,7 @@ abstract contract Borrowing is IBorrowing, Status {
         uint redemptionFee = convert(convert(defaulterDebt).mul(_redemptionFeeSpread));
 
         // Redeem (pull defaulter's entire debt + redemptionFee)
-        USDC.safeTransferFrom(msg.sender, address(this), defaulterDebt + redemptionFee); // Note: anyone can redeem on behalf of defaulter
+        USDC.safeTransferFrom(msg.sender, address(this), defaulterDebt + redemptionFee); // Note: anyone can redeem on behalf of defaulter // Question: actually, shouldn't the defaulter be the only one able to redeem?
 
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
@@ -127,6 +134,8 @@ abstract contract Borrowing is IBorrowing, Status {
 
         // Send nft to loan.borrower
         sendNft(loan, loan.borrower, tokenId);
+
+        emit RedeemLoan(msg.sender, tokenId, interest, defaulterDebt, redemptionFee, block.timestamp);
     }
 
     function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) /*private*/ public pure returns(UD60x18 paymentPerSecond) {

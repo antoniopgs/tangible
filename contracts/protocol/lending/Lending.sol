@@ -23,6 +23,8 @@ contract Lending is ILending, Status {
 
         // Mint tUsdc to depositor
         tUSDC.defaultOperatorMint(msg.sender, _tUsdc);
+
+        emit Deposit(msg.sender, usdc, _tUsdc);
     }
 
     function withdraw(uint usdc) external {
@@ -39,6 +41,8 @@ contract Lending is ILending, Status {
 
         // Send usdc to withdrawer
         USDC.safeTransfer(msg.sender, usdc);
+
+        emit Deposit(msg.sender, usdc, _tUsdc);
     }
 
     function usdcToTUsdc(uint usdcAmount) public view returns(uint tUsdcAmount) {
