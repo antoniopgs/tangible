@@ -86,7 +86,8 @@ module.exports = deploy = async () => {
     Automation.interface.getSighash("utilization"),
     Automation.interface.getSighash("status"),
     Automation.interface.getSighash("lenderApy"),
-    Automation.interface.getSighash("findHighestActionableBidIdx")
+    Automation.interface.getSighash("findHighestActionableBidIdx"),
+    Automation.interface.getSighash("myLoans")
   ];
   await proxy.connect(team).setSelectorsTarget(automationSelectors, automation.address);
   console.log("automationSelectors set.");

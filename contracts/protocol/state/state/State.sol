@@ -127,4 +127,17 @@ abstract contract State is IState, TargetManager, Initializable {
     function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
         return block.timestamp - loan.lastPaymentTime;
     }
+
+    function myLoans() external view returns (uint[] memory myLoansTokenIds) {
+
+        for (uint i = 0; i < loansTokenIds.length(); i++) {
+
+            // Get tokenId
+            uint tokenId = loansTokenIds.at(i);
+
+            if (_loans[tokenId].borrower == msg.sender) {
+                myLoansTokenIds[myLoansTokenIds.length] = tokenId;
+            }
+        }
+    }
 }
