@@ -113,7 +113,8 @@ module.exports = deploy = async () => {
   const lendingSelectors = [
     Lending.interface.getSighash("deposit"),
     Lending.interface.getSighash("withdraw"),
-    Lending.interface.getSighash("usdcToTUsdc")
+    Lending.interface.getSighash("usdcToTUsdc"),
+    Lending.interface.getSighash("tUsdcToUsdc")
   ];
   await proxy.connect(team).setSelectorsTarget(lendingSelectors, lending.address);
   console.log("lendingSelectors set.");
