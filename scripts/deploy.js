@@ -186,6 +186,7 @@ module.exports = deploy = async () => {
     // borrowing: borrowing,
     interest: interest,
     lending: lending,
+    getter: getter,
     acceptNone: acceptNone,
     acceptMortgage: acceptMortgage,
     acceptDefault: acceptDefault,
