@@ -77,7 +77,7 @@ contract Auctions is IAuctions, Status {
         Bid[] storage tokenIdBids = _bids[tokenId];
 
         // Ensure bid is actionable
-        require(bidActionable(tokenIdBids[bidIdx]), "bid not actionable");
+        require(_bidActionable(tokenIdBids[bidIdx]), "bid not actionable");
 
         // Get status
         Status status = status(tokenId);

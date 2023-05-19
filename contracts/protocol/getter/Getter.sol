@@ -96,6 +96,15 @@ contract Getter is IGetter, State {
         return convert(totalPrincipal).div(convert(totalDeposits));
     }
 
+    function bidActionable(uint tokenId, uint bidIdx) external view returns (bool) {
+
+        // Get Bid
+        Bid memory bid = _bids[tokenId][bidIdx];
+
+        // Return
+        return _bidActionable(bid);
+    }
+
     function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount) {
         
         // Get tUsdcSupply

@@ -30,4 +30,6 @@ interface IGetter is IState {
     function lenderApy() external view returns(UD60x18);
 
     function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount);
+
+    function bidActionable(uint tokenId, uint bidIdx) external view returns(bool);
 }

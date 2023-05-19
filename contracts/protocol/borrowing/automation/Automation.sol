@@ -63,7 +63,7 @@ contract Automation is AutomationCompatibleInterface, Borrowing {
             Bid memory bid = propertyBids[i];
 
             // If bid has higher propertyValue and is actionable
-            if (bid.propertyValue > propertyBids[highestActionableIdx].propertyValue && bidActionable(bid)) {
+            if (bid.propertyValue > propertyBids[highestActionableIdx].propertyValue && _bidActionable(bid)) {
 
                 // Update highestActionableIdx // Note: might run into problems if nothing is returned and it defaults to 0
                 highestActionableIdx = i;

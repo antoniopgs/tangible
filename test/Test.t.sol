@@ -357,11 +357,8 @@ contract ProtocolTest is Test, DeployScript {
             // Get random tokenIdBidIdx
             tokenIdBidIdx = randomness % tokenIdBids.length;
 
-            // Get Bid
-            IState.Bid memory _bid = tokenIdBids[tokenIdBidIdx];
-
             // If bid isn't actionable
-            if (!State(protocol).bidActionable(_bid)) {
+            if (!IGetter(protocol).bidActionable(tokenId, tokenIdBidIdx)) {
 
                 // make actionable bid on tokenId
                 makeActionableBid({

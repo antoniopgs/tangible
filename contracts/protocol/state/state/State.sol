@@ -67,11 +67,11 @@ abstract contract State is IState, TargetManager, Initializable {
         return totalDeposits - totalPrincipal;
     }
 
-    function bidActionable(Bid memory bid) public view returns(bool) {
+    function _bidActionable(Bid memory bid) internal view returns(bool) {
         return bid.propertyValue == bid.downPayment || loanBidActionable(bid);
     }
 
-    function loanBidActionable(Bid memory _bid) public view returns(bool) {
+    function loanBidActionable(Bid memory _bid) private view returns(bool) {
 
         // Calculate loanBid principal
         uint principal = _bid.propertyValue - _bid.downPayment;

@@ -121,7 +121,7 @@ contract DeployScript is Script {
         ProtocolProxy(protocol).setSelectorsTarget(lendingSelectors, address(lending));
 
         // Set getterSelectors
-        bytes4[] memory getterSelectors = new bytes4[](12);
+        bytes4[] memory getterSelectors = new bytes4[](13);
         getterSelectors[0] = IGetter.loans.selector;
         getterSelectors[1] = IGetter.bids.selector;
         getterSelectors[2] = IGetter.availableLiquidity.selector;
@@ -134,6 +134,7 @@ contract DeployScript is Script {
         getterSelectors[9] = IGetter.accruedInterest.selector;
         getterSelectors[10] = IGetter.lenderApy.selector;
         getterSelectors[11] = IGetter.tUsdcToUsdc.selector;
+        getterSelectors[12] = IGetter.bidActionable.selector;
         ProtocolProxy(protocol).setSelectorsTarget(getterSelectors, address(getter));
 
         // ---------- BID ACCEPTANCE SELECTORS ----------
