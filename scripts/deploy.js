@@ -134,7 +134,7 @@ module.exports = deploy = async () => {
     Getter.interface.getSighash("defaultFeeSpread"),
     Getter.interface.getSighash("accruedInterest"),
     Getter.interface.getSighash("lenderApy"),
-    Getter.interface.getSighash("tUsdcToUsdc"),
+    Getter.interface.getSighash("tUsdcToUsdc")
   ];
   await proxy.connect(team).setSelectorsTarget(getterSelectors, getter.address);
   console.log("getterSelectors set.");
