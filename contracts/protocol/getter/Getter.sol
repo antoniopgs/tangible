@@ -95,4 +95,18 @@ contract Getter is IGetter, State {
         }
         return convert(totalPrincipal).div(convert(totalDeposits));
     }
+
+    function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount) {
+        
+        // Get tUsdcSupply
+        uint tUsdcSupply = tUSDC.totalSupply();
+
+        // If tUsdcSupply or totalDeposits = 0, 1:1
+        if (tUsdcSupply == 0 || totalDeposits == 0) {
+            return usdcAmount = tUsdcAmount;
+        }
+
+        // Calculate usdcAmount
+        return usdcAmount = tUsdcAmount * totalDeposits / tUsdcSupply;
+    }
 }

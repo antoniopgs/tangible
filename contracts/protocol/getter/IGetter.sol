@@ -28,4 +28,6 @@ interface IGetter is IState {
     function accruedInterest(uint tokenId) external view returns(uint);
 
     function lenderApy() external view returns(UD60x18);
+
+    function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount);
 }
