@@ -170,14 +170,6 @@ abstract contract Borrowing is IBorrowing, Status {
         return convert(totalPrincipal).div(convert(totalDeposits));
     }
 
-    function lenderApy() public view returns(UD60x18) {
-    //     if (totalDeposits == 0) {
-    //         assert(maxTotalUnpaidInterest == 0);
-    //         return convert(0);
-    //     }
-    //     return convert(maxTotalUnpaidInterest).div(convert(totalDeposits)); // Question: is this missing auto-compounding?
-    }
-
     function sendNft(Loan storage loan, address receiver, uint tokenId) private { // Todo: move to Borrowing
 
         // Send Nft to receiver

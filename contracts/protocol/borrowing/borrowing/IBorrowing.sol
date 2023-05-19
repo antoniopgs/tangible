@@ -25,8 +25,7 @@ interface IBorrowing is IStatus {
     function redeemLoan(uint tokenId) external;
 
     // Views
-    function lenderApy() external view returns(UD60x18);
+    function utilization() external view returns(UD60x18);
     // function principalCap(Loan memory loan, uint month) external pure returns(uint cap);
     // function status(uint tokenId) external view returns (Status);
-    function utilization() external view returns(UD60x18);
 }

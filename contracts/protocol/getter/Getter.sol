@@ -79,4 +79,20 @@ contract Getter is IGetter, State {
     function availableLiquidity() external view returns(uint) {
         return _availableLiquidity();
     }
+
+    function lenderApy() public view returns(UD60x18) {
+    //     if (totalDeposits == 0) {
+    //         assert(maxTotalUnpaidInterest == 0);
+    //         return convert(0);
+    //     }
+    //     return convert(maxTotalUnpaidInterest).div(convert(totalDeposits)); // Question: is this missing auto-compounding?
+    }
+
+    function utilization() public view returns(UD60x18) {
+        if (totalDeposits == 0) {
+            assert(totalPrincipal == 0);
+            return convert(uint(0));
+        }
+        return convert(totalPrincipal).div(convert(totalDeposits));
+    }
 }
