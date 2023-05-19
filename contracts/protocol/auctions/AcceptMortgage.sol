@@ -31,7 +31,7 @@ contract AcceptMortgage is Status {
         // assert(associatedLoanInterest <= _loans[tokenId].maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest?
 
         // Calculate interest
-        uint interest = accruedInterest(tokenId);
+        uint interest = _accruedInterest(tokenId);
 
         // Update pool (lenders get paidFirst)
         totalPrincipal -= loan.unpaidPrincipal;

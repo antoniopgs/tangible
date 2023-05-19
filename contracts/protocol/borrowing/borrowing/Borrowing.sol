@@ -68,7 +68,7 @@ abstract contract Borrowing is IBorrowing, Status {
         require(status(tokenId) == Status.Mortgage, "nft has no active mortgage");
 
         // Calculate interest
-        uint interest = accruedInterest(tokenId);
+        uint interest = _accruedInterest(tokenId);
 
         //require(payment <= loan.unpaidPrincipal + interest, "payment must be <= unpaidPrincipal + interest");
         //require(payment => interest, "payment must be => interest"); // Question: maybe don't calculate repayment if payment < interest?
@@ -117,7 +117,7 @@ abstract contract Borrowing is IBorrowing, Status {
         Loan storage loan = _loans[tokenId];
 
         // Calculate interest
-        uint interest = accruedInterest(tokenId);
+        uint interest = _accruedInterest(tokenId);
 
         // Calculate defaulterDebt & redemptionFee
         uint defaulterDebt = loan.unpaidPrincipal + interest;

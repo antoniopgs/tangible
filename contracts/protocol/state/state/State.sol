@@ -63,7 +63,7 @@ abstract contract State is IState, TargetManager, Initializable {
     }
 
     // ----- Views -----
-    function availableLiquidity() public view returns(uint) {
+    function _availableLiquidity() internal view returns(uint) {
         return totalDeposits - totalPrincipal;
     }
 
@@ -80,44 +80,18 @@ abstract contract State is IState, TargetManager, Initializable {
         UD60x18 ltv = convert(principal).div(convert(_bid.propertyValue));
 
         // Return actionability
-        return ltv.lte(maxLtv) && principal <= availableLiquidity();
+        return ltv.lte(maxLtv) && principal <= _availableLiquidity();
     }
 
     // ----- Views for Testing -----
-    function loansTokenIdsLength() external view returns (uint) {
-        return loansTokenIds.length();
-    }
 
-    function loansTokenIdsAt(uint idx) external view returns (uint tokenId) {
-        tokenId = loansTokenIds.at(idx);
-    }
+    function _accruedInterest(uint tokenId) internal view returns(uint) {
 
-    function loans(uint tokenId) external view returns (Loan memory) {
-        return _loans[tokenId];
-    }
+        // Get loan
+        Loan memory loan = _loans[tokenId];
 
-    function bids(uint tokenId) external view returns (Bid[] memory) {
-        return _bids[tokenId];
-    }
-
-    function tokenIdBidsLength(uint tokenId) external view returns (uint) {
-        return _bids[tokenId].length;
-    }
-
-    function redemptionFeeSpread() external view returns (UD60x18) {
-        return _redemptionFeeSpread;
-    }
-
-    function defaultFeeSpread() external view returns (UD60x18) {
-        return _defaultFeeSpread;
-    }
-
-    function accruedInterest(Loan memory loan) private view returns(uint) {
+        // Return
         return convert(convert(loan.unpaidPrincipal).mul(accruedRate(loan)));
-    }
-
-    function accruedInterest(uint tokenId) public view returns(uint) { // Note: made this duplicate of accruedInterest() for testing
-        return accruedInterest(_loans[tokenId]);
     }
 
     function accruedRate(Loan memory loan) private view returns(UD60x18) {
@@ -126,18 +100,5 @@ abstract contract State is IState, TargetManager, Initializable {
 
     function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
         return block.timestamp - loan.lastPaymentTime;
-    }
-
-    function myLoans() external view returns (uint[] memory myLoansTokenIds) {
-
-        for (uint i = 0; i < loansTokenIds.length(); i++) {
-
-            // Get tokenId
-            uint tokenId = loansTokenIds.at(i);
-
-            if (_loans[tokenId].borrower == msg.sender) {
-                myLoansTokenIds[myLoansTokenIds.length] = tokenId;
-            }
-        }
     }
 }
