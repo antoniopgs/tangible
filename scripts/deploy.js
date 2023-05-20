@@ -54,7 +54,7 @@ module.exports = deploy = async () => {
   // const borrowing = await deployContract("Borrowing", team);
   const interest = await deployContract("Interest", team);
   const lending = await deployContract("Lending", team);
-  const getter = await deployContract("Getter", team);
+  const info = await deployContract("Info", team);
 
   // ---------- BID ACCEPTANCE IMPLEMENTATIONS ----------
   const acceptNone = await deployContract("AcceptNone", team);
@@ -118,27 +118,27 @@ module.exports = deploy = async () => {
   await proxy.connect(team).setSelectorsTarget(lendingSelectors, lending.address);
   console.log("lendingSelectors set.");
 
-  // Getter
+  // Info
   console.log("");
-  console.log("setting getterSelectors...");
-  const Getter = await ethers.getContractFactory("Getter");
-  const getterSelectors = [
-    Getter.interface.getSighash("loans"),
-    Getter.interface.getSighash("bids"),
-    Getter.interface.getSighash("availableLiquidity"),
-    Getter.interface.getSighash("myLoans"),
-    Getter.interface.getSighash("myBids"),
-    Getter.interface.getSighash("loansTokenIdsLength"),
-    Getter.interface.getSighash("loansTokenIdsAt"),
-    Getter.interface.getSighash("redemptionFeeSpread"),
-    Getter.interface.getSighash("defaultFeeSpread"),
-    Getter.interface.getSighash("accruedInterest"),
-    Getter.interface.getSighash("lenderApy"),
-    Getter.interface.getSighash("tUsdcToUsdc"),
-    Getter.interface.getSighash("bidActionable")
+  console.log("setting infoSelectors...");
+  const Info = await ethers.getContractFactory("Info");
+  const infoSelectors = [
+    Info.interface.getSighash("loans"),
+    Info.interface.getSighash("bids"),
+    Info.interface.getSighash("availableLiquidity"),
+    Info.interface.getSighash("myLoans"),
+    Info.interface.getSighash("myBids"),
+    Info.interface.getSighash("loansTokenIdsLength"),
+    Info.interface.getSighash("loansTokenIdsAt"),
+    Info.interface.getSighash("redemptionFeeSpread"),
+    Info.interface.getSighash("defaultFeeSpread"),
+    Info.interface.getSighash("accruedInterest"),
+    Info.interface.getSighash("lenderApy"),
+    Info.interface.getSighash("tUsdcToUsdc"),
+    Info.interface.getSighash("bidActionable")
   ];
-  await proxy.connect(team).setSelectorsTarget(getterSelectors, getter.address);
-  console.log("getterSelectors set.");
+  await proxy.connect(team).setSelectorsTarget(infoSelectors, info.address);
+  console.log("infoSelectors set.");
 
   // ---------- BID ACCEPTANCE SELECTORS ----------
 
