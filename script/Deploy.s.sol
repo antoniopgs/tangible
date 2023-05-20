@@ -11,7 +11,7 @@ import "../contracts/protocol/borrowing/automation/Automation.sol"; // Note: v2
 // import "../contracts/protocol/borrowing/borrowing/Borrowing.sol";
 import "../contracts/protocol/interest/Interest.sol";
 import "../contracts/protocol/lending/Lending.sol";
-import "../contracts/protocol/getter/Getter.sol";
+import "../contracts/protocol/info/Info.sol";
 import "../contracts/protocol/protocolProxy/ProtocolProxy.sol";
 
 // Token Imports
@@ -36,7 +36,7 @@ contract DeployScript is Script {
     // Borrowing borrowing;
     Interest interest;
     Lending lending;
-    Getter getter;
+    Info info;
 
     // Bid acceptance contracts
     AcceptNone acceptNone;
@@ -74,7 +74,7 @@ contract DeployScript is Script {
         // borrowing = new Borrowing();
         interest = new Interest();
         lending = new Lending();
-        getter = new Getter();
+        info = new Info();
 
         // Deploy bid acceptance contracts
         acceptNone = new AcceptNone();
@@ -120,22 +120,22 @@ contract DeployScript is Script {
         lendingSelectors[2] = Lending.usdcToTUsdc.selector;
         ProtocolProxy(protocol).setSelectorsTarget(lendingSelectors, address(lending));
 
-        // Set getterSelectors
-        bytes4[] memory getterSelectors = new bytes4[](13);
-        getterSelectors[0] = IGetter.loans.selector;
-        getterSelectors[1] = IGetter.bids.selector;
-        getterSelectors[2] = IGetter.availableLiquidity.selector;
-        getterSelectors[3] = IGetter.myLoans.selector;
-        getterSelectors[4] = IGetter.myBids.selector;
-        getterSelectors[5] = IGetter.loansTokenIdsLength.selector;
-        getterSelectors[6] = IGetter.loansTokenIdsAt.selector;
-        getterSelectors[7] = IGetter.redemptionFeeSpread.selector;
-        getterSelectors[8] = IGetter.defaultFeeSpread.selector;
-        getterSelectors[9] = IGetter.accruedInterest.selector;
-        getterSelectors[10] = IGetter.lenderApy.selector;
-        getterSelectors[11] = IGetter.tUsdcToUsdc.selector;
-        getterSelectors[12] = IGetter.bidActionable.selector;
-        ProtocolProxy(protocol).setSelectorsTarget(getterSelectors, address(getter));
+        // Set infoSelectors
+        bytes4[] memory infoSelectors = new bytes4[](13);
+        infoSelectors[0] = IInfo.loans.selector;
+        infoSelectors[1] = IInfo.bids.selector;
+        infoSelectors[2] = IInfo.availableLiquidity.selector;
+        infoSelectors[3] = IInfo.myLoans.selector;
+        infoSelectors[4] = IInfo.myBids.selector;
+        infoSelectors[5] = IInfo.loansTokenIdsLength.selector;
+        infoSelectors[6] = IInfo.loansTokenIdsAt.selector;
+        infoSelectors[7] = IInfo.redemptionFeeSpread.selector;
+        infoSelectors[8] = IInfo.defaultFeeSpread.selector;
+        infoSelectors[9] = IInfo.accruedInterest.selector;
+        infoSelectors[10] = IInfo.lenderApy.selector;
+        infoSelectors[11] = IInfo.tUsdcToUsdc.selector;
+        infoSelectors[12] = IInfo.bidActionable.selector;
+        ProtocolProxy(protocol).setSelectorsTarget(infoSelectors, address(info));
 
         // ---------- BID ACCEPTANCE SELECTORS ----------
 

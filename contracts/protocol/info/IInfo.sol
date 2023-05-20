@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import "../state/state/IState.sol";
 
-interface IGetter is IState {
+interface IInfo is IState {
 
     struct BidInfo {
         uint tokenId;

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./IGetter.sol";
+import "./IInfo.sol";
 import "../state/state/State.sol";
 
-contract Getter is IGetter, State {
+contract Info is IInfo, State {
 
     using EnumerableSet for EnumerableSet.UintSet;
 

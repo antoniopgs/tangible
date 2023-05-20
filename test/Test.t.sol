@@ -61,7 +61,7 @@ contract ProtocolTest is Test, DeployScript {
         if (downPayment < propertyValue) {
 
             // Get availableLiquidity
-            uint availableLiquidity = IGetter(protocol).availableLiquidity();
+            uint availableLiquidity = IInfo(protocol).availableLiquidity();
 
             console.log("z2");
 
@@ -260,7 +260,7 @@ contract ProtocolTest is Test, DeployScript {
     function testWithdraw(uint amount) private validate {
 
         // Bound amount
-        amount = bound(amount, 0, IGetter(protocol).availableLiquidity());
+        amount = bound(amount, 0, IInfo(protocol).availableLiquidity());
         
         // Set expectations
         expectedTotalDeposits -= amount;
@@ -306,7 +306,7 @@ contract ProtocolTest is Test, DeployScript {
             uint tokenId = bound(randomness, 0, totalSupply - 1);
 
             // Get tokenIdBids
-            IState.Bid[] memory tokenIdBids = IGetter(protocol).bids(tokenId);
+            IState.Bid[] memory tokenIdBids = IInfo(protocol).bids(tokenId);
 
             // If tokenId has bids
             if (tokenIdBids.length > 0) {
@@ -338,7 +338,7 @@ contract ProtocolTest is Test, DeployScript {
         uint tokenId = bound(randomness, 0, totalSupply - 1);
 
         // Get tokenIdBids
-        IState.Bid[] memory tokenIdBids = IGetter(protocol).bids(tokenId);
+        IState.Bid[] memory tokenIdBids = IInfo(protocol).bids(tokenId);
 
         uint tokenIdBidIdx;
 
@@ -358,7 +358,7 @@ contract ProtocolTest is Test, DeployScript {
             tokenIdBidIdx = randomness % tokenIdBids.length;
 
             // If bid isn't actionable
-            if (!IGetter(protocol).bidActionable(tokenId, tokenIdBidIdx)) {
+            if (!IInfo(protocol).bidActionable(tokenId, tokenIdBidIdx)) {
 
                 // make actionable bid on tokenId
                 makeActionableBid({
@@ -378,7 +378,7 @@ contract ProtocolTest is Test, DeployScript {
         console.log("zz1");
 
         // Update expectedTotalPrincipal // Note: do it before acceptBid() (because bid will be deleted after it's accepted)
-        IState.Bid memory bid = IGetter(protocol).bids(tokenId)[tokenIdBidIdx];
+        IState.Bid memory bid = IInfo(protocol).bids(tokenId)[tokenIdBidIdx];
         uint expectedPrincipal = bid.propertyValue - bid.downPayment;
         expectedTotalPrincipal += expectedPrincipal;
 
@@ -402,11 +402,11 @@ contract ProtocolTest is Test, DeployScript {
         } else if (status == IState.Status.Mortgage || status == IState.Status.Default) {
             
             // Get loan
-            IState.Loan memory loan = IGetter(protocol).loans(tokenId);
+            IState.Loan memory loan = IInfo(protocol).loans(tokenId);
 
             // Update expectations
             expectedTotalPrincipal -= loan.unpaidPrincipal;
-            expectedTotalDeposits += IGetter(protocol).accruedInterest(tokenId);
+            expectedTotalDeposits += IInfo(protocol).accruedInterest(tokenId);
 
             // Borrower Accepts Bid
             vm.prank(loan.borrower);
@@ -416,11 +416,11 @@ contract ProtocolTest is Test, DeployScript {
         } else if (status == IState.Status.Foreclosurable) {
 
             // Get loan
-            IState.Loan memory loan = IGetter(protocol).loans(tokenId);
+            IState.Loan memory loan = IInfo(protocol).loans(tokenId);
 
             // Update expectations
             expectedTotalPrincipal -= loan.unpaidPrincipal;
-            expectedTotalDeposits += IGetter(protocol).accruedInterest(tokenId);
+            expectedTotalDeposits += IInfo(protocol).accruedInterest(tokenId);
 
             // Accepts Bid
             IAuctions(protocol).acceptBid(tokenId, tokenIdBidIdx);
@@ -470,7 +470,7 @@ contract ProtocolTest is Test, DeployScript {
         console.log("tpl1");
 
         // Get loansTokenIdsLength
-        uint loansTokenIdsLength = IGetter(protocol).loansTokenIdsLength();
+        uint loansTokenIdsLength = IInfo(protocol).loansTokenIdsLength();
 
         console.log("tpl2");
 
@@ -485,7 +485,7 @@ contract ProtocolTest is Test, DeployScript {
             console.log("tpl21");
 
             // Get random tokenId
-            uint tokenId = IGetter(protocol).loansTokenIdsAt(randomIdx);
+            uint tokenId = IInfo(protocol).loansTokenIdsAt(randomIdx);
 
             console.log("tpl22");
 
@@ -498,7 +498,7 @@ contract ProtocolTest is Test, DeployScript {
 
                 // Update expectations
                 console.log("tpl233");
-                uint expectedInterest = IGetter(protocol).accruedInterest(tokenId);
+                uint expectedInterest = IInfo(protocol).accruedInterest(tokenId);
                 console.log("tpl238");
 
                 // Pick random payment
@@ -506,7 +506,7 @@ contract ProtocolTest is Test, DeployScript {
 
                 uint expectedRepayment = payment - expectedInterest;
                 console.log("tpl235");
-                IState.Loan memory loan = IGetter(protocol).loans(tokenId);
+                IState.Loan memory loan = IInfo(protocol).loans(tokenId);
                 if (expectedRepayment > loan.unpaidPrincipal) {
                     expectedRepayment = loan.unpaidPrincipal;
                 }
@@ -595,10 +595,10 @@ contract ProtocolTest is Test, DeployScript {
                 console.log(5);
 
                 // Get redeemer & unpaidPrincipal
-                State.Loan memory loan = IGetter(protocol).loans(tokenId);
-                uint accruedInterest = IGetter(protocol).accruedInterest(tokenId);
+                State.Loan memory loan = IInfo(protocol).loans(tokenId);
+                uint accruedInterest = IInfo(protocol).accruedInterest(tokenId);
                 uint expectedRedeemerDebt = loan.unpaidPrincipal + accruedInterest;
-                uint expectedRedemptionFee = convert(convert(expectedRedeemerDebt).mul(IGetter(protocol).redemptionFeeSpread()));
+                uint expectedRedemptionFee = convert(convert(expectedRedeemerDebt).mul(IInfo(protocol).redemptionFeeSpread()));
 
                 // Give redeemer expectedRedeemerDebt
                 deal(address(USDC), loan.borrower, expectedRedeemerDebt + expectedRedemptionFee);
@@ -662,7 +662,7 @@ contract ProtocolTest is Test, DeployScript {
                 // expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
                 // expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
 
-                IState.Bid[] memory tokenIdBids = IGetter(protocol).bids(tokenId);
+                IState.Bid[] memory tokenIdBids = IInfo(protocol).bids(tokenId);
                 if (tokenIdBids.length > 0) {
 
                     // Find highestActionableBidIdx
@@ -705,7 +705,7 @@ contract ProtocolTest is Test, DeployScript {
 
         // Validate lenderApy
         console.log("v4");
-        UD60x18 lenderApy = IGetter(protocol).lenderApy();
+        UD60x18 lenderApy = IInfo(protocol).lenderApy();
         console.log("v5");
         assert(lenderApy.gte(convert(uint(0))) /*&& lenderApy.lte(convert(1))*/); // Note: actually, lenderApy might be able to surpass 100%
 
