@@ -42,7 +42,7 @@ abstract contract State is IState, TargetManager, Initializable {
     UD60x18 internal _defaultFeeSpread = convert(4).div(convert(100)); // Note: 4%
 
     // Main Storage
-    mapping(uint => Bid[]) internal _bids; // Question: should I change this to public for front end purposes?
+    mapping(uint => Bid[]) public _bids; // Note: temporarily made public for front end
     mapping(uint => Loan) public _loans;
     EnumerableSet.UintSet internal loansTokenIds;
     uint protocolMoney;
@@ -100,5 +100,9 @@ abstract contract State is IState, TargetManager, Initializable {
 
     function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
         return block.timestamp - loan.lastPaymentTime;
+    }
+
+    function nftBids(uint tokenId) external view returns(Bid[] memory _nftBids) {
+        _nftBids = _bids[tokenId];
     }
 }

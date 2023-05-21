@@ -21,7 +21,10 @@ contract Info is IInfo, State {
         }
     }
 
-    function myBids() external view returns(BidInfo[] memory _myBids) {
+    function myBids() external view returns(BidInfo[] memory) {
+
+        BidInfo[] memory _myBids = new BidInfo[](100);
+        uint realLength;
         
         // Loop tokenIds
         for (uint i = 0; i < prosperaNftContract.totalSupply(); i++) {
@@ -38,14 +41,18 @@ contract Info is IInfo, State {
                 // If bidder is caller
                 if (bid.bidder == msg.sender) {
 
-                    _myBids[_myBids.length] = BidInfo({
+                    _myBids[realLength] = BidInfo({
                         tokenId: i,
                         idx: n,
                         bid: bid
                     });
+
+                    realLength++;
                 }
             }
         }
+
+        return _myBids;
     }
 
     function accruedInterest(uint tokenId) external view returns(uint) { // Note: made this duplicate of accruedInterest() for testing

@@ -132,7 +132,8 @@ contract ProtocolTest is Test, DeployScript {
         uint propertyValue = bound(randomness, 10_000e18, 1_000_000_000e18); // 10k to 1B
 
         // Calculate random downPayment
-        uint downPayment = bound(randomness, propertyValue / 2, propertyValue); // for now, do min = max/2 (cause maxLtv is 50%)
+        // uint downPayment = bound(randomness, propertyValue / 2, propertyValue); // for now, do min = max/2 (cause maxLtv is 50%)
+        uint downPayment = propertyValue;
 
         // Pick random maxDurationMonths
         uint maxDurationMonths = bound(randomness, 1, State(protocol).maxDurationMonthsCap());
@@ -155,6 +156,13 @@ contract ProtocolTest is Test, DeployScript {
         // Bidder bids
         vm.prank(bidder);
         IAuctions(protocol).bid(tokenId, propertyValue, downPayment, maxDurationMonths);
+
+        // Get myBids
+        vm.prank(bidder);
+        console.log("pre");
+        IInfo.BidInfo[] memory myBids = IInfo(protocol).myBids();
+        console.log("myBids.length:", myBids.length);
+        console.log("post");
     }
 
     // Setup
@@ -387,6 +395,8 @@ contract ProtocolTest is Test, DeployScript {
         // If status == None
         if (status == IState.Status.None) {
 
+            console.log("none");
+
             // Get nftOwner
             address nftOwner = nftContract.ownerOf(tokenId);
 
@@ -400,6 +410,8 @@ contract ProtocolTest is Test, DeployScript {
         
         // If status == Mortgage or Default
         } else if (status == IState.Status.Mortgage || status == IState.Status.Default) {
+
+            console.log("mortgage/default");
             
             // Get loan
             IState.Loan memory loan = IInfo(protocol).loans(tokenId);
@@ -414,6 +426,8 @@ contract ProtocolTest is Test, DeployScript {
 
         // If status == Foreclosurable
         } else if (status == IState.Status.Foreclosurable) {
+
+            console.log("foreclosurable");
 
             // Get loan
             IState.Loan memory loan = IInfo(protocol).loans(tokenId);
@@ -613,12 +627,10 @@ contract ProtocolTest is Test, DeployScript {
                 // expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
 
                 // Redemer redeems
-                // vm.prank(loan.borrower);
+                vm.prank(loan.borrower);
                 IBorrowing(protocol).redeemLoan(tokenId);
 
                 console.log(6);
-
-                require(false, "testRedeemLoan");
             }
         } else {
             console.log("no default.\n");
@@ -684,7 +696,8 @@ contract ProtocolTest is Test, DeployScript {
         uint timeJump = bound(randomness, 0, 6 * 30 days);
 
         // Skip by timeJump
-        skip(timeJump);
+        // skip(timeJump);
+        // skip(1);
     }
 
     // Validation Modifiers
