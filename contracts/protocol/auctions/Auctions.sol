@@ -69,6 +69,8 @@ contract Auctions is IAuctions, Status {
         USDC.safeTransfer(bidToRemove.bidder, bidToRemove.downPayment);
 
         emit CancelBid(msg.sender, tokenId, bidIdx);
+
+        // Todo: use deleteBid() here
     }
 
     function acceptBid(uint tokenId, uint bidIdx) external {
