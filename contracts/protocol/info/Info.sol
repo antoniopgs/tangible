@@ -8,9 +8,9 @@ contract Info is IInfo, State {
 
     using EnumerableSet for EnumerableSet.UintSet;
 
-    function myLoans() external view returns (uint[] memory) {
+    function myLoans() external view returns (uint[] memory myLoansTokenIds) {
 
-        uint[] memory myLoansTokenIds = new uint[](100);
+        myLoansTokenIds = new uint[](10);
         uint realLength;
 
         for (uint i = 0; i < loansTokenIds.length(); i++) {
@@ -20,8 +20,12 @@ contract Info is IInfo, State {
 
             if (_loans[tokenId].borrower == msg.sender) {
                 myLoansTokenIds[realLength] = tokenId;
-                realLength++;
+                realLength += 1;
             }
+        }
+
+        for (uint i = realLength; i < myLoansTokenIds.length; i++) {
+            myLoansTokenIds[i] = 999_999;
         }
 
         return myLoansTokenIds;

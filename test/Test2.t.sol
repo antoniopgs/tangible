@@ -18,6 +18,8 @@ contract Test2 is Test, DeployScript {
 
         // Mint nft to nftOwner
         nftContract.mint(nftOwner, "");
+        nftContract.mint(nftOwner, "");
+        nftContract.mint(nftOwner, "");
 
         // Get bidder
         address bidder = makeAddr("bidder");
@@ -32,24 +34,41 @@ contract Test2 is Test, DeployScript {
         vm.prank(bidder);
         USDC.approve(address(protocol), 100_000e18);
 
+        address depositor = makeAddr("depositor");
+        deal(address(USDC), depositor, 25_000e18);
+        vm.prank(depositor);
+        USDC.approve(address(protocol), 25_000e18);
+        vm.prank(depositor);
+        ILending(protocol).deposit(25_000e18);
+
         // Bidder bids
         vm.prank(bidder);
         IAuctions(protocol).bid({
-            tokenId: 0,
+            tokenId: 2,
             propertyValue: 100_000e18,
-            downPayment: 100_000e18,
+            downPayment: 75_000e18,
             maxDurationMonths: 120
         });
 
         // nftOwner approves protocol
         vm.prank(nftOwner);
-        nftContract.approve(address(protocol), 0);
+        nftContract.approve(address(protocol), 2);
 
         // nftOwner accepts bid
         vm.prank(nftOwner);
         IAuctions(protocol).acceptBid({
-            tokenId: 0,
+            tokenId: 2,
             bidIdx: 0
         });
+
+        console.log("1");
+
+        vm.prank(bidder);
+        uint[] memory myLoansTokenIds = IInfo(protocol).myLoans();
+
+        console.log("myLoansTokenIds.length", myLoansTokenIds.length);
+        for (uint i = 0; i < myLoansTokenIds.length; i++) {
+            console.log("myLoansTokenIds[i]:", myLoansTokenIds[i]);
+        }
     }
 }
