@@ -125,8 +125,8 @@ contract DeployScript is Script {
         infoSelectors[0] = IInfo.loans.selector;
         infoSelectors[1] = IInfo.bids.selector;
         infoSelectors[2] = IInfo.availableLiquidity.selector;
-        infoSelectors[3] = IInfo.myLoans.selector;
-        infoSelectors[4] = IInfo.myBids.selector;
+        infoSelectors[3] = IInfo.userLoans.selector;
+        infoSelectors[4] = IInfo.userBids.selector;
         infoSelectors[5] = IInfo.loansTokenIdsLength.selector;
         infoSelectors[6] = IInfo.loansTokenIdsAt.selector;
         infoSelectors[7] = IInfo.redemptionFeeSpread.selector;

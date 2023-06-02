@@ -8,9 +8,9 @@ contract Info is IInfo, State {
 
     using EnumerableSet for EnumerableSet.UintSet;
 
-    function myLoans() external view returns (uint[] memory myLoansTokenIds) {
+    function userLoans(address account) external view returns (uint[] memory userLoansTokenIds) {
 
-        myLoansTokenIds = new uint[](10);
+        userLoansTokenIds = new uint[](10);
         uint realLength;
 
         for (uint i = 0; i < loansTokenIds.length(); i++) {
@@ -18,22 +18,20 @@ contract Info is IInfo, State {
             // Get tokenId
             uint tokenId = loansTokenIds.at(i);
 
-            if (_loans[tokenId].borrower == msg.sender) {
-                myLoansTokenIds[realLength] = tokenId;
+            if (_loans[tokenId].borrower == account) {
+                userLoansTokenIds[realLength] = tokenId;
                 realLength += 1;
             }
         }
 
-        for (uint i = realLength; i < myLoansTokenIds.length; i++) {
-            myLoansTokenIds[i] = 999_999;
+        for (uint i = realLength; i < userLoansTokenIds.length; i++) {
+            userLoansTokenIds[i] = 999_999;
         }
-
-        return myLoansTokenIds;
     }
 
-    function myBids() external view returns(BidInfo[] memory) {
+    function userBids(address account) external view returns(BidInfo[] memory _userBids) {
 
-        BidInfo[] memory _myBids = new BidInfo[](100);
+        _userBids = new BidInfo[](10);
         uint realLength;
         
         // Loop tokenIds
@@ -49,9 +47,9 @@ contract Info is IInfo, State {
                 Bid memory bid = tokenIdBids[n];
                 
                 // If bidder is caller
-                if (bid.bidder == msg.sender) {
+                if (bid.bidder == account) {
 
-                    _myBids[realLength] = BidInfo({
+                    _userBids[realLength] = BidInfo({
                         tokenId: i,
                         idx: n,
                         bid: bid
@@ -61,8 +59,6 @@ contract Info is IInfo, State {
                 }
             }
         }
-
-        return _myBids;
     }
 
     function accruedInterest(uint tokenId) external view returns(uint) { // Note: made this duplicate of accruedInterest() for testing

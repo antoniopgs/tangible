@@ -16,8 +16,8 @@ interface IInfo is IState {
 
     function availableLiquidity() external view returns(uint);
 
-    function myLoans() external view returns (uint[] memory myLoansTokenIds);
-    function myBids() external view returns(BidInfo[] memory _myBids);
+    function userLoans(address user) external view returns (uint[] memory userLoansTokenIds);
+    function userBids(address user) external view returns(BidInfo[] memory _userBids);
 
     function loansTokenIdsLength() external view returns (uint);
     function loansTokenIdsAt(uint idx) external view returns (uint tokenId);

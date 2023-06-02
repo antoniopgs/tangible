@@ -157,16 +157,16 @@ contract ProtocolTest is Test, DeployScript {
         vm.prank(bidder);
         IAuctions(protocol).bid(tokenId, propertyValue, downPayment, maxDurationMonths);
 
-        // Get myBids
-        vm.prank(bidder);
-        console.log("pre");
-        IInfo.BidInfo[] memory myBids = IInfo(protocol).myBids();
-        console.log("myBids.length:", myBids.length);
-        console.log("post");
+        // // Get myBids
+        // vm.prank(bidder);
+        // console.log("pre");
+        // IInfo.BidInfo[] memory myBids = IInfo(protocol).myBids();
+        // console.log("myBids.length:", myBids.length);
+        // console.log("post");
 
-        for (uint i = 0; i < 5; i++) {
-            console.log("myBids[i].bid.bidder:", myBids[i].bid.bidder);
-        }
+        // for (uint i = 0; i < 5; i++) {
+        //     console.log("myBids[i].bid.bidder:", myBids[i].bid.bidder);
+        // }
     }
 
     // Setup

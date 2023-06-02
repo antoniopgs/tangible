@@ -28,6 +28,7 @@ abstract contract Status is State {
 
                 if (timeSinceDefault <= redemptionWindow) {
                     return Status.Default; // Note: foreclose() must clear-out borrower & loanForeclose() must update borrower
+
                 } else {
                     return Status.Foreclosurable;
                 }
@@ -46,6 +47,10 @@ abstract contract Status is State {
 
         // Get loanCompletedMonths
         uint _loanCompletedMonths = loanCompletedMonths(loan);
+
+        if (_loanCompletedMonths == 0) {
+            return false;
+        }
 
         // Calculate loanMaxDurationMonths
         uint loanMaxDurationMonths = loan.maxDurationSeconds / yearSeconds * yearMonths;
@@ -98,11 +103,13 @@ abstract contract Status is State {
         for (uint i = completedMonths; i > 0; i--) {
 
             uint completedMonthPrincipalCap = principalCap(loan, i);
-            uint prevCompletedMonthPrincipalCap = principalCap(loan, i - 1);
+            uint prevCompletedMonthPrincipalCap = i == 1 ? loan.unpaidPrincipal : principalCap(loan, i - 1);
 
             if (loan.unpaidPrincipal > completedMonthPrincipalCap && loan.unpaidPrincipal <= prevCompletedMonthPrincipalCap) {
                 _defaultTime = loan.startTime + (i * monthSeconds);
             }
         }
+
+        assert(_defaultTime > 0);
     }
 }
