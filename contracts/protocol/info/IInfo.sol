@@ -22,9 +22,6 @@ interface IInfo is IState {
     function loansTokenIdsLength() external view returns (uint);
     function loansTokenIdsAt(uint idx) external view returns (uint tokenId);
 
-    function redemptionFeeSpread() external view returns (UD60x18);
-    function defaultFeeSpread() external view returns (UD60x18);
-
     function accruedInterest(uint tokenId) external view returns(uint);
 
     function lenderApy() external view returns(UD60x18);
@@ -32,4 +29,9 @@ interface IInfo is IState {
     function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount);
 
     function bidActionable(uint tokenId, uint bidIdx) external view returns(bool);
+
+    function saleFeeSpread() external view returns(UD60x18);
+    function payLoanFeeSpread() external view returns(UD60x18);
+    function redemptionFeeSpread() external view returns(UD60x18);
+    function defaultFeeSpread() external view returns(UD60x18);
 }

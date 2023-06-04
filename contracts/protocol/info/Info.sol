@@ -65,6 +65,14 @@ contract Info is IInfo, State {
         return _accruedInterest(tokenId);
     }
 
+    function saleFeeSpread() external view returns (UD60x18) {
+        return _saleFeeSpread;
+    }
+
+    function payLoanFeeSpread() external view returns (UD60x18) {
+        return _payLoanFeeSpread;
+    }
+
     function redemptionFeeSpread() external view returns (UD60x18) {
         return _redemptionFeeSpread;
     }
