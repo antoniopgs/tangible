@@ -35,7 +35,7 @@ module.exports = upgrade = async () => {
     // const team = await ethers.getSigner();
 
     // proxy
-    const proxyAddress = "0x1dEFcE9d58f278C84fE46c1cb6Da0b4caced5541";
+    const proxyAddress = "0x31383611Fd284E0e7200008c1b87196f4D20bB0E";
     const proxy = await ethers.getContractAt("ProtocolProxy", proxyAddress);
 
     // ---------- IMPLEMENTATIONS ----------
@@ -53,6 +53,8 @@ module.exports = upgrade = async () => {
         Info.interface.getSighash("userBids"),
         Info.interface.getSighash("loansTokenIdsLength"),
         Info.interface.getSighash("loansTokenIdsAt"),
+        Info.interface.getSighash("saleFeeSpread"),
+        Info.interface.getSighash("payLoanFeeSpread"),
         Info.interface.getSighash("redemptionFeeSpread"),
         Info.interface.getSighash("defaultFeeSpread"),
         Info.interface.getSighash("accruedInterest"),
