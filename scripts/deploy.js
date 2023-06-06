@@ -130,6 +130,8 @@ module.exports = deploy = async () => {
     Info.interface.getSighash("userBids"),
     Info.interface.getSighash("loansTokenIdsLength"),
     Info.interface.getSighash("loansTokenIdsAt"),
+    Info.interface.getSighash("saleFeeSpread"),
+    Info.interface.getSighash("payLoanFeeSpread"),
     Info.interface.getSighash("redemptionFeeSpread"),
     Info.interface.getSighash("defaultFeeSpread"),
     Info.interface.getSighash("accruedInterest"),
