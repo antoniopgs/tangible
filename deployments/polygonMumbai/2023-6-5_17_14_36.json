@@ -1,0 +1,20 @@
+{
+    "team": "0x42544A495fEb2fB1116f8f754Bf0050ea28509B7",
+    "proxy": "0x442491EDB3706165EEA6f61c733a1fd78c6F4812",
+    "tokens": {
+        "mockUsdc": "0x65f4100F15212E19Faf073cBA7fEcEd8C48692DB",
+        "tUsdc": "0x2582b5a957807D6c4FDb965C825Ab83C9DD834BE",
+        "tangibleNft": "0x337b7c8039af96c2eb380D88e6C871AeE8DD7928"
+    },
+    "auctions": "0x295D21fF4e8cDe5c134C772BCCb32388BfbD16F6",
+    "automation": "0x0200e70D1EBbdF2549851Ee44B09029beF02b0d8",
+    "interest": "0x229E0771eE026576EdD242726Ad96e0d4bd27B4b",
+    "lending": "0x17a42e5Fa81Cf965edcafDbccA4115Fc55c2fCF0",
+    "info": "0x91c8B524294d2e391d5fAE6DDF7255f53d589717",
+    "acceptNone": "0x92018E9498d1E2733ee81582d7D53423E95951ab",
+    "acceptMortgage": "0x510A3053982dFC8dF170A837aF2015279441b9B8",
+    "acceptDefault": "0xE1f0F7CcCb9578468b378760149aD9f0414D3aC0",
+    "acceptForeclosurable": "0xb3ba2b7AEFEdf0AEA10d4Db6735d9B9b769D3461",
+    "network": "polygonMumbai",
+    "date": "2023-6-5_17_14_36"
+}
