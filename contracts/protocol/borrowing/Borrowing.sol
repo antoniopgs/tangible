@@ -2,21 +2,59 @@
 pragma solidity ^0.8.15;
 
 import "./IBorrowing.sol";
-import "../../state/status/Status.sol";
+import "../state/status/Status.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../../interest/IInterest.sol";
-import "../../auctions/IAuctions.sol";
+import "../interest/IInterest.sol";
 
-abstract contract Borrowing is IBorrowing, Status {
+contract Borrowing is IBorrowing, Status {
 
     // Libs
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
     // Functions
-    function startLoan(address borrower, uint tokenId, uint principal, uint maxDurationMonths) external {
-        require(prosperaNftContract.ownerOf(tokenId) == address(this), "unauthorized"); // Note: nft must be owned must be address(this) because this will be called via delegatecall // Todo: review safety of this require later
-        // require(status(tokenId) == Status.None, "nft already in system"); // Note: THIS MIGHT NOT WORK
+    function startLoan(
+        address borrower,
+        uint propertyId,
+        uint principal,
+        uint propertyValue,
+        uint downPayment,
+        uint maxDurationMonths
+    ) external onlyOwner {
+
+        // Get unpaidPrincipal
+        uint unpaidPrincipal = _loans[propertyId].unpaidPrincipal;
+        
+        // Calculate interest
+        uint interest = _accruedInterest(propertyId);
+
+        // 1. If seller has debt, Pay Money Pool/Lenders
+        if (unpaidPrincipal > 0) {
+            totalPrincipal -= unpaidPrincipal;
+            totalDeposits += interest;
+            // maxTotalUnpaidInterest -= interest;
+        }
+
+        // 2. Protocol charges Sale Fee
+        uint saleFee = convert(convert(propertyValue).mul(_saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
+        protocolMoney += saleFee;
+
+        // 3. Protocol charges Foreclosure Fee (if needed)
+        // if (foreclosure) {
+            uint foreclosureFee = convert(convert(propertyValue).mul(_defaultFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
+            protocolMoney += foreclosureFee;
+        // }
+
+        // 4. Pay Seller
+        uint debt = unpaidPrincipal + interest + saleFee + foreclosureFee;
+        uint sellerCut = _bid.propertyValue - debt;
+        USDC.safeTransfer(seller, sellerCut);
+
+        // 5. Start Mortgage
+        startMortgage();
+    }
+
+    function startMortgage() private {
 
         // Get ratePerSecond
         (bool success, bytes memory data) = logicTargets[IInterest.borrowerRatePerSecond.selector].call(
@@ -42,7 +80,7 @@ abstract contract Borrowing is IBorrowing, Status {
         // Calculate maxUnpaidInterest
         // uint maxUnpaidInterest = maxCost - principal;
         
-        _loans[tokenId] = Loan({
+        _loans[propertyId] = Loan({
             borrower: borrower, // Note: must be called via delegatecall for this to work
             ratePerSecond: ratePerSecond,
             paymentPerSecond: paymentPerSecond,
@@ -59,9 +97,10 @@ abstract contract Borrowing is IBorrowing, Status {
         assert(totalPrincipal <= totalDeposits);
 
         // Add tokenId to loansTokenIds
-        loansTokenIds.add(tokenId);
+        // loansTokenIds.add(tokenId);
 
-        emit StartLoan(borrower, tokenId, principal, maxDurationMonths, ratePerSecond, maxDurationSeconds, paymentPerSecond, maxCost, block.timestamp);
+        emit StartLoan(borrower, propertyId, principal, maxDurationMonths, ratePerSecond, maxDurationSeconds, paymentPerSecond, maxCost, block.timestamp);
+
     }
 
     function payLoan(uint tokenId, uint payment) external {
@@ -173,12 +212,12 @@ abstract contract Borrowing is IBorrowing, Status {
     function sendNft(Loan storage loan, address receiver, uint tokenId) private { // Todo: move to Borrowing
 
         // Send Nft to receiver
-        prosperaNftContract.safeTransferFrom(address(this), receiver, tokenId);
+        // prosperaNftContract.safeTransferFrom(address(this), receiver, tokenId);
 
         // Reset loan state to Null (so it can re-enter system later)
         loan.borrower = address(0);
 
         // Remove tokenId from loansTokenIds
-        loansTokenIds.remove(tokenId);
+        // loansTokenIds.remove(tokenId);
     }
 }

@@ -18,39 +18,7 @@ contract Test3 is Test, DeployScript {
         vm.prank(depositor);
         ILending(protocol).deposit(25_000e18);
 
-        // Mint nft to nftOwner
-        address nftOwner = makeAddr("nftOwner");
-        nftContract.verifyEResident(1, nftOwner);
-        nftContract.mint(nftOwner, "");
-
-        console.log("status a:", uint(Status(protocol).status(0)));
-        console.log("");
-
-        // Bidder bids
-        address bidder = makeAddr("bidder");
-        nftContract.verifyEResident(2, bidder);
-        deal(address(USDC), bidder, 75_000e18);
-        vm.prank(bidder);
-        USDC.approve(address(protocol), 75_000e18);
-        vm.prank(bidder);
-        IAuctions(protocol).bid({
-            tokenId: 0,
-            propertyValue: 100_000e18,
-            downPayment: 75_000e18,
-            maxDurationMonths: 120
-        });
-
-        console.log("status b:", uint(Status(protocol).status(0)));
-        console.log("");
-
-        // nftOwner accepts bid
-        vm.prank(nftOwner);
-        nftContract.approve(address(protocol), 0);
-        vm.prank(nftOwner);
-        IAuctions(protocol).acceptBid({
-            tokenId: 0,
-            bidIdx: 0
-        });
+        // loan is confirmed by gsp
 
         console.log("status c:", uint(Status(protocol).status(0)));
         console.log("");

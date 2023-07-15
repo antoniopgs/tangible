@@ -5,7 +5,6 @@ import "./IState.sol";
 import "../targetManager/TargetManager.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../../tokens/tUsdc.sol";
-import "../../../tokens/TangibleNft.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
@@ -17,7 +16,6 @@ abstract contract State is IState, TargetManager, Initializable {
     // Tokens
     IERC20 USDC; /* = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // ethereum */
     tUsdc tUSDC;
-    TangibleNft internal prosperaNftContract;
 
     // Time constants
     uint /* private */ public constant yearSeconds = 365 days; // Note: made public for testing
@@ -42,9 +40,8 @@ abstract contract State is IState, TargetManager, Initializable {
     UD60x18 internal _defaultFeeSpread = convert(4).div(convert(100)); // Note: 4%
 
     // Main Storage
-    mapping(uint => Bid[]) public _bids; // Note: temporarily made public for front end
     mapping(uint => Loan) public _loans;
-    EnumerableSet.UintSet internal loansTokenIds;
+    // EnumerableSet.UintSet internal loansTokenIds;
     uint protocolMoney;
 
     // Other vars
@@ -56,10 +53,9 @@ abstract contract State is IState, TargetManager, Initializable {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    function initialize(IERC20 _USDC, tUsdc _tUSDC, TangibleNft _prosperaNftContract) external initializer { // Question: maybe move this elsewhere?
+    function initialize(IERC20 _USDC, tUsdc _tUSDC) external initializer { // Question: maybe move this elsewhere?
         USDC = _USDC;
         tUSDC = _tUSDC;
-        prosperaNftContract = _prosperaNftContract;
     }
 
     // ----- Views -----
@@ -67,21 +63,21 @@ abstract contract State is IState, TargetManager, Initializable {
         return totalDeposits - totalPrincipal;
     }
 
-    function _bidActionable(Bid memory bid) internal view returns(bool) {
-        return bid.propertyValue == bid.downPayment || loanBidActionable(bid);
-    }
+    // function _bidActionable(Bid memory bid) internal view returns(bool) {
+    //     return bid.propertyValue == bid.downPayment || loanBidActionable(bid);
+    // }
 
-    function loanBidActionable(Bid memory _bid) private view returns(bool) {
+    // function loanBidActionable(Bid memory _bid) private view returns(bool) {
 
-        // Calculate loanBid principal
-        uint principal = _bid.propertyValue - _bid.downPayment;
+    //     // Calculate loanBid principal
+    //     uint principal = _bid.propertyValue - _bid.downPayment;
 
-        // Calculate loanBid ltv
-        UD60x18 ltv = convert(principal).div(convert(_bid.propertyValue));
+    //     // Calculate loanBid ltv
+    //     UD60x18 ltv = convert(principal).div(convert(_bid.propertyValue));
 
-        // Return actionability
-        return ltv.lte(maxLtv) && principal <= _availableLiquidity();
-    }
+    //     // Return actionability
+    //     return ltv.lte(maxLtv) && principal <= _availableLiquidity();
+    // }
 
     // ----- Views for Testing -----
 
@@ -100,9 +96,5 @@ abstract contract State is IState, TargetManager, Initializable {
 
     function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
         return block.timestamp - loan.lastPaymentTime;
-    }
-
-    function nftBids(uint tokenId) external view returns(Bid[] memory _nftBids) {
-        _nftBids = _bids[tokenId];
     }
 }

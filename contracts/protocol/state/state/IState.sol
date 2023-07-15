@@ -8,13 +8,13 @@ interface IState {
     // Enums
     enum Status { None, Mortgage, Default, Foreclosurable }
 
-    // Structs
-    struct Bid {
-        address bidder;
-        uint propertyValue;
-        uint downPayment;
-        uint maxDurationMonths;
-    }
+    // // Structs
+    // struct Bid {
+    //     address bidder;
+    //     uint propertyValue;
+    //     uint downPayment;
+    //     uint maxDurationMonths;
+    // }
 
     struct Loan {
         address borrower;

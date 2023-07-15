@@ -10,55 +10,23 @@ contract Info is IInfo, State {
 
     function userLoans(address account) external view returns (uint[] memory userLoansTokenIds) {
 
-        userLoansTokenIds = new uint[](10);
-        uint realLength;
+        // userLoansTokenIds = new uint[](10);
+        // uint realLength;
 
-        for (uint i = 0; i < loansTokenIds.length(); i++) {
+        // for (uint i = 0; i < loansTokenIds.length(); i++) {
 
-            // Get tokenId
-            uint tokenId = loansTokenIds.at(i);
+        //     // Get tokenId
+        //     uint tokenId = loansTokenIds.at(i);
 
-            if (_loans[tokenId].borrower == account) {
-                userLoansTokenIds[realLength] = tokenId;
-                realLength += 1;
-            }
-        }
+        //     if (_loans[tokenId].borrower == account) {
+        //         userLoansTokenIds[realLength] = tokenId;
+        //         realLength += 1;
+        //     }
+        // }
 
-        for (uint i = realLength; i < userLoansTokenIds.length; i++) {
-            userLoansTokenIds[i] = 999_999;
-        }
-    }
-
-    function userBids(address account) external view returns(BidInfo[] memory _userBids) {
-
-        _userBids = new BidInfo[](10);
-        uint realLength;
-        
-        // Loop tokenIds
-        for (uint i = 0; i < prosperaNftContract.totalSupply(); i++) {
-            
-            // Get tokenIdBids
-            Bid[] memory tokenIdBids = _bids[i];
-
-            // Loop tokenIdBids
-            for (uint n = 0; n < tokenIdBids.length; n++) {
-
-                // Get bid
-                Bid memory bid = tokenIdBids[n];
-                
-                // If bidder is caller
-                if (bid.bidder == account) {
-
-                    _userBids[realLength] = BidInfo({
-                        tokenId: i,
-                        idx: n,
-                        bid: bid
-                    });
-
-                    realLength++;
-                }
-            }
-        }
+        // for (uint i = realLength; i < userLoansTokenIds.length; i++) {
+        //     userLoansTokenIds[i] = 999_999;
+        // }
     }
 
     function accruedInterest(uint tokenId) external view returns(uint) { // Note: made this duplicate of accruedInterest() for testing
@@ -82,19 +50,15 @@ contract Info is IInfo, State {
     }
 
     function loansTokenIdsLength() external view returns (uint) {
-        return loansTokenIds.length();
+        // return loansTokenIds.length();
     }
 
     function loansTokenIdsAt(uint idx) external view returns (uint tokenId) {
-        tokenId = loansTokenIds.at(idx);
+        // tokenId = loansTokenIds.at(idx);
     }
 
     function loans(uint tokenId) external view returns (Loan memory) {
         return _loans[tokenId];
-    }
-
-    function bids(uint tokenId) external view returns (Bid[] memory) {
-        return _bids[tokenId];
     }
 
     function availableLiquidity() external view returns(uint) {
@@ -117,14 +81,14 @@ contract Info is IInfo, State {
         return convert(totalPrincipal).div(convert(totalDeposits));
     }
 
-    function bidActionable(uint tokenId, uint bidIdx) external view returns (bool) {
+    // function bidActionable(uint tokenId, uint bidIdx) external view returns (bool) {
 
-        // Get Bid
-        Bid memory bid = _bids[tokenId][bidIdx];
+    //     // Get Bid
+    //     Bid memory bid = _bids[tokenId][bidIdx];
 
-        // Return
-        return _bidActionable(bid);
-    }
+    //     // Return
+    //     return _bidActionable(bid);
+    // }
 
     function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount) {
         
