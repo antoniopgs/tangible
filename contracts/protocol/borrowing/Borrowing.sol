@@ -12,12 +12,11 @@ contract Borrowing is IBorrowing, Status {
 
     // Libs
     using SafeERC20 for IERC20;
-    using EnumerableSet for EnumerableSet.UintSet;
+    // using EnumerableSet for EnumerableSet.UintSet;
 
     // Functions
     function startLoan(
         address borrower,
-        address seller,
         uint tokenId,
         uint propertyValue,
         uint downPayment,
@@ -27,8 +26,11 @@ contract Borrowing is IBorrowing, Status {
         // Pull downPayment from borrower
         USDC.safeTransferFrom(borrower, address(this), downPayment);
 
+        // Get loan
+        Loan memory loan = _loans[tokenId];
+
         // Get unpaidPrincipal
-        uint unpaidPrincipal = _loans[tokenId].unpaidPrincipal;
+        uint unpaidPrincipal = loan.unpaidPrincipal;
         
         // Calculate interest
         uint interest = _accruedInterest(tokenId);
@@ -51,25 +53,26 @@ contract Borrowing is IBorrowing, Status {
             protocolMoney += foreclosureFee;
         }
 
-        // 4. Pay Seller
+        // 4. Pay Seller (loan.owner)
         uint debt = unpaidPrincipal + interest + saleFee + foreclosureFee;
         uint sellerCut = propertyValue - debt;
-        USDC.safeTransfer(seller, sellerCut);
+        USDC.safeTransfer(loan.owner, sellerCut);
 
         // 5. Start Mortgage
-        startMortgage(borrower, tokenId, propertyValue, downPayment, maxDurationMonths);
+        _startMortgage({
+            borrower: borrower,
+            tokenId: tokenId,
+            principal: propertyValue - downPayment,
+            maxDurationMonths: maxDurationMonths
+        });
     }
 
-    function startMortgage(
+    function _startMortgage(
         address borrower,
         uint tokenId,
-        uint propertyValue,
-        uint downPayment,
+        uint principal,
         uint maxDurationMonths
     ) private {
-
-        // Calculate principal
-        uint principal = propertyValue - downPayment;
 
         // Get ratePerSecond
         (bool success, bytes memory data) = logicTargets[IInterest.borrowerRatePerSecond.selector].call(
@@ -96,7 +99,7 @@ contract Borrowing is IBorrowing, Status {
         // uint maxUnpaidInterest = maxCost - principal;
         
         _loans[tokenId] = Loan({
-            borrower: borrower, // Note: must be called via delegatecall for this to work
+            owner: borrower,
             ratePerSecond: ratePerSecond,
             paymentPerSecond: paymentPerSecond,
             startTime: block.timestamp,
@@ -151,17 +154,7 @@ contract Borrowing is IBorrowing, Status {
         totalDeposits += interest;
         // maxTotalUnpaidInterest -= interest;
 
-        // If loan is paid off
-        bool paidOff;
-        if (loan.unpaidPrincipal == 0) {
-
-            paidOff = true;
-            
-            // Send nft to loan.borrower
-            sendNft(loan, loan.borrower, tokenId);
-        }
-
-        emit PayLoan(msg.sender, tokenId, payment, interest, repayment, block.timestamp, paidOff);
+        emit PayLoan(msg.sender, tokenId, payment, interest, repayment, block.timestamp, loan.unpaidPrincipal == 0);
     }
 
     function redeemLoan(uint tokenId) external {
@@ -185,9 +178,6 @@ contract Borrowing is IBorrowing, Status {
         totalDeposits += interest;
         // assert(interest <= loan.maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest? // Note: actually, now that he only has redemptionWindow to redeem, maybe I can bring this assertion back
         //  -= loan.maxUnpaidInterest; // Note: maxTotalUnpaidInterest -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
-
-        // Send nft to loan.borrower
-        sendNft(loan, loan.borrower, tokenId);
 
         emit RedeemLoan(msg.sender, tokenId, interest, defaulterDebt, redemptionFee, block.timestamp);
     }
@@ -222,17 +212,5 @@ contract Borrowing is IBorrowing, Status {
             return convert(uint(0));
         }
         return convert(totalPrincipal).div(convert(totalDeposits));
-    }
-
-    function sendNft(Loan storage loan, address receiver, uint tokenId) private { // Todo: move to Borrowing
-
-        // Send Nft to receiver
-        // prosperaNftContract.safeTransferFrom(address(this), receiver, tokenId);
-
-        // Reset loan state to Null (so it can re-enter system later)
-        loan.borrower = address(0);
-
-        // Remove tokenId from loansTokenIds
-        // loansTokenIds.remove(tokenId);
     }
 }

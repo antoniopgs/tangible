@@ -8,23 +8,21 @@ import { intoUD60x18 } from "@prb/math/src/sd59x18/Casting.sol";
 import { intoSD59x18 } from "@prb/math/src/ud60x18/Casting.sol";
 
 abstract contract Status is State {
-    
+
     function status(uint tokenId) public view returns (Status) {
 
         Loan memory loan = _loans[tokenId];
-        
-        // If no borrower
-        if (loan.borrower == address(0)) { // Note: acceptBid() must clear-out borrower & acceptLoanBid() must update borrower
-            return Status.None;
 
-        // If borrower
+        if (loan.unpaidPrincipal == 0) {
+            return Status.ResidentOwned;
+
         } else {
-            
+
             // If default
             if (defaulted(tokenId)) { // Note: payLoan() must clear-out borrower in finalPayment
                 
                 // Calculate timeSinceDefault
-                uint timeSinceDefault = block.timestamp - defaultTime(loan);
+                uint timeSinceDefault = block.timestamp - defaultTime(loan); // Todo: reduce gas costs
 
                 if (timeSinceDefault <= redemptionWindow) {
                     return Status.Default; // Note: foreclose() must clear-out borrower & loanForeclose() must update borrower
@@ -100,7 +98,7 @@ abstract contract Status is State {
         uint completedMonths = loanCompletedMonths(loan);
 
         // Loop backwards from loanCompletedMonths
-        for (uint i = completedMonths; i > 0; i--) {
+        for (uint i = completedMonths; i > 0; i--) { // Todo: reduce gas costs
 
             uint completedMonthPrincipalCap = principalCap(loan, i);
             uint prevCompletedMonthPrincipalCap = i == 1 ? loan.unpaidPrincipal : principalCap(loan, i - 1);
