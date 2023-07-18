@@ -65,8 +65,8 @@ contract DeployScript is Script {
         borrowingSelectors[1] = IBorrowing.payLoan.selector;
         borrowingSelectors[2] = IBorrowing.redeemLoan.selector;
         // borrowingSelectors[3] = IBorrowing.forecloseLoan.selector; // Note: maybe I don't even need a foreclosure function, because startLoan() could take care of it
-        borrowingSelectors[4] = IBorrowing.utilization.selector;
-        borrowingSelectors[5] = Status.status.selector;
+        borrowingSelectors[3] = IBorrowing.utilization.selector;
+        borrowingSelectors[4] = Status.status.selector;
         ProtocolProxy(protocol).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set interestSelectors

@@ -6,6 +6,8 @@ import "../state/status/Status.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interest/IInterest.sol";
 
+import "forge-std/console.sol";
+
 contract Borrowing is IBorrowing, Status {
 
     // Libs
@@ -15,18 +17,21 @@ contract Borrowing is IBorrowing, Status {
     // Functions
     function startLoan(
         address borrower,
-        uint propertyId,
-        uint principal,
+        address seller,
+        uint tokenId,
         uint propertyValue,
         uint downPayment,
         uint maxDurationMonths
     ) external onlyOwner {
 
+        // Pull downPayment from borrower
+        USDC.safeTransferFrom(borrower, address(this), downPayment);
+
         // Get unpaidPrincipal
-        uint unpaidPrincipal = _loans[propertyId].unpaidPrincipal;
+        uint unpaidPrincipal = _loans[tokenId].unpaidPrincipal;
         
         // Calculate interest
-        uint interest = _accruedInterest(propertyId);
+        uint interest = _accruedInterest(tokenId);
 
         // 1. If seller has debt, Pay Money Pool/Lenders
         if (unpaidPrincipal > 0) {
@@ -40,21 +45,31 @@ contract Borrowing is IBorrowing, Status {
         protocolMoney += saleFee;
 
         // 3. Protocol charges Foreclosure Fee (if needed)
-        // if (foreclosure) {
-            uint foreclosureFee = convert(convert(propertyValue).mul(_defaultFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
+        uint foreclosureFee;
+        if (status(tokenId) == Status.Default || status(tokenId) == Status.Foreclosurable) {
+            foreclosureFee = convert(convert(propertyValue).mul(_defaultFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
             protocolMoney += foreclosureFee;
-        // }
+        }
 
         // 4. Pay Seller
         uint debt = unpaidPrincipal + interest + saleFee + foreclosureFee;
-        uint sellerCut = _bid.propertyValue - debt;
+        uint sellerCut = propertyValue - debt;
         USDC.safeTransfer(seller, sellerCut);
 
         // 5. Start Mortgage
-        startMortgage();
+        startMortgage(borrower, tokenId, propertyValue, downPayment, maxDurationMonths);
     }
 
-    function startMortgage() private {
+    function startMortgage(
+        address borrower,
+        uint tokenId,
+        uint propertyValue,
+        uint downPayment,
+        uint maxDurationMonths
+    ) private {
+
+        // Calculate principal
+        uint principal = propertyValue - downPayment;
 
         // Get ratePerSecond
         (bool success, bytes memory data) = logicTargets[IInterest.borrowerRatePerSecond.selector].call(
@@ -80,7 +95,7 @@ contract Borrowing is IBorrowing, Status {
         // Calculate maxUnpaidInterest
         // uint maxUnpaidInterest = maxCost - principal;
         
-        _loans[propertyId] = Loan({
+        _loans[tokenId] = Loan({
             borrower: borrower, // Note: must be called via delegatecall for this to work
             ratePerSecond: ratePerSecond,
             paymentPerSecond: paymentPerSecond,
@@ -99,7 +114,7 @@ contract Borrowing is IBorrowing, Status {
         // Add tokenId to loansTokenIds
         // loansTokenIds.add(tokenId);
 
-        emit StartLoan(borrower, propertyId, principal, maxDurationMonths, ratePerSecond, maxDurationSeconds, paymentPerSecond, maxCost, block.timestamp);
+        emit StartLoan(borrower, tokenId, principal, maxDurationMonths, ratePerSecond, maxDurationSeconds, paymentPerSecond, maxCost, block.timestamp);
 
     }
 

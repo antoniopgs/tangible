@@ -24,6 +24,7 @@ contract ProtocolTest is Test, DeployScript {
     // Actions
     enum Action {
         Deposit, Withdraw, // Lenders
+        StartLoan, // Admin
         PayLoan, RedeemLoan, // Borrower In-Loan
         Foreclose, // Foreclosure
         SkipTime // Util
@@ -42,6 +43,8 @@ contract ProtocolTest is Test, DeployScript {
     // Main
     function testMath(uint[] calldata randomness) public {
 
+        console.log("testMath");
+
         // Loop actions
         for (uint i = 0; i < randomness.length; i++) {
 
@@ -55,6 +58,9 @@ contract ProtocolTest is Test, DeployScript {
 
             } else if (action == uint(Action.Withdraw)) {
                 console.log("\nAction.Withdraw");
+                testWithdraw(randomness[i]);
+            } else if (action == uint(Action.StartLoan)) {
+                console.log("\nAction.StartLoan");
                 testWithdraw(randomness[i]);
             
             } else if (action == uint(Action.PayLoan)) {
@@ -77,39 +83,44 @@ contract ProtocolTest is Test, DeployScript {
     }
 
     // Lender
-    function testDeposit(uint amount) private validate {
+    function testDeposit(uint amount) private {
 
         // Bound amount
-        amount = bound(amount, 0, 1_000_000_000);
+        amount = bound(amount, 0, 1_000_000_000e18);
+
+        _testDeposit(amount);
+    }
+
+    function _testDeposit(uint amount) private validate {
 
         // Set expectations
         expectedTotalDeposits += amount;
 
-        // Get lender
-        address lender = makeAddr("lender");
+        // Get depositor
+        address depositor = makeAddr("depositor"); // Todo: later have different depositors
 
-        // Give USDC to lender
-        deal(address(USDC), lender, amount);
+        // Give USDC to depositor
+        deal(address(USDC), depositor, amount);
 
         // Approve protocol to pull amount
-        vm.prank(lender);
+        vm.prank(depositor);
         USDC.approve(address(protocol), amount);
 
-        // Lender deposits
-        vm.prank(lender);
+        // Depositor deposits
+        vm.prank(depositor);
         ILending(protocol).deposit(amount);
     }
 
     function testWithdraw(uint amount) private validate {
 
         // Bound amount
-        amount = bound(amount, 0, IInfo(protocol).availableLiquidity());
+        amount = bound(amount, 0, IInfo(protocol).availableLiquidity()); // Todo: later check user's tUSDC balance so tests have multiple depositors
         
         // Set expectations
         expectedTotalDeposits -= amount;
 
         // Get withdrawer
-        address withdrawer = makeAddr("withdrawer");
+        address withdrawer = makeAddr("withdrawer"); // Todo: later have different withdrawers
 
         // Give withdrawer tUSDC
         uint expectedTUsdcBurn = Lending(protocol).usdcToTUsdc(amount);
@@ -118,6 +129,44 @@ contract ProtocolTest is Test, DeployScript {
         // Withdraw
         vm.prank(withdrawer);
         ILending(protocol).withdraw(amount);
+    }
+
+    // Admin
+    function testStartLoan(uint randomness) external {
+
+        console.log("a");
+
+        address borrower = makeAddr("borrower");
+        address seller = makeAddr("seller");
+        uint tokenId = 0;
+        uint propertyValue = bound(randomness, 50_000e18, 1_000_000_000e18);
+        uint downPayment = propertyValue / 2; // Todo: implement different LTVs later
+        uint maxDurationMonths = bound(randomness, 12, 240); // 1 to 20 years;
+
+        // Give downPayment to borrower
+        vm.prank(borrower);
+        deal(address(USDC), borrower, downPayment);
+
+        // Borrower approves protocol
+        vm.prank(borrower);
+        USDC.approve(address(protocol), downPayment);
+
+        // Ensure protocol has enough funds
+        uint protocolBalance = USDC.balanceOf(address(protocol));
+        uint loan = propertyValue - downPayment;
+        if (protocolBalance < loan) {
+            _testDeposit(loan - protocolBalance);
+        }
+
+        // Start Loan
+        IBorrowing(protocol).startLoan(
+            borrower,
+            seller,
+            tokenId,
+            propertyValue,
+            downPayment,
+            maxDurationMonths
+        );
     }
 
     // Borrower In-Loan 
@@ -335,7 +384,7 @@ contract ProtocolTest is Test, DeployScript {
         uint timeJump = bound(randomness, 0, 6 * 30 days);
 
         // Skip by timeJump
-        // skip(timeJump);
+        skip(timeJump);
         // skip(1);
     }
 

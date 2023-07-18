@@ -22,11 +22,11 @@ interface IBorrowing is IStatus {
     // Functions
     function startLoan(
         address borrower,
-        uint propertyId,
-        uint principal,
-        uint maxDurationMonths,
+        address seller,
+        uint tokenId,
         uint propertyValue,
-        uint downPayment
+        uint downPayment,
+        uint maxDurationMonths
     ) external;
     function payLoan(uint tokenId, uint payment) external;
     function redeemLoan(uint tokenId) external;
