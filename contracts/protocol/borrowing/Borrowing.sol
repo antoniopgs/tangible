@@ -55,6 +55,7 @@ contract Borrowing is IBorrowing, Status {
 
         // 4. Pay Seller (loan.owner)
         uint debt = unpaidPrincipal + interest + saleFee + foreclosureFee;
+        require(propertyValue >= debt, "propertyValue must cover debt");
         uint sellerCut = propertyValue - debt;
         USDC.safeTransfer(loan.owner, sellerCut);
 

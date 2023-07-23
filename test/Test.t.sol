@@ -26,7 +26,6 @@ contract ProtocolTest is Test, DeployScript {
         Deposit, Withdraw, // Lenders
         StartLoan, // Admin
         PayLoan, RedeemLoan, // Borrower In-Loan
-        Foreclose, // Foreclosure
         SkipTime // Util
     }
     
@@ -71,10 +70,6 @@ contract ProtocolTest is Test, DeployScript {
                 console.log("\nAction.RedeemLoan");
                 testRedeemLoan(randomness[i]);
 
-            } else if (action == uint(Action.Foreclose)) {
-                console.log("\nAction.Foreclose");
-                testForeclose(randomness[i]);
-                
             } else if (action == uint(Action.SkipTime)) {
                 console.log("\nAction.SkipTime");
                 testSkip(randomness[i]);
@@ -137,7 +132,7 @@ contract ProtocolTest is Test, DeployScript {
         console.log("a");
 
         address borrower = makeAddr("borrower");
-        address seller = makeAddr("seller");
+        // address seller = makeAddr("seller");
         uint tokenId = 0;
         uint propertyValue = bound(randomness, 50_000e18, 1_000_000_000e18);
         uint downPayment = propertyValue / 2; // Todo: implement different LTVs later
@@ -161,7 +156,6 @@ contract ProtocolTest is Test, DeployScript {
         // Start Loan
         IBorrowing(protocol).startLoan(
             borrower,
-            seller,
             tokenId,
             propertyValue,
             downPayment,
@@ -322,58 +316,6 @@ contract ProtocolTest is Test, DeployScript {
         //     }
         // } else {
         //     console.log("no default.\n");
-        // }
-    }
-
-    // Foreclosure
-    function testForeclose(uint randomness) private validate {
-
-        // // if foreclosurable loans exist
-        // // get tokenId of foreclosurable loan
-
-        // // Get totalSupply
-        // uint totalSupply = nftContract.totalSupply();
-
-        // // If nfts exist
-        // if (totalSupply > 0) {
-
-        //     console.log("tf0");
-
-        //     // Get random tokenId
-        //     uint tokenId = bound(randomness, 0, totalSupply - 1);
-
-        //     // If foreclosurable
-        //     if (Automation(protocol).status(tokenId) == IState.Status.Foreclosurable) {
-
-        //         console.log("tf1");
-
-        //         // Get unpaidPrincipal & maxUnpaidInterest
-        //         // State.Loan memory loan = Borrowing(protocol).loans(tokenId);
-
-        //         // // Bound salePrice
-        //         // uint expectedDefaulterDebt = loan.unpaidPrincipal + Borrowing(protocol).accruedInterest(tokenId);
-        //         // uint expectedForeclosureFee = convert(convert(expectedDefaulterDebt).mul(State(protocol).foreclosureFeeSpread()));
-        //         // uint salePrice = bound(randomness, expectedDefaulterDebt + expectedForeclosureFee, 1_000_000_000 * 1e18);
-
-        //         // uint protocolUsdc = USDC.balanceOf(address(protocol));
-        //         // deal(address(USDC), address(protocol), protocolUsdc + salePrice, true);
-
-        //         // expectedTotalPrincipal -= loan.unpaidPrincipal;
-        //         // expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
-        //         // expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
-
-        //         IState.Bid[] memory tokenIdBids = IInfo(protocol).bids(tokenId);
-        //         if (tokenIdBids.length > 0) {
-
-        //             // Find highestActionableBidIdx
-        //             uint highestActionableBidIdx = Automation(protocol).findHighestActionableBidIdx(tokenId);
-
-        //             console.log("tf2");
-
-        //             // Accept Bid
-        //             IAuctions(protocol).acceptBid(tokenId, highestActionableBidIdx);
-        //         }
-        //     }
         // }
     }
 
