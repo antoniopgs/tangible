@@ -29,7 +29,7 @@ contract Info is IInfo, State {
         }
     }
 
-    function accruedInterest(uint tokenId) external view returns(uint) { // Note: made this duplicate of accruedInterest() for testing
+    function accruedInterest(uint tokenId) external view returns(uint) {
         return _accruedInterest(_loans[tokenId]);
     }
 
@@ -80,15 +80,6 @@ contract Info is IInfo, State {
         }
         return convert(totalPrincipal).div(convert(totalDeposits));
     }
-
-    // function bidActionable(uint tokenId, uint bidIdx) external view returns (bool) {
-
-    //     // Get Bid
-    //     Bid memory bid = _bids[tokenId][bidIdx];
-
-    //     // Return
-    //     return _bidActionable(bid);
-    // }
 
     function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount) {
         

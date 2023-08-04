@@ -60,33 +60,15 @@ abstract contract State is IState, TargetManager, Initializable {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    function initialize(IERC20 _USDC, tUsdc _tUSDC) external initializer { // Question: maybe move this elsewhere?
+    function initialize(IERC20 _USDC, tUsdc _tUSDC, TangibleNft _prosperaNftContract) external initializer { // Question: maybe move this elsewhere?
         USDC = _USDC;
         tUSDC = _tUSDC;
+        prosperaNftContract = _prosperaNftContract;
     }
 
-    // ----- Views -----
     function _availableLiquidity() internal view returns(uint) {
         return totalDeposits - totalPrincipal;
     }
-
-    // function _bidActionable(Bid memory bid) internal view returns(bool) {
-    //     return bid.propertyValue == bid.downPayment || loanBidActionable(bid);
-    // }
-
-    // function loanBidActionable(Bid memory _bid) private view returns(bool) {
-
-    //     // Calculate loanBid principal
-    //     uint principal = _bid.propertyValue - _bid.downPayment;
-
-    //     // Calculate loanBid ltv
-    //     UD60x18 ltv = convert(principal).div(convert(_bid.propertyValue));
-
-    //     // Return actionability
-    //     return ltv.lte(maxLtv) && principal <= _availableLiquidity();
-    // }
-
-    // ----- Views for Testing -----
 
     function _accruedInterest(Loan memory loan) internal view returns(uint) {
         return convert(convert(loan.unpaidPrincipal).mul(accruedRate(loan)));
