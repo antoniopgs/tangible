@@ -22,6 +22,7 @@ contract DeployScript is Script {
     // Tokens
     IERC20 USDC; /* = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet */
     tUsdc tUSDC;
+    TangibleNft nftContract;
 
     // Protocol
     address payable protocol;
@@ -50,8 +51,11 @@ contract DeployScript is Script {
         // Deploy tUSDC
         tUSDC = new tUsdc(tUsdcDefaultOperators);
 
+        // Deploy nftContract
+        nftContract = new TangibleNft(protocol);
+
         // Initialize protocol
-        ProtocolProxy(protocol).initialize(USDC, tUSDC);
+        ProtocolProxy(protocol).initialize(USDC, tUSDC, nftContract);
 
         // Deploy logic contracts
         borrowing = new Borrowing();
