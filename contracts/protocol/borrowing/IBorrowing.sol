@@ -13,16 +13,15 @@ interface IBorrowing is IStatus {
         UD60x18 ratePerSecond,
         uint maxDurationSeconds,
         UD60x18 paymentPerSecond,
-        uint maxCost,
+        // uint maxCost,
         uint timestamp
     );
     event PayLoan(address caller, uint tokenId, uint payment, uint interest, uint repayment, uint timestamp, bool paidOff);
     event RedeemLoan(address caller, uint tokenId, uint interest, uint defaulterDebt, uint redemptionFee, uint timestamp);
 
     // Functions
-    function startLoan(
-        address seller,
-        address newOwner,
+    function startNewLoan(
+        address buyer,
         uint tokenId,
         uint propertyValue,
         uint downPayment,

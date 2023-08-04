@@ -34,7 +34,7 @@ abstract contract State is IState, TargetManager, Initializable {
     UD60x18 internal m2 = convert(9); // Note: 9
 
     // Fees/Spreads
-    UD60x18 internal _saleFeeSpread = convert(1).div(convert(100)); // Note: 1%
+    UD60x18 internal _baseSaleFeeSpread = convert(1).div(convert(100)); // Note: 1%
     UD60x18 internal _interestFeeSpread = convert(2).div(convert(100)); // Note: 2%
     UD60x18 internal _redemptionFeeSpread = convert(3).div(convert(100)); // Note: 3%
     UD60x18 internal _defaultFeeSpread = convert(4).div(convert(100)); // Note: 4%
@@ -81,12 +81,7 @@ abstract contract State is IState, TargetManager, Initializable {
 
     // ----- Views for Testing -----
 
-    function _accruedInterest(uint tokenId) internal view returns(uint) {
-
-        // Get loan
-        Loan memory loan = _loans[tokenId];
-
-        // Return
+    function _accruedInterest(Loan memory loan) internal view returns(uint) {
         return convert(convert(loan.unpaidPrincipal).mul(accruedRate(loan)));
     }
 

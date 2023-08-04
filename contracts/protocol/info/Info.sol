@@ -30,11 +30,11 @@ contract Info is IInfo, State {
     }
 
     function accruedInterest(uint tokenId) external view returns(uint) { // Note: made this duplicate of accruedInterest() for testing
-        return _accruedInterest(tokenId);
+        return _accruedInterest(_loans[tokenId]);
     }
 
-    function saleFeeSpread() external view returns (UD60x18) {
-        return _saleFeeSpread;
+    function baseSaleFeeSpread() external view returns (UD60x18) {
+        return _baseSaleFeeSpread;
     }
 
     function interestFeeSpread() external view returns (UD60x18) {

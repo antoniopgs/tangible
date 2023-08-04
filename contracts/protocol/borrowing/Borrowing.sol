@@ -14,68 +14,66 @@ contract Borrowing is IBorrowing, Status {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
+    function _coverDebt(uint tokenId, uint propertyValue) private {
+
+        // 0. Get loan
+        Loan memory loan = _loans[tokenId];
+        uint unpaidPrincipal = loan.unpaidPrincipal;
+        uint interest = _accruedInterest(loan); // will be 0 if unpaidPrincipal == 0
+
+        // 1. If loan has debt, Pay Lenders
+        if (unpaidPrincipal > 0) {
+
+            // Protocol charges Interest Fee
+            uint interestFee = convert(convert(interest).mul(_interestFeeSpread));
+            protocolMoney += interestFee;
+
+            // Update Pool
+            totalPrincipal -= unpaidPrincipal;
+            totalDeposits += interest - interestFee;
+            // maxTotalUnpaidInterest -= interest;
+        }
+
+        // 2. Protocol charges Sale Fee
+        UD60x18 saleFeeSpread = _baseSaleFeeSpread;
+        if (status(tokenId) == Status.Default || status(tokenId) == Status.Foreclosurable) {
+            saleFeeSpread = saleFeeSpread.add(_defaultFeeSpread); // Question: maybe defaultFee should be a boost appplied to interest instead?
+        }
+        uint saleFee = convert(convert(propertyValue).mul(saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
+        protocolMoney += saleFee;
+
+        // 4. Pay oldOwner his equity (loan.owner)
+        uint debt = unpaidPrincipal + interest + saleFee;
+        require(propertyValue >= debt, "propertyValue must cover debt");
+        USDC.safeTransfer(loan.owner, propertyValue - debt);
+    }
+
     // Functions
-    function startLoan(
-        address seller,
-        address newOwner,
+    function startNewLoan(
+        address buyer,
         uint tokenId,
         uint propertyValue,
         uint downPayment,
         uint maxDurationMonths
     ) external onlyOwner {
 
-        // Get loan
-        Loan memory loan = _loans[tokenId];
+        // Cover Debts
+        _coverDebt(tokenId, propertyValue);
 
-        // Get unpaidPrincipal
-        uint unpaidPrincipal = loan.unpaidPrincipal;
-        
-        // Calculate interest
-        uint interest = _accruedInterest(tokenId);
-
-        // 1. If oldOwner has debt, Pay Money Pool/Lenders
-        if (unpaidPrincipal > 0) {
-            totalPrincipal -= unpaidPrincipal;
-            totalDeposits += interest;
-            // maxTotalUnpaidInterest -= interest;
-        }
-
-        // 2. Protocol charges Sale Fee
-        uint saleFee = convert(convert(propertyValue).mul(_saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
-        protocolMoney += saleFee;
-
-        // 3. Protocol charges Default Fee (if needed)
-        uint defaultFee;
-        if (status(tokenId) == Status.Default || status(tokenId) == Status.Foreclosurable) {
-            defaultFee = convert(convert(propertyValue).mul(_defaultFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
-            protocolMoney += defaultFee;
-        }
-
-        // 4. Pay oldOwner (loan.owner)
-        uint debt = unpaidPrincipal + interest + saleFee + defaultFee;
-        require(propertyValue >= debt, "propertyValue must cover debt");
-        uint oldOwnerCut = propertyValue - debt;
-
-        if (loan.owner == address(0)) {
-            USDC.safeTransfer(seller, oldOwnerCut);
-        } else {
-            USDC.safeTransfer(loan.owner, oldOwnerCut);
-        }
-
-        // 5. Start Mortgage
-        _startMortgage({
-            newOwner: newOwner,
-            downPayment: downPayment,
+        // Start New Mortgage
+        _startNewMortgage({
+            newOwner: buyer,
             tokenId: tokenId,
+            downPayment: downPayment,
             principal: propertyValue - downPayment,
             maxDurationMonths: maxDurationMonths
         });
     }
 
-    function _startMortgage(
+    function _startNewMortgage(
         address newOwner,
-        uint downPayment,
         uint tokenId,
+        uint downPayment,
         uint principal,
         uint maxDurationMonths
     ) private {
@@ -101,8 +99,8 @@ contract Borrowing is IBorrowing, Status {
         assert(paymentPerSecond.gt(convert(uint(0))));
 
         // Calculate maxCost
-        uint maxCost = convert(paymentPerSecond.mul(convert(maxDurationSeconds)));
-        assert(maxCost > principal);
+        // uint maxCost = convert(paymentPerSecond.mul(convert(maxDurationSeconds)));
+        // assert(maxCost > principal);
 
         // Calculate maxUnpaidInterest
         // uint maxUnpaidInterest = maxCost - principal;
@@ -126,21 +124,20 @@ contract Borrowing is IBorrowing, Status {
         // Add tokenId to loansTokenIds
         loansTokenIds.add(tokenId);
 
-        emit StartLoan(newOwner, tokenId, principal, maxDurationMonths, ratePerSecond, maxDurationSeconds, paymentPerSecond, maxCost, block.timestamp);
-
+        emit StartLoan(newOwner, tokenId, principal, maxDurationMonths, ratePerSecond, maxDurationSeconds, paymentPerSecond, /*maxCost,*/ block.timestamp);
     }
 
     function payLoan(uint tokenId, uint payment) external {
         require(status(tokenId) == Status.Mortgage, "nft has no active mortgage");
 
+        // Get Loan
+        Loan storage loan = _loans[tokenId];
+
         // Calculate interest
-        uint interest = _accruedInterest(tokenId);
+        uint interest = _accruedInterest(loan);
 
         //require(payment <= loan.unpaidPrincipal + interest, "payment must be <= unpaidPrincipal + interest");
         //require(payment => interest, "payment must be => interest"); // Question: maybe don't calculate repayment if payment < interest?
-
-        // Get Loan
-        Loan storage loan = _loans[tokenId];
 
         // Bound payment
         if (payment > loan.unpaidPrincipal + interest) {
@@ -159,7 +156,7 @@ contract Borrowing is IBorrowing, Status {
         loan.lastPaymentTime = block.timestamp;
 
         // Protocol charges interestFee
-        uint interestFee = interest.mul(_interestFeeSpread);
+        uint interestFee = convert(convert(interest).mul(_interestFeeSpread));
         protocolMoney += interestFee;
 
         // Update pool
@@ -177,7 +174,7 @@ contract Borrowing is IBorrowing, Status {
         Loan storage loan = _loans[tokenId];
 
         // Calculate interest
-        uint interest = _accruedInterest(tokenId);
+        uint interest = _accruedInterest(loan);
 
         // Calculate defaulterDebt & redemptionFee
         uint defaulterDebt = loan.unpaidPrincipal + interest;

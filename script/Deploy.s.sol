@@ -61,7 +61,7 @@ contract DeployScript is Script {
 
         // Set borrowingSelectors
         bytes4[] memory borrowingSelectors = new bytes4[](5);
-        borrowingSelectors[0] = IBorrowing.startLoan.selector;
+        borrowingSelectors[0] = IBorrowing.startNewLoan.selector;
         borrowingSelectors[1] = IBorrowing.payLoan.selector;
         borrowingSelectors[2] = IBorrowing.redeemLoan.selector;
         // borrowingSelectors[3] = IBorrowing.forecloseLoan.selector; // Note: maybe I don't even need a foreclosure function, because startLoan() could take care of it

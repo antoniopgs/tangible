@@ -29,7 +29,7 @@ interface IInfo is IState {
 
     // function bidActionable(uint tokenId, uint bidIdx) external view returns(bool);
 
-    function saleFeeSpread() external view returns(UD60x18);
+    function baseSaleFeeSpread() external view returns(UD60x18);
     function interestFeeSpread() external view returns(UD60x18);
     function redemptionFeeSpread() external view returns(UD60x18);
     function defaultFeeSpread() external view returns(UD60x18);
