@@ -19,7 +19,7 @@ contract Lending is ILending, State {
         totalDeposits += usdc;
         
         // Calulate depositor tUsdc
-        uint _tUsdc = usdcToTUsdc(usdc);
+        uint _tUsdc = _usdcToTUsdc(usdc);
 
         // Mint tUsdc to depositor
         tUSDC.defaultOperatorMint(msg.sender, _tUsdc);
@@ -30,7 +30,7 @@ contract Lending is ILending, State {
     function withdraw(uint usdc) external {
 
         // Calulate withdrawer tUsdc
-        uint _tUsdc = usdcToTUsdc(usdc);
+        uint _tUsdc = _usdcToTUsdc(usdc);
 
         // Burn withdrawer tUsdc
         tUSDC.operatorBurn(msg.sender, _tUsdc, "", "");
@@ -43,19 +43,5 @@ contract Lending is ILending, State {
         USDC.safeTransfer(msg.sender, usdc);
 
         emit Deposit(msg.sender, usdc, _tUsdc);
-    }
-
-    function usdcToTUsdc(uint usdcAmount) public view returns(uint tUsdcAmount) {
-        
-        // Get tUsdcSupply
-        uint tUsdcSupply = tUSDC.totalSupply();
-
-        // If tUsdcSupply or totalDeposits = 0, 1:1
-        if (tUsdcSupply == 0 || totalDeposits == 0) {
-            return tUsdcAmount = usdcAmount;
-        }
-
-        // Calculate tUsdcAmount
-        return tUsdcAmount = usdcAmount * tUsdcSupply / totalDeposits;
     }
 }

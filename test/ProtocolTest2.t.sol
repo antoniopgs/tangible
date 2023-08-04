@@ -73,14 +73,22 @@ contract ProtocolTest2 is Test, DeployScript {
     }
 
     function _testWithdraw(uint randomness) private {
+        address withdrawer = makeAddr("withdrawer");
         uint availableLiquidity = IInfo(protocol).availableLiquidity();
         uint usdc = bound(randomness, 0, availableLiquidity);
+        uint tUsdcBurn = IInfo(protocol).usdcToTUsdc(usdc);
+
+        // Deal tUSDC
+        deal(address(tUSDC), withdrawer, tUsdcBurn);
+
+        // Withdraw
+        vm.prank(withdrawer);
         ILending(protocol).withdraw(usdc);
     }
 
     function _testStartNewLoan(uint randomness) private {
         
-        address buyer = vm.addr(randomness + 1); // Note: add 1 because input can't be 0
+        address buyer = vm.addr(bound(randomness, 1, 999_999_999));
         uint tokenId = _randomTokenId(randomness);
         uint propertyValue = bound(randomness, 10_000e6, 1_000_000_000e6); // Note: USDC has 6 decimals
         uint downPayment = bound(randomness, propertyValue / 2, propertyValue); // Note: maxLtv is 50%

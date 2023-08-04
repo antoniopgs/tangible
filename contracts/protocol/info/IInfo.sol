@@ -19,6 +19,7 @@ interface IInfo is IStatus, IState {
 
     function lenderApy() external view returns(UD60x18);
 
+    function usdcToTUsdc(uint usdcAmount) external view returns(uint tUsdcAmount);
     function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount);
 
     function baseSaleFeeSpread() external view returns(UD60x18);

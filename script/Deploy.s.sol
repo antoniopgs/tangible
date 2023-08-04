@@ -78,14 +78,13 @@ contract DeployScript is Script {
         ProtocolProxy(protocol).setSelectorsTarget(interestSelectors, address(interest));
 
         // Set lendingSelectors
-        bytes4[] memory lendingSelectors = new bytes4[](3);
+        bytes4[] memory lendingSelectors = new bytes4[](2);
         lendingSelectors[0] = ILending.deposit.selector;
         lendingSelectors[1] = ILending.withdraw.selector;
-        lendingSelectors[2] = Lending.usdcToTUsdc.selector;
         ProtocolProxy(protocol).setSelectorsTarget(lendingSelectors, address(lending));
 
         // Set infoSelectors
-        bytes4[] memory infoSelectors = new bytes4[](11);
+        bytes4[] memory infoSelectors = new bytes4[](12);
         infoSelectors[0] = IInfo.loans.selector;
         infoSelectors[1] = IInfo.availableLiquidity.selector;
         infoSelectors[2] = IInfo.userLoans.selector;
@@ -95,8 +94,9 @@ contract DeployScript is Script {
         infoSelectors[6] = IInfo.defaultFeeSpread.selector;
         infoSelectors[7] = IInfo.accruedInterest.selector;
         infoSelectors[8] = IInfo.lenderApy.selector;
-        infoSelectors[9] = IInfo.tUsdcToUsdc.selector;
-        infoSelectors[10] = IInfo.status.selector;
+        infoSelectors[9] = IInfo.usdcToTUsdc.selector;
+        infoSelectors[10] = IInfo.tUsdcToUsdc.selector;
+        infoSelectors[11] = IInfo.status.selector;
         ProtocolProxy(protocol).setSelectorsTarget(infoSelectors, address(info));
     }
 }

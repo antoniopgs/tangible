@@ -81,4 +81,18 @@ abstract contract State is IState, TargetManager, Initializable {
     function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
         return block.timestamp - loan.lastPaymentTime;
     }
+
+    function _usdcToTUsdc(uint usdcAmount) internal view returns(uint tUsdcAmount) {
+        
+        // Get tUsdcSupply
+        uint tUsdcSupply = tUSDC.totalSupply();
+
+        // If tUsdcSupply or totalDeposits = 0, 1:1
+        if (tUsdcSupply == 0 || totalDeposits == 0) {
+            return tUsdcAmount = usdcAmount;
+        }
+
+        // Calculate tUsdcAmount
+        return tUsdcAmount = usdcAmount * tUsdcSupply / totalDeposits;
+    }
 }

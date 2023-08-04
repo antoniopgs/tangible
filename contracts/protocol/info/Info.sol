@@ -81,6 +81,10 @@ contract Info is IInfo, Status {
         return convert(totalPrincipal).div(convert(totalDeposits));
     }
 
+    function usdcToTUsdc(uint usdcAmount) external view returns(uint tUsdcAmount) {
+        tUsdcAmount = _usdcToTUsdc(usdcAmount);
+    }
+
     function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount) {
         
         // Get tUsdcSupply
