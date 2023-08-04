@@ -7,7 +7,7 @@ import "../script/Deploy.s.sol";
 import "forge-std/console.sol";
 
 // Protocol Contracts
-import "../contracts/protocol/borrowing/IBorrowing.sol";
+import "../contracts/protocol/borrowing/borrowing/IBorrowing.sol";
 import "../contracts/protocol/lending/ILending.sol";
 import "../contracts/protocol/state/state/IState.sol";
 // import "../contracts/protocol/borrowing/borrowing/Borrowing.sol"; // Note: later, further improve architecture, to be able to remove this import

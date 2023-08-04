@@ -6,7 +6,7 @@ import "forge-std/Script.sol";
 import { console } from "forge-std/console.sol";
 
 // Contract Imports
-import "../contracts/protocol/borrowing/Borrowing.sol";
+import "../contracts/protocol/borrowing/borrowing/Borrowing.sol";
 import "../contracts/protocol/interest/Interest.sol";
 import "../contracts/protocol/lending/Lending.sol";
 import "../contracts/protocol/info/Info.sol";

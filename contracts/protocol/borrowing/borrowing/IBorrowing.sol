@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../state/status/IStatus.sol";
+import { UD60x18 } from "@prb/math/src/UD60x18.sol";
 
-interface IBorrowing is IStatus {
+interface IBorrowing {
     
     event StartLoan(
         address borrower,
