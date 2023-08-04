@@ -64,13 +64,12 @@ contract DeployScript is Script {
         info = new Info();
 
         // Set borrowingSelectors
-        bytes4[] memory borrowingSelectors = new bytes4[](5);
+        bytes4[] memory borrowingSelectors = new bytes4[](4);
         borrowingSelectors[0] = IBorrowing.startNewLoan.selector;
         borrowingSelectors[1] = IBorrowing.payLoan.selector;
         borrowingSelectors[2] = IBorrowing.redeemLoan.selector;
         // borrowingSelectors[3] = IBorrowing.forecloseLoan.selector; // Note: maybe I don't even need a foreclosure function, because startLoan() could take care of it
         borrowingSelectors[3] = IBorrowing.utilization.selector;
-        borrowingSelectors[4] = Status.status.selector;
         ProtocolProxy(protocol).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set interestSelectors
@@ -86,20 +85,18 @@ contract DeployScript is Script {
         ProtocolProxy(protocol).setSelectorsTarget(lendingSelectors, address(lending));
 
         // Set infoSelectors
-        bytes4[] memory infoSelectors = new bytes4[](13);
+        bytes4[] memory infoSelectors = new bytes4[](11);
         infoSelectors[0] = IInfo.loans.selector;
-        // infoSelectors[1] = IInfo.bids.selector;
-        infoSelectors[2] = IInfo.availableLiquidity.selector;
-        infoSelectors[3] = IInfo.userLoans.selector;
-        // infoSelectors[4] = IInfo.userBids.selector;
-        infoSelectors[5] = IInfo.loansTokenIdsLength.selector;
-        infoSelectors[6] = IInfo.loansTokenIdsAt.selector;
-        infoSelectors[7] = IInfo.redemptionFeeSpread.selector;
-        infoSelectors[8] = IInfo.defaultFeeSpread.selector;
-        infoSelectors[9] = IInfo.accruedInterest.selector;
-        infoSelectors[10] = IInfo.lenderApy.selector;
-        infoSelectors[11] = IInfo.tUsdcToUsdc.selector;
-        // infoSelectors[12] = IInfo.bidActionable.selector;
+        infoSelectors[1] = IInfo.availableLiquidity.selector;
+        infoSelectors[2] = IInfo.userLoans.selector;
+        infoSelectors[3] = IInfo.loansTokenIdsLength.selector;
+        infoSelectors[4] = IInfo.loansTokenIdsAt.selector;
+        infoSelectors[5] = IInfo.redemptionFeeSpread.selector;
+        infoSelectors[6] = IInfo.defaultFeeSpread.selector;
+        infoSelectors[7] = IInfo.accruedInterest.selector;
+        infoSelectors[8] = IInfo.lenderApy.selector;
+        infoSelectors[9] = IInfo.tUsdcToUsdc.selector;
+        infoSelectors[10] = IInfo.status.selector;
         ProtocolProxy(protocol).setSelectorsTarget(infoSelectors, address(info));
     }
 }

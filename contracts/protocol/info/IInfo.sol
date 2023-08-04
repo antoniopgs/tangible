@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
+import "../borrowing/status/IStatus.sol";
 import "../state/state/IState.sol";
 
-interface IInfo is IState {
+interface IInfo is IStatus, IState {
     
     function loans(uint tokenId) external view returns (Loan memory);
 
@@ -24,4 +25,6 @@ interface IInfo is IState {
     function interestFeeSpread() external view returns(UD60x18);
     function redemptionFeeSpread() external view returns(UD60x18);
     function defaultFeeSpread() external view returns(UD60x18);
+
+    function status(uint tokenId) external view returns (Status);
 }

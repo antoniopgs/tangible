@@ -10,7 +10,7 @@ import { intoSD59x18 } from "@prb/math/src/ud60x18/Casting.sol";
 
 abstract contract Status is IStatus, State {
 
-    function status(uint tokenId) public view returns (Status) {
+    function _status(uint tokenId) internal view returns (Status) {
         
         // If not owned by protocol
         if (prosperaNftContract.ownerOf(tokenId) != address(this)) {

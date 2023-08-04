@@ -2,9 +2,9 @@
 pragma solidity ^0.8.15;
 
 import "./IInfo.sol";
-import "../state/state/State.sol";
+import "../borrowing/status/Status.sol";
 
-contract Info is IInfo, State {
+contract Info is IInfo, Status {
 
     using EnumerableSet for EnumerableSet.UintSet;
 
@@ -93,5 +93,9 @@ contract Info is IInfo, State {
 
         // Calculate usdcAmount
         return usdcAmount = tUsdcAmount * totalDeposits / tUsdcSupply;
+    }
+
+    function status(uint tokenId) external view returns (Status) {
+        return _status(tokenId);
     }
 }

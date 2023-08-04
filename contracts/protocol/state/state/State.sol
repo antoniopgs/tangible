@@ -67,7 +67,7 @@ abstract contract State is IState, TargetManager, Initializable {
     }
 
     function _availableLiquidity() internal view returns(uint) {
-        return totalDeposits - totalPrincipal;
+        return totalDeposits - totalPrincipal; // - protocolMoney?
     }
 
     function _accruedInterest(Loan memory loan) internal view returns(uint) {

@@ -6,8 +6,6 @@ import "../status/Status.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../interest/IInterest.sol";
 
-import "forge-std/console.sol";
-
 contract Borrowing is IBorrowing, Status {
 
     // Libs
@@ -17,11 +15,16 @@ contract Borrowing is IBorrowing, Status {
     // Functions
     function startNewLoan(address buyer, uint tokenId, uint propertyValue, uint downPayment, uint maxDurationMonths) external onlyOwner {
 
+        require(_availableLiquidity() >= propertyValue - downPayment, "insufficient liquidity for loan");
+
+        // Pull downPayment from buyer
+        USDC.safeTransferFrom(buyer, address(this), downPayment);
+
         // Get loan
         Loan memory loan = _loans[tokenId];
 
         // If NFT is ResidentOwned
-        if (status(tokenId) == Status.ResidentOwned) {
+        if (_status(tokenId) == Status.ResidentOwned) {
             
             // Get nftOwner
             address nftOwner = prosperaNftContract.ownerOf(tokenId);
@@ -54,7 +57,6 @@ contract Borrowing is IBorrowing, Status {
         _startNewMortgage({
             newOwner: buyer,
             tokenId: tokenId,
-            downPayment: downPayment,
             principal: propertyValue - downPayment,
             maxDurationMonths: maxDurationMonths
         });
@@ -84,28 +86,25 @@ contract Borrowing is IBorrowing, Status {
 
         // 2. Protocol charges Sale Fee
         UD60x18 saleFeeSpread = _baseSaleFeeSpread;
-        if (status(tokenId) == Status.Default || status(tokenId) == Status.Foreclosurable) {
+        if (_status(tokenId) == Status.Default || _status(tokenId) == Status.Foreclosurable) {
             saleFeeSpread = saleFeeSpread.add(_defaultFeeSpread); // Question: maybe defaultFee should be a boost appplied to interest instead?
         }
         uint saleFee = convert(convert(propertyValue).mul(saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
         protocolMoney += saleFee;
 
-        // 4. Pay oldOwner his equity (loan.owner)
+        // 3. Pay oldOwner his equity (loan.owner)
         uint debt = unpaidPrincipal + interest + saleFee;
         require(propertyValue >= debt, "propertyValue must cover debt");
-        USDC.safeTransfer(oldOwner, propertyValue - debt); //// DONT FORGET THIS!!!
+
+        USDC.safeTransfer(oldOwner, propertyValue - debt);
     }
 
     function _startNewMortgage(
         address newOwner,
         uint tokenId,
-        uint downPayment,
         uint principal,
         uint maxDurationMonths
     ) private {
-
-        // Pull downPayment from newOwner
-        USDC.safeTransferFrom(newOwner, address(this), downPayment);
 
         // Get ratePerSecond
         (bool success, bytes memory data) = logicTargets[IInterest.borrowerRatePerSecond.selector].call(
@@ -152,7 +151,7 @@ contract Borrowing is IBorrowing, Status {
     }
 
     function payLoan(uint tokenId, uint payment) external {
-        require(status(tokenId) == Status.Mortgage, "nft has no active mortgage");
+        require(_status(tokenId) == Status.Mortgage, "nft has no active mortgage");
 
         // Get Loan
         Loan storage loan = _loans[tokenId];
@@ -199,7 +198,7 @@ contract Borrowing is IBorrowing, Status {
     }
 
     function redeemLoan(uint tokenId) external {
-        require(status(tokenId) == Status.Default, "no default");
+        require(_status(tokenId) == Status.Default, "no default");
 
         // Get Loan
         Loan memory loan = _loans[tokenId];
