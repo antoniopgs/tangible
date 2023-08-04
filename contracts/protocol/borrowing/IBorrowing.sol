@@ -21,7 +21,8 @@ interface IBorrowing is IStatus {
 
     // Functions
     function startLoan(
-        address borrower,
+        address seller,
+        address newOwner,
         uint tokenId,
         uint propertyValue,
         uint downPayment,

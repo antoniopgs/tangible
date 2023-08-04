@@ -35,13 +35,13 @@ abstract contract State is IState, TargetManager, Initializable {
 
     // Fees/Spreads
     UD60x18 internal _saleFeeSpread = convert(1).div(convert(100)); // Note: 1%
-    UD60x18 internal _payLoanFeeSpread = convert(2).div(convert(100)); // Note: 2%
+    UD60x18 internal _interestFeeSpread = convert(2).div(convert(100)); // Note: 2%
     UD60x18 internal _redemptionFeeSpread = convert(3).div(convert(100)); // Note: 3%
     UD60x18 internal _defaultFeeSpread = convert(4).div(convert(100)); // Note: 4%
 
     // Main Storage
     mapping(uint => Loan) public _loans;
-    // EnumerableSet.UintSet internal loansTokenIds;
+    EnumerableSet.UintSet internal loansTokenIds;
     uint protocolMoney;
 
     // Other vars

@@ -12,19 +12,17 @@ contract Borrowing is IBorrowing, Status {
 
     // Libs
     using SafeERC20 for IERC20;
-    // using EnumerableSet for EnumerableSet.UintSet;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     // Functions
     function startLoan(
-        address borrower,
+        address seller,
+        address newOwner,
         uint tokenId,
         uint propertyValue,
         uint downPayment,
         uint maxDurationMonths
     ) external onlyOwner {
-
-        // Pull downPayment from borrower
-        USDC.safeTransferFrom(borrower, address(this), downPayment);
 
         // Get loan
         Loan memory loan = _loans[tokenId];
@@ -35,7 +33,7 @@ contract Borrowing is IBorrowing, Status {
         // Calculate interest
         uint interest = _accruedInterest(tokenId);
 
-        // 1. If seller has debt, Pay Money Pool/Lenders
+        // 1. If oldOwner has debt, Pay Money Pool/Lenders
         if (unpaidPrincipal > 0) {
             totalPrincipal -= unpaidPrincipal;
             totalDeposits += interest;
@@ -46,22 +44,28 @@ contract Borrowing is IBorrowing, Status {
         uint saleFee = convert(convert(propertyValue).mul(_saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
         protocolMoney += saleFee;
 
-        // 3. Protocol charges Foreclosure Fee (if needed)
-        uint foreclosureFee;
+        // 3. Protocol charges Default Fee (if needed)
+        uint defaultFee;
         if (status(tokenId) == Status.Default || status(tokenId) == Status.Foreclosurable) {
-            foreclosureFee = convert(convert(propertyValue).mul(_defaultFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
-            protocolMoney += foreclosureFee;
+            defaultFee = convert(convert(propertyValue).mul(_defaultFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
+            protocolMoney += defaultFee;
         }
 
-        // 4. Pay Seller (loan.owner)
-        uint debt = unpaidPrincipal + interest + saleFee + foreclosureFee;
+        // 4. Pay oldOwner (loan.owner)
+        uint debt = unpaidPrincipal + interest + saleFee + defaultFee;
         require(propertyValue >= debt, "propertyValue must cover debt");
-        uint sellerCut = propertyValue - debt;
-        USDC.safeTransfer(loan.owner, sellerCut);
+        uint oldOwnerCut = propertyValue - debt;
+
+        if (loan.owner == address(0)) {
+            USDC.safeTransfer(seller, oldOwnerCut);
+        } else {
+            USDC.safeTransfer(loan.owner, oldOwnerCut);
+        }
 
         // 5. Start Mortgage
         _startMortgage({
-            borrower: borrower,
+            newOwner: newOwner,
+            downPayment: downPayment,
             tokenId: tokenId,
             principal: propertyValue - downPayment,
             maxDurationMonths: maxDurationMonths
@@ -69,11 +73,15 @@ contract Borrowing is IBorrowing, Status {
     }
 
     function _startMortgage(
-        address borrower,
+        address newOwner,
+        uint downPayment,
         uint tokenId,
         uint principal,
         uint maxDurationMonths
     ) private {
+
+        // Pull downPayment from newOwner
+        USDC.safeTransferFrom(newOwner, address(this), downPayment);
 
         // Get ratePerSecond
         (bool success, bytes memory data) = logicTargets[IInterest.borrowerRatePerSecond.selector].call(
@@ -100,7 +108,7 @@ contract Borrowing is IBorrowing, Status {
         // uint maxUnpaidInterest = maxCost - principal;
         
         _loans[tokenId] = Loan({
-            owner: borrower,
+            owner: newOwner,
             ratePerSecond: ratePerSecond,
             paymentPerSecond: paymentPerSecond,
             startTime: block.timestamp,
@@ -116,9 +124,9 @@ contract Borrowing is IBorrowing, Status {
         assert(totalPrincipal <= totalDeposits);
 
         // Add tokenId to loansTokenIds
-        // loansTokenIds.add(tokenId);
+        loansTokenIds.add(tokenId);
 
-        emit StartLoan(borrower, tokenId, principal, maxDurationMonths, ratePerSecond, maxDurationSeconds, paymentPerSecond, maxCost, block.timestamp);
+        emit StartLoan(newOwner, tokenId, principal, maxDurationMonths, ratePerSecond, maxDurationSeconds, paymentPerSecond, maxCost, block.timestamp);
 
     }
 
@@ -150,9 +158,13 @@ contract Borrowing is IBorrowing, Status {
         // loan.maxUnpaidInterest -= interest;
         loan.lastPaymentTime = block.timestamp;
 
+        // Protocol charges interestFee
+        uint interestFee = interest.mul(_interestFeeSpread);
+        protocolMoney += interestFee;
+
         // Update pool
         totalPrincipal -= repayment;
-        totalDeposits += interest;
+        totalDeposits += interest - interestFee;
         // maxTotalUnpaidInterest -= interest;
 
         emit PayLoan(msg.sender, tokenId, payment, interest, repayment, block.timestamp, loan.unpaidPrincipal == 0);
