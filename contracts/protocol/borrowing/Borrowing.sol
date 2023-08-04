@@ -17,8 +17,38 @@ contract Borrowing is IBorrowing, Status {
     // Functions
     function startNewLoan(address buyer, uint tokenId, uint propertyValue, uint downPayment, uint maxDurationMonths) external onlyOwner {
 
-        // Cover Debts
-        _coverDebt(tokenId, propertyValue);
+        // Get loan
+        Loan memory loan = _loans[tokenId];
+
+        // If NFT is ResidentOwned
+        if (status(tokenId) == Status.ResidentOwned) {
+            
+            // Get nftOwner
+            address nftOwner = prosperaNftContract.ownerOf(tokenId);
+
+            // Pull NFT from nftOwner to protocol
+            prosperaNftContract.safeTransferFrom(nftOwner, address(this), tokenId); // Note: don't use loan.owner (it doesn't get cleared-out anymore, but NFT could have been transferred)
+
+            // Add tokenId to loansTokenIds
+            loansTokenIds.add(tokenId);
+
+            // Cover Debts (oldOwner = nftOwner)
+            _coverDebt({
+                tokenId: tokenId,
+                propertyValue: propertyValue,
+                oldOwner: nftOwner
+            });
+
+        // Else
+        } else {
+
+            // Cover Debts (oldOwner = loan.owner)
+            _coverDebt({
+                tokenId: tokenId,
+                propertyValue: propertyValue,
+                oldOwner: loan.owner
+            });
+        }
 
         // Start New Mortgage
         _startNewMortgage({
@@ -30,10 +60,12 @@ contract Borrowing is IBorrowing, Status {
         });
     }
 
-    function _coverDebt(uint tokenId, uint propertyValue) private {
+    function _coverDebt(uint tokenId, uint propertyValue, address oldOwner) private {
+
+        // Get loan
+        Loan memory loan = _loans[tokenId];
 
         // 0. Get loan
-        Loan memory loan = _loans[tokenId];
         uint unpaidPrincipal = loan.unpaidPrincipal;
         uint interest = _accruedInterest(loan); // will be 0 if unpaidPrincipal == 0
 
@@ -61,7 +93,7 @@ contract Borrowing is IBorrowing, Status {
         // 4. Pay oldOwner his equity (loan.owner)
         uint debt = unpaidPrincipal + interest + saleFee;
         require(propertyValue >= debt, "propertyValue must cover debt");
-        USDC.safeTransfer(loan.owner, propertyValue - debt);
+        USDC.safeTransfer(oldOwner, propertyValue - debt); //// DONT FORGET THIS!!!
     }
 
     function _startNewMortgage(
@@ -116,9 +148,6 @@ contract Borrowing is IBorrowing, Status {
         // maxTotalUnpaidInterest += maxUnpaidInterest;
         assert(totalPrincipal <= totalDeposits);
 
-        // Add tokenId to loansTokenIds
-        loansTokenIds.add(tokenId);
-
         emit StartLoan(newOwner, tokenId, principal, maxDurationMonths, ratePerSecond, maxDurationSeconds, paymentPerSecond, /*maxCost,*/ block.timestamp);
     }
 
@@ -159,6 +188,13 @@ contract Borrowing is IBorrowing, Status {
         totalDeposits += interest - interestFee;
         // maxTotalUnpaidInterest -= interest;
 
+        // If loan is paid off
+        if (loan.unpaidPrincipal == 0) {
+            
+            // Release NFT
+            releaseNft(tokenId);
+        }
+
         emit PayLoan(msg.sender, tokenId, payment, interest, repayment, block.timestamp, loan.unpaidPrincipal == 0);
     }
 
@@ -166,7 +202,7 @@ contract Borrowing is IBorrowing, Status {
         require(status(tokenId) == Status.Default, "no default");
 
         // Get Loan
-        Loan storage loan = _loans[tokenId];
+        Loan memory loan = _loans[tokenId];
 
         // Calculate interest
         uint interest = _accruedInterest(loan);
@@ -183,6 +219,9 @@ contract Borrowing is IBorrowing, Status {
         totalDeposits += interest;
         // assert(interest <= loan.maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest? // Note: actually, now that he only has redemptionWindow to redeem, maybe I can bring this assertion back
         //  -= loan.maxUnpaidInterest; // Note: maxTotalUnpaidInterest -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
+
+        // Release NFT
+        releaseNft(tokenId);
 
         emit RedeemLoan(msg.sender, tokenId, interest, defaulterDebt, redemptionFee, block.timestamp);
     }
@@ -217,5 +256,14 @@ contract Borrowing is IBorrowing, Status {
             return convert(uint(0));
         }
         return convert(totalPrincipal).div(convert(totalDeposits));
+    }
+
+    function releaseNft(uint tokenId) private { // Todo: move to Borrowing
+
+        // Send NFT to loan.owner
+        prosperaNftContract.safeTransferFrom(address(this), _loans[tokenId].owner, tokenId);
+
+        // Remove tokenId from loansTokenIds
+        loansTokenIds.remove(tokenId);
     }
 }

@@ -5,9 +5,6 @@ import { UD60x18 } from "@prb/math/src/UD60x18.sol";
 
 interface IState {
 
-    // Enums
-    enum Status { ResidentOwned, Mortgage, Default, Foreclosurable }
-
     struct Loan {
         address owner;
         UD60x18 ratePerSecond;

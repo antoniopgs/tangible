@@ -1,31 +1,35 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import "..//state/State.sol";
+import "./IStatus.sol";
+import "../state/State.sol";
 import { SD59x18, convert } from "@prb/math/src/SD59x18.sol";
 import { convert } from "@prb/math/src/UD60x18.sol";
 import { intoUD60x18 } from "@prb/math/src/sd59x18/Casting.sol";
 import { intoSD59x18 } from "@prb/math/src/ud60x18/Casting.sol";
 
-abstract contract Status is State {
+abstract contract Status is IStatus, State {
 
     function status(uint tokenId) public view returns (Status) {
-
-        Loan memory loan = _loans[tokenId];
-
-        if (loan.unpaidPrincipal == 0) {
+        
+        // If not owned by protocol
+        if (prosperaNftContract.ownerOf(tokenId) != address(this)) {
             return Status.ResidentOwned;
 
+        // If borrower
         } else {
 
+            // Get Loan
+            Loan memory loan = _loans[tokenId];
+            
             // If default
-            if (defaulted(tokenId)) { // Note: payLoan() must clear-out borrower in finalPayment
+            if (defaulted(loan)) {
                 
                 // Calculate timeSinceDefault
-                uint timeSinceDefault = block.timestamp - defaultTime(loan); // Todo: reduce gas costs
+                uint timeSinceDefault = block.timestamp - defaultTime(loan);
 
                 if (timeSinceDefault <= redemptionWindow) {
-                    return Status.Default; // Note: foreclose() must clear-out borrower & loanForeclose() must update borrower
+                    return Status.Default;
 
                 } else {
                     return Status.Foreclosurable;
@@ -38,10 +42,7 @@ abstract contract Status is State {
         }
     }
 
-    function defaulted(uint tokenId) private view returns(bool) {
-
-        // Get loan
-        Loan memory loan = _loans[tokenId];
+    function defaulted(Loan memory loan) private view returns(bool) {
 
         // Get loanCompletedMonths
         uint _loanCompletedMonths = loanCompletedMonths(loan);

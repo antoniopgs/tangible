@@ -1,13 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
+// Inheritance
 import "./IState.sol";
 import "../targetManager/TargetManager.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+// Links
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../../../tokens/tUsdc.sol";
+import "../../../tokens/TangibleNft.sol";
+
+// Libs
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 import { convert } from "@prb/math/src/UD60x18.sol";
 
@@ -16,6 +22,7 @@ abstract contract State is IState, TargetManager, Initializable {
     // Tokens
     IERC20 USDC; /* = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // ethereum */
     tUsdc tUSDC;
+    TangibleNft internal prosperaNftContract;
 
     // Time constants
     uint /* private */ public constant yearSeconds = 365 days; // Note: made public for testing

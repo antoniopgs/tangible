@@ -24,8 +24,9 @@ contract ProtocolTest is Test, DeployScript {
     // Actions
     enum Action {
         Deposit, Withdraw, // Lenders
-        StartLoan, // Admin
+        StartLoan, // Admin Pre-Loan
         PayLoan, RedeemLoan, // Borrower In-Loan
+        SellMortgage, Foreclose, // Admin In-Loan
         SkipTime // Util
     }
     
@@ -58,6 +59,7 @@ contract ProtocolTest is Test, DeployScript {
             } else if (action == uint(Action.Withdraw)) {
                 console.log("\nAction.Withdraw");
                 testWithdraw(randomness[i]);
+                
             } else if (action == uint(Action.StartLoan)) {
                 console.log("\nAction.StartLoan");
                 testWithdraw(randomness[i]);
@@ -132,7 +134,7 @@ contract ProtocolTest is Test, DeployScript {
         console.log("a");
 
         address borrower = makeAddr("borrower");
-        // address seller = makeAddr("seller");
+        address seller = makeAddr("seller");
         uint tokenId = 0;
         uint propertyValue = bound(randomness, 50_000e18, 1_000_000_000e18);
         uint downPayment = propertyValue / 2; // Todo: implement different LTVs later
@@ -155,6 +157,7 @@ contract ProtocolTest is Test, DeployScript {
 
         // Start Loan
         IBorrowing(protocol).startLoan(
+            seller,
             borrower,
             tokenId,
             propertyValue,
@@ -238,85 +241,84 @@ contract ProtocolTest is Test, DeployScript {
         }
         
         // Get unpaidPrincipal & interest
-        // State.Loan memory loan = State(protocol).loans(tokenId);
-        // uint expectedInterest = Borrowing(protocol).accruedInterest(tokenId);
+        State.Loan memory loan = State(protocol).loans(tokenId);
+        uint expectedInterest = Borrowing(protocol).accruedInterest(tokenId);
 
-        // // Calculate minPayment & maxPayment
-        // uint minPayment = expectedInterest;
-        // uint maxPayment = loan.unpaidPrincipal + expectedInterest;
+        // Calculate minPayment & maxPayment
+        uint minPayment = expectedInterest;
+        uint maxPayment = loan.unpaidPrincipal + expectedInterest;
 
-        // // Bound payment
-        // uint payment = bound(randomness, minPayment, maxPayment);
+        // Bound payment
+        uint payment = bound(randomness, minPayment, maxPayment);
 
-        // // Calculate expectations
-        // uint expectedRepayment = payment - expectedInterest;
-        // expectedTotalPrincipal -= expectedRepayment;
-        // expectedTotalDeposits += expectedInterest;
-        // expectedMaxTotalInterestOwed -= expectedInterest;
+        // Calculate expectations
+        uint expectedRepayment = payment - expectedInterest;
+        expectedTotalPrincipal -= expectedRepayment;
+        expectedTotalDeposits += expectedInterest;
+        expectedMaxTotalInterestOwed -= expectedInterest;
 
         // Pay Loan
-        // totalPaidInterest += expectedInterest;
-        // IBorrowing(protocol).payLoan(tokenId, payment);
-        // IBorrowing(protocol).payLoan(tokenId);
+        totalPaidInterest += expectedInterest;
+        IBorrowing(protocol).payLoan(tokenId, payment);
+        IBorrowing(protocol).payLoan(tokenId);
 
-        // // If loan is paid off, return
-        // loan = State(protocol).loans(tokenId);
-        // if (loan.borrower == address(0)) {
-        // console.log("loan paid off.\n");
-        // }
+        // If loan is paid off, return
+        loan = State(protocol).loans(tokenId);
+        if (loan.borrower == address(0)) {
+            console.log("loan paid off.\n");
+        }
     }
 
     function testRedeemLoan(uint randomness) private validate {
 
-        // console.log(1);
+        console.log(1);
 
-        // // if defaulted loans exist
-        // // get tokenId of defaulted loan
+        // if defaulted loans exist
+        // get tokenId of defaulted loan
 
-        // console.log(2);
+        console.log(2);
 
-        // // If nfts exist
-        // if (totalSupply > 0) {
+        // If nfts exist
+        if (totalSupply > 0) {
 
-        //     console.log(3);
+            console.log(3);
 
-        //     // Get random tokenId
-        //     uint tokenId = bound(randomness, 0, totalSupply - 1);
+            // Get random tokenId
+            uint tokenId = bound(randomness, 0, totalSupply - 1);
 
-        //     console.log(4);
+            console.log(4);
 
-        //     // If default
-        //     if (Automation(protocol).status(tokenId) == IState.Status.Default) {
+            // If default
+            if (Automation(protocol).status(tokenId) == IState.Status.Default) {
 
-        //         console.log(5);
+                console.log(5);
 
-        //         // Get redeemer & unpaidPrincipal
-        //         State.Loan memory loan = IInfo(protocol).loans(tokenId);
-        //         uint accruedInterest = IInfo(protocol).accruedInterest(tokenId);
-        //         uint expectedRedeemerDebt = loan.unpaidPrincipal + accruedInterest;
-        //         uint expectedRedemptionFee = convert(convert(expectedRedeemerDebt).mul(IInfo(protocol).redemptionFeeSpread()));
+                // Get redeemer & unpaidPrincipal
+                State.Loan memory loan = IInfo(protocol).loans(tokenId);
+                uint accruedInterest = IInfo(protocol).accruedInterest(tokenId);
+                uint expectedRedeemerDebt = loan.unpaidPrincipal + accruedInterest;
+                uint expectedRedemptionFee = convert(convert(expectedRedeemerDebt).mul(IInfo(protocol).redemptionFeeSpread()));
 
-        //         // Give redeemer expectedRedeemerDebt
-        //         deal(address(USDC), loan.borrower, expectedRedeemerDebt + expectedRedemptionFee);
+                // Give redeemer expectedRedeemerDebt
+                deal(address(USDC), loan.borrower, expectedRedeemerDebt + expectedRedemptionFee);
 
-        //         // Redeemer approves protocol
-        //         vm.prank(loan.borrower);
-        //         // USDC.approve(address(protocol), expectedRedeemerDebt + expectedRedemptionFee);
-        //         USDC.approve(address(protocol), type(uint).max);
+                // Redeemer approves protocol
+                vm.prank(loan.borrower);
+                // USDC.approve(address(protocol), expectedRedeemerDebt + expectedRedemptionFee);
+                USDC.approve(address(protocol), type(uint).max);
                 
-        //         // expectedTotalPrincipal -= loan.unpaidPrincipal;
-        //         // expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
-        //         // expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
+                expectedTotalPrincipal -= loan.unpaidPrincipal;
+                expectedTotalDeposits += Borrowing(protocol).accruedInterest(tokenId);
+                expectedMaxTotalInterestOwed -= loan.maxUnpaidInterest;
+                // Redemer redeems
+                vm.prank(loan.borrower);
+                IBorrowing(protocol).redeemLoan(tokenId);
 
-        //         // Redemer redeems
-        //         vm.prank(loan.borrower);
-        //         IBorrowing(protocol).redeemLoan(tokenId);
-
-        //         console.log(6);
-        //     }
-        // } else {
-        //     console.log("no default.\n");
-        // }
+                console.log(6);
+            }
+        } else {
+            console.log("no default.\n");
+        }
     }
 
     // Util
