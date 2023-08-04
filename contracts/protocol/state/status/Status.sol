@@ -73,7 +73,7 @@ abstract contract Status is IStatus, State {
         return yearMonths * loan.maxDurationSeconds / yearSeconds;
     }
 
-    function principalCap(Loan memory loan, uint month) public pure returns(uint cap) {
+    function principalCap(Loan memory loan, uint month) private pure returns(uint cap) {
 
         // Ensure month doesn't exceed loanMaxDurationMonths
         require(month <= loanMaxMonths(loan), "month must be <= loanMaxDurationMonths");
