@@ -10,14 +10,10 @@ import "forge-std/console.sol";
 import "../contracts/protocol/borrowing/borrowing/IBorrowing.sol";
 import "../contracts/protocol/lending/ILending.sol";
 import "../contracts/protocol/state/state/IState.sol";
-// import "../contracts/protocol/borrowing/borrowing/Borrowing.sol"; // Note: later, further improve architecture, to be able to remove this import
-import "../contracts/protocol/lending/Lending.sol"; // Note: later, further improve architecture, to be able to remove this import
 
 // Other
 // import { MAX_UD60x18, log10 } from "@prb/math/src/UD60x18.sol";
-import { convert } from "@prb/math/src/UD60x18.sol";
-
-import "forge-std/console.sol";
+// import { convert } from "@prb/math/src/UD60x18.sol";
 
 contract ProtocolTest is Test, DeployScript {
 
@@ -192,7 +188,7 @@ contract ProtocolTest is Test, DeployScript {
             console.log("tpl22");
 
             // Get status
-            IState.Status status = Status(protocol).status(tokenId);
+            IStatus.Status status = Status(protocol).status(tokenId);
 
             console.log("tpl23");
 
@@ -241,7 +237,7 @@ contract ProtocolTest is Test, DeployScript {
         }
         
         // Get unpaidPrincipal & interest
-        State.Loan memory loan = State(protocol).loans(tokenId);
+        State.Loan memory loan = IInfo(protocol).loans(tokenId);
         uint expectedInterest = Borrowing(protocol).accruedInterest(tokenId);
 
         // Calculate minPayment & maxPayment
@@ -263,7 +259,7 @@ contract ProtocolTest is Test, DeployScript {
         IBorrowing(protocol).payLoan(tokenId);
 
         // If loan is paid off, return
-        loan = State(protocol).loans(tokenId);
+        loan = IInfo(protocol).loans(tokenId);
         if (loan.borrower == address(0)) {
             console.log("loan paid off.\n");
         }
@@ -278,6 +274,9 @@ contract ProtocolTest is Test, DeployScript {
 
         console.log(2);
 
+        // Get totalSupply
+        uint totalSupply = nftContract.totalSupply();
+
         // If nfts exist
         if (totalSupply > 0) {
 
@@ -289,7 +288,7 @@ contract ProtocolTest is Test, DeployScript {
             console.log(4);
 
             // If default
-            if (Automation(protocol).status(tokenId) == IState.Status.Default) {
+            if (Borrowing(protocol).status(tokenId) == IState.Status.Default) {
 
                 console.log(5);
 
