@@ -14,6 +14,22 @@ contract Borrowing is IBorrowing, Status {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
 
+    // Functions
+    function startNewLoan(address buyer, uint tokenId, uint propertyValue, uint downPayment, uint maxDurationMonths) external onlyOwner {
+
+        // Cover Debts
+        _coverDebt(tokenId, propertyValue);
+
+        // Start New Mortgage
+        _startNewMortgage({
+            newOwner: buyer,
+            tokenId: tokenId,
+            downPayment: downPayment,
+            principal: propertyValue - downPayment,
+            maxDurationMonths: maxDurationMonths
+        });
+    }
+
     function _coverDebt(uint tokenId, uint propertyValue) private {
 
         // 0. Get loan
@@ -46,28 +62,6 @@ contract Borrowing is IBorrowing, Status {
         uint debt = unpaidPrincipal + interest + saleFee;
         require(propertyValue >= debt, "propertyValue must cover debt");
         USDC.safeTransfer(loan.owner, propertyValue - debt);
-    }
-
-    // Functions
-    function startNewLoan(
-        address buyer,
-        uint tokenId,
-        uint propertyValue,
-        uint downPayment,
-        uint maxDurationMonths
-    ) external onlyOwner {
-
-        // Cover Debts
-        _coverDebt(tokenId, propertyValue);
-
-        // Start New Mortgage
-        _startNewMortgage({
-            newOwner: buyer,
-            tokenId: tokenId,
-            downPayment: downPayment,
-            principal: propertyValue - downPayment,
-            maxDurationMonths: maxDurationMonths
-        });
     }
 
     function _startNewMortgage(
@@ -105,6 +99,7 @@ contract Borrowing is IBorrowing, Status {
         // Calculate maxUnpaidInterest
         // uint maxUnpaidInterest = maxCost - principal;
         
+        // Store new Loan
         _loans[tokenId] = Loan({
             owner: newOwner,
             ratePerSecond: ratePerSecond,
