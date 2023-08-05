@@ -28,6 +28,8 @@ contract ProtocolTest2 is Test, DeployScript {
     uint expectedTotalDeposits;
     // uint expectedMaxTotalInterestOwed;
 
+    uint eResidentCount;
+
     // Main
     function testMath(uint[] calldata randomness) public {
 
@@ -68,12 +70,11 @@ contract ProtocolTest2 is Test, DeployScript {
     }
 
     function _testDeposit(uint randomness) private {
-        uint usdc = bound(randomness, 0, 1_000_000_000e6); // Note: USDC has 6 decimals
-        _deposit(usdc);
+        _deposit(randomness);
     }
 
     function _testWithdraw(uint randomness) private {
-        address withdrawer = makeAddr("withdrawer");
+        address withdrawer = vm.addr(bound(randomness, 1, 999_999_999));
         uint availableLiquidity = IInfo(protocol).availableLiquidity();
         uint usdc = bound(randomness, 0, availableLiquidity);
         uint tUsdcBurn = IInfo(protocol).usdcToTUsdc(usdc);
@@ -87,9 +88,103 @@ contract ProtocolTest2 is Test, DeployScript {
     }
 
     function _testStartNewLoan(uint randomness) private {
-        
+        _startNewLoan(randomness);
+    }
+
+    function _testPayLoan(uint randomness) private {
+
+        console.log(0);
+
+        // Get random loan tokenId
+        uint tokenId = _randomLoanTokenId(randomness);
+
+        // Get payment
+        uint payment = bound(randomness, 1, 1_000_000_000e6); // Note: USDC has 6 decimals
+
+        console.log(1);
+
+        // Deal & Approve
+        address payee = vm.addr(bound(randomness, 1, 999_999_999));
+        deal(address(USDC), payee, payment);
+        vm.prank(payee);
+        USDC.approve(protocol, payment);
+
+        console.log(2);
+
+        // Pay loan
+        vm.prank(payee);
+        IBorrowing(protocol).payLoan(tokenId, payment);
+
+        console.log(3);
+    }
+
+    function _testRedeemLoan(uint randomness) private {
+        uint tokenId = _randomLoanTokenId(randomness);
+        IBorrowing(protocol).redeemLoan(tokenId);
+    }
+
+    function _testSkip(uint randomness) private {
+        uint timeJump = bound(randomness, 0, 100 * 365 days); // Note: 0 to 100 years
+        skip(timeJump);
+    }
+
+
+    // ----- UTILS -----
+    function _randomTokenId(uint randomness) private returns(uint tokenId) {
+        uint totalSupply = nftContract.totalSupply();
+        tokenId = bound(randomness, 0, totalSupply);
+    }
+
+    function _randomLoanTokenId(uint randomness) private returns(uint loanTokenId) {
+
+        // Get loansTokenIdsLength
+        uint loansTokenIdsLength = IInfo(protocol).loansTokenIdsLength();
+
+        // If loans exist
+        if (loansTokenIdsLength > 0) {
+
+            // Return random loanTokenId
+            uint randomIdx = bound(randomness, 0, loansTokenIdsLength);
+            loanTokenId = IInfo(protocol).loansTokenIdsAt(randomIdx);
+
+        // If no loans
+        } else {
+
+            // Start new loan & return tokenId
+            loanTokenId = _startNewLoan(randomness);
+        }
+    }
+
+    function _mintNfts(uint amount) private {
+        for (uint i = 1; i <= amount; i++) {
+            nftContract.verifyEResident(i, vm.addr(i));
+            nftContract.mint(vm.addr(i), "");
+        }
+        eResidentCount = amount;
+    }
+
+    function _deposit(uint randomness) private {
+
+        // Get buyer
         address buyer = vm.addr(bound(randomness, 1, 999_999_999));
-        uint tokenId = _randomTokenId(randomness);
+        uint amount = bound(randomness, 0, 1_000_000_000e6); // Note: USDC has 6 decimals
+
+        // Deal
+        deal(address(USDC), buyer, amount);
+
+        // Approve
+        vm.prank(buyer);
+        USDC.approve(protocol, amount);
+
+        // Deposit
+        vm.prank(buyer);
+        ILending(protocol).deposit(amount);
+    }
+
+    function _startNewLoan(uint randomness) private returns(uint tokenId) {
+
+        address buyer = randomEResident(randomness);
+        tokenId = _randomTokenId(randomness);
         uint propertyValue = bound(randomness, 10_000e6, 1_000_000_000e6); // Note: USDC has 6 decimals
         uint downPayment = bound(randomness, propertyValue / 2, propertyValue); // Note: maxLtv is 50%
         uint maxDurationMonths = bound(randomness, 1, 100 * 12); // Note: 1 to 100 years
@@ -121,57 +216,8 @@ contract ProtocolTest2 is Test, DeployScript {
         );
     }
 
-    function _testPayLoan(uint randomness) private {
-        uint tokenId = _randomLoanTokenId(randomness);
-        uint payment = bound(randomness, 1, 1_000_000_000e6); // Note: USDC has 6 decimals
-        IBorrowing(protocol).payLoan(tokenId, payment);
-    }
-
-    function _testRedeemLoan(uint randomness) private {
-        uint tokenId = _randomLoanTokenId(randomness);
-        IBorrowing(protocol).redeemLoan(tokenId);
-    }
-
-    function _testSkip(uint randomness) private {
-        uint timeJump = bound(randomness, 0, 100 * 365 days); // Note: 0 to 100 years
-        skip(timeJump);
-    }
-
-
-    // ----- UTILS -----
-    function _randomTokenId(uint randomness) private returns(uint tokenId) {
-        uint totalSupply = nftContract.totalSupply();
-        tokenId = bound(randomness, 0, totalSupply);
-    }
-
-    function _randomLoanTokenId(uint randomness) private returns(uint loanTokenId) {
-        uint loansTokenIdsLength = IInfo(protocol).loansTokenIdsLength();
-        console.log("loansTokenIdsLength:", loansTokenIdsLength);
-        uint randomIdx = bound(randomness, 0, loansTokenIdsLength);
-        loanTokenId = IInfo(protocol).loansTokenIdsAt(randomIdx);
-    }
-
-    function _mintNfts(uint amount) private {
-        for (uint i = 1; i <= amount; i++) {
-            nftContract.verifyEResident(i, vm.addr(i));
-            nftContract.mint(vm.addr(i), "");
-        }
-    }
-
-    function _deposit(uint amount) private {
-
-        // Get buyer
-        address buyer = makeAddr("depositor");
-
-        // Deal
-        deal(address(USDC), buyer, amount);
-
-        // Approve
-        vm.prank(buyer);
-        USDC.approve(protocol, amount);
-
-        // Deposit
-        vm.prank(buyer);
-        ILending(protocol).deposit(amount);
+    function randomEResident(uint randomness) private returns(address) {
+        uint randomEResidentId = bound(randomness, 1, eResidentCount);
+        return nftContract.eResidentToAddress(randomEResidentId);
     }
 }

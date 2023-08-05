@@ -14,7 +14,7 @@ contract Borrowing is IBorrowing, Status {
 
     // Functions
     function startNewLoan(address buyer, uint tokenId, uint propertyValue, uint downPayment, uint maxDurationMonths) external onlyOwner {
-
+        require(prosperaNftContract.isEResident(buyer), "buyer not eResident");
         require(_availableLiquidity() >= propertyValue - downPayment, "insufficient liquidity for loan");
 
         // Pull downPayment from buyer
