@@ -64,12 +64,11 @@ contract DeployScript is Script {
         info = new Info();
 
         // Set borrowingSelectors
-        bytes4[] memory borrowingSelectors = new bytes4[](4);
+        bytes4[] memory borrowingSelectors = new bytes4[](3);
         borrowingSelectors[0] = IBorrowing.startNewLoan.selector;
         borrowingSelectors[1] = IBorrowing.payLoan.selector;
         borrowingSelectors[2] = IBorrowing.redeemLoan.selector;
         // borrowingSelectors[3] = IBorrowing.forecloseLoan.selector; // Note: maybe I don't even need a foreclosure function, because startLoan() could take care of it
-        borrowingSelectors[3] = IBorrowing.utilization.selector;
         ProtocolProxy(protocol).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set interestSelectors
@@ -84,7 +83,7 @@ contract DeployScript is Script {
         ProtocolProxy(protocol).setSelectorsTarget(lendingSelectors, address(lending));
 
         // Set infoSelectors
-        bytes4[] memory infoSelectors = new bytes4[](12);
+        bytes4[] memory infoSelectors = new bytes4[](14);
         infoSelectors[0] = IInfo.loans.selector;
         infoSelectors[1] = IInfo.availableLiquidity.selector;
         infoSelectors[2] = IInfo.userLoans.selector;
@@ -92,11 +91,13 @@ contract DeployScript is Script {
         infoSelectors[4] = IInfo.loansTokenIdsAt.selector;
         infoSelectors[5] = IInfo.redemptionFeeSpread.selector;
         infoSelectors[6] = IInfo.defaultFeeSpread.selector;
-        infoSelectors[7] = IInfo.accruedInterest.selector;
-        infoSelectors[8] = IInfo.lenderApy.selector;
-        infoSelectors[9] = IInfo.usdcToTUsdc.selector;
-        infoSelectors[10] = IInfo.tUsdcToUsdc.selector;
-        infoSelectors[11] = IInfo.status.selector;
+        infoSelectors[7] = IInfo.unpaidPrincipal.selector;
+        infoSelectors[8] = IInfo.accruedInterest.selector;
+        infoSelectors[9] = IInfo.lenderApy.selector;
+        infoSelectors[10] = IInfo.usdcToTUsdc.selector;
+        infoSelectors[11] = IInfo.tUsdcToUsdc.selector;
+        infoSelectors[12] = IInfo.status.selector;
+        infoSelectors[13] = IInfo.utilization.selector;
         ProtocolProxy(protocol).setSelectorsTarget(infoSelectors, address(info));
     }
 }

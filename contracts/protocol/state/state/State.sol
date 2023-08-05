@@ -95,4 +95,12 @@ abstract contract State is IState, TargetManager, Initializable {
         // Calculate tUsdcAmount
         return tUsdcAmount = usdcAmount * tUsdcSupply / totalDeposits;
     }
+
+    function _utilization() internal view returns(UD60x18) {
+        if (totalDeposits == 0) {
+            assert(totalPrincipal == 0);
+            return convert(uint(0));
+        }
+        return convert(totalPrincipal).div(convert(totalDeposits));
+    }
 }

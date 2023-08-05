@@ -15,6 +15,7 @@ interface IInfo is IStatus, IState {
     function loansTokenIdsLength() external view returns (uint);
     function loansTokenIdsAt(uint idx) external view returns (uint tokenId);
 
+    function unpaidPrincipal(uint tokenId) external view returns(uint);
     function accruedInterest(uint tokenId) external view returns(uint);
 
     function lenderApy() external view returns(UD60x18);
@@ -28,4 +29,6 @@ interface IInfo is IStatus, IState {
     function defaultFeeSpread() external view returns(UD60x18);
 
     function status(uint tokenId) external view returns (Status);
+
+    function utilization() external view returns(UD60x18);
 }

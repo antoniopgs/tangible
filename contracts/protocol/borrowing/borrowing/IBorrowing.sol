@@ -29,7 +29,4 @@ interface IBorrowing {
     ) external;
     function payLoan(uint tokenId, uint payment) external;
     function redeemLoan(uint tokenId) external;
-
-    // Views
-    function utilization() external view returns(UD60x18);
 }

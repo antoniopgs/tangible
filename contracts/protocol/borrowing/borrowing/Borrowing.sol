@@ -107,21 +107,14 @@ contract Borrowing is IBorrowing, Status {
     ) private {
 
         // Get ratePerSecond
-        (bool success, bytes memory data) = logicTargets[IInterest.borrowerRatePerSecond.selector].call(
-            abi.encodeCall(
-                IInterest.borrowerRatePerSecond,
-                (utilization())
-            )
-        );
-        require(success, "couldn't get borrowerRatePerSecond");
-        UD60x18 ratePerSecond = abi.decode(data, (UD60x18));
+        UD60x18 ratePerSecond = IInterest(address(this)).borrowerRatePerSecond(_utilization());
 
         // Calculate maxDurationSeconds
         uint maxDurationSeconds = maxDurationMonths * monthSeconds;
 
         // Calculate paymentPerSecond
         UD60x18 paymentPerSecond = calculatePaymentPerSecond(principal, ratePerSecond, maxDurationSeconds);
-        assert(paymentPerSecond.gt(convert(uint(0))));
+        require(paymentPerSecond.gt(convert(uint(0))), "paymentPerSecond must be > 0");
 
         // Calculate maxCost
         // uint maxCost = convert(paymentPerSecond.mul(convert(maxDurationSeconds)));
@@ -247,14 +240,6 @@ contract Borrowing is IBorrowing, Status {
         
         // Calculate paymentPerSecond
         paymentPerSecond = convert(principal).mul(ratePerSecond).mul(x).div(x.sub(convert(uint(1))));
-    }
-
-    function utilization() public view returns(UD60x18) {
-        if (totalDeposits == 0) {
-            assert(totalPrincipal == 0);
-            return convert(uint(0));
-        }
-        return convert(totalPrincipal).div(convert(totalDeposits));
     }
 
     function releaseNft(uint tokenId) private { // Todo: move to Borrowing

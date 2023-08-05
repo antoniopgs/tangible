@@ -29,6 +29,10 @@ contract Info is IInfo, Status {
         }
     }
 
+    function unpaidPrincipal(uint tokenId) external view returns(uint) {
+        return _loans[tokenId].unpaidPrincipal;
+    }
+
     function accruedInterest(uint tokenId) external view returns(uint) {
         return _accruedInterest(_loans[tokenId]);
     }
@@ -73,12 +77,8 @@ contract Info is IInfo, Status {
     //     return convert(maxTotalUnpaidInterest).div(convert(totalDeposits)); // Question: is this missing auto-compounding?
     }
 
-    function utilization() public view returns(UD60x18) {
-        if (totalDeposits == 0) {
-            assert(totalPrincipal == 0);
-            return convert(uint(0));
-        }
-        return convert(totalPrincipal).div(convert(totalDeposits));
+    function utilization() external view returns(UD60x18) {
+        return _utilization();
     }
 
     function usdcToTUsdc(uint usdcAmount) external view returns(uint tUsdcAmount) {

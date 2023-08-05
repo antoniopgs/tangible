@@ -11,7 +11,7 @@ import "../contracts/protocol/lending/ILending.sol";
 import "../contracts/protocol/state/state/IState.sol";
 
 // Other
-import "forge-std/console.sol";
+// import { convert } from "@prb/math/src/UD60x18.sol";
 
 contract ProtocolTest2 is Test, DeployScript {
 
@@ -96,23 +96,33 @@ contract ProtocolTest2 is Test, DeployScript {
         // Get random loan tokenId
         uint tokenId = _randomLoanTokenId(randomness);
 
-        // Get payment
-        uint payment = bound(randomness, 1, 1_000_000_000e6); // Note: USDC has 6 decimals
+        // If Mortgage
+        if (IInfo(protocol).status(tokenId) == IStatus.Status.Mortgage) {
 
-        // Deal & Approve
-        address payee = vm.addr(bound(randomness, 1, 999_999_999));
-        deal(address(USDC), payee, payment);
-        vm.prank(payee);
-        USDC.approve(protocol, payment);
+            // Get payment
+            uint payment = bound(randomness, 1, 1_000_000_000e6); // Note: USDC has 6 decimals
 
-        // Pay loan
-        vm.prank(payee);
-        IBorrowing(protocol).payLoan(tokenId, payment);
+            // Deal & Approve
+            address payee = vm.addr(bound(randomness, 1, 999_999_999));
+            deal(address(USDC), payee, payment);
+            vm.prank(payee);
+            USDC.approve(protocol, payment);
+
+            // Pay loan
+            vm.prank(payee);
+            IBorrowing(protocol).payLoan(tokenId, payment);
+        }
     }
 
     function _testRedeemLoan(uint randomness) private {
+
+        // Get random loan tokenId
         uint tokenId = _randomLoanTokenId(randomness);
-        IBorrowing(protocol).redeemLoan(tokenId);
+
+        // If Default
+        if (IInfo(protocol).status(tokenId) == IStatus.Status.Default) {
+            IBorrowing(protocol).redeemLoan(tokenId); // Note: test this is getting reach with assert(false)
+        }
     }
 
     function _testSkip(uint randomness) private {
@@ -177,9 +187,16 @@ contract ProtocolTest2 is Test, DeployScript {
 
         address buyer = randomEResident(randomness);
         tokenId = _randomTokenId(randomness);
-        uint propertyValue = bound(randomness, 10_000e6, 1_000_000_000e6); // Note: USDC has 6 decimals
-        uint downPayment = bound(randomness, propertyValue / 2, propertyValue); // Note: maxLtv is 50%
-        uint maxDurationMonths = bound(randomness, 1, 100 * 12); // Note: 1 to 100 years
+
+        uint unpaidPrincipal = IInfo(protocol).unpaidPrincipal(tokenId);
+        uint interest = IInfo(protocol).accruedInterest(tokenId);
+        // UD60x18 a = convert(5).div(convert(100)); // Note: 105%
+        // uint debt = convert(convert(unpaidPrincipal + interest).mul(a));
+        uint debt = (unpaidPrincipal + interest) * 2;
+
+        uint propertyValue = bound(randomness, debt, debt + 1_000_000_000e6); // Note: USDC has 6 decimals // 5%
+        uint downPayment = bound(randomness, propertyValue / 2, 3 * propertyValue / 4); // Note: 25% to 50% ltv
+        uint maxDurationMonths = bound(randomness, 3, 100 * 12); // Note: 1 to 100 years
 
         // If nft is ResidentOwned
         if (IInfo(protocol).status(tokenId) == IStatus.Status.ResidentOwned) {
