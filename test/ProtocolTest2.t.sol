@@ -93,15 +93,11 @@ contract ProtocolTest2 is Test, DeployScript {
 
     function _testPayLoan(uint randomness) private {
 
-        console.log(0);
-
         // Get random loan tokenId
         uint tokenId = _randomLoanTokenId(randomness);
 
         // Get payment
         uint payment = bound(randomness, 1, 1_000_000_000e6); // Note: USDC has 6 decimals
-
-        console.log(1);
 
         // Deal & Approve
         address payee = vm.addr(bound(randomness, 1, 999_999_999));
@@ -109,13 +105,9 @@ contract ProtocolTest2 is Test, DeployScript {
         vm.prank(payee);
         USDC.approve(protocol, payment);
 
-        console.log(2);
-
         // Pay loan
         vm.prank(payee);
         IBorrowing(protocol).payLoan(tokenId, payment);
-
-        console.log(3);
     }
 
     function _testRedeemLoan(uint randomness) private {
@@ -144,7 +136,7 @@ contract ProtocolTest2 is Test, DeployScript {
         if (loansTokenIdsLength > 0) {
 
             // Return random loanTokenId
-            uint randomIdx = bound(randomness, 0, loansTokenIdsLength);
+            uint randomIdx = bound(randomness, 0, loansTokenIdsLength - 1);
             loanTokenId = IInfo(protocol).loansTokenIdsAt(randomIdx);
 
         // If no loans
