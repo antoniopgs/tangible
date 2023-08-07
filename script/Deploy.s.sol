@@ -33,6 +33,9 @@ contract DeployScript is Script {
     Lending lending;
     Info info;
 
+    // Multi-Sig
+    address PAC;
+
     constructor() {
 
         // Fork (needed for tUSDC's ERC777 registration in the ERC1820 registry)
@@ -51,8 +54,11 @@ contract DeployScript is Script {
         // Deploy tUSDC
         tUSDC = new tUsdc(tUsdcDefaultOperators);
 
+        // Deploy PAC Multi-Sig
+        PAC = address(0); // Todo: fix later
+
         // Deploy nftContract
-        nftContract = new TangibleNft(protocol);
+        nftContract = new TangibleNft(protocol, PAC);
 
         // Initialize protocol
         ProtocolProxy(protocol).initialize(USDC, tUSDC, nftContract);

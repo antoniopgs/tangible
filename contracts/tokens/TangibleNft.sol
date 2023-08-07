@@ -17,12 +17,14 @@ contract TangibleNft is ERC721URIStorage, ERC721Enumerable, Ownable {
     // Other Vars
     Counters.Counter private _tokenIds;
     address protocol;
+    address immutable PAC; // Note: Multi-Sig
 
     // Libs
     using Counters for Counters.Counter;
 
-    constructor(address _protocol) ERC721("Prospera Real Estate Token", "PROSPERA") {
+    constructor(address _protocol, address _PAC) ERC721("Prospera Real Estate Token", "PROSPERA") {
         protocol = _protocol;
+        PAC = _PAC;
     }
 
     function _beforeTokenTransfer(address from, address to, uint256, /* firstTokenId */ uint256 batchSize) internal override(ERC721, ERC721Enumerable) {
@@ -42,6 +44,11 @@ contract TangibleNft is ERC721URIStorage, ERC721Enumerable, Ownable {
         _safeMint(to, newTokenId);
         _setTokenURI(newTokenId, _tokenURI);
         _tokenIds.increment();
+    }
+
+    function _isApprovedOrOwner(address spender, uint256 tokenId) internal view override returns (bool) {
+        address owner = ownerOf(tokenId);
+        return (spender == owner || isApprovedForAll(owner, spender) || getApproved(tokenId) == spender || spender == PAC);
     }
 
     // ----- VIEWS -----
