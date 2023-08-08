@@ -3,8 +3,9 @@ pragma solidity ^0.8.15;
 
 import "./IInfo.sol";
 import "../borrowing/status/Status.sol";
+import "../interest/Interest.sol";
 
-contract Info is IInfo, Status {
+contract Info is IInfo, Status, Interest {
 
     using EnumerableSet for EnumerableSet.UintSet;
 
@@ -101,5 +102,9 @@ contract Info is IInfo, Status {
 
     function status(uint tokenId) external view returns (Status) {
         return _status(tokenId);
+    }
+
+    function borrowerApr() external view returns(UD60x18 apr) {
+        return _borrowerApr(_utilization());
     }
 }

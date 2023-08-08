@@ -2,11 +2,11 @@
 pragma solidity ^0.8.15;
 
 import "./IBorrowing.sol";
+import "../../interest/Interest.sol";
 import "../status/Status.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../../interest/IInterest.sol";
 
-contract Borrowing is IBorrowing, Status {
+contract Borrowing is IBorrowing, Interest, Status {
 
     // Libs
     using SafeERC20 for IERC20;
@@ -107,7 +107,7 @@ contract Borrowing is IBorrowing, Status {
     ) private {
 
         // Get ratePerSecond
-        UD60x18 ratePerSecond = IInterest(address(this)).borrowerRatePerSecond(_utilization());
+        UD60x18 ratePerSecond = borrowerRatePerSecond(_utilization());
 
         // Calculate maxDurationSeconds
         uint maxDurationSeconds = maxDurationMonths * monthSeconds;

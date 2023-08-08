@@ -24,13 +24,12 @@ contract DeployScript is Script {
     tUsdc tUSDC;
     TangibleNft nftContract;
 
-    // Protocol
-    address payable protocol;
+    // Proxy
+    address payable proxy;
 
     // Logic Contracts
-    Borrowing borrowing;
-    Interest interest;
     Lending lending;
+    Borrowing borrowing;
     Info info;
 
     // Multi-Sig
@@ -41,12 +40,12 @@ contract DeployScript is Script {
         // Fork (needed for tUSDC's ERC777 registration in the ERC1820 registry)
         vm.createSelectFork("https://mainnet.infura.io/v3/f36750d69d314e3695b7fe230bb781af");
 
-        // Deploy protocol
-        protocol = payable(new ProtocolProxy());
+        // Deploy proxy
+        proxy = payable(new ProtocolProxy());
 
         // Build tUsdcDefaultOperators;
         address[] memory tUsdcDefaultOperators = new address[](1);
-        tUsdcDefaultOperators[0] = address(protocol);
+        tUsdcDefaultOperators[0] = address(proxy);
 
         // Deploy mockUSDC
         USDC = new MockUsdc();
@@ -58,37 +57,31 @@ contract DeployScript is Script {
         PAC = address(0); // Todo: fix later
 
         // Deploy nftContract
-        nftContract = new TangibleNft(protocol, PAC);
+        nftContract = new TangibleNft(proxy, PAC);
 
-        // Initialize protocol
-        ProtocolProxy(protocol).initialize(USDC, tUSDC, nftContract);
+        // Initialize proxy
+        ProtocolProxy(proxy).initialize(USDC, tUSDC, nftContract);
 
         // Deploy logic contracts
-        borrowing = new Borrowing();
-        interest = new Interest();
         lending = new Lending();
+        borrowing = new Borrowing();
         info = new Info();
+
+        // Set lendingSelectors
+        bytes4[] memory lendingSelectors = new bytes4[](2);
+        lendingSelectors[0] = ILending.deposit.selector;
+        lendingSelectors[1] = ILending.withdraw.selector;
+        ProtocolProxy(proxy).setSelectorsTarget(lendingSelectors, address(lending));
 
         // Set borrowingSelectors
         bytes4[] memory borrowingSelectors = new bytes4[](3);
         borrowingSelectors[0] = IBorrowing.startNewLoan.selector;
         borrowingSelectors[1] = IBorrowing.payLoan.selector;
         borrowingSelectors[2] = IBorrowing.redeemLoan.selector;
-        ProtocolProxy(protocol).setSelectorsTarget(borrowingSelectors, address(borrowing));
-
-        // Set interestSelectors
-        bytes4[] memory interestSelectors = new bytes4[](1);
-        interestSelectors[0] = IInterest.borrowerRatePerSecond.selector;
-        ProtocolProxy(protocol).setSelectorsTarget(interestSelectors, address(interest));
-
-        // Set lendingSelectors
-        bytes4[] memory lendingSelectors = new bytes4[](2);
-        lendingSelectors[0] = ILending.deposit.selector;
-        lendingSelectors[1] = ILending.withdraw.selector;
-        ProtocolProxy(protocol).setSelectorsTarget(lendingSelectors, address(lending));
+        ProtocolProxy(proxy).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set infoSelectors
-        bytes4[] memory infoSelectors = new bytes4[](14);
+        bytes4[] memory infoSelectors = new bytes4[](15);
         infoSelectors[0] = IInfo.loans.selector;
         infoSelectors[1] = IInfo.availableLiquidity.selector;
         infoSelectors[2] = IInfo.userLoans.selector;
@@ -103,6 +96,7 @@ contract DeployScript is Script {
         infoSelectors[11] = IInfo.tUsdcToUsdc.selector;
         infoSelectors[12] = IInfo.status.selector;
         infoSelectors[13] = IInfo.utilization.selector;
-        ProtocolProxy(protocol).setSelectorsTarget(infoSelectors, address(info));
+        infoSelectors[14] = IInfo.borrowerApr.selector;
+        ProtocolProxy(proxy).setSelectorsTarget(infoSelectors, address(info));
     }
 }

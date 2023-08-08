@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./IInterest.sol";
 import "../state/state/State.sol";
 import { SD59x18 } from "@prb/math/src/SD59x18.sol";
 import { intoUD60x18 } from "@prb/math/src/sd59x18/Casting.sol";
 import { intoSD59x18 } from "@prb/math/src/ud60x18/Casting.sol";
 
-contract Interest is IInterest, State {
+abstract contract Interest is State {
 
-    function borrowerRatePerSecond(UD60x18 utilization) public view returns(UD60x18 ratePerSecond) {
-        ratePerSecond = borrowerApr(utilization).div(convert(yearSeconds)); // Todo: improve precision
+    function borrowerRatePerSecond(UD60x18 utilization) internal view returns(UD60x18 ratePerSecond) {
+        ratePerSecond = _borrowerApr(utilization).div(convert(yearSeconds)); // Todo: improve precision
     }
 
-    function borrowerApr(UD60x18 utilization) public view returns(UD60x18 apr) {
+    function _borrowerApr(UD60x18 utilization) internal view returns(UD60x18 apr) {
 
         assert(utilization.lte(convert(uint(1)))); // Note: utilization should never exceed 100%
 

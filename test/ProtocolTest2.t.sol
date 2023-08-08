@@ -75,16 +75,16 @@ contract ProtocolTest2 is Test, DeployScript {
 
     function _testWithdraw(uint randomness) private {
         address withdrawer = vm.addr(bound(randomness, 1, 999_999_999));
-        uint availableLiquidity = IInfo(protocol).availableLiquidity();
+        uint availableLiquidity = IInfo(proxy).availableLiquidity();
         uint usdc = bound(randomness, 0, availableLiquidity);
-        uint tUsdcBurn = IInfo(protocol).usdcToTUsdc(usdc);
+        uint tUsdcBurn = IInfo(proxy).usdcToTUsdc(usdc);
 
         // Deal tUSDC
         deal(address(tUSDC), withdrawer, tUsdcBurn);
 
         // Withdraw
         vm.prank(withdrawer);
-        ILending(protocol).withdraw(usdc);
+        ILending(proxy).withdraw(usdc);
     }
 
     function _testStartNewLoan(uint randomness) private {
@@ -97,7 +97,7 @@ contract ProtocolTest2 is Test, DeployScript {
         uint tokenId = _randomLoanTokenId(randomness);
 
         // If Mortgage
-        if (IInfo(protocol).status(tokenId) == IStatus.Status.Mortgage) {
+        if (IInfo(proxy).status(tokenId) == IStatus.Status.Mortgage) {
 
             // Get payment
             uint payment = bound(randomness, 1, 1_000_000_000e6); // Note: USDC has 6 decimals
@@ -106,11 +106,11 @@ contract ProtocolTest2 is Test, DeployScript {
             address payee = vm.addr(bound(randomness, 1, 999_999_999));
             deal(address(USDC), payee, payment);
             vm.prank(payee);
-            USDC.approve(protocol, payment);
+            USDC.approve(proxy, payment);
 
             // Pay loan
             vm.prank(payee);
-            IBorrowing(protocol).payLoan(tokenId, payment);
+            IBorrowing(proxy).payLoan(tokenId, payment);
         }
     }
 
@@ -120,8 +120,8 @@ contract ProtocolTest2 is Test, DeployScript {
         uint tokenId = _randomLoanTokenId(randomness);
 
         // If Default
-        if (IInfo(protocol).status(tokenId) == IStatus.Status.Default) {
-            IBorrowing(protocol).redeemLoan(tokenId); // Note: test this is getting reach with assert(false)
+        if (IInfo(proxy).status(tokenId) == IStatus.Status.Default) {
+            IBorrowing(proxy).redeemLoan(tokenId); // Note: test this is getting reach with assert(false)
         }
     }
 
@@ -140,14 +140,14 @@ contract ProtocolTest2 is Test, DeployScript {
     function _randomLoanTokenId(uint randomness) private returns(uint loanTokenId) {
 
         // Get loansTokenIdsLength
-        uint loansTokenIdsLength = IInfo(protocol).loansTokenIdsLength();
+        uint loansTokenIdsLength = IInfo(proxy).loansTokenIdsLength();
 
         // If loans exist
         if (loansTokenIdsLength > 0) {
 
             // Return random loanTokenId
             uint randomIdx = bound(randomness, 0, loansTokenIdsLength - 1);
-            loanTokenId = IInfo(protocol).loansTokenIdsAt(randomIdx);
+            loanTokenId = IInfo(proxy).loansTokenIdsAt(randomIdx);
 
         // If no loans
         } else {
@@ -176,11 +176,11 @@ contract ProtocolTest2 is Test, DeployScript {
 
         // Approve
         vm.prank(buyer);
-        USDC.approve(protocol, amount);
+        USDC.approve(proxy, amount);
 
         // Deposit
         vm.prank(buyer);
-        ILending(protocol).deposit(amount);
+        ILending(proxy).deposit(amount);
     }
 
     function _startNewLoan(uint randomness) private returns(uint tokenId) {
@@ -188,8 +188,8 @@ contract ProtocolTest2 is Test, DeployScript {
         address buyer = randomEResident(randomness);
         tokenId = _randomTokenId(randomness);
 
-        uint unpaidPrincipal = IInfo(protocol).unpaidPrincipal(tokenId);
-        uint interest = IInfo(protocol).accruedInterest(tokenId);
+        uint unpaidPrincipal = IInfo(proxy).unpaidPrincipal(tokenId);
+        uint interest = IInfo(proxy).accruedInterest(tokenId);
         // UD60x18 a = convert(5).div(convert(100)); // Note: 105%
         // uint debt = convert(convert(unpaidPrincipal + interest).mul(a));
         uint debt = (unpaidPrincipal + interest) * 2;
@@ -199,24 +199,24 @@ contract ProtocolTest2 is Test, DeployScript {
         uint maxDurationMonths = bound(randomness, 3, 100 * 12); // Note: 1 to 100 years
 
         // If nft is ResidentOwned
-        if (IInfo(protocol).status(tokenId) == IStatus.Status.ResidentOwned) {
+        if (IInfo(proxy).status(tokenId) == IStatus.Status.ResidentOwned) {
 
-            // nftOwner approves protocol
+            // nftOwner approves proxy
             address nftOwner = nftContract.ownerOf(tokenId);
             vm.prank(nftOwner);
-            nftContract.approve(protocol, tokenId);
+            nftContract.approve(proxy, tokenId);
         }
 
         // Give buyer downPayment & approve
         deal(address(USDC), buyer, downPayment);
         vm.prank(buyer);
-        USDC.approve(protocol, downPayment);
+        USDC.approve(proxy, downPayment);
 
         // Deposit principal
         _deposit(propertyValue - downPayment);
         
         // Start New Loan
-        IBorrowing(protocol).startNewLoan(
+        IBorrowing(proxy).startNewLoan(
             buyer,
             tokenId,
             propertyValue,
