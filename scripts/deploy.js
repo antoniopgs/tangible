@@ -41,7 +41,10 @@ module.exports = deploy = async () => {
   const mockUsdc = await deployContract("MockUsdc", team);
   const tUsdcDefaultOperators = [ proxy.address ];
   const tUsdc = await deployContract("tUsdc", team, tUsdcDefaultOperators);
-  const tangibleNft = await deployContract("TangibleNft", team, proxy.address);
+  const PAC = ethers.constants.AddressZero; // Todo: fix later
+  // const tangibleNft = await deployContract("TangibleNft", team, [ proxy.address, PAC ]);
+  const TangibleNft = await ethers.getContractFactory("TangibleNft");
+  const tangibleNft = await TangibleNft.connect(team).deploy(proxy.address, PAC);
 
   // ---------- INITIALIZE ----------
 
@@ -49,12 +52,22 @@ module.exports = deploy = async () => {
   await proxy.connect(team).initialize(mockUsdc.address, tUsdc.address, tangibleNft.address);
 
   // ---------- IMPLEMENTATIONS ----------
-  const borrowing = await deployContract("Borrowing", team);
-  const interest = await deployContract("Interest", team);
   const lending = await deployContract("Lending", team);
+  const borrowing = await deployContract("Borrowing", team);
   const info = await deployContract("Info", team);
 
   // ---------- SELECTORS ------------
+
+  // Lending
+  console.log("");
+  console.log("setting lendingSelectors...");
+  const Lending = await ethers.getContractFactory("Lending");
+  const lendingSelectors = [
+    Lending.interface.getSighash("deposit"),
+    Lending.interface.getSighash("withdraw")
+  ];
+  await proxy.connect(team).setSelectorsTarget(lendingSelectors, lending.address);
+  console.log("lendingSelectors set.");
 
   // Borrowing
   console.log("");
@@ -67,27 +80,6 @@ module.exports = deploy = async () => {
   ];
   await proxy.connect(team).setSelectorsTarget(borrowingSelectors, borrowing.address);
   console.log("borrowingSelectors set.");
-
-  // Interest
-  console.log("");
-  console.log("setting interestSelectors...");
-  const Interest = await ethers.getContractFactory("Interest");
-  const interestSelectors = [
-    Interest.interface.getSighash("borrowerRatePerSecond"),
-  ];
-  await proxy.connect(team).setSelectorsTarget(interestSelectors, interest.address);
-  console.log("interestSelectors set.");
-  
-  // Lending
-  console.log("");
-  console.log("setting lendingSelectors...");
-  const Lending = await ethers.getContractFactory("Lending");
-  const lendingSelectors = [
-    Lending.interface.getSighash("deposit"),
-    Lending.interface.getSighash("withdraw")
-  ];
-  await proxy.connect(team).setSelectorsTarget(lendingSelectors, lending.address);
-  console.log("lendingSelectors set.");
 
   // Info
   console.log("");
@@ -107,22 +99,26 @@ module.exports = deploy = async () => {
     Info.interface.getSighash("usdcToTUsdc"),
     Info.interface.getSighash("tUsdcToUsdc"),
     Info.interface.getSighash("status"),
-    Info.interface.getSighash("utilization")
+    Info.interface.getSighash("utilization"),
+    Info.interface.getSighash("borrowerApr")
   ];
   await proxy.connect(team).setSelectorsTarget(infoSelectors, info.address);
   console.log("infoSelectors set.");
 
   return {
     team: team,
-    proxy: proxy,
+    protocol: {
+      proxy: proxy,
+      implementations: {
+        lending: lending,
+        borrowing: borrowing,
+        info: info
+      }
+    },
     tokens: {
       mockUsdc: mockUsdc,
       tUsdc: tUsdc,
       tangibleNft: tangibleNft
-    },
-    borrowing: borrowing,
-    interest: interest,
-    lending: lending,
-    info: info
+    }
   }
 }

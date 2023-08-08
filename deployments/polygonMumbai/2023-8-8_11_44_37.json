@@ -1,0 +1,18 @@
+{
+    "team": "0x42544A495fEb2fB1116f8f754Bf0050ea28509B7",
+    "protocol": {
+        "proxy": "0x3f55899c9Bb79d56DC8405F5BFe15cF1aF3c7cEE",
+        "implementations": {
+            "lending": "0xBe00bC9978451B294669336E8075f7012abae022",
+            "borrowing": "0x89c16FfA07bf340C608F14b5511e5d97D5F33a94",
+            "info": "0xc28FC1326F4F65cC9e46ecCEEa744B4f8923a17E"
+        }
+    },
+    "tokens": {
+        "mockUsdc": "0x6fBf1b22024D5DBf1Ad6CcD63d55b710D63A9518",
+        "tUsdc": "0xEceE622078cc870d9A51Bb4185B54EF56cbBd668",
+        "tangibleNft": "0x6eb1B3E25d849c90958C64E1DBB18C4409b98d6D"
+    },
+    "network": "polygonMumbai",
+    "date": "2023-8-8_11_44_37"
+}
