@@ -70,7 +70,7 @@ contract Info is IInfo, Status, Interest {
         return _availableLiquidity();
     }
 
-    function lenderApy() public view returns(UD60x18) {
+    function lenderApy() external view returns(UD60x18) {
     //     if (totalDeposits == 0) {
     //         assert(maxTotalUnpaidInterest == 0);
     //         return convert(0);
