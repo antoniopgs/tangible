@@ -11,7 +11,7 @@ contract Info is IInfo, Status, Interest {
 
     function userLoans(address account) external view returns (uint[] memory userLoansTokenIds) {
 
-        userLoansTokenIds = new uint[](10);
+        userLoansTokenIds = new uint[](10); // NOTE: MIGHT CAUSE PROBLEMS, INCREASE LATER
         uint realLength;
 
         for (uint i = 0; i < loansTokenIds.length(); i++) {
