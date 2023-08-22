@@ -13,3 +13,4 @@ node_modules
 deployments/hardhat
 deployments/localhost
 artifacts
+deployments
