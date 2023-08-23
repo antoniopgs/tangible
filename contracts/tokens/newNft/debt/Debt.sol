@@ -43,7 +43,7 @@ abstract contract Debt is IDebt, Roles {
 
     }
 
-    function foreclose(uint tokenId) external onlyRole(GSP) {
+    function foreclose(uint tokenId) external onlyRole(PAC) {
 
     }
 
