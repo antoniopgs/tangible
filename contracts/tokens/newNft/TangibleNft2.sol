@@ -31,6 +31,7 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
     }
 
     // ----- Functional View Overrides -----
+    // Todo: require payment transfer fees & sale fees? Or just build up debt for later?
     function _beforeTokenTransfer(address from, address to, uint256, /* firstTokenId */ uint256 batchSize) internal override(ERC721, ERC721Enumerable) {
         require(_isResident(to), "receiver not resident");
         super._beforeTokenTransfer(from, to, 0, batchSize); // is it fine to pass 0 here?
@@ -38,7 +39,8 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
 
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view override returns (bool) {
         address owner = ownerOf(tokenId);
-        return (spender == owner || isApprovedForAll(owner, spender) || getApproved(tokenId) == spender || hasRole(PAC, spender));
+        return (spender == owner || isApprovedForAll(owner, spender) || getApproved(tokenId) == spender ||
+        hasRole(PAC, spender)); // Note: Overriden to allow PAC to move tokens
     }
 
     // ----- Inheritance Overrides -----
