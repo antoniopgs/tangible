@@ -31,7 +31,9 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
     }
 
     // ----- Functional View Overrides -----
-    // Todo: require payment transfer fees & sale fees? Or just build up debt for later?
+    // Todo:
+    // - require payment of transfer fees & sale fees before transfer? Or just build up debt for later?
+    // - how to transfer tokens with debt?
     function _beforeTokenTransfer(address from, address to, uint256, /* firstTokenId */ uint256 batchSize) internal override(ERC721, ERC721Enumerable) {
         require(_isResident(to), "receiver not resident");
         super._beforeTokenTransfer(from, to, 0, batchSize); // is it fine to pass 0 here?
