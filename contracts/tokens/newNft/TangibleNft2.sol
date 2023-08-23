@@ -23,6 +23,7 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
 
     }
 
+    // Note: tokenURI will point to Prospera Property Registry (example: https://prospera-sure.hn/view/27) we might not even need IPFS
     function mint(address to, string memory _tokenURI) external onlyRole(GSP) returns (uint newTokenId) {
         newTokenId = _tokenIds.current();
         _safeMint(to, newTokenId);
