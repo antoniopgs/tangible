@@ -66,11 +66,12 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
     // Note: pulling everything to address(this) is better because:
     // - easier: buyer only needs to approve address(this), instead of address(this) and seller
     // - safer: no need to approve seller (which could let him run off with money)
-    function loanSellToken(uint tokenId, address buyer, uint salePrice, uint downPayment) public {
+    function loanSellToken(uint tokenId, address buyer, uint salePrice, uint downPayment) public { // QUESTION: would loanBuyToken() be better?
 
         // 1. Pull downPayment from buyer
         USDC.safeTransferFrom(buyer, address(this), downPayment);
 
+        // QUESTION: could I make it more efficient if an active mortage is being sold with a new loan? in said scenario, money flows should be simpler...
         // 2. Pull principal (salePrice - downPayment) from protocol
         USDC.safeTransferFrom(protocol, address(this), salePrice - downPayment); // Note: salePrice - downPayment will be 0 if no loan, which is fine
 
