@@ -58,4 +58,37 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
     function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
         return super.tokenURI(tokenId);
     }
+
+    function sellToken(uint tokenId, address buyer, uint salePrice) external {
+        loanSellToken(tokenId, buyer, salePrice, salePrice);
+    }
+
+    // Note: pulling everything to address(this) is better because:
+    // - easier: buyer only needs to approve address(this), instead of address(this) and seller
+    // - safer: no need to approve seller (which could let him run off with money)
+    function loanSellToken(uint tokenId, address buyer, uint salePrice, uint downPayment) public {
+
+        // 1. Pull downPayment from buyer
+        USDC.safeTransferFrom(buyer, address(this), downPayment);
+
+        // 2. Pull principal (salePrice - downPayment) from protocol
+        USDC.safeTransferFrom(protocol, address(this), salePrice - downPayment); // Note: salePrice - downPayment will be 0 if no loan, which is fine
+
+        // 3. Get Loan
+        Loan storage loan;
+
+        // Update Pool (pay off lenders)
+        totalPrincipal -= loan.unpaidPrincipal
+        totalDeposits += accruedInterest(loan);
+
+        // 3. Send sellerEquity (salePrice - unpaidPrincipal - accruedInterest - otherDebt) to seller
+        USDC.safeTransfer(msg.sender, salePrice - loan.unpaidPrincipal - accruedInterest(loan) - loan.otherDebt);
+
+        // 4. Send nft from seller/caller to buyer
+        _safeTransfer(msg.sender, buyer, tokenId);
+
+        // 5. Clear seller debt
+        loan.unpaidPrincipal = 0;
+        loan.otherDebt = 0;
+    }
 }
