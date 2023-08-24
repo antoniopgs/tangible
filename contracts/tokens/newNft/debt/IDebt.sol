@@ -28,6 +28,6 @@ interface IDebt {
 
     // User Functions
     function startNewMortgage(uint tokenId) external; // MUST WORK ON TRAANSFER
-    function payMortgage(uint tokenId) external;
+    function payMortgage(uint tokenId, uint payment) external;
     function redeemMortgage(uint tokenId) external;
 }

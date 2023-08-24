@@ -30,7 +30,7 @@ abstract contract Debt is IDebt, Roles {
 
     }
 
-    function payMortgage(uint tokenId) external {
+    function payMortgage(uint tokenId, uint payment) external {
 
     }
 
