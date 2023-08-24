@@ -23,7 +23,8 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
     using SafeERC20 for IERC20;
 
     constructor(address tangible, address gsp, address pac, address usdc)
-    Debt(tangible, gsp, pac, usdc) ERC721("Prospera Real Estate Token", "PROSPERA") {
+    /*  Debt(usdc) */ Roles(tangible, gsp, pac)
+    ERC721("Prospera Real Estate Token", "PROSPERA") {
 
     }
 

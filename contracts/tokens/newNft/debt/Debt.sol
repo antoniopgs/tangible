@@ -7,12 +7,12 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract Debt is IDebt, Roles {
 
-    IERC20 public immutable USDC;
+    IERC20 public /* immutable */ USDC;
     mapping(uint => Debt) public tokenDebts;
 
-    constructor(address tangible, address gsp, address pac, address usdc) Roles(tangible, gsp, pac) {
-        USDC = IERC20(usdc);
-    }
+    // constructor(address usdc) {
+    //     USDC = IERC20(usdc);
+    // }
 
     // function startNewMortgage() external {
 
