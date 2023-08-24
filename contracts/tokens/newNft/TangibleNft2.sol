@@ -8,8 +8,12 @@ import "./residents/Residents.sol";
 import "./debt/Debt.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { convert } from "@prb/math/src/UD60x18.sol";
 
 contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Residents, Debt {
+
+    uint public totalPrincipal;
+    uint public totalDeposits;
 
     // Other Vars
     Counters.Counter private _tokenIds;
@@ -19,9 +23,7 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
     using SafeERC20 for IERC20;
 
     constructor(address tangible, address gsp, address pac, address usdc)
-    ERC721("Prospera Real Estate Token", "PROSPERA")
-    Roles(tangible, gsp, pac)
-    Debt(usdc) {
+    Debt(tangible, gsp, pac, usdc) ERC721("Prospera Real Estate Token", "PROSPERA") {
 
     }
 
@@ -62,13 +64,13 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
     }
 
     function sellToken(uint tokenId, address buyer, uint salePrice) external {
-        loanSellToken(tokenId, buyer, /* salePrice, */ salePrice);
+        loanSellToken(tokenId, buyer, salePrice, salePrice);
     }
 
     // Note: pulling everything to address(this) is better because:
     // - easier: buyer only needs to approve address(this), instead of address(this) and seller
     // - safer: no need to approve seller (which could let him run off with money)
-    function loanSellToken(uint tokenId, address buyer, /* uint salePrice, */ uint downPayment) public { // QUESTION: would loanBuyToken() be better?
+    function loanSellToken(uint tokenId, address buyer, uint salePrice, uint downPayment) public { // QUESTION: would loanBuyToken() be better?
 
         // 1. Pull downPayment from buyer
         USDC.safeTransferFrom(buyer, address(this), downPayment);
@@ -78,21 +80,34 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
         // USDC.safeTransferFrom(protocol, address(this), salePrice - downPayment); // Note: salePrice - downPayment will be 0 if no loan, which is fine
 
         // 3. Get Loan
-        // Loan storage loan;
-        // uint interest = accruedInterest(loan);
+        Debt storage debt = tokenDebts[tokenId];
+        Loan storage loan = debt.loan;
+        uint interest = accruedInterest(loan);
 
         // Update Pool (pay off lenders)
-        // totalPrincipal -= loan.unpaidPrincipal;
-        // totalDeposits += interest;
+        totalPrincipal -= loan.unpaidPrincipal;
+        totalDeposits += interest;
 
         // 3. Send sellerEquity (salePrice - unpaidPrincipal - accruedInterest - otherDebt) to seller
-        // USDC.safeTransfer(msg.sender, salePrice - loan.unpaidPrincipal - interest - loan.otherDebt);
+        USDC.safeTransfer(msg.sender, salePrice - loan.unpaidPrincipal - interest - debt.otherDebt);
 
         // 4. Send nft from seller/caller to buyer
         _safeTransfer(msg.sender, buyer, tokenId, "");
 
         // 5. Clear seller debt
-        // loan.unpaidPrincipal = 0;
-        // loan.otherDebt = 0;
+        loan.unpaidPrincipal = 0;
+        debt.otherDebt = 0;
+    }
+
+    function accruedInterest(Loan memory loan) private view returns(uint) {
+        return convert(convert(loan.unpaidPrincipal).mul(accruedRate(loan)));
+    }
+
+    function accruedRate(Loan memory loan) private view returns(UD60x18) {
+        return loan.ratePerSecond.mul(convert(secondsSinceLastPayment(loan)));
+    }
+
+    function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
+        return block.timestamp - loan.lastPaymentTime;
     }
 }

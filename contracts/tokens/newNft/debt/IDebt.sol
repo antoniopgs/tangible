@@ -14,9 +14,9 @@ interface IDebt {
         uint lastPaymentTime;
     }
 
-    struct TokenDebt {
+    struct Debt {
         Loan loan;
-        uint other;
+        uint otherDebt;
     }
 
     // Todo: Add Events Later
