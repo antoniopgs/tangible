@@ -34,10 +34,8 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
         _setTokenURI(newTokenId, _tokenURI);
         _tokenIds.increment();
     }
-
-    // ----- Functional View Overrides -----
-    // Todo:
-    // - require payment of transfer fees & sale fees before transfer? Or just build up debt for later?
+    
+    // Todo: require payment of transfer fees & sale fees before transfer? Or just build up debt for later?
     function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize) internal override(ERC721, ERC721Enumerable) {
         require(_isResident(to), "receiver not resident");
         require(tokenDebts[firstTokenId].loan.unpaidPrincipal == 0, "can't transfer nft with mortgage debt");
@@ -48,19 +46,6 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
         address owner = ownerOf(tokenId);
         return (spender == owner || isApprovedForAll(owner, spender) || getApproved(tokenId) == spender ||
         hasRole(PAC, spender)); // Note: Overriden to allow PAC to move tokens
-    }
-
-    // ----- Inheritance Overrides -----
-    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
-        super._burn(tokenId);
-    }
-
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721Enumerable, ERC721, AccessControl) returns (bool) {
-        return super.supportsInterface(interfaceId);
-    }
-
-    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
-        return super.tokenURI(tokenId);
     }
 
     function buyToken(uint tokenId, uint salePrice) external {
@@ -109,6 +94,18 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
 
         // 3. Send nft from seller to buyer
         safeTransferFrom(seller, buyer, tokenId);
+    }
 
+    // ----- Inheritance Overrides -----
+    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
+        super._burn(tokenId);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721Enumerable, ERC721, AccessControl) returns (bool) {
+        return super.supportsInterface(interfaceId);
+    }
+
+    function tokenURI(uint256 tokenId) public view override(ERC721, ERC721URIStorage) returns (string memory) {
+        return super.tokenURI(tokenId);
     }
 }
