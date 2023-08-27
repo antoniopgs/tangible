@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./ILending.sol";
-import "../state/state/State.sol";
+import "./IPool.sol";
+// import "../state/state/State.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract Lending is ILending, State {
+contract Pool is IPool, State {
 
     // Libs
     using SafeERC20 for IERC20;

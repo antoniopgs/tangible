@@ -8,8 +8,8 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 // Links
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../../../tokens/tUsdc.sol";
-import "../../../tokens/TangibleNft.sol";
+import "../../tokens/tUsdc.sol";
+import "../../tokens/newNft/TangibleNft2.sol";
 
 // Libs
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -22,7 +22,7 @@ abstract contract State is IState, TargetManager, Initializable {
     // Tokens
     IERC20 USDC; /* = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // ethereum */
     tUsdc tUSDC;
-    TangibleNft internal prosperaNftContract;
+    TangibleNft2 internal prosperaNftContract;
 
     // Time constants
     uint /* private */ public constant yearSeconds = 365 days; // Note: made public for testing
