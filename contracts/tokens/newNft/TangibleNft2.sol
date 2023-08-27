@@ -75,14 +75,14 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
         debtTransfer(ownerOf(tokenId), msg.sender, tokenId, salePrice, downPayment);
     }
 
+    function loanSellToken(address buyer, uint tokenId, uint salePrice, uint downPayment) public {
+        debtTransfer(msg.sender, buyer, tokenId, salePrice, downPayment);
+    }
+
     // Note: pulling everything to address(this) is better because:
     // - easier: buyer only needs to approve address(this), instead of address(this) and seller
     // - safer: no need to approve seller (which could let him run off with money)
     // QUESTION: could I make it more efficient if an active mortage is being sold with a new loan? in said scenario, money flows should be simpler...
-    function loanSellToken(address buyer, uint tokenId, uint salePrice, uint downPayment) public { // QUESTION: would loanBuyToken() be better?
-        debtTransfer(msg.sender, buyer, tokenId, salePrice, downPayment);
-    }
-
     function debtTransfer(address seller, address buyer, uint tokenId, uint salePrice, uint downPayment) private {
 
         // 1. Pull downPayment from buyer
@@ -100,12 +100,12 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
 
+        // 3. Send sellerEquity (salePrice - unpaidPrincipal - interest - otherDebt) to seller
+        USDC.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest - debt.otherDebt);
+
         // 5. Clear seller/caller debt
         loan.unpaidPrincipal = 0;
         debt.otherDebt = 0;
-
-        // 3. Send sellerEquity (salePrice - unpaidPrincipal - interest - otherDebt) to seller
-        USDC.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest - debt.otherDebt);
 
         // 3. Send nft from seller to buyer
         safeTransferFrom(seller, buyer, tokenId);
