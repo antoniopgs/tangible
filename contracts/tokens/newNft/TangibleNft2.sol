@@ -88,15 +88,15 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
 
-        // 3. Send sellerEquity (salePrice - unpaidPrincipal - accruedInterest - otherDebt) to seller
-        USDC.safeTransfer(msg.sender, salePrice - loan.unpaidPrincipal - interest - debt.otherDebt);
-
-        // 4. Send nft from seller/caller to buyer // Note: maybe move to router
-        _safeTransfer(msg.sender, buyer, tokenId, "");
-
-        // 5. Clear seller debt
+        // 5. Clear seller/caller debt
         loan.unpaidPrincipal = 0;
         debt.otherDebt = 0;
+
+        // 3. Send sellerEquity (salePrice - unpaidPrincipal - interest - otherDebt) to seller/caller
+        USDC.safeTransfer(msg.sender, salePrice - loan.unpaidPrincipal - interest - debt.otherDebt);
+
+        // 4. Send nft from seller/caller to buyer
+        safeTransferFrom(msg.sender, buyer, tokenId);
     }
 
     function buyToken(uint tokenId, uint salePrice) external {
@@ -105,8 +105,32 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
 
     function loanBuyToken(uint tokenId, uint salePrice, uint downPayment) public {
 
-        // 1.
-        // 2.
-        // 3.
+        // 1. Pull downPayment from buyer/caller
+        USDC.safeTransferFrom(msg.sender, address(this), downPayment);
+
+        // Get seller
+        address seller = ownerOf(tokenId);
+
+        // 2. Pull principal (salePrice - downPayment) from protocol
+        // USDC.safeTransferFrom(protocol, address(this), salePrice - downPayment); // Note: salePrice - downPayment will be 0 if no loan, which is fine
+
+        // 3. Get Loan
+        Debt storage debt = tokenDebts[tokenId];
+        Loan storage loan = debt.loan;
+        uint interest = accruedInterest(loan);
+
+        // Update Pool (pay off lenders)
+        totalPrincipal -= loan.unpaidPrincipal;
+        totalDeposits += interest;
+
+        // 5. Clear seller/caller debt
+        loan.unpaidPrincipal = 0;
+        debt.otherDebt = 0;
+
+        // 3. Send sellerEquity (salePrice - unpaidPrincipal - interest - otherDebt) to seller
+        USDC.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest - debt.otherDebt);
+
+        // 3. Send nft from seller to buyer/caller
+        safeTransferFrom(seller, msg.sender, tokenId);
     }
 }
