@@ -68,6 +68,7 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
     // - easier: buyer only needs to approve address(this), instead of address(this) and seller
     // - safer: no need to approve seller (which could let him run off with money)
     // QUESTION: could I make it more efficient if an active mortage is being sold with a new loan? in said scenario, money flows should be simpler...
+    // Todo: figure out where to send otherDebt
     function debtTransfer(address seller, address buyer, uint tokenId, uint salePrice, uint downPayment) private {
 
         // 1. Pull downPayment from buyer
