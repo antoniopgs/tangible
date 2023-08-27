@@ -34,7 +34,7 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
         _setTokenURI(newTokenId, _tokenURI);
         _tokenIds.increment();
     }
-    
+
     // Todo: require payment of transfer fees & sale fees before transfer? Or just build up debt for later?
     function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize) internal override(ERC721, ERC721Enumerable) {
         require(_isResident(to), "receiver not resident");
@@ -96,7 +96,8 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
         safeTransferFrom(seller, buyer, tokenId);
     }
 
-    // ----- Inheritance Overrides -----
+
+    // ----- INHERITANCE OVERRIDES -----
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
         super._burn(tokenId);
     }
