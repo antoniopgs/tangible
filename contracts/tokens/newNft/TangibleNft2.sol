@@ -63,53 +63,30 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
         return super.tokenURI(tokenId);
     }
 
-    function sellToken(uint tokenId, address buyer, uint salePrice) external {
-        loanSellToken(tokenId, buyer, salePrice, salePrice);
+    function buyToken(uint tokenId, uint salePrice) external {
+        loanBuyToken(tokenId, salePrice, salePrice);
+    }
+
+    function sellToken(address buyer, uint tokenId, uint salePrice) external {
+        loanSellToken(buyer, tokenId, salePrice, salePrice);
+    }
+
+    function loanBuyToken(uint tokenId, uint salePrice, uint downPayment) public {
+        debtTransfer(ownerOf(tokenId), msg.sender, tokenId, salePrice, downPayment);
     }
 
     // Note: pulling everything to address(this) is better because:
     // - easier: buyer only needs to approve address(this), instead of address(this) and seller
     // - safer: no need to approve seller (which could let him run off with money)
-    function loanSellToken(uint tokenId, address buyer, uint salePrice, uint downPayment) public { // QUESTION: would loanBuyToken() be better?
+    // QUESTION: could I make it more efficient if an active mortage is being sold with a new loan? in said scenario, money flows should be simpler...
+    function loanSellToken(address buyer, uint tokenId, uint salePrice, uint downPayment) public { // QUESTION: would loanBuyToken() be better?
+        debtTransfer(msg.sender, buyer, tokenId, salePrice, downPayment);
+    }
+
+    function debtTransfer(address seller, address buyer, uint tokenId, uint salePrice, uint downPayment) private {
 
         // 1. Pull downPayment from buyer
         USDC.safeTransferFrom(buyer, address(this), downPayment);
-
-        // QUESTION: could I make it more efficient if an active mortage is being sold with a new loan? in said scenario, money flows should be simpler...
-        // 2. Pull principal (salePrice - downPayment) from protocol
-        // USDC.safeTransferFrom(protocol, address(this), salePrice - downPayment); // Note: salePrice - downPayment will be 0 if no loan, which is fine
-
-        // 3. Get Loan
-        Debt storage debt = tokenDebts[tokenId];
-        Loan storage loan = debt.loan;
-        uint interest = accruedInterest(loan);
-
-        // Update Pool (pay off lenders)
-        totalPrincipal -= loan.unpaidPrincipal;
-        totalDeposits += interest;
-
-        // 5. Clear seller/caller debt
-        loan.unpaidPrincipal = 0;
-        debt.otherDebt = 0;
-
-        // 3. Send sellerEquity (salePrice - unpaidPrincipal - interest - otherDebt) to seller/caller
-        USDC.safeTransfer(msg.sender, salePrice - loan.unpaidPrincipal - interest - debt.otherDebt);
-
-        // 4. Send nft from seller/caller to buyer
-        safeTransferFrom(msg.sender, buyer, tokenId);
-    }
-
-    function buyToken(uint tokenId, uint salePrice) external {
-        loanBuyToken(tokenId, salePrice, salePrice);
-    }
-
-    function loanBuyToken(uint tokenId, uint salePrice, uint downPayment) public {
-
-        // 1. Pull downPayment from buyer/caller
-        USDC.safeTransferFrom(msg.sender, address(this), downPayment);
-
-        // Get seller
-        address seller = ownerOf(tokenId);
 
         // 2. Pull principal (salePrice - downPayment) from protocol
         // USDC.safeTransferFrom(protocol, address(this), salePrice - downPayment); // Note: salePrice - downPayment will be 0 if no loan, which is fine
@@ -130,7 +107,8 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
         // 3. Send sellerEquity (salePrice - unpaidPrincipal - interest - otherDebt) to seller
         USDC.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest - debt.otherDebt);
 
-        // 3. Send nft from seller to buyer/caller
-        safeTransferFrom(seller, msg.sender, tokenId);
+        // 3. Send nft from seller to buyer
+        safeTransferFrom(seller, buyer, tokenId);
+
     }
 }
