@@ -4,6 +4,7 @@ pragma solidity ^0.8.15;
 import "./IDebt.sol";
 import "../roles/Roles.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { convert } from "@prb/math/src/UD60x18.sol";
 
 abstract contract Debt is IDebt, Roles {
 
@@ -50,5 +51,17 @@ abstract contract Debt is IDebt, Roles {
 
     function updateOtherDebt(uint tokenId, string calldata motive) external onlyRole(GSP) {
 
+    }
+
+    function accruedInterest(Loan memory loan) internal view returns(uint) {
+        return convert(convert(loan.unpaidPrincipal).mul(accruedRate(loan)));
+    }
+
+    function accruedRate(Loan memory loan) private view returns(UD60x18) {
+        return loan.ratePerSecond.mul(convert(secondsSinceLastPayment(loan)));
+    }
+
+    function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
+        return block.timestamp - loan.lastPaymentTime;
     }
 }

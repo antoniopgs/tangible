@@ -8,7 +8,7 @@ import "./residents/Residents.sol";
 import "./debt/Debt.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { convert } from "@prb/math/src/UD60x18.sol";
+// import { convert } from "@prb/math/src/UD60x18.sol";
 
 contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Residents, Debt {
 
@@ -39,7 +39,6 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
     // ----- Functional View Overrides -----
     // Todo:
     // - require payment of transfer fees & sale fees before transfer? Or just build up debt for later?
-    // - how to transfer tokens with debt?
     function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize) internal override(ERC721, ERC721Enumerable) {
         require(_isResident(to), "receiver not resident");
         require(tokenDebts[firstTokenId].loan.unpaidPrincipal == 0, "can't transfer nft with mortgage debt");
@@ -99,17 +98,5 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
         // 5. Clear seller debt
         loan.unpaidPrincipal = 0;
         debt.otherDebt = 0;
-    }
-
-    function accruedInterest(Loan memory loan) private view returns(uint) {
-        return convert(convert(loan.unpaidPrincipal).mul(accruedRate(loan)));
-    }
-
-    function accruedRate(Loan memory loan) private view returns(UD60x18) {
-        return loan.ratePerSecond.mul(convert(secondsSinceLastPayment(loan)));
-    }
-
-    function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
-        return block.timestamp - loan.lastPaymentTime;
     }
 }
