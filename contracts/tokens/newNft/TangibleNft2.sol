@@ -8,7 +8,6 @@ import "./residents/Residents.sol";
 import "./debt/Debt.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-// import { convert } from "@prb/math/src/UD60x18.sol";
 
 contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Residents, Debt {
 
@@ -92,11 +91,22 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
         // 3. Send sellerEquity (salePrice - unpaidPrincipal - accruedInterest - otherDebt) to seller
         USDC.safeTransfer(msg.sender, salePrice - loan.unpaidPrincipal - interest - debt.otherDebt);
 
-        // 4. Send nft from seller/caller to buyer
+        // 4. Send nft from seller/caller to buyer // Note: maybe move to router
         _safeTransfer(msg.sender, buyer, tokenId, "");
 
         // 5. Clear seller debt
         loan.unpaidPrincipal = 0;
         debt.otherDebt = 0;
+    }
+
+    function buyToken(uint tokenId, uint salePrice) external {
+        loanBuyToken(tokenId, salePrice, salePrice);
+    }
+
+    function loanBuyToken(uint tokenId, uint salePrice, uint downPayment) public {
+
+        // 1.
+        // 2.
+        // 3.
     }
 }
