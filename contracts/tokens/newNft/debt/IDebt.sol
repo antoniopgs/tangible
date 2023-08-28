@@ -30,4 +30,8 @@ interface IDebt {
     function startNewMortgage(uint tokenId) external; // MUST WORK ON TRAANSFER
     function payMortgage(uint tokenId, uint payment) external;
     function redeemMortgage(uint tokenId) external;
+
+    // Views
+    function unpaidPrincipal(uint tokenId) external view returns(uint);
+    function accruedInterest(uint tokenId) external view returns(uint);
 }
