@@ -10,10 +10,9 @@ contract Borrowing is IBorrowing, Interest, Status {
 
     // Libs
     using SafeERC20 for IERC20;
-    using EnumerableSet for EnumerableSet.UintSet;
 
     // Functions
-    function startNewLoan(address buyer, uint tokenId, uint propertyValue, uint downPayment, uint maxDurationMonths) external onlyOwner {
+    function startNewLoan(address buyer, uint tokenId, uint propertyValue, uint downPayment, uint maxDurationMonths) external /* onlyOwner */ {
         require(prosperaNftContract.isEResident(buyer), "buyer not eResident");
         require(_availableLiquidity() >= propertyValue - downPayment, "insufficient liquidity for loan");
 
@@ -31,9 +30,6 @@ contract Borrowing is IBorrowing, Interest, Status {
 
             // Pull NFT from nftOwner to protocol
             prosperaNftContract.safeTransferFrom(nftOwner, address(this), tokenId); // Note: don't use loan.owner (it doesn't get cleared-out anymore, but NFT could have been transferred)
-
-            // Add tokenId to loansTokenIds
-            loansTokenIds.add(tokenId);
 
             // Cover Debts (oldOwner = nftOwner)
             _coverDebt({
@@ -180,13 +176,6 @@ contract Borrowing is IBorrowing, Interest, Status {
         totalDeposits += interest - interestFee;
         // maxTotalUnpaidInterest -= interest;
 
-        // If loan is paid off
-        if (loan.unpaidPrincipal == 0) {
-            
-            // Release NFT
-            releaseNft(tokenId);
-        }
-
         emit PayLoan(msg.sender, tokenId, payment, interest, repayment, block.timestamp, loan.unpaidPrincipal == 0);
     }
 
@@ -211,9 +200,6 @@ contract Borrowing is IBorrowing, Interest, Status {
         totalDeposits += interest;
         // assert(interest <= loan.maxUnpaidInterest); // Note: actually, if borrower defaults, can't he pay more interest than loan.maxUnpaidInterest? // Note: actually, now that he only has redemptionWindow to redeem, maybe I can bring this assertion back
         //  -= loan.maxUnpaidInterest; // Note: maxTotalUnpaidInterest -= accruedInterest + any remaining unpaid interest (so can use loan.maxUnpaidInterest)
-
-        // Release NFT
-        releaseNft(tokenId);
 
         emit RedeemLoan(msg.sender, tokenId, interest, defaulterDebt, redemptionFee, block.timestamp);
     }
@@ -240,14 +226,5 @@ contract Borrowing is IBorrowing, Interest, Status {
         
         // Calculate paymentPerSecond
         paymentPerSecond = convert(principal).mul(ratePerSecond).mul(x).div(x.sub(convert(uint(1))));
-    }
-
-    function releaseNft(uint tokenId) private { // Todo: move to Borrowing
-
-        // Send NFT to loan.owner
-        prosperaNftContract.safeTransferFrom(address(this), _loans[tokenId].owner, tokenId);
-
-        // Remove tokenId from loansTokenIds
-        loansTokenIds.remove(tokenId);
     }
 }
