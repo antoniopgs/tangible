@@ -53,6 +53,11 @@ abstract contract Debt is IDebt, Roles {
 
     }
 
+    // Views
+    function unpaidPrincipal(uint tokenId) external view returns(uint) {
+        return tokenDebts[tokenId].loan.unpaidPrincipal;
+    }
+
     function accruedInterest(Loan memory loan) internal view returns(uint) {
         return convert(convert(loan.unpaidPrincipal).mul(accruedRate(loan)));
     }
