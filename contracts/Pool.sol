@@ -2,10 +2,17 @@
 pragma solidity ^0.8.15;
 
 import "./IPool.sol";
-// import "../state/state/State.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./tokens/tUsdc.sol";
+import { convert } from "@prb/math/src/UD60x18.sol";
 
-contract Pool is IPool, State {
+contract Pool is IPool {
+
+    IERC20 USDC; /* = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // ethereum */
+    tUsdc tUSDC;
+
+    uint public totalPrincipal;
+    uint public totalDeposits;
 
     // Libs
     using SafeERC20 for IERC20;
@@ -19,7 +26,7 @@ contract Pool is IPool, State {
         totalDeposits += usdc;
         
         // Calulate depositor tUsdc
-        uint _tUsdc = _usdcToTUsdc(usdc);
+        uint _tUsdc = usdcToTUsdc(usdc);
 
         // Mint tUsdc to depositor
         tUSDC.defaultOperatorMint(msg.sender, _tUsdc);
@@ -30,7 +37,7 @@ contract Pool is IPool, State {
     function withdraw(uint usdc) external {
 
         // Calulate withdrawer tUsdc
-        uint _tUsdc = _usdcToTUsdc(usdc);
+        uint _tUsdc = usdcToTUsdc(usdc);
 
         // Burn withdrawer tUsdc
         tUSDC.operatorBurn(msg.sender, _tUsdc, "", "");
@@ -43,5 +50,45 @@ contract Pool is IPool, State {
         USDC.safeTransfer(msg.sender, usdc);
 
         emit Deposit(msg.sender, usdc, _tUsdc);
+    }
+
+    function availableLiquidity() external view returns(uint) {
+        return totalDeposits - totalPrincipal; // - protocolMoney?
+    }
+
+    function utilization() external view returns(UD60x18) {
+        if (totalDeposits == 0) {
+            assert(totalPrincipal == 0);
+            return convert(uint(0));
+        }
+        return convert(totalPrincipal).div(convert(totalDeposits));
+    }
+
+    function usdcToTUsdc(uint usdcAmount) public view returns(uint tUsdcAmount) {
+        
+        // Get tUsdcSupply
+        uint tUsdcSupply = tUSDC.totalSupply();
+
+        // If tUsdcSupply or totalDeposits = 0, 1:1
+        if (tUsdcSupply == 0 || totalDeposits == 0) {
+            return tUsdcAmount = usdcAmount;
+        }
+
+        // Calculate tUsdcAmount
+        return tUsdcAmount = usdcAmount * tUsdcSupply / totalDeposits;
+    }
+
+    function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount) {
+        
+        // Get tUsdcSupply
+        uint tUsdcSupply = tUSDC.totalSupply();
+
+        // If tUsdcSupply or totalDeposits = 0, 1:1
+        if (tUsdcSupply == 0 || totalDeposits == 0) {
+            return usdcAmount = tUsdcAmount;
+        }
+
+        // Calculate usdcAmount
+        return usdcAmount = tUsdcAmount * totalDeposits / tUsdcSupply;
     }
 }
