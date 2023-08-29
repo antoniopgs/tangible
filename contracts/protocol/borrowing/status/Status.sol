@@ -23,30 +23,18 @@ abstract contract Status is PrevState {
         uint otherDebt;
     }
 
-    enum NftStatus { ResidentOwned, Mortgage, Default, Foreclosurable }
+    enum NftStatus { ResidentOwned, Mortgage, Default }
 
     function status(Loan memory loan) public view returns (NftStatus) {
         
         if (loan.unpaidPrincipal == 0) {
             return NftStatus.ResidentOwned;
 
-        // If borrower
         } else {
             
-            // If default
             if (defaulted(loan)) {
-                
-                // Calculate timeSinceDefault
-                uint timeSinceDefault = block.timestamp - defaultTime(loan);
+                return NftStatus.Default;
 
-                if (timeSinceDefault <= redemptionWindow) {
-                    return NftStatus.Default;
-
-                } else {
-                    return NftStatus.Foreclosurable;
-                }
-
-            // If no default
             } else {
                 return NftStatus.Mortgage;
             }
@@ -121,5 +109,10 @@ abstract contract Status is PrevState {
         }
 
         assert(_defaultTime > 0);
+    }
+
+    function redeemable(Loan memory loan) private view returns(bool) {
+        uint timeSinceDefault = block.timestamp - defaultTime(loan);
+        return timeSinceDefault <= redemptionWindow;
     }
 }

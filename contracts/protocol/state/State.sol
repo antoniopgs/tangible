@@ -25,11 +25,8 @@ abstract contract PrevState {
     UD60x18 public _defaultFeeSpread = convert(4).div(convert(100)); // Note: 4%
 
     // Main Storage
-    // mapping(uint => Loan) public _loans;
     uint protocolMoney;
 
     // Other vars
     uint internal redemptionWindow = 45 days;
-    // UD60x18 public maxLtv = convert(50).div(convert(100)); // Note: 50%
-    // uint public maxDurationMonthsCap = 120;
 }
