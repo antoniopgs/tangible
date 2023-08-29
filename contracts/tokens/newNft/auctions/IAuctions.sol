@@ -10,9 +10,4 @@ interface IAuctions {
 
     // Seller
     function acceptBid(uint tokenId, uint idx) external;
-    function bidActionable(uint tokenId, uint idx) external returns(bool);
-
-    // Admin
-    function updateMaxLtv(uint newMaxLtvPct) external;
-    function updateMaxLoanMonths(uint newMaxLoanMonths) external;
 }

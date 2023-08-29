@@ -2,8 +2,9 @@
 pragma solidity ^0.8.15;
 
 import "./IInfo.sol";
+import "../auctions/Auctions.sol";
 
-contract Info is IInfo {
+contract Info is IInfo, Auctions {
 
     // Residents
     function isResident(address addr) external view returns (bool) {
@@ -28,8 +29,8 @@ contract Info is IInfo {
     }
 
     // Auctions
-    function bidActionable(Bid memory _bid) external view returns(bool) {
-        return _bidActionable(_bid);
+    function bidActionable(uint tokenId, uint idx) external view returns(bool) {
+        return _bidActionable(bids[tokenId][idx]);
     }
 
     // Token Debts
