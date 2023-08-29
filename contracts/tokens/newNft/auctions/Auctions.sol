@@ -133,8 +133,13 @@ contract Auctions is IAuctions, Debt, Pool, Residents {
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest;
 
+        // Protocol charges saleFee
+        UD60x18 saleFeeSpread = status(loan) == Status.Default ? _baseSaleFeeSpread.add(_defaultFeeSpread) : _baseSaleFeeSpread; // Question: maybe defaultFee should be a boost appplied to interest instead?
+        uint saleFee = convert(convert(salePrice).mul(saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
+        protocolMoney += saleFee;
+
         // 3. Send sellerEquity (salePrice - unpaidPrincipal - interest - otherDebt) to seller
-        USDC.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest - debt.otherDebt);
+        USDC.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest - debt.otherDebt - saleFee);
 
         // 5. Clear seller/caller debt
         loan.unpaidPrincipal = 0;

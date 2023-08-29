@@ -9,9 +9,6 @@ import "../../tUsdc.sol";
 
 abstract contract State is IState, Roles {
 
-    bool public initialized; // Question: do I actually need this?
-    uint protocolMoney; // Question: do I actually need this?
-
     // Pool
     uint public totalPrincipal;
     uint public totalDeposits;
@@ -38,11 +35,17 @@ abstract contract State is IState, Roles {
     uint internal redemptionWindow = 45 days;
 
     // Fees/Spreads
+    UD60x18 public _baseSaleFeeSpread = convert(1).div(convert(100)); // Note: 1%
     UD60x18 public _interestFeeSpread = convert(2).div(convert(100)); // Note: 2%
     UD60x18 public _redemptionFeeSpread = convert(3).div(convert(100)); // Note: 3%
+    UD60x18 public _defaultFeeSpread = convert(4).div(convert(100)); // Note: 4%
 
 
 
+
+
+    bool public initialized; // Question: do I actually need this?
+    uint protocolMoney; // Question: do I actually need this?
 
 
 
