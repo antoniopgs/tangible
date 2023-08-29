@@ -10,14 +10,17 @@ import "../../tUsdc.sol";
 abstract contract State is IState, Roles {
 
     bool public initialized; // Question: do I actually need this?
-    
-    // Links
-    IERC20 public /* immutable */ USDC;
-    tUsdc tUSDC;
+    uint protocolMoney; // Question: do I actually need this?
 
     // Pool
     uint public totalPrincipal;
     uint public totalDeposits;
+    UD60x18 public optimalUtilization = convert(90).div(convert(100)); // Note: 90%
+
+    // Interest vars
+    UD60x18 internal m1 = convert(4).div(convert(100)); // Note: 0.04
+    UD60x18 internal b1 = convert(3).div(convert(100)); // Note: 0.03
+    UD60x18 internal m2 = convert(9); // Note: 9
 
     // Debts
     mapping(uint => Debt) public debts;
@@ -32,10 +35,22 @@ abstract contract State is IState, Roles {
     // Other Vars
     UD60x18 public maxLtv = convert(50).div(convert(100)); // Note: 50%
     uint public maxLoanMonths = 120; // Note: 10 years
+    uint internal redemptionWindow = 45 days;
+
+    // Fees/Spreads
+    UD60x18 public _interestFeeSpread = convert(2).div(convert(100)); // Note: 2%
+    UD60x18 public _redemptionFeeSpread = convert(3).div(convert(100)); // Note: 3%
 
 
 
 
+
+
+    // EVERY BELOW MIGHT BE CONSTANTS, SO COULD MOVE THEM OFF STATE?
+
+    // Links
+    IERC20 public /* immutable */ USDC;
+    tUsdc tUSDC;
 
     // Time constants
     uint public constant yearSeconds = 365 days;
