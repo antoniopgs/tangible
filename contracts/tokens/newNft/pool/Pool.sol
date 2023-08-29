@@ -2,17 +2,9 @@
 pragma solidity ^0.8.15;
 
 import "./IPool.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./tokens/tUsdc.sol";
-import { convert } from "@prb/math/src/UD60x18.sol";
+import "../state/State.sol";
 
-contract Pool is IPool {
-
-    IERC20 USDC; /* = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // ethereum */
-    tUsdc tUSDC;
-
-    uint public totalPrincipal;
-    uint public totalDeposits;
+contract Pool is IPool, State {
 
     // Libs
     using SafeERC20 for IERC20;
@@ -20,7 +12,7 @@ contract Pool is IPool {
     function deposit(uint usdc) external {
         
         // Pull usdc from depositor
-        USDC.safeTransferFrom(msg.sender, address(this), usdc);
+        USDC.safeTransferFrom(msg.sender, address(this), usdc); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
 
         // Update pool
         totalDeposits += usdc;
@@ -53,6 +45,10 @@ contract Pool is IPool {
     }
 
     function availableLiquidity() external view returns(uint) {
+        return totalDeposits - totalPrincipal; // - protocolMoney?
+    }
+
+    function _availableLiquidity() internal view returns(uint) {
         return totalDeposits - totalPrincipal; // - protocolMoney?
     }
 

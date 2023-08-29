@@ -1,26 +1,37 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import "./IStatus.sol";
-import "../../state/state/State.sol";
+import "../../state/State.sol";
 import { SD59x18, convert } from "@prb/math/src/SD59x18.sol";
 import { convert } from "@prb/math/src/UD60x18.sol";
 import { intoUD60x18 } from "@prb/math/src/sd59x18/Casting.sol";
 import { intoSD59x18 } from "@prb/math/src/ud60x18/Casting.sol";
 
-abstract contract Status is IStatus, State {
+abstract contract Status is PrevState {
 
-    function _status(uint tokenId) internal view returns (Status) {
+    struct Loan {
+        UD60x18 ratePerSecond;
+        UD60x18 paymentPerSecond;
+        uint unpaidPrincipal;
+        uint startTime;
+        uint maxDurationSeconds;
+        uint lastPaymentTime;
+    }
+
+    struct Debt {
+        Loan loan;
+        uint otherDebt;
+    }
+
+    enum NftStatus { ResidentOwned, Mortgage, Default, Foreclosurable }
+
+    function status(Loan memory loan) public view returns (NftStatus) {
         
-        // If not owned by protocol
-        if (prosperaNftContract.ownerOf(tokenId) != address(this)) {
-            return Status.ResidentOwned;
+        if (loan.unpaidPrincipal == 0) {
+            return NftStatus.ResidentOwned;
 
         // If borrower
         } else {
-
-            // Get Loan
-            Loan memory loan = _loans[tokenId];
             
             // If default
             if (defaulted(loan)) {
@@ -29,15 +40,15 @@ abstract contract Status is IStatus, State {
                 uint timeSinceDefault = block.timestamp - defaultTime(loan);
 
                 if (timeSinceDefault <= redemptionWindow) {
-                    return Status.Default;
+                    return NftStatus.Default;
 
                 } else {
-                    return Status.Foreclosurable;
+                    return NftStatus.Foreclosurable;
                 }
 
             // If no default
             } else {
-                return Status.Mortgage;
+                return NftStatus.Mortgage;
             }
         }
     }

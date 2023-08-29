@@ -1,38 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-// Inheritance
-import "./IState.sol";
-import "../targetManager/TargetManager.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
 
-// Links
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../../tokens/tUsdc.sol";
-import "../../tokens/newNft/TangibleNft2.sol";
-
-// Libs
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-
-import { convert } from "@prb/math/src/UD60x18.sol";
-
-abstract contract State is IState, TargetManager, Initializable {
-
-    // Tokens
-    IERC20 USDC; /* = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // ethereum */
-    tUsdc tUSDC;
-    TangibleNft2 internal prosperaNftContract;
+abstract contract PrevState {
 
     // Time constants
-    uint /* private */ public constant yearSeconds = 365 days; // Note: made public for testing
-    uint /* private */ public constant yearMonths = 12;
-    uint /* private */ public constant monthSeconds = yearSeconds / yearMonths; // Note: yearSeconds % yearMonths = 0 (no precision loss)
+    uint public constant yearSeconds = 365 days;
+    uint public constant yearMonths = 12;
+    uint public constant monthSeconds = yearSeconds / yearMonths; // Note: yearSeconds % yearMonths = 0 (no precision loss)
 
     // Pool vars
-    uint public totalPrincipal;
-    uint public totalDeposits;
-    // uint public maxTotalUnpaidInterest; // Todo: figure this out
     UD60x18 public optimalUtilization = convert(90).div(convert(100)); // Note: 90%
 
     // Interest vars
@@ -41,66 +19,17 @@ abstract contract State is IState, TargetManager, Initializable {
     UD60x18 internal m2 = convert(9); // Note: 9
 
     // Fees/Spreads
-    UD60x18 internal _baseSaleFeeSpread = convert(1).div(convert(100)); // Note: 1%
-    UD60x18 internal _interestFeeSpread = convert(2).div(convert(100)); // Note: 2%
-    UD60x18 internal _redemptionFeeSpread = convert(3).div(convert(100)); // Note: 3%
-    UD60x18 internal _defaultFeeSpread = convert(4).div(convert(100)); // Note: 4%
+    UD60x18 public _baseSaleFeeSpread = convert(1).div(convert(100)); // Note: 1%
+    UD60x18 public _interestFeeSpread = convert(2).div(convert(100)); // Note: 2%
+    UD60x18 public _redemptionFeeSpread = convert(3).div(convert(100)); // Note: 3%
+    UD60x18 public _defaultFeeSpread = convert(4).div(convert(100)); // Note: 4%
 
     // Main Storage
-    mapping(uint => Loan) public _loans;
-    EnumerableSet.UintSet internal loansTokenIds;
+    // mapping(uint => Loan) public _loans;
     uint protocolMoney;
 
     // Other vars
     uint internal redemptionWindow = 45 days;
-    UD60x18 public maxLtv = convert(50).div(convert(100)); // Note: 50%
-    uint public maxDurationMonthsCap = 120;
-
-    // Libs
-    using SafeERC20 for IERC20;
-    using EnumerableSet for EnumerableSet.UintSet;
-
-    function initialize(IERC20 _USDC, tUsdc _tUSDC, TangibleNft _prosperaNftContract) external initializer { // Question: maybe move this elsewhere?
-        USDC = _USDC;
-        tUSDC = _tUSDC;
-        prosperaNftContract = _prosperaNftContract;
-    }
-
-    function _availableLiquidity() internal view returns(uint) {
-        return totalDeposits - totalPrincipal; // - protocolMoney?
-    }
-
-    function _accruedInterest(Loan memory loan) internal view returns(uint) {
-        return convert(convert(loan.unpaidPrincipal).mul(accruedRate(loan)));
-    }
-
-    function accruedRate(Loan memory loan) private view returns(UD60x18) {
-        return loan.ratePerSecond.mul(convert(secondsSinceLastPayment(loan)));
-    }
-
-    function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
-        return block.timestamp - loan.lastPaymentTime;
-    }
-
-    function _usdcToTUsdc(uint usdcAmount) internal view returns(uint tUsdcAmount) {
-        
-        // Get tUsdcSupply
-        uint tUsdcSupply = tUSDC.totalSupply();
-
-        // If tUsdcSupply or totalDeposits = 0, 1:1
-        if (tUsdcSupply == 0 || totalDeposits == 0) {
-            return tUsdcAmount = usdcAmount;
-        }
-
-        // Calculate tUsdcAmount
-        return tUsdcAmount = usdcAmount * tUsdcSupply / totalDeposits;
-    }
-
-    function _utilization() internal view returns(UD60x18) {
-        if (totalDeposits == 0) {
-            assert(totalPrincipal == 0);
-            return convert(uint(0));
-        }
-        return convert(totalPrincipal).div(convert(totalDeposits));
-    }
+    // UD60x18 public maxLtv = convert(50).div(convert(100)); // Note: 50%
+    // uint public maxDurationMonthsCap = 120;
 }

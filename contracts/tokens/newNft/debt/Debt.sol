@@ -2,18 +2,10 @@
 pragma solidity ^0.8.15;
 
 import "./IDebt.sol";
-import "../roles/Roles.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { convert } from "@prb/math/src/UD60x18.sol";
+import "../state/State.sol";
+// import "../../../protocol/borrowing/status/Status.sol";
 
-abstract contract Debt is IDebt, Roles {
-
-    IERC20 public /* immutable */ USDC;
-    mapping(uint => Debt) public tokenDebts;
-
-    // constructor(address usdc) {
-    //     USDC = IERC20(usdc);
-    // }
+contract Debt is IDebt, State /*, Status, */ {
 
     // function startNewMortgage() external {
 
@@ -55,10 +47,14 @@ abstract contract Debt is IDebt, Roles {
 
     // Views
     function unpaidPrincipal(uint tokenId) external view returns(uint) {
-        return tokenDebts[tokenId].loan.unpaidPrincipal;
+        return debts[tokenId].loan.unpaidPrincipal;
     }
 
-    function accruedInterest(Loan memory loan) internal view returns(uint) {
+    function accruedInterest(uint tokenId) external view returns(uint) {
+        return _accruedInterest(debts[tokenId].loan);
+    }
+
+    function _accruedInterest(Loan memory loan) internal view returns(uint) {
         return convert(convert(loan.unpaidPrincipal).mul(accruedRate(loan)));
     }
 

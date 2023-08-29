@@ -6,13 +6,23 @@ import { UD60x18 } from "@prb/math/src/UD60x18.sol";
 interface IState {
 
     struct Loan {
-        address owner;
         UD60x18 ratePerSecond;
         UD60x18 paymentPerSecond;
-        uint startTime;
         uint unpaidPrincipal;
-        // uint maxUnpaidInterest;
+        uint startTime;
         uint maxDurationSeconds;
         uint lastPaymentTime;
+    }
+
+    struct Debt {
+        Loan loan;
+        uint otherDebt;
+    }
+
+    struct Bid {
+        address bidder;
+        uint propertyValue;
+        uint downPayment;
+        uint loanMonths;
     }
 }
