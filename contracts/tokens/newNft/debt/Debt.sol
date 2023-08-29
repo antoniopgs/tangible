@@ -46,14 +46,6 @@ contract Debt is IDebt, State /*, Status, */ {
     }
 
     // Views
-    function unpaidPrincipal(uint tokenId) external view returns(uint) {
-        return debts[tokenId].loan.unpaidPrincipal;
-    }
-
-    function accruedInterest(uint tokenId) external view returns(uint) {
-        return _accruedInterest(debts[tokenId].loan);
-    }
-
     function _accruedInterest(Loan memory loan) internal view returns(uint) {
         return convert(convert(loan.unpaidPrincipal).mul(accruedRate(loan)));
     }

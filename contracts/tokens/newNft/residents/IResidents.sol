@@ -4,5 +4,4 @@ pragma solidity ^0.8.15;
 interface IResidents {
 
     function verifyResident(address addr, uint resident) external;
-    function isResident(address addr) external view returns (bool);
 }

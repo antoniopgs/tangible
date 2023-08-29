@@ -18,7 +18,7 @@ contract Pool is IPool, State {
         totalDeposits += usdc;
         
         // Calulate depositor tUsdc
-        uint _tUsdc = usdcToTUsdc(usdc);
+        uint _tUsdc = _usdcToTUsdc(usdc);
 
         // Mint tUsdc to depositor
         tUSDC.defaultOperatorMint(msg.sender, _tUsdc);
@@ -29,7 +29,7 @@ contract Pool is IPool, State {
     function withdraw(uint usdc) external {
 
         // Calulate withdrawer tUsdc
-        uint _tUsdc = usdcToTUsdc(usdc);
+        uint _tUsdc = _usdcToTUsdc(usdc);
 
         // Burn withdrawer tUsdc
         tUSDC.operatorBurn(msg.sender, _tUsdc, "", "");
@@ -44,15 +44,11 @@ contract Pool is IPool, State {
         emit Deposit(msg.sender, usdc, _tUsdc);
     }
 
-    function availableLiquidity() external view returns(uint) {
-        return totalDeposits - totalPrincipal; // - protocolMoney?
-    }
-
     function _availableLiquidity() internal view returns(uint) {
         return totalDeposits - totalPrincipal; // - protocolMoney?
     }
 
-    function utilization() external view returns(UD60x18) {
+    function _utilization() internal view returns(UD60x18) {
         if (totalDeposits == 0) {
             assert(totalPrincipal == 0);
             return convert(uint(0));
@@ -60,7 +56,7 @@ contract Pool is IPool, State {
         return convert(totalPrincipal).div(convert(totalDeposits));
     }
 
-    function usdcToTUsdc(uint usdcAmount) public view returns(uint tUsdcAmount) {
+    function _usdcToTUsdc(uint usdcAmount) internal view returns(uint tUsdcAmount) {
         
         // Get tUsdcSupply
         uint tUsdcSupply = tUSDC.totalSupply();
@@ -74,7 +70,7 @@ contract Pool is IPool, State {
         return tUsdcAmount = usdcAmount * tUsdcSupply / totalDeposits;
     }
 
-    function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount) {
+    function _tUsdcToUsdc(uint tUsdcAmount) internal view returns(uint usdcAmount) {
         
         // Get tUsdcSupply
         uint tUsdcSupply = tUSDC.totalSupply();

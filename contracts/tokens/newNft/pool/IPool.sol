@@ -11,11 +11,4 @@ interface IPool {
     // Functions
     function deposit(uint usdc) external;
     function withdraw(uint usdc) external;
-
-    // Views
-    function availableLiquidity() external view returns(uint);
-    function utilization() external view returns(UD60x18);
-    function usdcToTUsdc(uint usdcAmount) external view returns(uint tUsdcAmount);
-    function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount);
-    // function borrowerApr() external view returns(UD60x18 apr);
 }

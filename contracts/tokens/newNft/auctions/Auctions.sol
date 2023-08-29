@@ -63,7 +63,7 @@ contract Auctions is IAuctions, Debt, Pool, Residents {
         Bid memory _bid = bids[tokenId][idx];
 
         // Ensure bid is actionable
-        require(bidActionable(_bid), "bid not actionable");
+        require(_bidActionable(_bid), "bid not actionable");
 
         // Debt Transfer NFT from seller to bidder
         debtTransfer({
@@ -88,7 +88,7 @@ contract Auctions is IAuctions, Debt, Pool, Residents {
         tokenBids.pop();
     }
 
-    function bidActionable(Bid memory _bid) public view returns(bool) {
+    function _bidActionable(Bid memory _bid) internal view returns(bool) {
         return _bid.propertyValue == _bid.downPayment || loanBidActionable(_bid);
     }
 
