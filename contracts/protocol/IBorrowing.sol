@@ -16,8 +16,6 @@ interface IBorrowing {
         // uint maxCost,
         uint timestamp
     );
-    event PayLoan(address caller, uint tokenId, uint payment, uint interest, uint repayment, uint timestamp, bool paidOff);
-    event RedeemLoan(address caller, uint tokenId, uint interest, uint defaulterDebt, uint redemptionFee, uint timestamp);
 
     // Functions
     function startNewLoan(
@@ -27,6 +25,4 @@ interface IBorrowing {
         uint downPayment,
         uint maxDurationMonths
     ) external;
-    function payLoan(uint tokenId, uint payment) external;
-    function redeemLoan(uint tokenId) external;
 }
