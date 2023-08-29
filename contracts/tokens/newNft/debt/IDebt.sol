@@ -4,6 +4,8 @@ pragma solidity ^0.8.15;
 interface IDebt {
 
     // Todo: Add Events Later
+    event PayLoan(address caller, uint tokenId, uint payment, uint interest, uint repayment, uint timestamp, bool paidOff);
+    event RedeemLoan(address caller, uint tokenId, uint interest, uint defaulterDebt, uint redemptionFee, uint timestamp);
 
     // Admin Functions
     function refinance(uint tokenId) external;
