@@ -9,7 +9,7 @@ import "../../tUsdc.sol";
 
 abstract contract State is IState, Roles {
 
-    bool public initialized;
+    bool public initialized; // Question: do I actually need this?
     
     // Links
     IERC20 public /* immutable */ USDC;
@@ -32,4 +32,16 @@ abstract contract State is IState, Roles {
     // Other Vars
     UD60x18 public maxLtv = convert(50).div(convert(100)); // Note: 50%
     uint public maxLoanMonths = 120; // Note: 10 years
+
+
+
+
+
+    // Time constants
+    uint public constant yearSeconds = 365 days;
+    uint public constant yearMonths = 12;
+    uint public constant monthSeconds = yearSeconds / yearMonths; // Note: yearSeconds % yearMonths = 0 (no precision loss)
+
+    // NFT Status
+    enum Status { ResidentOwned, Mortgage, Default }
 }

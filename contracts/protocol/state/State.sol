@@ -5,11 +5,6 @@ import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
 
 abstract contract PrevState {
 
-    // Time constants
-    uint public constant yearSeconds = 365 days;
-    uint public constant yearMonths = 12;
-    uint public constant monthSeconds = yearSeconds / yearMonths; // Note: yearSeconds % yearMonths = 0 (no precision loss)
-
     // Pool vars
     UD60x18 public optimalUtilization = convert(90).div(convert(100)); // Note: 90%
 
