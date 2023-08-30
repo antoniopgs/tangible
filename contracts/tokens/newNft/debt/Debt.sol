@@ -3,28 +3,47 @@ pragma solidity ^0.8.15;
 
 import "./IDebt.sol";
 import "../status/Status.sol";
+import "../interest/Interest.sol";
+import "../pool/Pool.sol";
 
-contract Debt is IDebt, Status {
+contract Debt is IDebt, Status, Interest, Pool {
 
     using SafeERC20 for IERC20;
 
-    // function startNewMortgage() external {
+    function startNewMortgage(Loan storage loan, uint principal, uint maxDurationMonths) private {
 
-    //     // 1. Buyer sends downPayment to seller
-    //     USDC.safeTransferFrom(msg.sender, seller, downPayment);
+        // Get ratePerSecond
+        UD60x18 ratePerSecond = borrowerRatePerSecond(_utilization());
 
-    //     // 2. Pool sends principal to seller
-    //     USDC.safeTransfer(seller, principal);
+        // Calculate maxDurationSeconds
+        uint maxDurationSeconds = maxDurationMonths * monthSeconds;
 
-    //     // 3. Admin transfers token from seller to buyer
-    //     nft.safeTransferFrom(seller, buyer, tokenId);
-    // }
+        // Calculate paymentPerSecond
+        UD60x18 paymentPerSecond = calculatePaymentPerSecond(principal, ratePerSecond, maxDurationSeconds);
+        require(paymentPerSecond.gt(convert(uint(0))), "paymentPerSecond must be > 0"); // Note: Maybe move to calculatePaymentPerSecond()?
 
-    // User Functions
-    function startNewMortgage(uint tokenId) external { // Todo: MUST WORK ON TRANSFER
+        // Get currentTime
+        uint currentTime = block.timestamp;
 
+        // Store New Loan
+        loan = Loan({
+            ratePerSecond: ratePerSecond,
+            paymentPerSecond: paymentPerSecond,
+            unpaidPrincipal: principal,
+            startTime: currentTime,
+            maxDurationSeconds: maxDurationSeconds,
+            lastPaymentTime: currentTime // Note: no payment here, but needed so lastPaymentElapsedSeconds only counts from now
+        });
+
+        // Update pool
+        totalPrincipal += principal;
+        assert(totalPrincipal <= totalDeposits);
+
+        // Emit Event
+        emit StartLoan(ratePerSecond, paymentPerSecond, principal, maxDurationMonths, currentTime);
     }
 
+    // User Functions
     function payMortgage(uint tokenId, uint payment) external {
 
         // Get Loan

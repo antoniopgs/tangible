@@ -69,7 +69,6 @@ contract Auctions is IAuctions, Debt, Pool, Residents {
 
         // Debt Transfer NFT from seller to bidder
         debtTransfer({
-            seller: msg.sender,
             tokenId: tokenId,
             _bid: _bid
         });
@@ -91,7 +90,7 @@ contract Auctions is IAuctions, Debt, Pool, Residents {
     }
 
     function _bidActionable(Bid memory _bid) internal view returns(bool) {
-        return _bid.propertyValue == _bid.downPayment || loanBidActionable(_bid);
+        return _bid.downPayment == _bid.propertyValue || loanBidActionable(_bid);
     }
 
     function loanBidActionable(Bid memory _bid) private view returns(bool) {
@@ -109,9 +108,10 @@ contract Auctions is IAuctions, Debt, Pool, Residents {
     // Note: pulling buyer's downPayment to address(this) is safer, because buyer doesn't need to approve seller (which could let him run off with money)
     // Question: if active mortgage is being paid off with a new loan, the pool is paying itself, so money flows should be simpler...
     // Todo: figure out where to send otherDebt
-    function debtTransfer(address seller, uint tokenId, Bid memory _bid) private {
+    function debtTransfer(uint tokenId, Bid memory _bid) private {
         
         // Get bid info
+        address seller = ownerOf(tokenId);
         address buyer = _bid.bidder;
         uint salePrice = _bid.propertyValue;
         uint downPayment = _bid.downPayment;
@@ -129,9 +129,13 @@ contract Auctions is IAuctions, Debt, Pool, Residents {
         Loan storage loan = debt.loan;
         uint interest = _accruedInterest(loan);
 
+        // Protocol charges Interest Fee
+        uint interestFee = convert(convert(interest).mul(_interestFeeSpread));
+        protocolMoney += interestFee;
+
         // Update Pool (pay off lenders)
         totalPrincipal -= loan.unpaidPrincipal;
-        totalDeposits += interest;
+        totalDeposits += interest - interestFee;
 
         // Protocol charges saleFee
         UD60x18 saleFeeSpread = status(loan) == Status.Default ? _baseSaleFeeSpread.add(_defaultFeeSpread) : _baseSaleFeeSpread; // Question: maybe defaultFee should be a boost appplied to interest instead?
@@ -139,7 +143,9 @@ contract Auctions is IAuctions, Debt, Pool, Residents {
         protocolMoney += saleFee;
 
         // 3. Send sellerEquity (salePrice - unpaidPrincipal - interest - otherDebt) to seller
-        USDC.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest - debt.otherDebt - saleFee);
+        uint sellerDebt = loan.unpaidPrincipal + interest + saleFee + interestFee + debt.otherDebt;
+        require(salePrice >= sellerDebt, "salePrice must cover sellerDebt");
+        USDC.safeTransfer(seller, salePrice - sellerDebt);
 
         // 5. Clear seller/caller debt
         loan.unpaidPrincipal = 0;
@@ -147,5 +153,14 @@ contract Auctions is IAuctions, Debt, Pool, Residents {
 
         // 3. Send nft from seller to buyer
         safeTransferFrom(seller, buyer, tokenId);
+
+        // If buyer needs loan
+        if (principal > 0) {
+            startNewMortgage({
+                loan: loan,
+                principal: principal,
+                maxDurationMonths: _bid.loanMonths
+            });
+        }
     }
 }
