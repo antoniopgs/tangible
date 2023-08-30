@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../roles/Roles.sol";
+import "../targetManager/TargetManager.sol";
 import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
-import { Debt, Bid } from "../../../types/Types.sol";
+import { Debt, Bid } from "../../../../types/Types.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../../tUsdc.sol";
+import "../../../tUsdc.sol";
 
-abstract contract State is Roles {
+abstract contract State is TargetManager {
 
     // Pool
     uint public totalPrincipal;

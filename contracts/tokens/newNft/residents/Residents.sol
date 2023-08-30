@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "./IResidents.sol";
-import "../state/State.sol";
+import "../state/state/State.sol";
 
 contract Residents is IResidents, State {
 

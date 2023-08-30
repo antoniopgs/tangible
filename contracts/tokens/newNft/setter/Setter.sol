@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "./ISetter.sol";
-import "../state/State.sol";
+import "../state/state/State.sol";
 
 contract Setter is ISetter, State {
 
