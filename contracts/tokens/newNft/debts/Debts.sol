@@ -134,10 +134,10 @@ contract Debts is IDebts, DebtsMath, Status, Interest, Pool {
     // Note: pulling buyer's downPayment to address(this) is safer, because buyer doesn't need to approve seller (which could let him run off with money)
     // Question: if active mortgage is being paid off with a new loan, the pool is paying itself, so money flows should be simpler...
     // Todo: figure out where to send otherDebt
-    function debtTransfer(uint tokenId, Bid memory _bid) private {
+    function debtTransfer(uint tokenId, Bid memory _bid) internal {
         
         // Get bid info
-        address seller = ownerOf(tokenId);
+        address seller /* = ownerOf(tokenId) */;
         address buyer = _bid.bidder;
         uint salePrice = _bid.propertyValue;
         uint downPayment = _bid.downPayment;
@@ -147,7 +147,7 @@ contract Debts is IDebts, DebtsMath, Status, Interest, Pool {
 
         // Pull principal from protocol
         uint principal = salePrice - downPayment; // Note: will be 0 if no loan (which is fine)
-        USDC.safeTransferFrom(protocol, address(this), principal); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
+        // USDC.safeTransferFrom(protocol, address(this), principal); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
         totalPrincipal += principal;
 
         // Get Loan
@@ -179,7 +179,7 @@ contract Debts is IDebts, DebtsMath, Status, Interest, Pool {
         debt.otherDebt = 0;
 
         // Send nft from seller to buyer
-        safeTransferFrom(seller, buyer, tokenId);
+        // safeTransferFrom(seller, buyer, tokenId);
 
         // If buyer used loan
         if (principal > 0) {

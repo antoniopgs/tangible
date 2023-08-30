@@ -2,9 +2,10 @@
 pragma solidity ^0.8.15;
 
 import "./IInfo.sol";
-import "../auctions/Auctions.sol";
+import "../debts/debtsMath/DebtsMath.sol";
+import "../state/State.sol";
 
-contract Info is IInfo, Auctions {
+contract Info is IInfo, DebtsMath, State {
 
     // Residents
     function isResident(address addr) external view returns (bool) {
@@ -25,7 +26,17 @@ contract Info is IInfo, Auctions {
     }
 
     function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount) {
-        return _tUsdcToUsdc(tUsdcAmount);
+        
+        // Get tUsdcSupply
+        uint tUsdcSupply = tUSDC.totalSupply();
+
+        // If tUsdcSupply or totalDeposits = 0, 1:1
+        if (tUsdcSupply == 0 || totalDeposits == 0) {
+            return usdcAmount = tUsdcAmount;
+        }
+
+        // Calculate usdcAmount
+        return usdcAmount = tUsdcAmount * totalDeposits / tUsdcSupply;
     }
 
     // Auctions

@@ -69,18 +69,4 @@ contract Pool is IPool, State {
         // Calculate tUsdcAmount
         return tUsdcAmount = usdcAmount * tUsdcSupply / totalDeposits;
     }
-
-    function _tUsdcToUsdc(uint tUsdcAmount) internal view returns(uint usdcAmount) {
-        
-        // Get tUsdcSupply
-        uint tUsdcSupply = tUSDC.totalSupply();
-
-        // If tUsdcSupply or totalDeposits = 0, 1:1
-        if (tUsdcSupply == 0 || totalDeposits == 0) {
-            return usdcAmount = tUsdcAmount;
-        }
-
-        // Calculate usdcAmount
-        return usdcAmount = tUsdcAmount * totalDeposits / tUsdcSupply;
-    }
 }
