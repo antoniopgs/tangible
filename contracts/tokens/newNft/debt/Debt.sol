@@ -103,9 +103,13 @@ contract Debt is IDebt, Status, Interest, Pool {
         // Redeem (pull defaulter's entire debt + redemptionFee)
         USDC.safeTransferFrom(msg.sender, address(this), defaulterDebt + redemptionFee); // Note: anyone can redeem on behalf of defaulter // Question: actually, shouldn't the defaulter be the only one able to redeem? // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
 
+        // Protocol charges interestFee
+        uint interestFee = convert(convert(interest).mul(_interestFeeSpread));
+        protocolMoney += interestFee;
+
         // Update pool
         totalPrincipal -= loan.unpaidPrincipal;
-        totalDeposits += interest;
+        totalDeposits += interest - interestFee;
 
         emit RedeemLoan(msg.sender, tokenId, interest, defaulterDebt, redemptionFee, block.timestamp);
     }
