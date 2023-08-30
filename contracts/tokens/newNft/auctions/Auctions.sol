@@ -2,11 +2,11 @@
 pragma solidity ^0.8.15;
 
 import "./IAuctions.sol";
-import "../debt/Debt.sol";
+import "../debts/Debts.sol";
 import "../pool/Pool.sol";
 import "../residents/Residents.sol";
 
-contract Auctions is IAuctions, Debt, Residents {
+contract Auctions is IAuctions, Debts, Residents {
 
     using SafeERC20 for IERC20;
 
