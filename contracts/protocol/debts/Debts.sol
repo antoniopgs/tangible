@@ -3,10 +3,10 @@ pragma solidity ^0.8.15;
 
 import "./IDebts.sol";
 import "../debtsInfo/DebtsInfo.sol";
-import "../nftStatus/NftStatus.sol";
-import "../interest/Interest.sol";
+import "../debtsMath/DebtsMath.sol";
+import "../onlySelf/OnlySelf.sol";
 
-contract Debts is IDebts, DebtsInfo, NftStatus, Interest {
+contract Debts is IDebts, DebtsInfo, DebtsMath, OnlySelf {
 
     using SafeERC20 for IERC20;
 
@@ -131,7 +131,7 @@ contract Debts is IDebts, DebtsInfo, NftStatus, Interest {
     // Note: pulling buyer's downPayment to address(this) is safer, because buyer doesn't need to approve seller (which could let him run off with money)
     // Question: if active mortgage is being paid off with a new loan, the pool is paying itself, so money flows should be simpler...
     // Todo: figure out where to send otherDebt
-    function debtTransfer(uint tokenId, Bid memory _bid) internal {
+    function debtTransfer(uint tokenId, Bid memory _bid) external onlySelf {
         
         // Get bid info
         address seller /* = ownerOf(tokenId) */;
@@ -176,7 +176,7 @@ contract Debts is IDebts, DebtsInfo, NftStatus, Interest {
         debt.otherDebt = 0;
 
         // Send nft from seller to buyer
-        safeTransferFrom(seller, buyer, tokenId);
+        tangibleNftProxy.safeTransferFrom(seller, buyer, tokenId);
 
         // If buyer used loan
         if (principal > 0) {

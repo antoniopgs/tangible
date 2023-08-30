@@ -2,6 +2,7 @@
 pragma solidity ^0.8.15;
 
 import { UD60x18 } from "@prb/math/src/UD60x18.sol";
+import { Bid } from "../../types/Types.sol";
 
 interface IDebts {
 
@@ -15,6 +16,7 @@ interface IDebts {
     // User Functions
     function payMortgage(uint tokenId, uint payment) external;
     function redeemMortgage(uint tokenId) external;
+    function debtTransfer(uint tokenId, Bid memory _bid) external; // only callable indirectly
 
     // Admin Functions
     // function refinance(uint tokenId) external;

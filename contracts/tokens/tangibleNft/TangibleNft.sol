@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 // import "./residents/Residents.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../../protocol/info/IInfo.sol";
+import { PAC } from "../../types/RoleNames.sol";
 
 contract TangibleNft is ITangibleNft, ERC721URIStorage, ERC721Enumerable {
 
@@ -40,6 +41,10 @@ contract TangibleNft is ITangibleNft, ERC721URIStorage, ERC721Enumerable {
         address owner = ownerOf(tokenId);
         return (spender == owner || isApprovedForAll(owner, spender) || getApproved(tokenId) == spender ||
         protocolProxy.hasRole(PAC, spender)); // Note: Overriden to allow PAC to move tokens
+    }
+
+    function exists(uint256 tokenId) external view returns (bool) {
+        return _exists(tokenId);
     }
 
     // ----- INHERITANCE OVERRIDES -----

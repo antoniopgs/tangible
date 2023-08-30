@@ -6,6 +6,7 @@ import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
 import { Debt, Bid } from "../../../types/Types.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../../tokens/tUsdc.sol";
+import "../../../tokens/tangibleNft/TangibleNft.sol";
 
 abstract contract State is TargetManager {
 
@@ -53,12 +54,8 @@ abstract contract State is TargetManager {
 
     // Links
     IERC20 public /* immutable */ USDC;
-    tUsdc tUSDC;
-
-    // Time constants
-    uint public constant yearSeconds = 365 days;
-    uint public constant yearMonths = 12;
-    uint public constant monthSeconds = yearSeconds / yearMonths; // Note: yearSeconds % yearMonths = 0 (no precision loss)
+    tUsdc public immutable tUsdcProxy;
+    TangibleNft public immutable tangibleNftProxy;
 
     function _isResident(address addr) internal view returns (bool) {
         return addressToResident[addr] != 0; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
