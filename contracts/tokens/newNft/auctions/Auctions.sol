@@ -116,46 +116,49 @@ contract Auctions is IAuctions, Debt, Pool, Residents {
         uint salePrice = _bid.propertyValue;
         uint downPayment = _bid.downPayment;
 
-        // 1. Pull downPayment from buyer
+        // Pull downPayment from buyer
         USDC.safeTransferFrom(buyer, address(this), downPayment); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
 
-        // 2. Pull principal from protocol
+        // Pull principal from protocol
         uint principal = salePrice - downPayment; // Note: will be 0 if no loan (which is fine)
         USDC.safeTransferFrom(protocol, address(this), principal); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
         totalPrincipal += principal;
 
-        // 3. Get Loan
+        // Get Loan
         Debt storage debt = debts[tokenId];
         Loan storage loan = debt.loan;
         uint interest = _accruedInterest(loan);
 
-        // Protocol charges Interest Fee
+        // Calculate interest Fee
         uint interestFee = convert(convert(interest).mul(_interestFeeSpread));
-        protocolMoney += interestFee;
 
         // Update Pool (pay off lenders)
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest - interestFee;
 
-        // Protocol charges saleFee
+        // Calculate saleFee
         UD60x18 saleFeeSpread = status(loan) == Status.Default ? _baseSaleFeeSpread.add(_defaultFeeSpread) : _baseSaleFeeSpread; // Question: maybe defaultFee should be a boost appplied to interest instead?
         uint saleFee = convert(convert(salePrice).mul(saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
-        protocolMoney += saleFee;
+        
+        // Protocol Charges Fees
+        protocolMoney += interestFee + saleFee;
 
-        // 3. Send sellerEquity (salePrice - unpaidPrincipal - interest - otherDebt) to seller
-        uint sellerDebt = loan.unpaidPrincipal + interest + saleFee + interestFee + debt.otherDebt;
+        // Send sellerEquity (salePrice - unpaidPrincipal - interest - otherDebt) to seller
+        uint sellerDebt = loan.unpaidPrincipal + interest + interestFee + saleFee + debt.otherDebt;
         require(salePrice >= sellerDebt, "salePrice must cover sellerDebt");
         USDC.safeTransfer(seller, salePrice - sellerDebt);
 
-        // 5. Clear seller/caller debt
+        // Clear seller/caller debt
         loan.unpaidPrincipal = 0;
         debt.otherDebt = 0;
 
-        // 3. Send nft from seller to buyer
+        // Send nft from seller to buyer
         safeTransferFrom(seller, buyer, tokenId);
 
-        // If buyer needs loan
+        // If buyer used loan
         if (principal > 0) {
+
+            // Start new Loan
             startNewMortgage({
                 loan: loan,
                 principal: principal,
