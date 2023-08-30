@@ -43,30 +43,4 @@ contract Pool is IPool, State {
 
         emit Deposit(msg.sender, usdc, _tUsdc);
     }
-
-    function _availableLiquidity() internal view returns(uint) {
-        return totalDeposits - totalPrincipal; // - protocolMoney?
-    }
-
-    function _utilization() internal view returns(UD60x18) {
-        if (totalDeposits == 0) {
-            assert(totalPrincipal == 0);
-            return convert(uint(0));
-        }
-        return convert(totalPrincipal).div(convert(totalDeposits));
-    }
-
-    function _usdcToTUsdc(uint usdcAmount) internal view returns(uint tUsdcAmount) {
-        
-        // Get tUsdcSupply
-        uint tUsdcSupply = tUSDC.totalSupply();
-
-        // If tUsdcSupply or totalDeposits = 0, 1:1
-        if (tUsdcSupply == 0 || totalDeposits == 0) {
-            return tUsdcAmount = usdcAmount;
-        }
-
-        // Calculate tUsdcAmount
-        return tUsdcAmount = usdcAmount * tUsdcSupply / totalDeposits;
-    }
 }

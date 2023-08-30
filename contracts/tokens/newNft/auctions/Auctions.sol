@@ -17,7 +17,7 @@ contract Auctions is IAuctions, Debts, Residents {
     // Question: what if nft has no debt? it could still use an auction mechanism, right? openSea could be used, but so could this...
     function bid(uint tokenId, uint propertyValue, uint downPayment, uint loanMonths) public {
         // _requireMinted(tokenId);
-        // require(_isResident(msg.sender), "only residents can bid"); // Note: NFT transfer to non-resident bidder would fail anyways, but I think its best to not invalid bids for Sellers
+        require(_isResident(msg.sender), "only residents can bid"); // Note: NFT transfer to non-resident bidder would fail anyways, but I think its best to not invalid bids for Sellers
         require(downPayment <= propertyValue, "downPayment cannot exceed propertyValue");
         require(loanMonths > 0 && loanMonths <= maxLoanMonths, "unallowed loanMonths");
 
@@ -87,21 +87,5 @@ contract Auctions is IAuctions, Debts, Residents {
 
         // Remove tokenLastBid
         tokenBids.pop();
-    }
-
-    function _bidActionable(Bid memory _bid) internal view returns(bool) {
-        return _bid.downPayment == _bid.propertyValue || loanBidActionable(_bid);
-    }
-
-    function loanBidActionable(Bid memory _bid) private view returns(bool) {
-
-        // Calculate loanBid principal
-        uint principal = _bid.propertyValue - _bid.downPayment;
-
-        // Calculate loanBid ltv
-        UD60x18 ltv = convert(principal).div(convert(_bid.propertyValue));
-
-        // Return actionability
-        return ltv.lte(maxLtv) && principal <= _availableLiquidity(); // Note: LTV already validated in bid(), but re-validate it here (because admin may have updated it)
     }
 }

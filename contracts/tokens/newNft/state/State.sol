@@ -62,4 +62,50 @@ abstract contract State is Roles {
 
     // NFT Status
     enum Status { ResidentOwned, Mortgage, Default }
+
+    function _availableLiquidity() internal view returns(uint) {
+        return totalDeposits - totalPrincipal; // - protocolMoney?
+    }
+
+    function _utilization() internal view returns(UD60x18) {
+        if (totalDeposits == 0) {
+            assert(totalPrincipal == 0);
+            return convert(uint(0));
+        }
+        return convert(totalPrincipal).div(convert(totalDeposits));
+    }
+
+    function _usdcToTUsdc(uint usdcAmount) internal view returns(uint tUsdcAmount) {
+        
+        // Get tUsdcSupply
+        uint tUsdcSupply = tUSDC.totalSupply();
+
+        // If tUsdcSupply or totalDeposits = 0, 1:1
+        if (tUsdcSupply == 0 || totalDeposits == 0) {
+            return tUsdcAmount = usdcAmount;
+        }
+
+        // Calculate tUsdcAmount
+        return tUsdcAmount = usdcAmount * tUsdcSupply / totalDeposits;
+    }
+
+    function _bidActionable(Bid memory _bid) internal view returns(bool) {
+        return _bid.downPayment == _bid.propertyValue || loanBidActionable(_bid);
+    }
+
+    function loanBidActionable(Bid memory _bid) private view returns(bool) {
+
+        // Calculate loanBid principal
+        uint principal = _bid.propertyValue - _bid.downPayment;
+
+        // Calculate loanBid ltv
+        UD60x18 ltv = convert(principal).div(convert(_bid.propertyValue));
+
+        // Return actionability
+        return ltv.lte(maxLtv) && principal <= _availableLiquidity(); // Note: LTV already validated in bid(), but re-validate it here (because admin may have updated it)
+    }
+
+    function _isResident(address addr) internal view returns (bool) {
+        return addressToResident[addr] != 0; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
+    }
 }

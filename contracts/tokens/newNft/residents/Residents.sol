@@ -12,8 +12,4 @@ contract Residents is IResidents, State {
         addressToResident[addr] = resident;
         residentToAddress[resident] = addr;
     }
-
-    function _isResident(address addr) internal view returns (bool) {
-        return addressToResident[addr] != 0; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
-    }
 }

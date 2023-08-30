@@ -26,15 +26,13 @@ contract Debts is IDebts, DebtsMath, Status, Interest, Pool {
         // Get currentTime
         uint currentTime = block.timestamp;
 
-        // Store New Loan
-        loan = Loan({
-            ratePerSecond: ratePerSecond,
-            paymentPerSecond: paymentPerSecond,
-            unpaidPrincipal: principal,
-            startTime: currentTime,
-            maxDurationSeconds: maxDurationSeconds,
-            lastPaymentTime: currentTime // Note: no payment here, but needed so lastPaymentElapsedSeconds only counts from now
-        });
+        // Update Loan
+        loan.ratePerSecond = ratePerSecond;
+        loan.paymentPerSecond = paymentPerSecond;
+        loan.unpaidPrincipal = principal;
+        loan.startTime = currentTime;
+        loan.maxDurationSeconds = maxDurationSeconds;
+        loan.lastPaymentTime = currentTime; // Note: no payment here, but needed so lastPaymentElapsedSeconds only counts from now
 
         // Update pool
         totalPrincipal += principal;
