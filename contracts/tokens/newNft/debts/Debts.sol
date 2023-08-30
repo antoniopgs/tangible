@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./IDebt.sol";
+import "./IDebts.sol";
+import "./debtsMath/DebtsMath.sol";
 import "../status/Status.sol";
 import "../interest/Interest.sol";
 import "../pool/Pool.sol";
 
-contract Debt is IDebt, Status, Interest, Pool {
+contract Debts is IDebts, DebtsMath, Status, Interest, Pool {
 
     using SafeERC20 for IERC20;
 
@@ -128,43 +129,6 @@ contract Debt is IDebt, Status, Interest, Pool {
         require(debts[tokenId].otherDebt >= amount, "amount must be <= otherDebt");
         debts[tokenId].otherDebt -= amount;
         emit DebtDecrease(tokenId, amount, motive, block.timestamp);
-    }
-
-    // Views
-    function _accruedInterest(Loan memory loan) internal view returns(uint) {
-        return convert(convert(loan.unpaidPrincipal).mul(accruedRate(loan)));
-    }
-
-    function accruedRate(Loan memory loan) private view returns(UD60x18) {
-        return loan.ratePerSecond.mul(convert(secondsSinceLastPayment(loan)));
-    }
-
-    function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
-        return block.timestamp - loan.lastPaymentTime;
-    }
-
-    function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) private pure returns(UD60x18 paymentPerSecond) {
-
-        // Calculate x
-        // - (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
-        // - (1 + ratePerSecond) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18
-        // - maxDurationMonths * monthSeconds <= log_(1 + ratePerSecond)_MAX_UD60x18
-        // - maxDurationMonths * monthSeconds <= log(MAX_UD60x18) / log(1 + ratePerSecond)
-        // - maxDurationMonths <= (log(MAX_UD60x18) / log(1 + ratePerSecond)) / monthSeconds // Note: ratePerSecond depends on util (so solve for maxDurationMonths)
-        // - maxDurationMonths <= log(MAX_UD60x18) / (monthSeconds * log(1 + ratePerSecond))
-        UD60x18 x = convert(uint(1)).add(ratePerSecond).powu(maxDurationSeconds);
-
-        // principal * ratePerSecond * x <= MAX_UD60x18
-        // principal * ratePerSecond * (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
-        // principal * ratePerSecond * (1 + ratePerSecond) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18
-        // (1 + ratePerSecond) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18 / (principal * ratePerSecond)
-        // maxDurationMonths * monthSeconds <= log_(1 + ratePerSecond)_(MAX_UD60x18 / (principal * ratePerSecond))
-        // maxDurationMonths * monthSeconds <= log(MAX_UD60x18 / (principal * ratePerSecond)) / log(1 + ratePerSecond)
-        // maxDurationMonths <= (log(MAX_UD60x18 / (principal * ratePerSecond)) / log(1 + ratePerSecond)) / monthSeconds
-        // maxDurationMonths <= log(MAX_UD60x18 / (principal * ratePerSecond)) / (monthSeconds * log(1 + ratePerSecond))
-        
-        // Calculate paymentPerSecond
-        paymentPerSecond = convert(principal).mul(ratePerSecond).mul(x).div(x.sub(convert(uint(1))));
     }
 
     // Note: pulling buyer's downPayment to address(this) is safer, because buyer doesn't need to approve seller (which could let him run off with money)

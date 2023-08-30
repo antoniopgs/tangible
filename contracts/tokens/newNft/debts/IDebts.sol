@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import { UD60x18 } from "@prb/math/src/UD60x18.sol";
 
-interface IDebt {
+interface IDebts {
 
     // Events
     event StartLoan(UD60x18 ratePerSecond, UD60x18 paymentPerSecond, uint principal, uint maxDurationMonths, uint timestamp);
