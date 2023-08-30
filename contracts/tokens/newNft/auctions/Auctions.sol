@@ -6,7 +6,7 @@ import "../debt/Debt.sol";
 import "../pool/Pool.sol";
 import "../residents/Residents.sol";
 
-contract Auctions is IAuctions, Debt, Pool, Residents {
+contract Auctions is IAuctions, Debt, Residents {
 
     using SafeERC20 for IERC20;
 
