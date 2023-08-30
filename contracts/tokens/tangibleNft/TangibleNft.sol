@@ -7,13 +7,14 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 // import "./residents/Residents.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "../../protocol/info/IInfo.sol";
+import "@openzeppelin/contracts/access/IAccessControl.sol";
 import { PAC } from "../../types/RoleNames.sol";
 
 contract TangibleNft is ITangibleNft, ERC721URIStorage, ERC721Enumerable {
 
     // Other Vars
     Counters.Counter private _tokenIds;
-    IInfo protocolProxy;
+    address protocolProxy;
 
     // Libs
     using Counters for Counters.Counter;
@@ -32,15 +33,15 @@ contract TangibleNft is ITangibleNft, ERC721URIStorage, ERC721Enumerable {
 
     // Todo: require payment of transfer fees & sale fees before transfer? Or just build up debt for later?
     function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize) internal override(ERC721, ERC721Enumerable) {
-        require(protocolProxy.isResident(to), "receiver not resident");
-        require(protocolProxy.unpaidPrincipal(firstTokenId) == 0, "can't transfer nft with mortgage debt");
+        require(IInfo(protocolProxy).isResident(to), "receiver not resident");
+        require(IInfo(protocolProxy).unpaidPrincipal(firstTokenId) == 0, "can't transfer nft with mortgage debt");
         super._beforeTokenTransfer(from, to, 0, batchSize); // is it fine to pass 0 here?
     }
 
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view override returns (bool) {
         address owner = ownerOf(tokenId);
         return (spender == owner || isApprovedForAll(owner, spender) || getApproved(tokenId) == spender ||
-        protocolProxy.hasRole(PAC, spender)); // Note: Overriden to allow PAC to move tokens
+        IAccessControl(protocolProxy).hasRole(PAC, spender)); // Note: Overriden to allow PAC to move tokens
     }
 
     function exists(uint256 tokenId) external view returns (bool) {

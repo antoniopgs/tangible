@@ -114,7 +114,7 @@ contract Debts is IDebts, DebtsInfo, DebtsMath, OnlySelf {
 
     // Admin Functions
     function foreclose(uint tokenId, uint idx) external onlyRole(PAC) {
-        debtTransfer(tokenId, bids[tokenId][idx]);
+        debtTransfer(tokenId, bids[tokenId][idx]); // Note: might need to change debtTransfer() visibility
     }
 
     function increaseOtherDebt(uint tokenId, uint amount, string calldata motive) external onlyRole(GSP) {
@@ -131,23 +131,15 @@ contract Debts is IDebts, DebtsInfo, DebtsMath, OnlySelf {
     // Note: pulling buyer's downPayment to address(this) is safer, because buyer doesn't need to approve seller (which could let him run off with money)
     // Question: if active mortgage is being paid off with a new loan, the pool is paying itself, so money flows should be simpler...
     // Todo: figure out where to send otherDebt
-    function debtTransfer(uint tokenId, Bid memory _bid) external onlySelf {
-        
+    function debtTransfer(uint tokenId, Bid memory _bid) public onlySelf {
+
         // Get bid info
         address seller /* = ownerOf(tokenId) */;
         address buyer = _bid.bidder;
         uint salePrice = _bid.propertyValue;
         uint downPayment = _bid.downPayment;
 
-        // Pull downPayment from buyer
-        USDC.safeTransferFrom(buyer, address(this), downPayment); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
-
-        // Pull principal from protocol
-        uint principal = salePrice - downPayment; // Note: will be 0 if no loan (which is fine)
-        USDC.safeTransferFrom(protocol, address(this), principal); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
-        totalPrincipal += principal;
-
-        // Get Loan
+        // Get loan info
         Debt storage debt = debts[tokenId];
         Loan storage loan = debt.loan;
         uint interest = _accruedInterest(loan);
@@ -155,20 +147,27 @@ contract Debts is IDebts, DebtsInfo, DebtsMath, OnlySelf {
         // Calculate interest Fee
         uint interestFee = convert(convert(interest).mul(_interestFeeSpread));
 
+        // Calculate saleFee
+        UD60x18 saleFeeSpread = status(loan) == Status.Default ? _baseSaleFeeSpread.add(_defaultFeeSpread) : _baseSaleFeeSpread; // Question: maybe defaultFee should be a boost appplied to interest instead?
+        uint saleFee = convert(convert(salePrice).mul(saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
+
+        // Calculate sellerDebt
+        uint sellerDebt = loan.unpaidPrincipal + interest + interestFee + saleFee + debt.otherDebt;
+
+        // Validate salePrice
+        require(salePrice >= sellerDebt, "salePrice must cover sellerDebt");
+
+        // Pull downPayment from buyer
+        USDC.safeTransferFrom(buyer, address(this), downPayment); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
+
         // Update Pool (pay off lenders)
         totalPrincipal -= loan.unpaidPrincipal;
         totalDeposits += interest - interestFee;
 
-        // Calculate saleFee
-        UD60x18 saleFeeSpread = status(loan) == Status.Default ? _baseSaleFeeSpread.add(_defaultFeeSpread) : _baseSaleFeeSpread; // Question: maybe defaultFee should be a boost appplied to interest instead?
-        uint saleFee = convert(convert(salePrice).mul(saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
-        
         // Protocol Charges Fees
         protocolMoney += interestFee + saleFee;
 
-        // Send sellerEquity (salePrice - unpaidPrincipal - interest - otherDebt) to seller
-        uint sellerDebt = loan.unpaidPrincipal + interest + interestFee + saleFee + debt.otherDebt;
-        require(salePrice >= sellerDebt, "salePrice must cover sellerDebt");
+        // Send sellerEquity (salePrice - sellerDebt) to seller
         USDC.safeTransfer(seller, salePrice - sellerDebt);
 
         // Clear seller/caller debt
@@ -176,15 +175,18 @@ contract Debts is IDebts, DebtsInfo, DebtsMath, OnlySelf {
         debt.otherDebt = 0;
 
         // Send nft from seller to buyer
-        tangibleNftProxy.safeTransferFrom(seller, buyer, tokenId);
+        tangibleNft.safeTransferFrom(seller, buyer, tokenId);
+
+        // Calculate buyerPrincipal
+        uint buyerPrincipal = salePrice - downPayment;
 
         // If buyer used loan
-        if (principal > 0) {
+        if (buyerPrincipal > 0) {
 
             // Start new Loan
             startNewMortgage({
                 loan: loan,
-                principal: principal,
+                principal: buyerPrincipal,
                 maxDurationMonths: _bid.loanMonths
             });
         }
