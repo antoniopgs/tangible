@@ -145,7 +145,7 @@ contract Debts is IDebts, DebtsMath, Status, Interest, Pool {
 
         // Pull principal from protocol
         uint principal = salePrice - downPayment; // Note: will be 0 if no loan (which is fine)
-        // USDC.safeTransferFrom(protocol, address(this), principal); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
+        USDC.safeTransferFrom(protocol, address(this), principal); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
         totalPrincipal += principal;
 
         // Get Loan
@@ -177,7 +177,7 @@ contract Debts is IDebts, DebtsMath, Status, Interest, Pool {
         debt.otherDebt = 0;
 
         // Send nft from seller to buyer
-        // safeTransferFrom(seller, buyer, tokenId);
+        safeTransferFrom(seller, buyer, tokenId);
 
         // If buyer used loan
         if (principal > 0) {
