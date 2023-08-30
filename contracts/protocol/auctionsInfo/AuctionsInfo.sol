@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "../state/state/State.sol";
-import { Bid } from "../../../types/Types.sol";
+import { Bid } from "../../types/Types.sol";
 import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
 
 abstract contract AuctionsInfo is State {

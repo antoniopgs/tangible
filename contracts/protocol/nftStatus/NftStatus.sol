@@ -5,7 +5,7 @@ import "../state/state/State.sol";
 import { SD59x18, convert } from "@prb/math/src/SD59x18.sol";
 import { intoUD60x18 } from "@prb/math/src/sd59x18/Casting.sol";
 import { intoSD59x18 } from "@prb/math/src/ud60x18/Casting.sol";
-import { Loan, Status } from "../../../types/Types.sol";
+import { Loan, Status } from "../../types/Types.sol";
 
 abstract contract NftStatus is State {
 

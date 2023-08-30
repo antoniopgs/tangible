@@ -1,28 +1,28 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./ITangibleNft2.sol";
+import "./ITangibleNft.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "./residents/Residents.sol";
-// import "./debt/Debt.sol";
+// import "./residents/Residents.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "../../protocol/info/IInfo.sol";
 
-contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Residents /*, Debt */ {
+contract TangibleNft is ITangibleNft, ERC721URIStorage, ERC721Enumerable {
 
     // Other Vars
     Counters.Counter private _tokenIds;
+    IInfo protocolProxy;
 
     // Libs
     using Counters for Counters.Counter;
-    using SafeERC20 for IERC20;
 
     constructor() ERC721("Prospera Real Estate Token", "PROSPERA") {
 
     }
 
     // Note: tokenURI will point to Prospera Property Registry (example: https://prospera-sure.hn/view/27) we might not even need IPFS
-    function mint(address to, string memory _tokenURI) external onlyRole(GSP) returns (uint newTokenId) {
+    function mint(address to, string memory _tokenURI) external /* onlyRole(GSP) */ returns (uint newTokenId) {
         newTokenId = _tokenIds.current();
         _safeMint(to, newTokenId);
         _setTokenURI(newTokenId, _tokenURI);
@@ -31,15 +31,15 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
 
     // Todo: require payment of transfer fees & sale fees before transfer? Or just build up debt for later?
     function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 batchSize) internal override(ERC721, ERC721Enumerable) {
-        require(_isResident(to), "receiver not resident");
-        require(debts[firstTokenId].loan.unpaidPrincipal == 0, "can't transfer nft with mortgage debt");
+        require(protocolProxy.isResident(to), "receiver not resident");
+        require(protocolProxy.unpaidPrincipal(firstTokenId) == 0, "can't transfer nft with mortgage debt");
         super._beforeTokenTransfer(from, to, 0, batchSize); // is it fine to pass 0 here?
     }
 
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view override returns (bool) {
         address owner = ownerOf(tokenId);
         return (spender == owner || isApprovedForAll(owner, spender) || getApproved(tokenId) == spender ||
-        hasRole(PAC, spender)); // Note: Overriden to allow PAC to move tokens
+        protocolProxy.hasRole(PAC, spender)); // Note: Overriden to allow PAC to move tokens
     }
 
     // ----- INHERITANCE OVERRIDES -----
@@ -47,7 +47,7 @@ contract TangibleNft2 is ITangibleNft2, ERC721URIStorage, ERC721Enumerable, Resi
         super._burn(tokenId);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721Enumerable, ERC721, AccessControl) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721Enumerable, ERC721/* , AccessControl */) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 

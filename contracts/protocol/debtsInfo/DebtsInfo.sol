@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
-import { Loan } from "../../../types/Types.sol";
+import { Loan } from "../../types/Types.sol";
 import "../state/state/State.sol";
 
 abstract contract DebtsInfo is State {
