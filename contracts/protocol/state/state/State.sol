@@ -13,12 +13,6 @@ abstract contract State is TargetManager {
     // Pool
     uint public totalPrincipal;
     uint public totalDeposits;
-    UD60x18 public optimalUtilization = convert(90).div(convert(100)); // Note: 90%
-
-    // Interest vars
-    UD60x18 internal m1 = convert(4).div(convert(100)); // Note: 0.04
-    UD60x18 internal b1 = convert(3).div(convert(100)); // Note: 0.03
-    UD60x18 internal m2 = convert(9); // Note: 9
 
     // Debts
     mapping(uint => Debt) public debts;
@@ -30,10 +24,18 @@ abstract contract State is TargetManager {
     mapping(address => uint) public addressToResident; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
     mapping(uint => address) public residentToAddress;
 
+    // Pool Vars
+    UD60x18 public optimalUtilization = convert(90).div(convert(100)); // Note: 90%
+
     // Other Vars
     UD60x18 public maxLtv = convert(50).div(convert(100)); // Note: 50%
     uint public maxLoanMonths = 120; // Note: 10 years
     uint internal redemptionWindow = 45 days;
+
+    // Interest vars
+    UD60x18 internal m1 = convert(4).div(convert(100)); // Note: 0.04
+    UD60x18 internal b1 = convert(3).div(convert(100)); // Note: 0.03
+    UD60x18 internal m2 = convert(9); // Note: 9
 
     // Fees/Spreads
     UD60x18 public _baseSaleFeeSpread = convert(1).div(convert(100)); // Note: 1%
