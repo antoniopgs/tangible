@@ -115,8 +115,8 @@ contract Debt is IDebt, Status, Interest, Pool {
     }
 
     // Admin Functions
-    function foreclose(uint tokenId) external onlyRole(PAC) {
-
+    function foreclose(uint tokenId, uint idx) external onlyRole(PAC) {
+        debtTransfer(tokenId, bids[tokenId][idx]);
     }
 
     function increaseOtherDebt(uint tokenId, uint amount, string calldata motive) external onlyRole(GSP) {
