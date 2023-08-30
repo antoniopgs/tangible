@@ -111,16 +111,19 @@ contract Debt is IDebt, Status, Interest, Pool {
     }
 
     // Admin Functions
-    function refinance(uint tokenId) external onlyRole(GSP) {
-
-    }
-
     function foreclose(uint tokenId) external onlyRole(PAC) {
 
     }
 
-    function updateOtherDebt(uint tokenId, string calldata motive) external onlyRole(GSP) {
+    function increaseOtherDebt(uint tokenId, uint amount, string calldata motive) external onlyRole(GSP) {
+        debts[tokenId].otherDebt += amount;
+        emit DebtIncrease(tokenId, amount, motive, block.timestamp);
+    }
 
+    function decreaseOtherDebt(uint tokenId, uint amount, string calldata motive) external onlyRole(GSP) {
+        require(debts[tokenId].otherDebt >= amount, "amount must be <= otherDebt");
+        debts[tokenId].otherDebt -= amount;
+        emit DebtDecrease(tokenId, amount, motive, block.timestamp);
     }
 
     // Views
