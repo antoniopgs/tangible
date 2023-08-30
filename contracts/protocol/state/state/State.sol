@@ -45,12 +45,7 @@ abstract contract State is TargetManager {
 
 
 
-    bool public initialized; // Question: do I actually need this?
-    uint protocolMoney; // Question: do I actually need this?
-
-
-
-    // EVERY BELOW MIGHT BE CONSTANTS, SO COULD MOVE THEM OFF STATE?
+    // Todo: MOVE CONSTANTS BELOW OFF STATE.SOL?
 
     // Links
     IERC20 public /* immutable */ USDC;
@@ -60,4 +55,7 @@ abstract contract State is TargetManager {
     function _isResident(address addr) internal view returns (bool) {
         return addressToResident[addr] != 0; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
     }
+
+    bool public initialized; // Question: do I actually need this?
+    uint protocolMoney; // Question: do I actually need this?
 }
