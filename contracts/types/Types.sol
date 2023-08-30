@@ -3,6 +3,8 @@ pragma solidity ^0.8.15;
 
 import { UD60x18 } from "@prb/math/src/UD60x18.sol";
 
+enum Status { ResidentOwned, Mortgage, Default }
+
 struct Loan {
     UD60x18 ratePerSecond;
     UD60x18 paymentPerSecond;

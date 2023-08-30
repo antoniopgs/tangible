@@ -2,12 +2,11 @@
 pragma solidity ^0.8.15;
 
 import "./IDebts.sol";
-import "./debtsMath/DebtsMath.sol";
-import "../status/Status.sol";
+import "../debtsInfo/DebtsInfo.sol";
+import "../nftStatus/NftStatus.sol";
 import "../interest/Interest.sol";
-import "../pool/Pool.sol";
 
-contract Debts is IDebts, DebtsMath, Status, Interest, Pool {
+contract Debts is IDebts, DebtsInfo, NftStatus, Interest {
 
     using SafeERC20 for IERC20;
 
@@ -145,7 +144,7 @@ contract Debts is IDebts, DebtsMath, Status, Interest, Pool {
 
         // Pull principal from protocol
         uint principal = salePrice - downPayment; // Note: will be 0 if no loan (which is fine)
-        USDC.safeTransferFrom(protocol, address(this), principal); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
+        // USDC.safeTransferFrom(protocol, address(this), principal); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
         totalPrincipal += principal;
 
         // Get Loan
@@ -177,7 +176,7 @@ contract Debts is IDebts, DebtsMath, Status, Interest, Pool {
         debt.otherDebt = 0;
 
         // Send nft from seller to buyer
-        safeTransferFrom(seller, buyer, tokenId);
+        // safeTransferFrom(seller, buyer, tokenId);
 
         // If buyer used loan
         if (principal > 0) {
@@ -189,5 +188,29 @@ contract Debts is IDebts, DebtsMath, Status, Interest, Pool {
                 maxDurationMonths: _bid.loanMonths
             });
         }
+    }
+
+    function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) internal pure returns(UD60x18 paymentPerSecond) {
+
+        // Calculate x
+        // - (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
+        // - (1 + ratePerSecond) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18
+        // - maxDurationMonths * monthSeconds <= log_(1 + ratePerSecond)_MAX_UD60x18
+        // - maxDurationMonths * monthSeconds <= log(MAX_UD60x18) / log(1 + ratePerSecond)
+        // - maxDurationMonths <= (log(MAX_UD60x18) / log(1 + ratePerSecond)) / monthSeconds // Note: ratePerSecond depends on util (so solve for maxDurationMonths)
+        // - maxDurationMonths <= log(MAX_UD60x18) / (monthSeconds * log(1 + ratePerSecond))
+        UD60x18 x = convert(uint(1)).add(ratePerSecond).powu(maxDurationSeconds);
+
+        // principal * ratePerSecond * x <= MAX_UD60x18
+        // principal * ratePerSecond * (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
+        // principal * ratePerSecond * (1 + ratePerSecond) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18
+        // (1 + ratePerSecond) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18 / (principal * ratePerSecond)
+        // maxDurationMonths * monthSeconds <= log_(1 + ratePerSecond)_(MAX_UD60x18 / (principal * ratePerSecond))
+        // maxDurationMonths * monthSeconds <= log(MAX_UD60x18 / (principal * ratePerSecond)) / log(1 + ratePerSecond)
+        // maxDurationMonths <= (log(MAX_UD60x18 / (principal * ratePerSecond)) / log(1 + ratePerSecond)) / monthSeconds
+        // maxDurationMonths <= log(MAX_UD60x18 / (principal * ratePerSecond)) / (monthSeconds * log(1 + ratePerSecond))
+        
+        // Calculate paymentPerSecond
+        paymentPerSecond = convert(principal).mul(ratePerSecond).mul(x).div(x.sub(convert(uint(1))));
     }
 }

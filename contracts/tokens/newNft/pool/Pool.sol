@@ -2,9 +2,9 @@
 pragma solidity ^0.8.15;
 
 import "./IPool.sol";
-import "../state/State.sol";
+import "../poolInfo/PoolInfo.sol";
 
-contract Pool is IPool, State {
+contract Pool is IPool, PoolInfo {
 
     // Libs
     using SafeERC20 for IERC20;
