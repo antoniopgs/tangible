@@ -166,4 +166,66 @@ contract Debt is IDebt, Status, Interest, Pool {
         // Calculate paymentPerSecond
         paymentPerSecond = convert(principal).mul(ratePerSecond).mul(x).div(x.sub(convert(uint(1))));
     }
+
+    // Note: pulling buyer's downPayment to address(this) is safer, because buyer doesn't need to approve seller (which could let him run off with money)
+    // Question: if active mortgage is being paid off with a new loan, the pool is paying itself, so money flows should be simpler...
+    // Todo: figure out where to send otherDebt
+    function debtTransfer(uint tokenId, Bid memory _bid) private {
+        
+        // Get bid info
+        address seller = ownerOf(tokenId);
+        address buyer = _bid.bidder;
+        uint salePrice = _bid.propertyValue;
+        uint downPayment = _bid.downPayment;
+
+        // Pull downPayment from buyer
+        USDC.safeTransferFrom(buyer, address(this), downPayment); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
+
+        // Pull principal from protocol
+        uint principal = salePrice - downPayment; // Note: will be 0 if no loan (which is fine)
+        USDC.safeTransferFrom(protocol, address(this), principal); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
+        totalPrincipal += principal;
+
+        // Get Loan
+        Debt storage debt = debts[tokenId];
+        Loan storage loan = debt.loan;
+        uint interest = _accruedInterest(loan);
+
+        // Calculate interest Fee
+        uint interestFee = convert(convert(interest).mul(_interestFeeSpread));
+
+        // Update Pool (pay off lenders)
+        totalPrincipal -= loan.unpaidPrincipal;
+        totalDeposits += interest - interestFee;
+
+        // Calculate saleFee
+        UD60x18 saleFeeSpread = status(loan) == Status.Default ? _baseSaleFeeSpread.add(_defaultFeeSpread) : _baseSaleFeeSpread; // Question: maybe defaultFee should be a boost appplied to interest instead?
+        uint saleFee = convert(convert(salePrice).mul(saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
+        
+        // Protocol Charges Fees
+        protocolMoney += interestFee + saleFee;
+
+        // Send sellerEquity (salePrice - unpaidPrincipal - interest - otherDebt) to seller
+        uint sellerDebt = loan.unpaidPrincipal + interest + interestFee + saleFee + debt.otherDebt;
+        require(salePrice >= sellerDebt, "salePrice must cover sellerDebt");
+        USDC.safeTransfer(seller, salePrice - sellerDebt);
+
+        // Clear seller/caller debt
+        loan.unpaidPrincipal = 0;
+        debt.otherDebt = 0;
+
+        // Send nft from seller to buyer
+        safeTransferFrom(seller, buyer, tokenId);
+
+        // If buyer used loan
+        if (principal > 0) {
+
+            // Start new Loan
+            startNewMortgage({
+                loan: loan,
+                principal: principal,
+                maxDurationMonths: _bid.loanMonths
+            });
+        }
+    }
 }
