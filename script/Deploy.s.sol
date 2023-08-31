@@ -60,11 +60,17 @@ contract DeployScript is Script {
         // Deploy Tokens
         deployTokens();
 
+        console.log(123);
+
         // Initialize proxy
-        Initializer(proxy).initialize(address(USDC), address(tUSDC), address(nftContract), _TANGIBLE, _GSP, _PAC);
+        Initializer(proxy).initialize1(address(USDC), address(tUSDC), address(nftContract), _TANGIBLE, _GSP, _PAC);
+
+        console.log(3);
 
         // Set Function Selectors
         setSelectors();
+
+        console.log(4);
     }
 
     function deployImplementations() private {
