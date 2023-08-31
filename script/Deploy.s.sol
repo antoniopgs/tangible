@@ -115,16 +115,18 @@ contract DeployScript is Script {
         ProtocolProxy(proxy).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set infoSelectors
-        bytes4[] memory infoSelectors = new bytes4[](8);
+        bytes4[] memory infoSelectors = new bytes4[](10);
         infoSelectors[0] = IInfo.isResident.selector;
-        infoSelectors[1] = IInfo.availableLiquidity.selector;
-        infoSelectors[2] = IInfo.utilization.selector;
-        infoSelectors[3] = IInfo.usdcToTUsdc.selector;
-        infoSelectors[4] = IInfo.tUsdcToUsdc.selector;
+        infoSelectors[1] = IInfo.addressToResident.selector;
+        infoSelectors[2] = IInfo.residentToAddress.selector;
+        infoSelectors[3] = IInfo.availableLiquidity.selector;
+        infoSelectors[4] = IInfo.utilization.selector;
+        infoSelectors[5] = IInfo.usdcToTUsdc.selector;
+        infoSelectors[6] = IInfo.tUsdcToUsdc.selector;
         // infoSelectors[] = IInfo.borrowerApr.selector;
-        infoSelectors[5] = IInfo.bidActionable.selector;
-        infoSelectors[6] = IInfo.unpaidPrincipal.selector;
-        infoSelectors[7] = IInfo.accruedInterest.selector;
+        infoSelectors[7] = IInfo.bidActionable.selector;
+        infoSelectors[8] = IInfo.unpaidPrincipal.selector;
+        infoSelectors[9] = IInfo.accruedInterest.selector;
         ProtocolProxy(proxy).setSelectorsTarget(infoSelectors, address(info));
 
         // Set initializerSelectors

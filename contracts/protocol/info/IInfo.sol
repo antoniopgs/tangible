@@ -7,6 +7,8 @@ interface IInfo {
 
     // Residents
     function isResident(address addr) external view returns (bool);
+    function addressToResident(address addr) external view returns(uint);
+    function residentToAddress(uint id) external view returns(address);
 
     // Pool
     function availableLiquidity() external view returns(uint);

@@ -9,5 +9,5 @@ interface IAuctions {
     function cancelBid(uint tokenId, uint idx) external;
 
     // Seller
-    function acceptBid(uint tokenId, uint idx) external;
+    function acceptBid(uint tokenId, uint idx) external; // Question: maybe move to Borrowing.sol & rename it to Sellers.sol?
 }

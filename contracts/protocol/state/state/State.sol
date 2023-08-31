@@ -29,8 +29,8 @@ abstract contract State is TargetManager {
     mapping(uint => Bid[]) public bids; // Todo: figure out multiple bids by same bidder on same nft later
 
     // Residents
-    mapping(address => uint) public addressToResident; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
-    mapping(uint => address) public residentToAddress;
+    mapping(address => uint) internal _addressToResident; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
+    mapping(uint => address) internal _residentToAddress;
 
     // Pool Vars
     UD60x18 public optimalUtilization = convert(90).div(convert(100)); // Note: 90%
@@ -52,6 +52,6 @@ abstract contract State is TargetManager {
     UD60x18 public _defaultFeeSpread = convert(4).div(convert(100)); // Note: 4%
 
     function _isResident(address addr) internal view returns (bool) {
-        return addressToResident[addr] != 0; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
+        return _addressToResident[addr] != 0; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
     }
 }

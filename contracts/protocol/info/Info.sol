@@ -13,6 +13,14 @@ contract Info is IInfo, AuctionsInfo, BorrowingInfo, LendingInfo {
         return _isResident(addr);
     }
 
+    function addressToResident(address addr) external view returns(uint) {
+        return _addressToResident[addr];
+    }
+
+    function residentToAddress(uint id) external view returns(address) {
+        return _residentToAddress[id];
+    }
+
     // Pool
     function availableLiquidity() external view returns(uint) {
         return _availableLiquidity();

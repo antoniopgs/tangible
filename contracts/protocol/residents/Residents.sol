@@ -8,8 +8,8 @@ contract Residents is IResidents, State {
 
     function verifyResident(address addr, uint resident) external onlyRole(GSP) { // Todo: add functionality to update resident address
         require(!_isResident(addr), "address already associated to an eResident");
-        require(residentToAddress[resident] == address(0), "resident already associated to an address");
-        addressToResident[addr] = resident;
-        residentToAddress[resident] = addr;
+        require(_residentToAddress[resident] == address(0), "resident already associated to an address");
+        _addressToResident[addr] = resident;
+        _residentToAddress[resident] = addr;
     }
 }

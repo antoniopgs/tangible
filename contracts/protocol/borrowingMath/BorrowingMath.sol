@@ -14,6 +14,10 @@ abstract contract BorrowingMath is IBorrowingMath, State {
     uint public constant yearSeconds = 365 days;
     uint public constant yearMonths = 12;
     uint public constant monthSeconds = yearSeconds / yearMonths; // Note: yearSeconds % yearMonths = 0 (no precision loss)
+    
+    function status(uint tokenId) external view returns (Status) {
+        return status(debts[tokenId].loan);
+    }
 
     function status(Loan memory loan) internal view returns (Status) {
         
