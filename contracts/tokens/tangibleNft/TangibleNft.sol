@@ -14,13 +14,13 @@ contract TangibleNft is ITangibleNft, ERC721URIStorage, ERC721Enumerable {
 
     // Other Vars
     Counters.Counter private _tokenIds;
-    address protocolProxy;
+    address immutable protocolProxy;
 
     // Libs
     using Counters for Counters.Counter;
 
-    constructor() ERC721("Prospera Real Estate Token", "PROSPERA") {
-
+    constructor(address _protocolProxy) ERC721("Prospera Real Estate Token", "PROSPERA") {
+        protocolProxy = _protocolProxy;
     }
 
     // Note: tokenURI will point to Prospera Property Registry (example: https://prospera-sure.hn/view/27) we might not even need IPFS
@@ -41,7 +41,7 @@ contract TangibleNft is ITangibleNft, ERC721URIStorage, ERC721Enumerable {
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view override returns (bool) {
         address owner = ownerOf(tokenId);
         return (spender == owner || isApprovedForAll(owner, spender) || getApproved(tokenId) == spender ||
-        IAccessControl(protocolProxy).hasRole(PAC, spender)); // Note: Overriden to allow PAC to move tokens
+        spender == protocolProxy || IAccessControl(protocolProxy).hasRole(PAC, spender)); // Note: override to allow protocol/PAC to move tokens (don't use operators, as they can be revoked)
     }
 
     function exists(uint256 tokenId) external view returns (bool) {
