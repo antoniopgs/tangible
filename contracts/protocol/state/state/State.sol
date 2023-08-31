@@ -10,6 +10,14 @@ import "../../../tokens/tangibleNft/TangibleNft.sol";
 
 abstract contract State is TargetManager {
 
+    uint protocolMoney; // Question: do I actually need this?
+    bool public initialized;
+
+    // Links (Initializables)
+    IERC20 public USDC;
+    tUsdc public tUSDC;
+    TangibleNft public tangibleNft;
+
     // Pool
     uint public totalPrincipal;
     uint public totalDeposits;
@@ -43,21 +51,7 @@ abstract contract State is TargetManager {
     UD60x18 public _redemptionFeeSpread = convert(3).div(convert(100)); // Note: 3%
     UD60x18 public _defaultFeeSpread = convert(4).div(convert(100)); // Note: 4%
 
-
-
-
-
-    // Todo: MOVE CONSTANTS BELOW OFF STATE.SOL?
-
-    // Links
-    IERC20 public /* immutable */ USDC;
-    tUsdc public /* immutable */ tUSDC;
-    TangibleNft public /* immutable */ tangibleNft;
-
     function _isResident(address addr) internal view returns (bool) {
         return addressToResident[addr] != 0; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
     }
-
-    bool public initialized; // Question: do I actually need this?
-    uint protocolMoney; // Question: do I actually need this?
 }
