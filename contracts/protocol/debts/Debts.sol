@@ -114,7 +114,11 @@ contract Debts is IDebts, DebtsInfo, DebtsMath, OnlySelf {
 
     // Admin Functions
     function foreclose(uint tokenId, uint idx) external onlyRole(PAC) {
-        debtTransfer(tokenId, bids[tokenId][idx]); // Note: might need to change debtTransfer() visibility
+        debtTransfer({
+            tokenId: tokenId,
+            seller: tangibleNft.ownerOf(tokenId),
+            _bid: bids[tokenId][idx]
+        }); // Note: might need to change debtTransfer() visibility
     }
 
     function increaseOtherDebt(uint tokenId, uint amount, string calldata motive) external onlyRole(GSP) {
@@ -131,10 +135,10 @@ contract Debts is IDebts, DebtsInfo, DebtsMath, OnlySelf {
     // Note: pulling buyer's downPayment to address(this) is safer, because buyer doesn't need to approve seller (which could let him run off with money)
     // Question: if active mortgage is being paid off with a new loan, the pool is paying itself, so money flows should be simpler...
     // Todo: figure out where to send otherDebt
-    function debtTransfer(uint tokenId, Bid memory _bid) public onlySelf {
+    function debtTransfer(uint tokenId, address seller, Bid memory _bid) public onlySelf {
 
         // Get bid info
-        address seller /* = ownerOf(tokenId) */;
+        // address seller /* = ownerOf(tokenId) */;
         address buyer = _bid.bidder;
         uint salePrice = _bid.propertyValue;
         uint downPayment = _bid.downPayment;
@@ -152,10 +156,11 @@ contract Debts is IDebts, DebtsInfo, DebtsMath, OnlySelf {
         uint saleFee = convert(convert(salePrice).mul(saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
 
         // Calculate sellerDebt
-        uint sellerDebt = loan.unpaidPrincipal + interest + interestFee + saleFee + debt.otherDebt;
+        // uint sellerDebt = loan.unpaidPrincipal + interest + interestFee + saleFee + debt.otherDebt;
 
         // Validate salePrice
-        require(salePrice >= sellerDebt, "salePrice must cover sellerDebt");
+        // require(salePrice >= sellerDebt, "salePrice must cover sellerDebt");
+        require(salePrice >= loan.unpaidPrincipal + interest + interestFee + saleFee + debt.otherDebt, "salePrice must cover sellerDebt");
 
         // Pull downPayment from buyer
         USDC.safeTransferFrom(buyer, address(this), downPayment); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
@@ -168,7 +173,8 @@ contract Debts is IDebts, DebtsInfo, DebtsMath, OnlySelf {
         protocolMoney += interestFee + saleFee;
 
         // Send sellerEquity (salePrice - sellerDebt) to seller
-        USDC.safeTransfer(seller, salePrice - sellerDebt);
+        // USDC.safeTransfer(seller, salePrice - sellerDebt);
+        USDC.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest - interestFee - saleFee - debt.otherDebt);
 
         // Clear seller/caller debt
         loan.unpaidPrincipal = 0;
@@ -178,15 +184,17 @@ contract Debts is IDebts, DebtsInfo, DebtsMath, OnlySelf {
         tangibleNft.safeTransferFrom(seller, buyer, tokenId);
 
         // Calculate buyerPrincipal
-        uint buyerPrincipal = salePrice - downPayment;
+        // uint buyerPrincipal = salePrice - downPayment;
 
         // If buyer used loan
-        if (buyerPrincipal > 0) {
+        // if (buyerPrincipal > 0) {
+        if (downPayment < salePrice) {
 
             // Start new Loan
             startNewMortgage({
                 loan: loan,
-                principal: buyerPrincipal,
+                // principal: buyerPrincipal,
+                principal: salePrice - downPayment,
                 maxDurationMonths: _bid.loanMonths
             });
         }

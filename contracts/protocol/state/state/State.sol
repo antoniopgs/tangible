@@ -51,8 +51,8 @@ abstract contract State is TargetManager {
 
     // Links
     IERC20 public /* immutable */ USDC;
-    tUsdc public immutable tUSDC;
-    TangibleNft public immutable tangibleNft;
+    tUsdc public /* immutable */ tUSDC;
+    TangibleNft public /* immutable */ tangibleNft;
 
     function _isResident(address addr) internal view returns (bool) {
         return addressToResident[addr] != 0; // Note: eResident number of 0 will considered "falsy", assuming nobody has it

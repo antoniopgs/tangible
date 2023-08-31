@@ -16,7 +16,7 @@ interface IDebts {
     // User Functions
     function payMortgage(uint tokenId, uint payment) external;
     function redeemMortgage(uint tokenId) external;
-    function debtTransfer(uint tokenId, Bid memory _bid) external; // only callable indirectly
+    function debtTransfer(uint tokenId, address seller, Bid memory _bid) external; // only callable indirectly
 
     // Admin Functions
     // function refinance(uint tokenId) external;

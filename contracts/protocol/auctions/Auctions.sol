@@ -69,6 +69,7 @@ contract Auctions is IAuctions, AuctionsInfo {
         // Debt Transfer NFT from seller to bidder
         IDebts(address(this)).debtTransfer({
             tokenId: tokenId,
+            seller: tangibleNft.ownerOf(tokenId),
             _bid: _bid
         });
 
