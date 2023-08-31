@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./IPool.sol";
-import "../poolInfo/PoolInfo.sol";
+import "./ILending.sol";
+import "../lendingInfo/LendingInfo.sol";
 
-contract Pool is IPool, PoolInfo {
+contract Lending is ILending, LendingInfo {
 
     // Libs
     using SafeERC20 for IERC20;

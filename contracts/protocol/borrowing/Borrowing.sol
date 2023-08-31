@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./IDebts.sol";
-import "../debtsInfo/DebtsInfo.sol";
-import "../debtsMath/DebtsMath.sol";
+import "./IBorrowing.sol";
+import "../borrowingInfo/BorrowingInfo.sol";
+import "../borrowingMath/BorrowingMath.sol";
 import "../onlySelf/OnlySelf.sol";
 
-contract Debts is IDebts, DebtsInfo, DebtsMath, OnlySelf {
+contract Borrowing is IBorrowing, BorrowingInfo, BorrowingMath, OnlySelf {
 
     using SafeERC20 for IERC20;
 

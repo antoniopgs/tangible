@@ -3,10 +3,10 @@ pragma solidity ^0.8.15;
 
 import "./IInfo.sol";
 import "../auctionsInfo/AuctionsInfo.sol";
-import "../debtsInfo/DebtsInfo.sol";
-import "../poolInfo/PoolInfo.sol";
+import "../borrowingInfo/BorrowingInfo.sol";
+import "../lendingInfo/LendingInfo.sol";
 
-contract Info is IInfo, AuctionsInfo, DebtsInfo, PoolInfo {
+contract Info is IInfo, AuctionsInfo, BorrowingInfo, LendingInfo {
 
     // Residents
     function isResident(address addr) external view returns (bool) {

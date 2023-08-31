@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import "../state/state/State.sol";
 
-abstract contract PoolInfo is State {
+abstract contract LendingInfo is State {
 
     function _usdcToTUsdc(uint usdcAmount) internal view returns(uint tUsdcAmount) {
         

@@ -5,7 +5,7 @@ import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
 import { Loan } from "../../types/Types.sol";
 import "../state/state/State.sol";
 
-abstract contract DebtsInfo is State {
+abstract contract BorrowingInfo is State {
 
     function _utilization() internal view returns(UD60x18) {
         if (totalDeposits == 0) {

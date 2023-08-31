@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import "./IAuctions.sol";
 import "../auctionsInfo/AuctionsInfo.sol";
-import "../debts/IDebts.sol";
+import "../borrowing/IBorrowing.sol";
 
 contract Auctions is IAuctions, AuctionsInfo {
 
@@ -67,7 +67,7 @@ contract Auctions is IAuctions, AuctionsInfo {
         require(_bidActionable(_bid), "bid not actionable");
 
         // Debt Transfer NFT from seller to bidder
-        IDebts(address(this)).debtTransfer({
+        IBorrowing(address(this)).debtTransfer({
             tokenId: tokenId,
             seller: tangibleNft.ownerOf(tokenId),
             _bid: _bid
