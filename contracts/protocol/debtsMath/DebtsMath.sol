@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
+import "./IDebtsMath.sol";
 import "../state/state/State.sol";
 import { SD59x18, convert } from "@prb/math/src/SD59x18.sol";
 import { intoUD60x18 } from "@prb/math/src/sd59x18/Casting.sol";
 import { intoSD59x18 } from "@prb/math/src/ud60x18/Casting.sol";
 import { Loan, Status } from "../../types/Types.sol";
 
-abstract contract DebtsMath is State {
+abstract contract DebtsMath is IDebtsMath, State {
 
     // Time constants
     uint public constant yearSeconds = 365 days;
@@ -132,5 +133,23 @@ abstract contract DebtsMath is State {
         SD59x18 x = intoSD59x18(m1).sub(intoSD59x18(m2));
         SD59x18 y = intoSD59x18(optimalUtilization).mul(x);
         return y.add(intoSD59x18(b1));
+    }
+
+    function loanChart(uint tokenId) external view returns(uint[] memory x, uint[] memory y) {
+
+        // Get loan
+        Loan memory loan = debts[tokenId].loan;
+
+        // Loop loan months
+        for (uint i = 0; i <= loanMaxMonths(loan); i++) {
+            
+            // Add month to x
+            // x.push(i);
+            x[i] = i;
+
+            // Add month's principal cap to y
+            // y.push(principalCap(loan, i));
+            y[i] = principalCap(loan, i);
+        }
     }
 }
