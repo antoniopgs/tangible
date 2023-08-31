@@ -10,11 +10,11 @@ contract Auctions is IAuctions, AuctionsInfo {
     using SafeERC20 for IERC20;
 
     function bid(uint tokenId, uint propertyValue, uint loanMonths) external {
-        bid(tokenId, propertyValue, propertyValue, loanMonths);
+        loanBid(tokenId, propertyValue, propertyValue, loanMonths);
     }
 
     // Question: what if nft has no debt? it could still use an auction mechanism, right? openSea could be used, but so could this...
-    function bid(uint tokenId, uint propertyValue, uint downPayment, uint loanMonths) public {
+    function loanBid(uint tokenId, uint propertyValue, uint downPayment, uint loanMonths) public {
         require(tangibleNft.exists(tokenId), "tokenId doesn't exist");
         require(_isResident(msg.sender), "only residents can bid"); // Note: NFT transfer to non-resident bidder would fail anyways, but I think its best to not invalid bids for Sellers
         require(downPayment <= propertyValue, "downPayment cannot exceed propertyValue");
