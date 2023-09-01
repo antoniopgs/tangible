@@ -49,16 +49,24 @@ contract Info is IInfo, AuctionsInfo, BorrowingInfo, LendingInfo {
     }
 
     // Auctions
+    function bids(uint tokenId, uint idx) external view returns(Bid memory) {
+        return _bids[tokenId][idx];
+    }
+
+    function bidsLength(uint tokenId) external view returns(uint) {
+        return _bids[tokenId].length;
+    }
+
     function bidActionable(uint tokenId, uint idx) external view returns(bool) {
-        return _bidActionable(bids[tokenId][idx]);
+        return _bidActionable(_bids[tokenId][idx]);
     }
 
     // Token Debts
     function unpaidPrincipal(uint tokenId) external view returns(uint) {
-        return debts[tokenId].loan.unpaidPrincipal;
+        return _debts[tokenId].loan.unpaidPrincipal;
     }
 
     function accruedInterest(uint tokenId) external view returns(uint) {
-        return _accruedInterest(debts[tokenId].loan);
+        return _accruedInterest(_debts[tokenId].loan);
     }
 }

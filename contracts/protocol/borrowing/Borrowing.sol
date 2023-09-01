@@ -45,7 +45,7 @@ contract Borrowing is IBorrowing, BorrowingInfo, BorrowingMath, OnlySelf {
     function payMortgage(uint tokenId, uint payment) external {
 
         // Get Loan
-        Loan storage loan = debts[tokenId].loan;
+        Loan storage loan = _debts[tokenId].loan;
 
         // Ensure there's an active mortgage
         require(status(loan) == Status.Mortgage, "nft has no active mortgage");
@@ -85,7 +85,7 @@ contract Borrowing is IBorrowing, BorrowingInfo, BorrowingMath, OnlySelf {
     function redeemMortgage(uint tokenId) external {
 
         // Get Loan
-        Loan memory loan = debts[tokenId].loan;
+        Loan memory loan = _debts[tokenId].loan;
 
         // Ensure default & redeemable
         require(status(loan) == Status.Default, "no default");
@@ -117,18 +117,18 @@ contract Borrowing is IBorrowing, BorrowingInfo, BorrowingMath, OnlySelf {
         debtTransfer({
             tokenId: tokenId,
             seller: tangibleNft.ownerOf(tokenId),
-            _bid: bids[tokenId][idx]
+            _bid: _bids[tokenId][idx]
         }); // Note: might need to change debtTransfer() visibility
     }
 
     function increaseOtherDebt(uint tokenId, uint amount, string calldata motive) external onlyRole(GSP) {
-        debts[tokenId].otherDebt += amount;
+        _debts[tokenId].otherDebt += amount;
         emit DebtIncrease(tokenId, amount, motive, block.timestamp);
     }
 
     function decreaseOtherDebt(uint tokenId, uint amount, string calldata motive) external onlyRole(GSP) {
-        require(debts[tokenId].otherDebt >= amount, "amount must be <= otherDebt");
-        debts[tokenId].otherDebt -= amount;
+        require(_debts[tokenId].otherDebt >= amount, "amount must be <= otherDebt");
+        _debts[tokenId].otherDebt -= amount;
         emit DebtDecrease(tokenId, amount, motive, block.timestamp);
     }
 
@@ -144,7 +144,7 @@ contract Borrowing is IBorrowing, BorrowingInfo, BorrowingMath, OnlySelf {
         uint downPayment = _bid.downPayment;
 
         // Get loan info
-        Debt storage debt = debts[tokenId];
+        Debt storage debt = _debts[tokenId];
         Loan storage loan = debt.loan;
         uint interest = _accruedInterest(loan);
 

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.15;
 
 import { UD60x18 } from "@prb/math/src/UD60x18.sol";
+import { Bid } from "../../types/Types.sol";
 
 interface IInfo {
 
@@ -18,6 +19,8 @@ interface IInfo {
     // function borrowerApr() external view returns(UD60x18 apr);
 
     // Auctions
+    function bids(uint tokenId, uint idx) external view returns(Bid memory);
+    function bidsLength(uint tokenId) external view returns(uint);
     function bidActionable(uint tokenId, uint idx) external view returns(bool);
 
     // Token Debts

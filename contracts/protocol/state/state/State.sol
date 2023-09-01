@@ -23,10 +23,10 @@ abstract contract State is TargetManager {
     uint public totalDeposits;
 
     // Debts
-    mapping(uint => Debt) public debts;
+    mapping(uint => Debt) internal _debts;
 
     // Bids
-    mapping(uint => Bid[]) public bids; // Todo: figure out multiple bids by same bidder on same nft later
+    mapping(uint => Bid[]) internal _bids; // Todo: figure out multiple bids by same bidder on same nft later
 
     // Residents
     mapping(address => uint) internal _addressToResident; // Note: eResident number of 0 will considered "falsy", assuming nobody has it

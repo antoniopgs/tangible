@@ -28,7 +28,7 @@ contract Auctions is IAuctions, AuctionsInfo {
         USDC.safeIncreaseAllowance(address(this), downPayment);
 
         // Add bid to tokenId bids
-        bids[tokenId].push(
+        _bids[tokenId].push(
             Bid({
                 bidder: msg.sender,
                 propertyValue: propertyValue,
@@ -42,7 +42,7 @@ contract Auctions is IAuctions, AuctionsInfo {
     function cancelBid(uint tokenId, uint idx) external {
 
         // Get tokenBids
-        Bid[] storage tokenBids = bids[tokenId];
+        Bid[] storage tokenBids = _bids[tokenId];
 
         // Get bidToRemove
         Bid memory bidToRemove = tokenBids[idx];
@@ -61,7 +61,7 @@ contract Auctions is IAuctions, AuctionsInfo {
         require(msg.sender == tangibleNft.ownerOf(tokenId), "only token owner can accept bid"); // Question: maybe PAC should be able too (for foreclosures?)
 
         // Get Bid
-        Bid memory _bid = bids[tokenId][idx];
+        Bid memory _bid = _bids[tokenId][idx];
 
         // Ensure bid is actionable
         require(_bidActionable(_bid), "bid not actionable");
@@ -74,7 +74,7 @@ contract Auctions is IAuctions, AuctionsInfo {
         });
 
         // Delete accepted bid
-        deleteBid(bids[tokenId], idx);
+        deleteBid(_bids[tokenId], idx);
     }
 
     function deleteBid(Bid[] storage tokenBids, uint idx) private {

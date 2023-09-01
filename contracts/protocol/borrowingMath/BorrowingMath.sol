@@ -16,7 +16,7 @@ abstract contract BorrowingMath is IBorrowingMath, State {
     uint public constant monthSeconds = yearSeconds / yearMonths; // Note: yearSeconds % yearMonths = 0 (no precision loss)
     
     function status(uint tokenId) external view returns (Status) {
-        return status(debts[tokenId].loan);
+        return status(_debts[tokenId].loan);
     }
 
     function status(Loan memory loan) internal view returns (Status) {
@@ -142,7 +142,7 @@ abstract contract BorrowingMath is IBorrowingMath, State {
     function loanChart(uint tokenId) external view returns(uint[] memory x, uint[] memory y) {
 
         // Get loan
-        Loan memory loan = debts[tokenId].loan;
+        Loan memory loan = _debts[tokenId].loan;
 
         // Loop loan months
         for (uint i = 0; i <= loanMaxMonths(loan); i++) {
