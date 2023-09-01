@@ -13,7 +13,7 @@ abstract contract State is TargetManager {
     uint protocolMoney; // Question: do I actually need this?
     bool public initialized;
 
-    // Links (Initializables)
+    // Links
     IERC20 public USDC;
     tUsdc public tUSDC;
     TangibleNft public tangibleNft;
@@ -33,23 +33,23 @@ abstract contract State is TargetManager {
     mapping(uint => address) internal _residentToAddress;
 
     // Pool Vars
-    UD60x18 public optimalUtilization = convert(90).div(convert(100)); // Note: 90%
+    UD60x18 public optimalUtilization;
 
     // Other Vars
-    UD60x18 public maxLtv = convert(50).div(convert(100)); // Note: 50%
-    uint public maxLoanMonths = 120; // Note: 10 years
-    uint internal redemptionWindow = 45 days;
+    UD60x18 public maxLtv;
+    uint public maxLoanMonths;
+    uint internal redemptionWindow;
 
     // Interest vars
-    UD60x18 internal m1 = convert(4).div(convert(100)); // Note: 0.04
-    UD60x18 internal b1 = convert(3).div(convert(100)); // Note: 0.03
-    UD60x18 internal m2 = convert(9); // Note: 9
+    UD60x18 internal m1;
+    UD60x18 internal b1;
+    UD60x18 internal m2;
 
     // Fees/Spreads
-    UD60x18 public _baseSaleFeeSpread = convert(1).div(convert(100)); // Note: 1%
-    UD60x18 public _interestFeeSpread = convert(2).div(convert(100)); // Note: 2%
-    UD60x18 public _redemptionFeeSpread = convert(3).div(convert(100)); // Note: 3%
-    UD60x18 public _defaultFeeSpread = convert(4).div(convert(100)); // Note: 4%
+    UD60x18 public _baseSaleFeeSpread;
+    UD60x18 public _interestFeeSpread;
+    UD60x18 public _redemptionFeeSpread;
+    UD60x18 public _defaultFeeSpread;
 
     function _isResident(address addr) internal view returns (bool) {
         return _addressToResident[addr] != 0; // Note: eResident number of 0 will considered "falsy", assuming nobody has it

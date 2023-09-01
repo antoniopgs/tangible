@@ -2,7 +2,6 @@
 pragma solidity ^0.8.15;
 
 import "../state/state/State.sol";
-import { console } from "forge-std/console.sol";
 
 contract Initializer is State {
 
@@ -15,20 +14,41 @@ contract Initializer is State {
         address pac // Note: Multi-Sig
     ) external {
 
-        console.log(1111);
-
         // Ensure this is 1st and only Initialization
         require(!initialized, "already initialized");
         initialized = true;
 
-        console.log(2222);
+        initializeContractLinks(_USDC, _tUSDC, _tangibleNft);
+        initializeState();
+        initializeRoles(tangible, gsp, pac);
+    }
 
-        // Initialize state
+    function initializeContractLinks(address _USDC, address _tUSDC, address _tangibleNft) private {
         USDC = IERC20(_USDC);
         tUSDC = tUsdc(_tUSDC);
         tangibleNft = TangibleNft(_tangibleNft);
-        initializeRoles(tangible, gsp, pac);
+    }
 
-        console.log(3333);
+    function initializeState() private {
+
+        // Pool Vars
+        optimalUtilization = convert(90).div(convert(100)); // Note: 90%
+
+        // Other Vars
+        maxLtv = convert(50).div(convert(100)); // Note: 50%
+        maxLoanMonths = 120; // Note: 10 years
+        redemptionWindow = 45 days;
+
+        // Interest vars
+        m1 = convert(4).div(convert(100)); // Note: 0.04
+        b1 = convert(3).div(convert(100)); // Note: 0.03
+        m2 = convert(9); // Note: 9
+
+        // Fees/Spreads
+        _baseSaleFeeSpread = convert(1).div(convert(100)); // Note: 1%
+        _interestFeeSpread = convert(2).div(convert(100)); // Note: 2%
+        _redemptionFeeSpread = convert(3).div(convert(100)); // Note: 3%
+        _defaultFeeSpread = convert(4).div(convert(100)); // Note: 4%
+
     }
 }
