@@ -162,8 +162,8 @@ contract Borrowing is IBorrowing, BorrowingInfo, BorrowingMath, OnlySelf {
         // require(salePrice >= sellerDebt, "salePrice must cover sellerDebt");
         require(salePrice >= loan.unpaidPrincipal + interest + interestFee + saleFee + debt.otherDebt, "salePrice must cover sellerDebt");
 
-        // Pull downPayment from buyer
-        USDC.safeTransferFrom(buyer, address(this), downPayment); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
+        // Pull downPayment from buyer (now bids actually transfer the money in)
+        // USDC.safeTransferFrom(buyer, address(this), downPayment); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
 
         // Update Pool (pay off lenders)
         totalPrincipal -= loan.unpaidPrincipal;

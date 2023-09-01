@@ -25,8 +25,8 @@ contract Auctions is IAuctions, AuctionsInfo {
         UD60x18 ltv = convert(uint(1)).sub(convert(downPayment).div(convert(propertyValue)));
         require(ltv.lte(maxLtv), "ltv cannot exceed maxLtv");
 
-        // Bidder increases protocol's allowance
-        USDC.safeIncreaseAllowance(address(this), downPayment);
+        // Pull downPayment from bidder
+        USDC.safeTransferFrom(msg.sender, address(this), downPayment);
 
         // Add bid to tokenId bids
         _bids[tokenId].push(
@@ -51,8 +51,8 @@ contract Auctions is IAuctions, AuctionsInfo {
         // Ensure caller is bidder
         require(msg.sender == bidToRemove.bidder, "only bidder can remove his bid");
 
-        // Bidder decreases protocol's allowance by bidToRemove's downPayment
-        USDC.safeDecreaseAllowance(address(this), bidToRemove.downPayment);
+        // Return downPayment to bidder
+        USDC.safeTransfer(bidToRemove.bidder, bidToRemove.downPayment);
 
         // Delete bid
         deleteBid(tokenBids, idx);

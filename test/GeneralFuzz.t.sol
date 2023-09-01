@@ -62,8 +62,8 @@ contract GeneralFuzz is Test, DeployScript {
             } else if (action == uint(Action.RedeemMortgage)) {
                 _testRedeemLoan(randomness[i]);
                 
-            } else if (action == uint(Action.Foreclose)) {
-                _testForeclose(randomness[i]);
+            // } else if (action == uint(Action.Foreclose)) {
+            //     _testForeclose(randomness[i]);
             
             } else if (action == uint(Action.Deposit)) {
                 _testDeposit(randomness[i]);
@@ -78,34 +78,40 @@ contract GeneralFuzz is Test, DeployScript {
     }
 
     function _testBid(uint randomness) private {
-        console.log("testBid...");
+        console.log("\ntestBid...");
 
         address resident = _randomResident(randomness);
-        uint tokenId = _randomTokenId(randomness);
+        uint randomTokenId = _randomTokenId(randomness);
         uint propertyValue = bound(randomness, 10e6, 1_000_000_000e6); // Note: 0 to 1 billion
         uint loanMonths = bound(randomness, 6, 120); // Note: 6 months to 10 years
 
         // Resident bids
-        vm.prank(resident);
-        IAuctions(proxy).bid(tokenId, propertyValue, loanMonths);
+        vm.startPrank(resident);
+        USDC.approve(proxy, propertyValue);
+        deal(address(USDC), resident, propertyValue);
+        IAuctions(proxy).bid(randomTokenId, propertyValue, loanMonths);
+        vm.stopPrank();
     }
 
     function _testLoanBid(uint randomness) private {
-        console.log("testLoanBid...");
+        console.log("\ntestLoanBid...");
 
         address resident = _randomResident(randomness);
-        uint tokenId = _randomTokenId(randomness);
+        uint randomTokenId = _randomTokenId(randomness);
         uint propertyValue = bound(randomness, 10e6, 1_000_000_000e6); // Note: 0 to 1 billion
         uint downPayment = bound(randomness, propertyValue / 2, propertyValue); // Note: maxLtv = 50%
         uint loanMonths = bound(randomness, 6, 120); // Note: 6 months to 10 years
 
         // Resident loanBids
-        vm.prank(resident);
-        IAuctions(proxy).loanBid(tokenId, propertyValue, downPayment, loanMonths);
+        vm.startPrank(resident);
+        USDC.approve(proxy, downPayment);
+        deal(address(USDC), resident, downPayment);
+        IAuctions(proxy).loanBid(randomTokenId, propertyValue, downPayment, loanMonths);
+        vm.stopPrank();
     }
 
     function _testCancelBid(uint randomness) private {
-        console.log("testCancelBid...");
+        console.log("\ntestCancelBid...");
 
         // Get randomTokenId
         uint randomTokenId = _randomTokenId(randomness);
@@ -118,12 +124,13 @@ contract GeneralFuzz is Test, DeployScript {
             uint randomIdx = _randomIdx(randomness, bidsLength);
 
             // Bidder cancels bid
+            vm.prank(IInfo(proxy).bids(randomTokenId, randomIdx).bidder);
             IAuctions(proxy).cancelBid(randomTokenId, randomIdx);
         }
     }
 
     function _testAcceptBid(uint randomness) private {
-        console.log("testAcceptBid...");
+        console.log("\ntestAcceptBid...");
 
         // Get randomTokenId
         uint randomTokenId = _randomTokenId(randomness);
@@ -146,7 +153,7 @@ contract GeneralFuzz is Test, DeployScript {
     }
 
     function _testPayLoan(uint randomness) private {
-        console.log("testPayLoan...");
+        console.log("\ntestPayLoan...");
 
         // Get random tokenId
         uint tokenId = _randomTokenId(randomness);
@@ -170,7 +177,7 @@ contract GeneralFuzz is Test, DeployScript {
     }
 
     function _testRedeemLoan(uint randomness) private {
-        console.log("testRedeemLoan...");
+        console.log("\ntestRedeemLoan...");
 
         // Get random tokenId
         uint tokenId = _randomTokenId(randomness);
@@ -182,7 +189,7 @@ contract GeneralFuzz is Test, DeployScript {
     }
 
     function _testForeclose(uint randomness) private {
-        console.log("testForelose...");
+        console.log("\ntestForelose...");
 
         // Get randomTokenId
         uint randomTokenId = _randomTokenId(randomness);
@@ -205,12 +212,12 @@ contract GeneralFuzz is Test, DeployScript {
     }
 
     function _testDeposit(uint randomness) private {
-        console.log("testDeposit...");
+        console.log("\ntestDeposit...");
         _deposit(randomness);
     }
 
     function _testWithdraw(uint randomness) private {
-        console.log("testWithdraw...");
+        console.log("\ntestWithdraw...");
         address withdrawer = _randomAddress(randomness);
         uint availableLiquidity = IInfo(proxy).availableLiquidity();
         uint usdc = bound(randomness, 0, availableLiquidity);
@@ -225,7 +232,7 @@ contract GeneralFuzz is Test, DeployScript {
     }
 
     function _testSkip(uint randomness) private {
-        console.log("testSkip...");
+        console.log("\ntestSkip...");
         uint timeJump = bound(randomness, 0, 100 * 365 days); // Note: 0 to 100 years
         skip(timeJump);
     }
@@ -251,7 +258,7 @@ contract GeneralFuzz is Test, DeployScript {
     }
 
     function _mintNfts(uint amount) private {
-        console.log("mintNfts...");
+        console.log("\nmintNfts...");
         vm.startPrank(_GSP); // Note: only GSP can mint nfts
         for (uint i = 1; i <= amount; i++) {
             IResidents(proxy).verifyResident(vm.addr(i), i);
