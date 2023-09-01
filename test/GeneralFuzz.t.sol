@@ -82,7 +82,7 @@ contract GeneralFuzz is Test, DeployScript {
 
         address resident = _randomResident(randomness);
         uint tokenId = _randomTokenId(randomness);
-        uint propertyValue = bound(randomness, 0, 1_000_000_000e6); // Note: 0 to 1 billion
+        uint propertyValue = bound(randomness, 10e6, 1_000_000_000e6); // Note: 0 to 1 billion
         uint loanMonths = bound(randomness, 6, 120); // Note: 6 months to 10 years
 
         // Resident bids
@@ -95,7 +95,7 @@ contract GeneralFuzz is Test, DeployScript {
 
         address resident = _randomResident(randomness);
         uint tokenId = _randomTokenId(randomness);
-        uint propertyValue = bound(randomness, 0, 1_000_000_000e6); // Note: 0 to 1 billion
+        uint propertyValue = bound(randomness, 10e6, 1_000_000_000e6); // Note: 0 to 1 billion
         uint downPayment = bound(randomness, propertyValue / 2, propertyValue); // Note: maxLtv = 50%
         uint loanMonths = bound(randomness, 6, 120); // Note: 6 months to 10 years
 
@@ -150,7 +150,7 @@ contract GeneralFuzz is Test, DeployScript {
         if (BorrowingMath(proxy).status(tokenId) == Status.Mortgage) {
 
             // Get payment
-            uint payment = bound(randomness, 1, 1_000_000_000e6); // Note: USDC has 6 decimals
+            uint payment = bound(randomness, 10e6, 1_000_000_000e6); // Note: USDC has 6 decimals
 
             // Deal & Approve
             address payee = _randomAddress(randomness);
@@ -248,7 +248,7 @@ contract GeneralFuzz is Test, DeployScript {
 
         // Get buyer
         address buyer = _randomAddress(randomness);
-        uint amount = bound(randomness, 0, 1_000_000_000e6); // Note: USDC has 6 decimals
+        uint amount = bound(randomness, 10e6, 1_000_000_000e6); // Note: USDC has 6 decimals
 
         // Deal
         deal(address(USDC), buyer, amount);

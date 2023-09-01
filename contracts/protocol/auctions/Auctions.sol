@@ -21,6 +21,7 @@ contract Auctions is IAuctions, AuctionsInfo {
         require(loanMonths > 0 && loanMonths <= maxLoanMonths, "unallowed loanMonths");
 
         // Validate ltv
+        require(propertyValue > 0, "propertyValue must be > 0");
         UD60x18 ltv = convert(uint(1)).sub(convert(downPayment).div(convert(propertyValue)));
         require(ltv.lte(maxLtv), "ltv cannot exceed maxLtv");
 
