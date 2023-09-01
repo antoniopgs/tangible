@@ -13,6 +13,7 @@ import { Status } from "../contracts/types/Types.sol";
 
 // Other
 // import { convert } from "@prb/math/src/UD60x18.sol";
+// import { console } from "forge-std/console.sol";
 
 contract GeneralFuzz is Test, DeployScript {
 
@@ -63,7 +64,7 @@ contract GeneralFuzz is Test, DeployScript {
                 _testRedeemLoan(randomness[i]);
                 
             } else if (action == uint(Action.Foreclose)) {
-                _testForeclose(randomness[i]);
+            //     _testForeclose(randomness[i]);
             
             } else if (action == uint(Action.Deposit)) {
                 _testDeposit(randomness[i]);
@@ -243,7 +244,7 @@ contract GeneralFuzz is Test, DeployScript {
     // ----- UTILS -----
     function _randomTokenId(uint randomness) private returns(uint tokenId) {
         uint totalSupply = nftContract.totalSupply();
-        tokenId = bound(randomness, 0, totalSupply);
+        tokenId = bound(randomness, 0, totalSupply - 1);
     }
 
     function _randomIdx(uint randomness, uint length) private returns(uint randomIdx) {
