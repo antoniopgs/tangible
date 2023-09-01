@@ -33,7 +33,7 @@ contract GeneralFuzz is Test, DeployScript {
     uint residentCount;
 
     // Main
-    function testMath(uint[] calldata randomness) public {
+    function testMath(uint[100] calldata randomness) public {
         console.log("testMath...");
 
         _mintNfts(100);
