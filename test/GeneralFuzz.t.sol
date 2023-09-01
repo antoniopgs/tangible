@@ -64,7 +64,7 @@ contract GeneralFuzz is Test, DeployScript {
                 _testRedeemLoan(randomness[i]);
                 
             } else if (action == uint(Action.Foreclose)) {
-            //     _testForeclose(randomness[i]);
+                _testForeclose(randomness[i]);
             
             } else if (action == uint(Action.Deposit)) {
                 _testDeposit(randomness[i]);
