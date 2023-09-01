@@ -135,8 +135,13 @@ contract GeneralFuzz is Test, DeployScript {
             // Get randomIdx
             uint randomIdx = _randomIdx(randomness, bidsLength);
 
-            // Nft owner accepts bid
-            IAuctions(proxy).acceptBid(randomTokenId, randomIdx);
+            // If bid is actionable
+            if (IInfo(proxy).bidActionable(randomTokenId, randomIdx)) {
+
+                // Nft owner accepts bid
+                vm.prank(nftContract.ownerOf(randomTokenId));
+                IAuctions(proxy).acceptBid(randomTokenId, randomIdx);
+            }
         }
     }
 
@@ -179,12 +184,24 @@ contract GeneralFuzz is Test, DeployScript {
     function _testForeclose(uint randomness) private {
         console.log("testForelose...");
 
-        uint tokenId;
-        uint idx;
+        // Get randomTokenId
+        uint randomTokenId = _randomTokenId(randomness);
+        
+        // If nft has bids
+        uint bidsLength = IInfo(proxy).bidsLength(randomTokenId);
+        if (bidsLength > 0) {
 
-        // PAC forecloses
-        vm.prank(_PAC);
-        IBorrowing(proxy).foreclose(tokenId, idx);
+            // Get randomIdx
+            uint randomIdx = _randomIdx(randomness, bidsLength);
+
+            // If bid is actionable
+            if (IInfo(proxy).bidActionable(randomTokenId, randomIdx)) {
+
+                // PAC forecloses
+                vm.prank(_PAC);
+                IBorrowing(proxy).foreclose(randomTokenId, randomIdx);
+            }
+        }
     }
 
     function _testDeposit(uint randomness) private {
