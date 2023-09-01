@@ -85,8 +85,8 @@ abstract contract BorrowingMath is IBorrowingMath, State {
         cap = convert(numerator.div(loan.ratePerSecond));
     }
 
-    function redeemable(Loan memory loan) internal view returns(bool) {
-        uint timeSinceDefault = block.timestamp - defaultTime(loan);
+    function redeemable(uint tokenId) public view returns(bool) {
+        uint timeSinceDefault = block.timestamp - defaultTime(_debts[tokenId].loan);
         return timeSinceDefault <= redemptionWindow;
     }
 

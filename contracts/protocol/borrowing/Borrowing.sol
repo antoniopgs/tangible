@@ -89,7 +89,7 @@ contract Borrowing is IBorrowing, BorrowingInfo, BorrowingMath, OnlySelf {
 
         // Ensure default & redeemable
         require(status(loan) == Status.Default, "no default");
-        require(redeemable(loan), "redemption window is over");
+        require(redeemable(tokenId), "redemption window is over");
 
         // Calculate interest
         uint interest = _accruedInterest(loan);

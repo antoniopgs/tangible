@@ -163,8 +163,9 @@ contract DeployScript is Script {
         ITargetManager(proxy).setSelectorsTarget(setterSelectors, address(setter));
 
         // Other
-        bytes4[] memory borrowingMathSelectors = new bytes4[](1);
+        bytes4[] memory borrowingMathSelectors = new bytes4[](2);
         borrowingMathSelectors[0] = BorrowingMath.status.selector;
+        borrowingMathSelectors[1] = BorrowingMath.redeemable.selector;
         ITargetManager(proxy).setSelectorsTarget(borrowingMathSelectors, address(borrowing));
     }
 }

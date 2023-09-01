@@ -62,8 +62,8 @@ contract GeneralFuzz is Test, DeployScript {
             } else if (action == uint(Action.RedeemMortgage)) {
                 _testRedeemLoan(randomness[i]);
                 
-            // } else if (action == uint(Action.Foreclose)) {
-            //     _testForeclose(randomness[i]);
+            } else if (action == uint(Action.Foreclose)) {
+                _testForeclose(randomness[i]);
             
             } else if (action == uint(Action.Deposit)) {
                 _testDeposit(randomness[i]);
@@ -182,8 +182,10 @@ contract GeneralFuzz is Test, DeployScript {
         // Get random tokenId
         uint tokenId = _randomTokenId(randomness);
 
-        // If Default
-        if (BorrowingMath(proxy).status(tokenId) == Status.Default) {
+        // If Default && Redeemable
+        if (BorrowingMath(proxy).status(tokenId) == Status.Default && BorrowingMath(proxy).redeemable(tokenId)) {
+            
+            // Redeem
             IBorrowing(proxy).redeemMortgage(tokenId); // Note: test this is getting reach with assert(false)
         }
     }
