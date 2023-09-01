@@ -8,4 +8,8 @@ contract MockUsdc is ERC20("Mock USDC", "mUSDC") {
     function mint(address account, uint amount) external {
         _mint(account, amount);
     }
+
+    function decimals() public pure virtual returns (uint8) {
+        return 6; // Note: override to same decimals as USDC
+    }
 }
