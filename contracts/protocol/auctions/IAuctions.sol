@@ -4,8 +4,7 @@ pragma solidity ^0.8.15;
 interface IAuctions {
 
     // Bidder
-    function bid(uint tokenId, uint propertyValue, uint loanMonths) external;
-    function loanBid(uint tokenId, uint propertyValue, uint downPayment, uint loanMonths) external;
+    function bid(uint tokenId, uint propertyValue, uint downPayment, uint loanMonths) external;
     function cancelBid(uint tokenId, uint idx) external;
 
     // Seller

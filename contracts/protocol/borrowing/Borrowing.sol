@@ -135,7 +135,7 @@ contract Borrowing is IBorrowing, BorrowingInfo, BorrowingMath, OnlySelf {
     // Note: pulling buyer's downPayment to address(this) is safer, because buyer doesn't need to approve seller (which could let him run off with money)
     // Question: if active mortgage is being paid off with a new loan, the pool is paying itself, so money flows should be simpler...
     // Todo: figure out where to send otherDebt
-    function debtTransfer(uint tokenId, address seller, Bid memory _bid) public onlySelf {
+    function debtTransfer(uint tokenId, address seller, Bid memory _bid) public onlySelf { // Todo: maybe move elsewhere (like ERC721) to not need onlySelf
 
         // Get bid info
         // address seller /* = ownerOf(tokenId) */;

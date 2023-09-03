@@ -8,15 +8,11 @@ import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
 abstract contract AuctionsInfo is State {
 
     function _bidActionable(Bid memory _bid) internal view returns(bool) {
-        return _bid.downPayment == _bid.propertyValue || loanBidActionable(_bid);
-    }
 
-    function loanBidActionable(Bid memory _bid) private view returns(bool) {
-
-        // Calculate loanBid principal
+        // Calculate bid principal
         uint principal = _bid.propertyValue - _bid.downPayment;
 
-        // Calculate loanBid ltv
+        // Calculate bid ltv
         UD60x18 ltv = convert(principal).div(convert(_bid.propertyValue));
 
         // Return actionability

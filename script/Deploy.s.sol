@@ -96,11 +96,10 @@ contract DeployScript is Script {
     function setSelectors() private {
 
         /// Set auctionSelectors
-        bytes4[] memory auctionSelectors = new bytes4[](4);
+        bytes4[] memory auctionSelectors = new bytes4[](3);
         auctionSelectors[0] = IAuctions.bid.selector;
-        auctionSelectors[1] = IAuctions.loanBid.selector;
-        auctionSelectors[2] = IAuctions.cancelBid.selector;
-        auctionSelectors[3] = IAuctions.acceptBid.selector;
+        auctionSelectors[1] = IAuctions.cancelBid.selector;
+        auctionSelectors[2] = IAuctions.acceptBid.selector;
         ITargetManager(proxy).setSelectorsTarget(auctionSelectors, address(auctions));
 
         // Set borrowingSelectors
