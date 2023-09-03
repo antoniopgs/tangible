@@ -61,6 +61,29 @@ contract Info is IInfo, AuctionsInfo, BorrowingInfo, LendingInfo {
         return _bidActionable(_bids[tokenId][idx]);
     }
 
+    // Todo: test this later
+    function userBids(address user) external view returns(uint[] memory tokenIds, uint[] memory idxs) {
+
+        // Loop tokenIds
+        for (uint i = 0; i < tangibleNft.totalSupply(); i++) {
+
+            // Get tokenBids
+            Bid[] memory tokenBids = _bids[i];
+
+            // Loop tokenBids
+            for (uint n = 0; n < tokenBids.length; n++) {
+                
+                // If bidder is user
+                if (tokenBids[n].bidder == user) {
+
+                    // Store in arrays
+                    tokenIds[tokenIds.length] = i;
+                    idxs[idxs.length] = n;
+                }
+            }
+        }
+    }
+
     // Token Debts
     function unpaidPrincipal(uint tokenId) external view returns(uint) {
         return _debts[tokenId].loan.unpaidPrincipal;
