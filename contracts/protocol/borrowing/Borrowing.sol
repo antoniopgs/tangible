@@ -139,7 +139,7 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf 
     // Todo: figure out where to send otherDebt
     // Note: bid() now pulls downPayment, so no need to pull it here
     // Todo: add/implement otherDebt later?
-    function debtTransfer(uint tokenId, address seller, Bid memory _bid) public onlySelf { // Todo: maybe move elsewhere (like ERC721) to not need onlySelf
+    function debtTransfer(uint tokenId, address seller, Bid memory _bid) public /* onlySelf */ { // Todo: maybe move elsewhere (like ERC721) to not need onlySelf
 
         // Get bid info
         // address seller /* = ownerOf(tokenId) */;
@@ -151,7 +151,7 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf 
         uint interest = _accruedInterest(loan);
 
         // Ensure bid is actionable
-        require(_bidActionable(loan, _bid), "bid not actionable");
+        require(_bidActionable(_bid, _minSalePrice(loan)), "bid not actionable");
 
         // Calculate interest Fee
         uint interestFee = convert(convert(interest).mul(_interestFeeSpread));

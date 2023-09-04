@@ -124,7 +124,7 @@ abstract contract LoanStatus is ILoanStatus, State {
     }
 
     // Todo: add otherDebt later?
-    function _bidActionable(Loan memory loan, Bid memory _bid) internal view returns(bool) {
+    function _bidActionable(Bid memory _bid, uint minSalePrice) internal view returns(bool) {
 
         // Calculate bid principal
         uint principal = _bid.propertyValue - _bid.downPayment;
@@ -136,7 +136,7 @@ abstract contract LoanStatus is ILoanStatus, State {
         return (
             principal <= _availableLiquidity() &&
             ltv.lte(_maxLtv) && // Note: LTV already validated in bid(), but re-validate it here (because admin may have updated it)
-            _bid.propertyValue >= _minSalePrice(loan)
+            _bid.propertyValue >= minSalePrice
         );
     }
 
@@ -147,5 +147,28 @@ abstract contract LoanStatus is ILoanStatus, State {
     function _minSalePrice(Loan memory loan) internal view returns(uint) {
         UD60x18 saleFeeSpread = status(loan) == Status.Default ? _baseSaleFeeSpread.add(_defaultFeeSpread) : _baseSaleFeeSpread; // Question: maybe defaultFee should be a boost appplied to interest instead?
         return convert(convert(loan.unpaidPrincipal + _accruedInterest(loan)).div(convert(uint(1)).sub(saleFeeSpread)));
+    }
+
+    function highestActionableBid(uint tokenId) internal view returns (uint highestActionableIdx) {
+
+        // Get minSalePrice
+        uint minSalePrice = _minSalePrice(_debts[tokenId].loan);
+
+        // Get tokenBids
+        Bid[] memory tokenBids = _bids[tokenId];
+
+        // Loop tokenBids
+        for (uint i = 0; i < tokenBids.length; i++) {
+
+            // Get bid
+            Bid memory bid = tokenBids[i];
+
+            // If bid has higher propertyValue and is actionable
+            if (bid.propertyValue > tokenBids[highestActionableIdx].propertyValue && _bidActionable(bid, minSalePrice)) {
+
+                // Update highestActionableIdx // Note: might run into problems if nothing is returned and it defaults to 0
+                highestActionableIdx = i;
+            }    
+        }
     }
 }

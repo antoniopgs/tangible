@@ -13,7 +13,7 @@ import { Status } from "../contracts/types/Types.sol";
 
 // Other
 // import { convert } from "@prb/math/src/UD60x18.sol";
-// import { console } from "forge-std/console.sol";
+import { console } from "forge-std/console.sol";
 
 contract GeneralFuzz is Test, DeployScript {
 
@@ -180,6 +180,7 @@ contract GeneralFuzz is Test, DeployScript {
         address withdrawer = _randomAddress(randomness);
         uint availableLiquidity = IInfo(proxy).availableLiquidity();
         uint usdc = bound(randomness, 0, availableLiquidity);
+        console.log("usdc:", usdc);
         uint tUsdcBurn = IInfo(proxy).usdcToTUsdc(usdc);
 
         // Deal tUsdcBurn to withdrawer
@@ -254,7 +255,7 @@ contract GeneralFuzz is Test, DeployScript {
 
         // Pick actionable propertyValue/salePrice
         uint minPropertyValue = IInfo(proxy).unpaidPrincipal(randomTokenId) > 0 ? IInfo(proxy).minSalePrice(randomTokenId) : 1;
-        uint propertyValue = bound(randomness, minPropertyValue, 1_000_000_000e6); // Note: minSalePrice to 1 billion
+        uint propertyValue = bound(randomness, minPropertyValue, minPropertyValue + 1_000_000_000e6); // Note: minPropertyValue to minPropertyValue + 1 billion
 
         // Pick actionable downPayment
         UD60x18 maxLtv = IInfo(proxy).maxLtv();

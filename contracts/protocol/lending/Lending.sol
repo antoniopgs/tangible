@@ -4,6 +4,8 @@ pragma solidity ^0.8.15;
 import "./ILending.sol";
 import "../lendingInfo/LendingInfo.sol";
 
+import { console } from "forge-std/console.sol";
+
 contract Lending is ILending, LendingInfo {
 
     // Libs
@@ -28,18 +30,28 @@ contract Lending is ILending, LendingInfo {
 
     function withdraw(uint usdc) external {
 
+        console.log(0);
+
         // Calulate withdrawer tUsdc
         uint _tUsdc = _usdcToTUsdc(usdc);
 
+        console.log(1);
+
         // Burn withdrawer tUsdc
         tUSDC.operatorBurn(msg.sender, _tUsdc, "", "");
+
+        console.log(2);
 
         // Update pool
         totalDeposits -= usdc;
         require(totalPrincipal <= totalDeposits, "utilization can't exceed 100%");
 
+        console.log(3);
+
         // Send usdc to withdrawer
         USDC.safeTransfer(msg.sender, usdc);
+
+        console.log(4);
 
         emit Deposit(msg.sender, usdc, _tUsdc);
     }

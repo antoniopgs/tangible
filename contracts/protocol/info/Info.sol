@@ -58,7 +58,7 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus {
     }
 
     function bidActionable(uint tokenId, uint idx) external view returns(bool) {
-        return _bidActionable(_debts[tokenId].loan, _bids[tokenId][idx]);
+        return _bidActionable(_bids[tokenId][idx], _minSalePrice(_debts[tokenId].loan));
     }
 
     // Todo: test this later
