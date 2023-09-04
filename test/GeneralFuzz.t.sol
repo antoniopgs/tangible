@@ -7,7 +7,7 @@ import "../script/Deploy.s.sol";
 
 // Protocol Contracts
 import "../contracts/protocol/borrowing/IBorrowing.sol";
-import "../contracts/protocol/borrowingMath/BorrowingMath.sol";
+import "../contracts/protocol/interest/Interest.sol";
 import "../contracts/protocol/lending/ILending.sol";
 import { Status } from "../contracts/types/Types.sol";
 
@@ -114,7 +114,7 @@ contract GeneralFuzz is Test, DeployScript {
         uint tokenId = _randomTokenId(randomness);
 
         // If Mortgage
-        if (BorrowingMath(proxy).status(tokenId) == Status.Mortgage) {
+        if (LoanStatus(proxy).status(tokenId) == Status.Mortgage) {
 
             // Get payment
             uint payment = bound(randomness, 10e6, 1_000_000_000e6); // Note: USDC has 6 decimals
@@ -138,7 +138,7 @@ contract GeneralFuzz is Test, DeployScript {
         uint tokenId = _randomTokenId(randomness);
 
         // If Default && Redeemable
-        if (BorrowingMath(proxy).status(tokenId) == Status.Default && BorrowingMath(proxy).redeemable(tokenId)) {
+        if (LoanStatus(proxy).status(tokenId) == Status.Default && LoanStatus(proxy).redeemable(tokenId)) {
             
             // Redeem
             IBorrowing(proxy).redeemMortgage(tokenId); // Note: test this is getting reach with assert(false)

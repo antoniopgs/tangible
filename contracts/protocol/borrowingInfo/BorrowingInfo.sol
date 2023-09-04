@@ -14,17 +14,4 @@ abstract contract BorrowingInfo is State {
         }
         return convert(totalPrincipal).div(convert(totalDeposits));
     }
-
-
-    function _accruedInterest(Loan memory loan) internal view returns(uint) {
-        return convert(convert(loan.unpaidPrincipal).mul(accruedRate(loan)));
-    }
-
-    function accruedRate(Loan memory loan) private view returns(UD60x18) {
-        return loan.ratePerSecond.mul(convert(secondsSinceLastPayment(loan)));
-    }
-
-    function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
-        return block.timestamp - loan.lastPaymentTime;
-    }
 }

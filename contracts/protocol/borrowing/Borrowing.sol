@@ -2,11 +2,13 @@
 pragma solidity ^0.8.15;
 
 import "./IBorrowing.sol";
+import "../loanStatus/LoanStatus.sol";
 import "../borrowingInfo/BorrowingInfo.sol";
-import "../borrowingMath/BorrowingMath.sol";
+import "../interest/Interest.sol";
 import "../onlySelf/OnlySelf.sol";
+import { Status } from "../../types/Types.sol";
 
-contract Borrowing is IBorrowing, BorrowingInfo, BorrowingMath, OnlySelf {
+contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf {
 
     using SafeERC20 for IERC20;
 
@@ -160,7 +162,7 @@ contract Borrowing is IBorrowing, BorrowingInfo, BorrowingMath, OnlySelf {
 
         // Validate salePrice
         // require(salePrice >= sellerDebt, "salePrice must cover sellerDebt");
-        require(salePrice >= loan.unpaidPrincipal + interest + interestFee + saleFee + debt.otherDebt, "salePrice must cover sellerDebt");
+        require(salePrice >= loan.unpaidPrincipal + interest + saleFee, "salePrice must cover sellerDebt"); // Todo: add otherDebt later?
 
         // Pull downPayment from buyer (now bids actually transfer the money in)
         // USDC.safeTransferFrom(buyer, address(this), downPayment); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
@@ -174,11 +176,11 @@ contract Borrowing is IBorrowing, BorrowingInfo, BorrowingMath, OnlySelf {
 
         // Send sellerEquity (salePrice - sellerDebt) to seller
         // USDC.safeTransfer(seller, salePrice - sellerDebt);
-        USDC.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest - interestFee - saleFee - debt.otherDebt);
+        USDC.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest - saleFee); // Todo: add otherDebt later?
 
         // Clear seller/caller debt
         loan.unpaidPrincipal = 0;
-        debt.otherDebt = 0;
+        // debt.otherDebt = 0; // Todo: add otherDebt later?
 
         // Send nft from seller to buyer
         tangibleNft.safeTransferFrom(seller, buyer, tokenId);
