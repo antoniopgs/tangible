@@ -61,9 +61,6 @@ contract Auctions is IAuctions, LoanStatus {
         // Get Bid
         Bid memory _bid = _bids[tokenId][idx];
 
-        // Ensure bid is actionable
-        require(_bidActionable(_debts[tokenId].loan, _bid), "bid not actionable");
-
         // Debt Transfer NFT from seller to bidder
         IBorrowing(address(this)).debtTransfer({
             tokenId: tokenId,
