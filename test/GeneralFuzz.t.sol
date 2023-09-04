@@ -110,32 +110,38 @@ contract GeneralFuzz is Test, DeployScript {
     function _testPayLoan(uint randomness) private {
         console.log("\ntestPayLoan...");
 
-        // Get random tokenId
+        // Get tokenId
         uint tokenId = _randomTokenId(randomness);
 
-        // If Mortgage
-        if (LoanStatus(proxy).status(tokenId) == Status.Mortgage) {
+        // Make Actionable Loan Bid
+        (address bidder, uint idx) = _makeActionableLoanBid(tokenId, randomness);
 
-            // Get payment
-            uint payment = bound(randomness, 10e6, 1_000_000_000e6); // Note: USDC has 6 decimals
+        // Seller accepts bid
+        vm.prank(nftContract.ownerOf(tokenId));
+        IAuctions(proxy).acceptBid(tokenId, idx);
 
-            // Deal & Approve
-            address payee = _randomAddress(randomness);
-            deal(address(USDC), payee, payment);
-            vm.prank(payee);
-            USDC.approve(proxy, payment);
+        // Get & Skip by timeJump
+        uint timeJump = bound(randomness, 0, 15 days);
+        skip(timeJump);
 
-            // Pay loan
-            vm.prank(payee);
-            IBorrowing(proxy).payMortgage(tokenId, payment);
-        }
+        // Get payment
+        uint payment = bound(randomness, 0, 1_000_000_000e6);
+
+        // Bidder pays loan
+        vm.startPrank(bidder);
+        USDC.approve(proxy, payment);
+        IBorrowing(proxy).payMortgage(tokenId, payment);
+        vm.stopPrank();
     }
 
     function _testRedeemLoan(uint randomness) private {
         console.log("\ntestRedeemLoan...");
 
+        // Get tokenId
+        uint tokenId = _randomTokenId(randomness);
+
         // Make Actionable Loan Bid
-        (address bidder, uint tokenId, uint idx) = _makeActionableLoanBid(randomness);
+        (address bidder, uint idx) = _makeActionableLoanBid(tokenId, randomness);
 
         // Seller accepts bid
         vm.prank(nftContract.ownerOf(tokenId));
@@ -157,15 +163,21 @@ contract GeneralFuzz is Test, DeployScript {
     function _testForeclose(uint randomness) private {
         console.log("\ntestForelose...");
 
+        // Get tokenId
+        uint tokenId = _randomTokenId(randomness);
+
         // Make Actionable Loan Bid
-        (, uint tokenId, uint idx) = _makeActionableLoanBid(randomness);
+        (, uint idx) = _makeActionableLoanBid(tokenId, randomness);
 
         // Seller accepts bid
         vm.prank(nftContract.ownerOf(tokenId));
         IAuctions(proxy).acceptBid(tokenId, idx);
 
         // Skip time (to default)
-        skip(30 days + 45 days);
+        skip(30 days + 45 days + 15 days);
+
+        // Make Actionable Loan Bid
+        _makeActionableLoanBid(tokenId, randomness);
 
         // PAC forecloses
         vm.prank(_PAC);
@@ -296,15 +308,14 @@ contract GeneralFuzz is Test, DeployScript {
         newBidIdx = IInfo(proxy).bidsLength(randomTokenId) - 1;
     }
 
-    function _makeActionableLoanBid(uint randomness) private returns(address bidder, uint randomTokenId, uint newBidIdx) {
+    function _makeActionableLoanBid(uint tokenId, uint randomness) private returns(address bidder, uint newBidIdx) {
         
         // Get vars
         bidder = _randomResident(randomness);
-        randomTokenId = _randomTokenId(randomness);
         uint loanMonths = bound(randomness, 6, 120); // Note: 6 months to 10 years
 
         // Pick actionable propertyValue/salePrice
-        uint minPropertyValue = IInfo(proxy).unpaidPrincipal(randomTokenId) > 0 ? IInfo(proxy).minSalePrice(randomTokenId) : 1;
+        uint minPropertyValue = IInfo(proxy).unpaidPrincipal(tokenId) > 0 ? IInfo(proxy).minSalePrice(tokenId) : 1;
         uint propertyValue = bound(randomness, minPropertyValue, minPropertyValue + 1_000_000_000e6); // Note: minPropertyValue to minPropertyValue + 1 billion
 
         // Pick actionable downPayment
@@ -335,10 +346,10 @@ contract GeneralFuzz is Test, DeployScript {
         // Bidder approves & bids
         vm.startPrank(bidder);
         USDC.approve(proxy, downPayment);
-        IAuctions(proxy).bid(randomTokenId, propertyValue, downPayment, loanMonths);
+        IAuctions(proxy).bid(tokenId, propertyValue, downPayment, loanMonths);
         vm.stopPrank();
 
         // Get newBidIdx
-        newBidIdx = IInfo(proxy).bidsLength(randomTokenId) - 1;
+        newBidIdx = IInfo(proxy).bidsLength(tokenId) - 1;
     }
 }
