@@ -79,14 +79,14 @@ contract GeneralFuzz is Test, DeployScript {
         console.log("\ntestBid...");
 
         // Bid
-        _bid(randomness);
+        _makeActionableBid(randomness);
     }
 
     function _testCancelBid(uint randomness) private {
         console.log("\ntestCancelBid...");
 
         // Bid
-        (address bidder, uint tokenId, uint idx) = _bid(randomness);
+        (address bidder, uint tokenId, uint idx) = _makeActionableBid(randomness);
 
         // Bidder cancels bid
         vm.prank(bidder);
@@ -97,7 +97,7 @@ contract GeneralFuzz is Test, DeployScript {
         console.log("\ntestAcceptBid...");
 
         // Bid
-        (, uint tokenId, uint idx) = _bid(randomness); // Todo: ensure bid is actionable later
+        (, uint tokenId, uint idx) = _makeActionableBid(randomness); // Todo: ensure bid is actionable later
 
         // Get seller
         address seller = nftContract.ownerOf(tokenId);
@@ -245,14 +245,22 @@ contract GeneralFuzz is Test, DeployScript {
         ILending(proxy).deposit(amount);
     }
 
-    function _bid(uint randomness) private returns(address bidder, uint randomTokenId, uint newBidIdx) { // Todo: ensure bid is actionable
+    function _makeActionableBid(uint randomness) private returns(address bidder, uint randomTokenId, uint newBidIdx) {
         
         // Get vars
         bidder = _randomResident(randomness);
         randomTokenId = _randomTokenId(randomness);
-        uint propertyValue = bound(randomness, 10e6, 1_000_000_000e6); // Note: 0 to 1 billion
-        uint downPayment = bound(randomness, propertyValue / 2, propertyValue); // Note: maxLtv = 50%
         uint loanMonths = bound(randomness, 6, 120); // Note: 6 months to 10 years
+
+        // Todo: Ensure availableLiquidity actionability?
+
+        // Pick actionable propertyValue/salePrice
+        uint minPropertyValue = IInfo(proxy).unpaidPrincipal(randomTokenId) > 0 ? IInfo(proxy).minSalePrice(randomTokenId) : 1;
+        uint propertyValue = bound(randomness, minPropertyValue, 1_000_000_000e6); // Note: minSalePrice to 1 billion
+
+        // Pick actionable downPayment
+        UD60x18 maxLtv = IInfo(proxy).maxLtv();
+        uint downPayment = bound(randomness, convert(maxLtv.mul(convert(propertyValue))) + 1, propertyValue); // Note: add 1 to minDownPayment for precision loss
 
         // Deal downPayment to bidder
         deal(address(USDC), bidder, downPayment);

@@ -13,7 +13,7 @@ contract Setter is ISetter, State {
 
     function updateMaxLtv(uint newMaxLtvPct) external onlyRole(TANGIBLE) {
         require(newMaxLtvPct <= 100, "invalid pct");
-        maxLtv = convert(newMaxLtvPct).div(convert(100));
+        _maxLtv = convert(newMaxLtvPct).div(convert(100));
     }
 
     function updateMaxLoanMonths(uint newMaxLoanMonths) external onlyRole(TANGIBLE) {

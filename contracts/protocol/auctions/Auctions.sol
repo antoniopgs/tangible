@@ -19,7 +19,7 @@ contract Auctions is IAuctions, LoanStatus {
         // Validate ltv
         require(propertyValue > 0, "propertyValue must be > 0");
         UD60x18 ltv = convert(uint(1)).sub(convert(downPayment).div(convert(propertyValue)));
-        require(ltv.lte(maxLtv), "ltv cannot exceed maxLtv");
+        require(ltv.lte(_maxLtv), "ltv cannot exceed maxLtv");
 
         // Pull downPayment from bidder
         USDC.safeTransferFrom(msg.sender, address(this), downPayment);

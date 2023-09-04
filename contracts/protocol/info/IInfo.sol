@@ -23,8 +23,10 @@ interface IInfo {
     function bidsLength(uint tokenId) external view returns(uint);
     function bidActionable(uint tokenId, uint idx) external view returns(bool);
     function userBids(address user) external view returns(uint[] memory tokenIds, uint[] memory idxs);
+    function minSalePrice(uint tokenId) external view returns(uint);
 
     // Token Debts
+    function maxLtv() external view returns(UD60x18);
     function unpaidPrincipal(uint tokenId) external view returns(uint);
     function accruedInterest(uint tokenId) external view returns(uint);
 }

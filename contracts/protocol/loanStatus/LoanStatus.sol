@@ -135,8 +135,8 @@ abstract contract LoanStatus is ILoanStatus, State {
         // Return actionability
         return (
             principal <= _availableLiquidity() &&
-            ltv.lte(maxLtv) && // Note: LTV already validated in bid(), but re-validate it here (because admin may have updated it)
-            _bid.propertyValue >= minSalePrice(loan)
+            ltv.lte(_maxLtv) && // Note: LTV already validated in bid(), but re-validate it here (because admin may have updated it)
+            _bid.propertyValue >= _minSalePrice(loan)
         );
     }
 
@@ -144,7 +144,7 @@ abstract contract LoanStatus is ILoanStatus, State {
         return totalDeposits - totalPrincipal; // - protocolMoney?
     }
 
-    function minSalePrice(Loan memory loan) private view returns(uint) {
+    function _minSalePrice(Loan memory loan) internal view returns(uint) {
         UD60x18 saleFeeSpread = status(loan) == Status.Default ? _baseSaleFeeSpread.add(_defaultFeeSpread) : _baseSaleFeeSpread; // Question: maybe defaultFee should be a boost appplied to interest instead?
         return convert(convert(loan.unpaidPrincipal + _accruedInterest(loan)).div(convert(uint(1)).sub(saleFeeSpread)));
     }

@@ -35,7 +35,7 @@ contract Initializer is State {
         optimalUtilization = convert(90).div(convert(100)); // Note: 90%
 
         // Other Vars
-        maxLtv = convert(50).div(convert(100)); // Note: 50%
+        _maxLtv = convert(50).div(convert(100)); // Note: 50%
         maxLoanMonths = 120; // Note: 10 years
         redemptionWindow = 45 days;
 

@@ -41,7 +41,7 @@ abstract contract State is TargetManager {
     UD60x18 public optimalUtilization;
 
     // Other Vars
-    UD60x18 public maxLtv;
+    UD60x18 internal _maxLtv;
     uint public maxLoanMonths;
     uint internal redemptionWindow;
 

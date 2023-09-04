@@ -84,6 +84,14 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus {
         }
     }
 
+    function maxLtv() external view returns(UD60x18) {
+        return _maxLtv;
+    }
+
+    function minSalePrice(uint tokenId) external view returns(uint) {
+        return _minSalePrice(_debts[tokenId].loan);
+    }
+
     // Token Debts
     function unpaidPrincipal(uint tokenId) external view returns(uint) {
         return _debts[tokenId].loan.unpaidPrincipal;
