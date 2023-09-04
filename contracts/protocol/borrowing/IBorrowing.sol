@@ -20,7 +20,7 @@ interface IBorrowing {
 
     // Admin Functions
     // function refinance(uint tokenId) external;
-    function foreclose(uint tokenId, uint idx) external;
+    function foreclose(uint tokenId) external;
     function increaseOtherDebt(uint tokenId, uint amount, string calldata motive) external;
     function decreaseOtherDebt(uint tokenId, uint amount, string calldata motive) external;
 }

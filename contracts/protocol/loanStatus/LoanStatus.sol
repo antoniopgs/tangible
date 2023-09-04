@@ -170,5 +170,12 @@ abstract contract LoanStatus is ILoanStatus, State {
                 highestActionableIdx = i;
             }    
         }
+
+        if (tokenBids.length == 0) {
+            revert("token has no bids");
+            
+        } else if (highestActionableIdx == 0 && !_bidActionable(tokenBids[0], minSalePrice)) {
+            revert("token has no actionable bids");
+        }
     }
 }

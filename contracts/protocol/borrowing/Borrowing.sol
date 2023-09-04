@@ -115,7 +115,14 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf 
     }
 
     // Admin Functions
-    function foreclose(uint tokenId, uint idx) external onlyRole(PAC) {
+    function foreclose(uint tokenId) external onlyRole(PAC) {
+
+        require(status(_debts[tokenId].loan) == Status.Default, "no default");
+        require(!redeemable(tokenId), "redemption window not over");
+
+        // Get idx
+        uint idx = highestActionableBid(tokenId);
+
         debtTransfer({
             tokenId: tokenId,
             seller: tangibleNft.ownerOf(tokenId),

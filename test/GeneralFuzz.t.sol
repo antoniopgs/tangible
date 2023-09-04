@@ -150,20 +150,16 @@ contract GeneralFuzz is Test, DeployScript {
 
         // Get randomTokenId
         uint randomTokenId = _randomTokenId(randomness);
-        
-        // If nft has bids
-        uint bidsLength = IInfo(proxy).bidsLength(randomTokenId);
-        if (bidsLength > 0) {
 
-            // Get randomIdx
-            uint randomIdx = _randomIdx(randomness, bidsLength);
+        // If Default && Not Redeemable
+        if (LoanStatus(proxy).status(randomTokenId) == Status.Default && !LoanStatus(proxy).redeemable(randomTokenId)) {
 
-            // If bid is actionable
-            if (IInfo(proxy).bidActionable(randomTokenId, randomIdx)) {
+            // If Token has bids
+            if (IInfo(proxy).bidsLength(randomTokenId) > 0) {
 
                 // PAC forecloses
                 vm.prank(_PAC);
-                IBorrowing(proxy).foreclose(randomTokenId, randomIdx);
+                IBorrowing(proxy).foreclose(randomTokenId);
             }
         }
     }
