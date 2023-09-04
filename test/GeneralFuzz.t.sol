@@ -134,34 +134,42 @@ contract GeneralFuzz is Test, DeployScript {
     function _testRedeemLoan(uint randomness) private {
         console.log("\ntestRedeemLoan...");
 
-        // Get random tokenId
-        uint tokenId = _randomTokenId(randomness);
+        // Make Actionable Loan Bid
+        (address bidder, uint tokenId, uint idx) = _makeActionableLoanBid(randomness);
 
-        // If Default && Redeemable
-        if (LoanStatus(proxy).status(tokenId) == Status.Default && LoanStatus(proxy).redeemable(tokenId)) {
-            
-            // Redeem
-            IBorrowing(proxy).redeemMortgage(tokenId); // Note: test this is getting reach with assert(false)
-        }
+        // Seller accepts bid
+        vm.prank(nftContract.ownerOf(tokenId));
+        IAuctions(proxy).acceptBid(tokenId, idx);
+
+        // Skip time (to make redeemable)
+        skip(30 days + 15 days);
+
+        uint unpaidPrincipal = IInfo(proxy).unpaidPrincipal(tokenId);
+        uint interest = IInfo(proxy).accruedInterest(tokenId);
+
+        // Bidder redeems
+        vm.startPrank(bidder);
+        USDC.approve(proxy, 2 * (unpaidPrincipal + interest)); // Todo: improve later
+        IBorrowing(proxy).redeemMortgage(tokenId);
+        vm.stopPrank();
     }
 
     function _testForeclose(uint randomness) private {
         console.log("\ntestForelose...");
 
-        // Get randomTokenId
-        uint randomTokenId = _randomTokenId(randomness);
+        // Make Actionable Loan Bid
+        (, uint tokenId, uint idx) = _makeActionableLoanBid(randomness);
 
-        // If Default && Not Redeemable
-        if (LoanStatus(proxy).status(randomTokenId) == Status.Default && !LoanStatus(proxy).redeemable(randomTokenId)) {
+        // Seller accepts bid
+        vm.prank(nftContract.ownerOf(tokenId));
+        IAuctions(proxy).acceptBid(tokenId, idx);
 
-            // If Token has bids
-            if (IInfo(proxy).bidsLength(randomTokenId) > 0) {
+        // Skip time (to default)
+        skip(30 days + 45 days);
 
-                // PAC forecloses
-                vm.prank(_PAC);
-                IBorrowing(proxy).foreclose(randomTokenId);
-            }
-        }
+        // PAC forecloses
+        vm.prank(_PAC);
+        IBorrowing(proxy).foreclose(tokenId);
     }
 
     function _testDeposit(uint randomness) private {
@@ -256,6 +264,52 @@ contract GeneralFuzz is Test, DeployScript {
         // Pick actionable downPayment
         UD60x18 maxLtv = IInfo(proxy).maxLtv();
         uint downPayment = bound(randomness, convert(maxLtv.mul(convert(propertyValue))) + 1, propertyValue); // Note: add 1 to minDownPayment for precision loss
+
+        // Ensure there's enough availableLiquidity
+        uint availableLiquidity = IInfo(proxy).availableLiquidity();
+        if (availableLiquidity < downPayment) {
+
+            // Get depositor
+            address depositor = makeAddr("depositor");
+
+            // Give neededLiquidity to depositor
+            uint neededLiquidity = downPayment - availableLiquidity;
+            deal(address(USDC), depositor, neededLiquidity);
+
+            // Depositor approves & deposits
+            vm.startPrank(depositor);
+            USDC.approve(proxy, neededLiquidity);
+            ILending(proxy).deposit(neededLiquidity);
+            vm.stopPrank();
+        }
+
+        // Deal downPayment to bidder
+        deal(address(USDC), bidder, downPayment);
+
+        // Bidder approves & bids
+        vm.startPrank(bidder);
+        USDC.approve(proxy, downPayment);
+        IAuctions(proxy).bid(randomTokenId, propertyValue, downPayment, loanMonths);
+        vm.stopPrank();
+
+        // Get newBidIdx
+        newBidIdx = IInfo(proxy).bidsLength(randomTokenId) - 1;
+    }
+
+    function _makeActionableLoanBid(uint randomness) private returns(address bidder, uint randomTokenId, uint newBidIdx) {
+        
+        // Get vars
+        bidder = _randomResident(randomness);
+        randomTokenId = _randomTokenId(randomness);
+        uint loanMonths = bound(randomness, 6, 120); // Note: 6 months to 10 years
+
+        // Pick actionable propertyValue/salePrice
+        uint minPropertyValue = IInfo(proxy).unpaidPrincipal(randomTokenId) > 0 ? IInfo(proxy).minSalePrice(randomTokenId) : 1;
+        uint propertyValue = bound(randomness, minPropertyValue, minPropertyValue + 1_000_000_000e6); // Note: minPropertyValue to minPropertyValue + 1 billion
+
+        // Pick actionable downPayment
+        UD60x18 maxLtv = IInfo(proxy).maxLtv();
+        uint downPayment = bound(randomness, convert(maxLtv.mul(convert(propertyValue))) + 1, 9 * propertyValue / 10); // Note: 50% to 90% of propertyValue
 
         // Ensure there's enough availableLiquidity
         uint availableLiquidity = IInfo(proxy).availableLiquidity();

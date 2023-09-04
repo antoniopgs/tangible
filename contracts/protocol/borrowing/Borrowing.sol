@@ -84,6 +84,7 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf 
         emit PayLoan(msg.sender, tokenId, payment, interest, repayment, block.timestamp, loan.unpaidPrincipal == 0);
     }
 
+    // Todo: who gets nft?
     function redeemMortgage(uint tokenId) external {
 
         // Get Loan
