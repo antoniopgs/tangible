@@ -2,10 +2,10 @@
 pragma solidity ^0.8.15;
 
 import "./IAuctions.sol";
-import "../auctionsInfo/AuctionsInfo.sol";
+import "../loanStatus/LoanStatus.sol";
 import "../borrowing/IBorrowing.sol";
 
-contract Auctions is IAuctions, AuctionsInfo {
+contract Auctions is IAuctions, LoanStatus {
 
     using SafeERC20 for IERC20;
 
@@ -53,7 +53,8 @@ contract Auctions is IAuctions, AuctionsInfo {
         // Delete bid
         deleteBid(tokenBids, idx);
     }
-
+    
+    // Todo: what if seller has no debt? might need to implement that option
     function acceptBid(uint tokenId, uint idx) external {
         require(msg.sender == tangibleNft.ownerOf(tokenId), "only token owner can accept bid"); // Question: maybe PAC should be able too (for foreclosures?)
 

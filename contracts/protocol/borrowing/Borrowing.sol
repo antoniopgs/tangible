@@ -137,18 +137,21 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf 
     // Note: pulling buyer's downPayment to address(this) is safer, because buyer doesn't need to approve seller (which could let him run off with money)
     // Question: if active mortgage is being paid off with a new loan, the pool is paying itself, so money flows should be simpler...
     // Todo: figure out where to send otherDebt
+    // Note: bid() now pulls downPayment, so no need to pull it here
+    // Todo: add/implement otherDebt later?
     function debtTransfer(uint tokenId, address seller, Bid memory _bid) public onlySelf { // Todo: maybe move elsewhere (like ERC721) to not need onlySelf
 
         // Get bid info
         // address seller /* = ownerOf(tokenId) */;
-        address buyer = _bid.bidder;
         uint salePrice = _bid.propertyValue;
         uint downPayment = _bid.downPayment;
 
         // Get loan info
-        Debt storage debt = _debts[tokenId];
-        Loan storage loan = debt.loan;
+        Loan storage loan = _debts[tokenId].loan;
         uint interest = _accruedInterest(loan);
+
+        // Ensure bid is actionable
+        require(_bidActionable(loan, _bid), "bid not actionable");
 
         // Calculate interest Fee
         uint interestFee = convert(convert(interest).mul(_interestFeeSpread));
@@ -156,16 +159,6 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf 
         // Calculate saleFee
         UD60x18 saleFeeSpread = status(loan) == Status.Default ? _baseSaleFeeSpread.add(_defaultFeeSpread) : _baseSaleFeeSpread; // Question: maybe defaultFee should be a boost appplied to interest instead?
         uint saleFee = convert(convert(salePrice).mul(saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
-
-        // Calculate sellerDebt
-        // uint sellerDebt = loan.unpaidPrincipal + interest + interestFee + saleFee + debt.otherDebt;
-
-        // Validate salePrice
-        // require(salePrice >= sellerDebt, "salePrice must cover sellerDebt");
-        require(salePrice >= loan.unpaidPrincipal + interest + saleFee, "salePrice must cover sellerDebt"); // Todo: add otherDebt later?
-
-        // Pull downPayment from buyer (now bids actually transfer the money in)
-        // USDC.safeTransferFrom(buyer, address(this), downPayment); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
 
         // Update Pool (pay off lenders)
         totalPrincipal -= loan.unpaidPrincipal;
@@ -175,27 +168,21 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf 
         protocolMoney += interestFee + saleFee;
 
         // Send sellerEquity (salePrice - sellerDebt) to seller
-        // USDC.safeTransfer(seller, salePrice - sellerDebt);
-        USDC.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest - saleFee); // Todo: add otherDebt later?
+        // sellerDebt = loan.unpaidPrincipal + interest + saleFee
+        USDC.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest - saleFee);
 
         // Clear seller/caller debt
         loan.unpaidPrincipal = 0;
-        // debt.otherDebt = 0; // Todo: add otherDebt later?
 
-        // Send nft from seller to buyer
-        tangibleNft.safeTransferFrom(seller, buyer, tokenId);
+        // Send nft from seller to bidder
+        tangibleNft.safeTransferFrom(seller, _bid.bidder, tokenId);
 
-        // Calculate buyerPrincipal
-        // uint buyerPrincipal = salePrice - downPayment;
-
-        // If buyer used loan
-        // if (buyerPrincipal > 0) {
+        // If bidder needs loan
         if (downPayment < salePrice) {
 
             // Start new Loan
             startNewMortgage({
                 loan: loan,
-                // principal: buyerPrincipal,
                 principal: salePrice - downPayment,
                 maxDurationMonths: _bid.loanMonths
             });
