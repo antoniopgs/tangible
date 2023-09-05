@@ -68,7 +68,7 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus, Interest {
 
     function userBids(address user) external view returns(BidInfo[] memory _userBids) {
 
-        _userBids = new BidInfo[](10);
+        _userBids = new BidInfo[](1_000_000);
         uint realLength;
         
         // Loop tokenIds
