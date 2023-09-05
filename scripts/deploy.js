@@ -98,14 +98,16 @@ module.exports = deploy = async () => {
   console.log("setting infoSelectors...");
   const Info = await ethers.getContractFactory("Info");
   const infoSelectors = [
+    Info.interface.getSighash("totalPrincipal"),
+    Info.interface.getSighash("totalDeposits"),
+    Info.interface.getSighash("availableLiquidity"),
+    Info.interface.getSighash("utilization"),
+    Info.interface.getSighash("optimalUtilization"),
+    Info.interface.getSighash("usdcToTUsdc"),
+    Info.interface.getSighash("tUsdcToUsdc"),
     Info.interface.getSighash("isResident"),
     Info.interface.getSighash("addressToResident"),
     Info.interface.getSighash("residentToAddress"),
-    Info.interface.getSighash("availableLiquidity"),
-    Info.interface.getSighash("utilization"),
-    Info.interface.getSighash("usdcToTUsdc"),
-    Info.interface.getSighash("tUsdcToUsdc"),
-    Info.interface.getSighash("borrowerApr"),
     Info.interface.getSighash("bids"),
     Info.interface.getSighash("bidsLength"),
     Info.interface.getSighash("bidActionable"),
@@ -116,7 +118,14 @@ module.exports = deploy = async () => {
     Info.interface.getSighash("status"),
     Info.interface.getSighash("redeemable"),
     Info.interface.getSighash("loanChart"),
-    Info.interface.getSighash("maxLtv")
+    Info.interface.getSighash("maxLtv"),
+    Info.interface.getSighash("maxLoanMonths"),
+    Info.interface.getSighash("borrowerApr"),
+    Info.interface.getSighash("redemptionWindow"),
+    Info.interface.getSighash("baseSaleFeeSpread"),
+    Info.interface.getSighash("interestFeeSpread"),
+    Info.interface.getSighash("redemptionFeeSpread"),
+    Info.interface.getSighash("defaultFeeSpread"),
   ];
   await proxy.connect(team).setSelectorsTarget(infoSelectors, info.address);
   console.log("infoSelectors set.");
