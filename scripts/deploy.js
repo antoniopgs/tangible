@@ -41,53 +41,6 @@ module.exports = deploy = async () => {
   const proxy = await deployContract("ProtocolProxy", team);
 
   // ---------- IMPLEMENTATIONS ----------
-  await deployImplementations();
-
-  // ---------- TOKENS ----------
-  const mockUsdc = await deployContract("MockUsdc", team);
-  const tUsdcDefaultOperators = [ proxy.address ];
-  const tUsdc = await deployContract("tUsdc", team, tUsdcDefaultOperators);
-  const TangibleNft = await ethers.getContractFactory("TangibleNft");
-  const tangibleNft = await TangibleNft.connect(team).deploy(proxy.address);
-
-  // ---------- SELECTORS ------------
-  await setSelectors();
-
-  // ---------- INITIALIZE ----------
-  console.log("");
-  console.log("initializing...");
-  const initializerProxy = initializer.attach(proxy.address);
-  await initializerProxy.connect(team).initialize(mockUsdc.address, tUsdc.address, tangibleNft.address, TANGIBLE.address, GSP.address, PAC.address);
-  console.log("initialized.");
-
-  return {
-    team: team,
-    multiSigs: {
-      tangible: TANGIBLE,
-      gsp: GSP,
-      pac: PAC
-    },
-    protocol: {
-      proxy: proxy,
-      implementations: {
-        auctions: auctions,
-        borrowing: borrowing,
-        info: info,
-        initializer: initializer,
-        lending: lending,
-        residents: residents,
-        setter: setter
-      }
-    },
-    tokens: {
-      mockUsdc: mockUsdc,
-      tUsdc: tUsdc,
-      tangibleNft: tangibleNft
-    }
-  }
-}
-
-const deployImplementations = async () => {
   console.log("")
   console.log("deploying implementations...");
 
@@ -100,9 +53,15 @@ const deployImplementations = async () => {
   const setter = await deployContract("Setter", team);
 
   console.log("implementations deployed.");
-}
 
-const setSelectors = async () => {
+  // ---------- TOKENS ----------
+  const mockUsdc = await deployContract("MockUsdc", team);
+  const tUsdcDefaultOperators = [ proxy.address ];
+  const tUsdc = await deployContract("tUsdc", team, tUsdcDefaultOperators);
+  const TangibleNft = await ethers.getContractFactory("TangibleNft");
+  const tangibleNft = await TangibleNft.connect(team).deploy(proxy.address);
+
+  // ---------- SELECTORS ------------
   console.log("")
   console.log("setting selectors...");
   
@@ -215,4 +174,37 @@ const setSelectors = async () => {
 
   console.log("");
   console.log("all selectors set.");
+
+  // ---------- INITIALIZE ----------
+  console.log("");
+  console.log("initializing...");
+  const initializerProxy = initializer.attach(proxy.address);
+  await initializerProxy.connect(team).initialize(mockUsdc.address, tUsdc.address, tangibleNft.address, TANGIBLE.address, GSP.address, PAC.address);
+  console.log("initialized.");
+
+  return {
+    team: team,
+    multiSigs: {
+      tangible: TANGIBLE,
+      gsp: GSP,
+      pac: PAC
+    },
+    protocol: {
+      proxy: proxy,
+      implementations: {
+        auctions: auctions,
+        borrowing: borrowing,
+        info: info,
+        initializer: initializer,
+        lending: lending,
+        residents: residents,
+        setter: setter
+      }
+    },
+    tokens: {
+      mockUsdc: mockUsdc,
+      tUsdc: tUsdc,
+      tangibleNft: tangibleNft
+    }
+  }
 }
