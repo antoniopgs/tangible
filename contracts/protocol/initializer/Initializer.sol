@@ -32,12 +32,12 @@ contract Initializer is State {
     function initializeState() private {
 
         // Pool Vars
-        optimalUtilization = convert(90).div(convert(100)); // Note: 90%
+        _optimalUtilization = convert(90).div(convert(100)); // Note: 90%
 
         // Other Vars
         _maxLtv = convert(50).div(convert(100)); // Note: 50%
-        maxLoanMonths = 120; // Note: 10 years
-        redemptionWindow = 45 days;
+        _maxLoanMonths = 120; // Note: 10 years
+        _redemptionWindow = 45 days;
 
         // Interest vars
         m1 = convert(4).div(convert(100)); // Note: 0.04

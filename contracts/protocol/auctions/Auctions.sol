@@ -14,7 +14,7 @@ contract Auctions is IAuctions, LoanStatus {
         require(tangibleNft.exists(tokenId), "tokenId doesn't exist");
         require(_isResident(msg.sender), "only residents can bid"); // Note: NFT transfer to non-resident bidder would fail anyways, but I think its best to not invalid bids for Sellers
         require(downPayment <= propertyValue, "downPayment cannot exceed propertyValue");
-        require(loanMonths > 0 && loanMonths <= maxLoanMonths, "unallowed loanMonths");
+        require(loanMonths > 0 && loanMonths <= _maxLoanMonths, "unallowed loanMonths");
 
         // Validate ltv
         require(propertyValue > 0, "propertyValue must be > 0");

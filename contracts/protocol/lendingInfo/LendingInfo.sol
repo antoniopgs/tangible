@@ -11,12 +11,12 @@ abstract contract LendingInfo is State {
         uint tUsdcSupply = tUSDC.totalSupply();
 
         // If tUsdcSupply or totalDeposits = 0, 1:1
-        if (tUsdcSupply == 0 || totalDeposits == 0) {
+        if (tUsdcSupply == 0 || _totalDeposits == 0) {
             return tUsdcAmount = usdcAmount;
         }
 
         // Calculate tUsdcAmount
-        return tUsdcAmount = usdcAmount * tUsdcSupply / totalDeposits;
+        return tUsdcAmount = usdcAmount * tUsdcSupply / _totalDeposits;
     }
 
 }

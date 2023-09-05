@@ -8,6 +8,8 @@ import "../interest/Interest.sol";
 import "../onlySelf/OnlySelf.sol";
 import { Status } from "../../types/Types.sol";
 
+import { console } from "forge-std/console.sol";
+
 contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf {
 
     using SafeERC20 for IERC20;
@@ -36,8 +38,8 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf 
         loan.lastPaymentTime = currentTime; // Note: no payment here, but needed so lastPaymentElapsedSeconds only counts from now
 
         // Update pool
-        totalPrincipal += principal;
-        assert(totalPrincipal <= totalDeposits);
+        _totalPrincipal += principal;
+        assert(_totalPrincipal <= _totalDeposits);
 
         // Emit Event
         emit StartLoan(ratePerSecond, paymentPerSecond, principal, maxDurationMonths, currentTime);
@@ -50,7 +52,7 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf 
         Loan storage loan = _debts[tokenId].loan;
 
         // Ensure there's an active mortgage
-        require(status(loan) == Status.Mortgage, "nft has no active mortgage");
+        require(_status(loan) == Status.Mortgage, "nft has no active mortgage");
 
         // Calculate interest
         uint interest = _accruedInterest(loan);
@@ -67,7 +69,10 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf 
         USDC.safeTransferFrom(msg.sender, address(this), payment); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
 
         // Calculate repayment
+        console.log("payment:", payment);
+        console.log("interest:", interest);
         uint repayment = payment - interest; // Todo: Add payLoanFee // Question: should payLoanFee come off the interest to lenders? Or only come off the borrower's repayment?
+        console.log("post");
 
         // Update loan
         loan.unpaidPrincipal -= repayment;
@@ -78,8 +83,8 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf 
         protocolMoney += interestFee;
 
         // Update pool
-        totalPrincipal -= repayment;
-        totalDeposits += interest - interestFee;
+        _totalPrincipal -= repayment;
+        _totalDeposits += interest - interestFee;
 
         emit PayLoan(msg.sender, tokenId, payment, interest, repayment, block.timestamp, loan.unpaidPrincipal == 0);
     }
@@ -91,8 +96,8 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf 
         Loan memory loan = _debts[tokenId].loan;
 
         // Ensure default & redeemable
-        require(status(loan) == Status.Default, "no default");
-        require(redeemable(tokenId), "redemption window is over");
+        require(_status(loan) == Status.Default, "no default");
+        require(_redeemable(tokenId), "redemption window is over");
 
         // Calculate interest
         uint interest = _accruedInterest(loan);
@@ -109,8 +114,8 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf 
         protocolMoney += interestFee;
 
         // Update pool
-        totalPrincipal -= loan.unpaidPrincipal;
-        totalDeposits += interest - interestFee;
+        _totalPrincipal -= loan.unpaidPrincipal;
+        _totalDeposits += interest - interestFee;
 
         emit RedeemLoan(msg.sender, tokenId, interest, defaulterDebt, redemptionFee, block.timestamp);
     }
@@ -118,8 +123,8 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf 
     // Admin Functions
     function foreclose(uint tokenId) external onlyRole(PAC) {
 
-        require(status(_debts[tokenId].loan) == Status.Default, "no default");
-        require(!redeemable(tokenId), "redemption window not over");
+        require(_status(_debts[tokenId].loan) == Status.Default, "no default");
+        require(!_redeemable(tokenId), "redemption window not over");
 
         // Get idx
         uint idx = highestActionableBid(tokenId);
@@ -165,12 +170,12 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf 
         uint interestFee = convert(convert(interest).mul(_interestFeeSpread));
 
         // Calculate saleFee
-        UD60x18 saleFeeSpread = status(loan) == Status.Default ? _baseSaleFeeSpread.add(_defaultFeeSpread) : _baseSaleFeeSpread; // Question: maybe defaultFee should be a boost appplied to interest instead?
+        UD60x18 saleFeeSpread = _status(loan) == Status.Default ? _baseSaleFeeSpread.add(_defaultFeeSpread) : _baseSaleFeeSpread; // Question: maybe defaultFee should be a boost appplied to interest instead?
         uint saleFee = convert(convert(salePrice).mul(saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
 
         // Update Pool (pay off lenders)
-        totalPrincipal -= loan.unpaidPrincipal;
-        totalDeposits += interest - interestFee;
+        _totalPrincipal -= loan.unpaidPrincipal;
+        _totalDeposits += interest - interestFee;
 
         // Protocol Charges Fees
         protocolMoney += interestFee + saleFee;

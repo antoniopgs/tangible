@@ -8,7 +8,7 @@ contract Setter is ISetter, State {
 
     function updateOptimalUtilization(uint newOptimalUtilizationPct) external onlyRole(TANGIBLE) {
         require(newOptimalUtilizationPct <= 100, "invalid pct");
-        optimalUtilization = convert(newOptimalUtilizationPct).div(convert(100));
+        _optimalUtilization = convert(newOptimalUtilizationPct).div(convert(100));
     }
 
     function updateMaxLtv(uint newMaxLtvPct) external onlyRole(TANGIBLE) {
@@ -17,11 +17,11 @@ contract Setter is ISetter, State {
     }
 
     function updateMaxLoanMonths(uint newMaxLoanMonths) external onlyRole(TANGIBLE) {
-        maxLoanMonths = newMaxLoanMonths;
+        _maxLoanMonths = newMaxLoanMonths;
     }
 
     function updateRedemptionWindow(uint _days) external onlyRole(TANGIBLE) {
-        redemptionWindow = _days * 1 days;
+        _redemptionWindow = _days * 1 days;
     }
 
     function updateM1(uint newM1) external onlyRole(TANGIBLE) {

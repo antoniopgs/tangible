@@ -8,10 +8,10 @@ import "../state/state/State.sol";
 abstract contract BorrowingInfo is State {
 
     function _utilization() internal view returns(UD60x18) {
-        if (totalDeposits == 0) {
-            assert(totalPrincipal == 0);
+        if (_totalDeposits == 0) {
+            assert(_totalPrincipal == 0);
             return convert(uint(0));
         }
-        return convert(totalPrincipal).div(convert(totalDeposits));
+        return convert(_totalPrincipal).div(convert(_totalDeposits));
     }
 }

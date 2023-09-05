@@ -5,8 +5,9 @@ import "./IInfo.sol";
 import "../borrowingInfo/BorrowingInfo.sol";
 import "../lendingInfo/LendingInfo.sol";
 import "../loanStatus/LoanStatus.sol";
+import "../interest/Interest.sol";
 
-contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus {
+contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus, Interest {
 
     // Residents
     function isResident(address addr) external view returns (bool) {
@@ -40,12 +41,16 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus {
         uint tUsdcSupply = tUSDC.totalSupply();
 
         // If tUsdcSupply or totalDeposits = 0, 1:1
-        if (tUsdcSupply == 0 || totalDeposits == 0) {
+        if (tUsdcSupply == 0 || _totalDeposits == 0) {
             return usdcAmount = tUsdcAmount;
         }
 
         // Calculate usdcAmount
-        return usdcAmount = tUsdcAmount * totalDeposits / tUsdcSupply;
+        return usdcAmount = tUsdcAmount * _totalDeposits / tUsdcSupply;
+    }
+
+    function borrowerApr(UD60x18 _utilization) external view returns(UD60x18 apr) {
+        return _borrowerApr(_utilization);
     }
 
     // Auctions
@@ -84,10 +89,6 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus {
         }
     }
 
-    function maxLtv() external view returns(UD60x18) {
-        return _maxLtv;
-    }
-
     function minSalePrice(uint tokenId) external view returns(uint) {
         return _minSalePrice(_debts[tokenId].loan);
     }
@@ -99,5 +100,71 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus {
 
     function accruedInterest(uint tokenId) external view returns(uint) {
         return _accruedInterest(_debts[tokenId].loan);
+    }
+
+    function status(uint tokenId) external view returns(Status) {
+        return _status(_debts[tokenId].loan);
+    }
+
+    function redeemable(uint tokenId) external view returns(bool) {
+        return _redeemable(tokenId);
+    }
+
+    function loanChart(uint tokenId) external view returns(uint[] memory x, uint[] memory y) {
+
+        // Get loan
+        Loan memory loan = _debts[tokenId].loan;
+
+        // Loop loan months
+        for (uint i = 0; i <= _loanMaxMonths(loan); i++) {
+            
+            // Add month to x
+            // x.push(i);
+            x[i] = i;
+
+            // Add month's principal cap to y
+            // y.push(principalCap(loan, i));
+            y[i] = _principalCap(loan, i);
+        }
+    }
+
+    function maxLtv() external view returns(UD60x18) {
+        return _maxLtv;
+    }
+
+    function baseSaleFeeSpread() external view returns(UD60x18) {
+        return _baseSaleFeeSpread;
+    }
+
+    function defaultFeeSpread() external view returns(UD60x18) {
+        return _defaultFeeSpread;
+    }
+
+    function interestFeeSpread() external view returns(UD60x18) {
+        return _interestFeeSpread;
+    }
+
+    function maxLoanMonths() external view returns(uint) {
+        return _maxLoanMonths;
+    }
+
+    function optimalUtilization() external view returns(UD60x18) {
+        return _optimalUtilization;
+    }
+
+    function redemptionFeeSpread() external view returns(UD60x18) {
+        return _redemptionFeeSpread;
+    }
+
+    function redemptionWindow() external view returns(uint) {
+        return _redemptionWindow;
+    }
+
+    function totalDeposits() external view returns(uint) {
+        return _totalDeposits;
+    }
+
+    function totalPrincipal() external view returns(uint) {
+        return _totalPrincipal;
     }
 }

@@ -15,7 +15,7 @@ abstract contract State is TargetManager {
     uint public constant yearMonths = 12;
     uint public constant monthSeconds = yearSeconds / yearMonths; // Note: yearSeconds % yearMonths = 0 (no precision loss)
 
-    uint protocolMoney; // Question: do I actually need this?
+    uint public protocolMoney; // Question: do I actually need this?
     bool public initialized;
 
     // Links
@@ -24,37 +24,35 @@ abstract contract State is TargetManager {
     TangibleNft public tangibleNft;
 
     // Pool
-    uint public totalPrincipal;
-    uint public totalDeposits;
-
-    // Debts
-    mapping(uint => Debt) internal _debts;
-
-    // Bids
-    mapping(uint => Bid[]) internal _bids; // Todo: figure out multiple bids by same bidder on same nft later
+    uint internal _totalPrincipal;
+    uint internal _totalDeposits;
+    UD60x18 internal _optimalUtilization;
 
     // Residents
     mapping(address => uint) internal _addressToResident; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
     mapping(uint => address) internal _residentToAddress;
 
-    // Pool Vars
-    UD60x18 public optimalUtilization;
+    // Bids
+    mapping(uint => Bid[]) internal _bids; // Todo: figure out multiple bids by same bidder on same nft late
 
-    // Other Vars
+    // Debts
+    mapping(uint => Debt) internal _debts;
+
+    // Loan Terms
     UD60x18 internal _maxLtv;
-    uint public maxLoanMonths;
-    uint internal redemptionWindow;
+    uint internal _maxLoanMonths;
+    uint internal _redemptionWindow;
+
+    // Fees/Spreads
+    UD60x18 internal _baseSaleFeeSpread;
+    UD60x18 internal _interestFeeSpread;
+    UD60x18 internal _redemptionFeeSpread;
+    UD60x18 internal _defaultFeeSpread;
 
     // Interest vars
     UD60x18 internal m1;
     UD60x18 internal b1;
     UD60x18 internal m2;
-
-    // Fees/Spreads
-    UD60x18 public _baseSaleFeeSpread;
-    UD60x18 public _interestFeeSpread;
-    UD60x18 public _redemptionFeeSpread;
-    UD60x18 public _defaultFeeSpread;
 
     function _isResident(address addr) internal view returns (bool) {
         return _addressToResident[addr] != 0; // Note: eResident number of 0 will considered "falsy", assuming nobody has it

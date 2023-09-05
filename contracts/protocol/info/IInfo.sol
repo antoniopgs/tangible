@@ -2,21 +2,23 @@
 pragma solidity ^0.8.15;
 
 import { UD60x18 } from "@prb/math/src/UD60x18.sol";
-import { Bid } from "../../types/Types.sol";
+import { Status, Bid } from "../../types/Types.sol";
 
 interface IInfo {
+
+    // Pool
+    function totalPrincipal() external view returns(uint);
+    function totalDeposits() external view returns(uint);
+    function availableLiquidity() external view returns(uint);
+    function utilization() external view returns(UD60x18);
+    function optimalUtilization() external view returns(UD60x18);
+    function usdcToTUsdc(uint usdcAmount) external view returns(uint tUsdcAmount);
+    function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount);
 
     // Residents
     function isResident(address addr) external view returns (bool);
     function addressToResident(address addr) external view returns(uint);
     function residentToAddress(uint id) external view returns(address);
-
-    // Pool
-    function availableLiquidity() external view returns(uint);
-    function utilization() external view returns(UD60x18);
-    function usdcToTUsdc(uint usdcAmount) external view returns(uint tUsdcAmount);
-    function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount);
-    // function borrowerApr() external view returns(UD60x18 apr);
 
     // Auctions
     function bids(uint tokenId, uint idx) external view returns(Bid memory);
@@ -25,8 +27,22 @@ interface IInfo {
     function userBids(address user) external view returns(uint[] memory tokenIds, uint[] memory idxs);
     function minSalePrice(uint tokenId) external view returns(uint);
 
-    // Token Debts
-    function maxLtv() external view returns(UD60x18);
+    // Loans
     function unpaidPrincipal(uint tokenId) external view returns(uint);
     function accruedInterest(uint tokenId) external view returns(uint);
+    function status(uint tokenId) external view returns(Status);
+    function redeemable(uint tokenId) external view returns(bool);
+    function loanChart(uint tokenId) external view returns(uint[] memory x, uint[] memory y);
+
+    // Loan Terms
+    function maxLtv() external view returns(UD60x18);
+    function maxLoanMonths() external view returns(uint);
+    function borrowerApr(UD60x18 utilization) external view returns(UD60x18 apr);
+    function redemptionWindow() external view returns(uint);
+
+    // Fees/Spreads
+    function baseSaleFeeSpread() external view returns(UD60x18);
+    function interestFeeSpread() external view returns(UD60x18);
+    function redemptionFeeSpread() external view returns(UD60x18);
+    function defaultFeeSpread() external view returns(UD60x18);
 }

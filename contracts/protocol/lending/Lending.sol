@@ -15,7 +15,7 @@ contract Lending is ILending, LendingInfo {
         USDC.safeTransferFrom(msg.sender, address(this), usdc); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
 
         // Update pool
-        totalDeposits += usdc;
+        _totalDeposits += usdc;
         
         // Calulate depositor tUsdc
         uint _tUsdc = _usdcToTUsdc(usdc);
@@ -35,8 +35,8 @@ contract Lending is ILending, LendingInfo {
         tUSDC.operatorBurn(msg.sender, _tUsdc, "", "");
 
         // Update pool
-        totalDeposits -= usdc;
-        require(totalPrincipal <= totalDeposits, "utilization can't exceed 100%");
+        _totalDeposits -= usdc;
+        require(_totalPrincipal <= _totalDeposits, "utilization can't exceed 100%");
 
         // Send usdc to withdrawer
         USDC.safeTransfer(msg.sender, usdc);

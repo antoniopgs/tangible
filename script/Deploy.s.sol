@@ -114,7 +114,7 @@ contract DeployScript is Script {
         ITargetManager(proxy).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set infoSelectors
-        bytes4[] memory infoSelectors = new bytes4[](14);
+        bytes4[] memory infoSelectors = new bytes4[](19);
         infoSelectors[0] = IInfo.isResident.selector;
         infoSelectors[1] = IInfo.addressToResident.selector;
         infoSelectors[2] = IInfo.residentToAddress.selector;
@@ -122,14 +122,18 @@ contract DeployScript is Script {
         infoSelectors[4] = IInfo.utilization.selector;
         infoSelectors[5] = IInfo.usdcToTUsdc.selector;
         infoSelectors[6] = IInfo.tUsdcToUsdc.selector;
-        // infoSelectors[] = IInfo.borrowerApr.selector;
-        infoSelectors[7] = IInfo.bids.selector;
-        infoSelectors[8] = IInfo.bidsLength.selector;
-        infoSelectors[9] = IInfo.bidActionable.selector;
-        infoSelectors[10] = IInfo.unpaidPrincipal.selector;
-        infoSelectors[11] = IInfo.accruedInterest.selector;
+        infoSelectors[7] = IInfo.borrowerApr.selector;
+        infoSelectors[8] = IInfo.bids.selector;
+        infoSelectors[9] = IInfo.bidsLength.selector;
+        infoSelectors[10] = IInfo.bidActionable.selector;
+        infoSelectors[11] = IInfo.userBids.selector;
         infoSelectors[12] = IInfo.minSalePrice.selector;
-        infoSelectors[13] = IInfo.maxLtv.selector;
+        infoSelectors[13] = IInfo.unpaidPrincipal.selector;
+        infoSelectors[14] = IInfo.accruedInterest.selector;
+        infoSelectors[15] = IInfo.status.selector;
+        infoSelectors[16] = IInfo.redeemable.selector;
+        infoSelectors[17] = IInfo.loanChart.selector;
+        infoSelectors[18] = IInfo.maxLtv.selector;
         ITargetManager(proxy).setSelectorsTarget(infoSelectors, address(info));
 
         // Set initializerSelectors
@@ -162,11 +166,5 @@ contract DeployScript is Script {
         setterSelectors[9] = ISetter.updateRedemptionFeeSpread.selector;
         setterSelectors[10] = ISetter.updateDefaultFeeSpread.selector;
         ITargetManager(proxy).setSelectorsTarget(setterSelectors, address(setter));
-
-        // Other
-        bytes4[] memory loanStatusSelectors = new bytes4[](2);
-        loanStatusSelectors[0] = LoanStatus.status.selector;
-        loanStatusSelectors[1] = LoanStatus.redeemable.selector;
-        ITargetManager(proxy).setSelectorsTarget(loanStatusSelectors, address(borrowing));
     }
 }

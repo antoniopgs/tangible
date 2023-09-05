@@ -6,7 +6,7 @@ import "../roles/Roles.sol";
 
 abstract contract TargetManager is ITargetManager, Roles {
 
-    mapping (bytes4 => address) public logicTargets;
+    mapping (bytes4 => address) public logicTargets; // Todo: maybe make public and move to Info?
 
     function setSelectorsTarget(bytes4[] calldata selectorsArr, address target) external /* onlyRole(TANGIBLE) */ {
 
