@@ -32,22 +32,16 @@ module.exports = deploy = async () => {
   const team = await getMnemonicTeam();
   // const team = await ethers.getSigner();
 
-  // ---------- PROXY ----------
-  const proxy = await deployContract("ProtocolProxy", team);
-
-  // ---------- IMPLEMENTATIONS ----------
-  const auctions = await deployContract("Auctions", team);
-  const borrowing = await deployContract("Borrowing", team);
-  const info = await deployContract("Info", team);
-  const initializer = await deployContract("Initializer", team);
-  const lending = await deployContract("Lending", team);
-  const residents = await deployContract("Residents", team);
-  const setter = await deployContract("Setter", team);
-
   // ---------- MULTI-SIGS ----------
   const TANGIBLE = team;
   const GSP = team;
   const PAC = team;
+
+  // ---------- PROXY ----------
+  const proxy = await deployContract("ProtocolProxy", team);
+
+  // ---------- IMPLEMENTATIONS ----------
+  await deployImplementations();
 
   // ---------- TOKENS ----------
   const mockUsdc = await deployContract("MockUsdc", team);
@@ -57,7 +51,61 @@ module.exports = deploy = async () => {
   const tangibleNft = await TangibleNft.connect(team).deploy(proxy.address);
 
   // ---------- SELECTORS ------------
+  await setSelectors();
 
+  // ---------- INITIALIZE ----------
+  console.log("");
+  console.log("initializing...");
+  const initializerProxy = initializer.attach(proxy.address);
+  await initializerProxy.connect(team).initialize(mockUsdc.address, tUsdc.address, tangibleNft.address, TANGIBLE.address, GSP.address, PAC.address);
+  console.log("initialized.");
+
+  return {
+    team: team,
+    multiSigs: {
+      tangible: TANGIBLE,
+      gsp: GSP,
+      pac: PAC
+    },
+    protocol: {
+      proxy: proxy,
+      implementations: {
+        auctions: auctions,
+        borrowing: borrowing,
+        info: info,
+        initializer: initializer,
+        lending: lending,
+        residents: residents,
+        setter: setter
+      }
+    },
+    tokens: {
+      mockUsdc: mockUsdc,
+      tUsdc: tUsdc,
+      tangibleNft: tangibleNft
+    }
+  }
+}
+
+const deployImplementations = async () => {
+  console.log("")
+  console.log("deploying implementations...");
+
+  const auctions = await deployContract("Auctions", team);
+  const borrowing = await deployContract("Borrowing", team);
+  const info = await deployContract("Info", team);
+  const initializer = await deployContract("Initializer", team);
+  const lending = await deployContract("Lending", team);
+  const residents = await deployContract("Residents", team);
+  const setter = await deployContract("Setter", team);
+
+  console.log("implementations deployed.");
+}
+
+const setSelectors = async () => {
+  console.log("")
+  console.log("setting selectors...");
+  
   // Auctions
   console.log("");
   console.log("setting auctionSelectors...");
@@ -69,7 +117,7 @@ module.exports = deploy = async () => {
   ];
   await proxy.connect(team).setSelectorsTarget(auctionSelectors, auctions.address);
   console.log("auctionSelectors set.");
-
+  
   // Borrowing
   console.log("");
   console.log("setting borrowingSelectors...");
@@ -144,7 +192,7 @@ module.exports = deploy = async () => {
   ];
   await proxy.connect(team).setSelectorsTarget(residentsSelectors, residents.address);
   console.log("residentsSelectors set.");
-
+  
   // Resident
   console.log("");
   console.log("setting setterSelectors...");
@@ -165,36 +213,6 @@ module.exports = deploy = async () => {
   await proxy.connect(team).setSelectorsTarget(setterSelectors, setter.address);
   console.log("setterSelectors set.");
 
-  // ---------- INITIALIZE ----------
   console.log("");
-  console.log("initializing...");
-  const initializerProxy = initializer.attach(proxy.address);
-  await initializerProxy.connect(team).initialize(mockUsdc.address, tUsdc.address, tangibleNft.address, TANGIBLE.address, GSP.address, PAC.address);
-  console.log("initialized.");
-
-  return {
-    team: team,
-    multiSigs: {
-      tangible: TANGIBLE,
-      gsp: GSP,
-      pac: PAC
-    },
-    protocol: {
-      proxy: proxy,
-      implementations: {
-        auctions: auctions,
-        borrowing: borrowing,
-        info: info,
-        initializer: initializer,
-        lending: lending,
-        residents: residents,
-        setter: setter
-      }
-    },
-    tokens: {
-      mockUsdc: mockUsdc,
-      tUsdc: tUsdc,
-      tangibleNft: tangibleNft
-    }
-  }
+  console.log("all selectors set.");
 }
