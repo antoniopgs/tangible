@@ -8,8 +8,6 @@ import "../interest/Interest.sol";
 import "../onlySelf/OnlySelf.sol";
 import { Status } from "../../types/Types.sol";
 
-import { console } from "forge-std/console.sol";
-
 contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf {
 
     using SafeERC20 for IERC20;
@@ -69,10 +67,7 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf 
         USDC.safeTransferFrom(msg.sender, address(this), payment); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
 
         // Calculate repayment
-        console.log("payment:", payment);
-        console.log("interest:", interest);
         uint repayment = payment - interest; // Todo: Add payLoanFee // Question: should payLoanFee come off the interest to lenders? Or only come off the borrower's repayment?
-        console.log("post");
 
         // Update loan
         loan.unpaidPrincipal -= repayment;

@@ -28,35 +28,101 @@ const deployContract = async (_factoryName, _signer, _constructorParams = null) 
 
 module.exports = deploy = async () => {
 
-  // ---------- MAIN ----------
-
-  // Get team
+  // ---------- TEAM ----------
   const team = await getMnemonicTeam();
   // const team = await ethers.getSigner();
 
-  // proxy
+  // ---------- PROXY ----------
   const proxy = await deployContract("ProtocolProxy", team);
+
+  // ---------- IMPLEMENTATIONS ----------
+  const auctions = await deployContract("Auctions", team);
+  const borrowing = await deployContract("Borrowing", team);
+  const info = await deployContract("Info", team);
+  const initializer = await deployContract("Initializer", team);
+  const lending = await deployContract("Lending", team);
+  const residents = await deployContract("Residents", team);
+  const setter = await deployContract("Setter", team);
+
+  // ---------- MULTI-SIGS ----------
+  const TANGIBLE = team;
+  const GSP = team;
+  const PAC = team;
 
   // ---------- TOKENS ----------
   const mockUsdc = await deployContract("MockUsdc", team);
   const tUsdcDefaultOperators = [ proxy.address ];
   const tUsdc = await deployContract("tUsdc", team, tUsdcDefaultOperators);
-  const PAC = ethers.constants.AddressZero; // Todo: fix later
-  // const tangibleNft = await deployContract("TangibleNft", team, [ proxy.address, PAC ]);
   const TangibleNft = await ethers.getContractFactory("TangibleNft");
-  const tangibleNft = await TangibleNft.connect(team).deploy(proxy.address, PAC);
-
-  // ---------- INITIALIZE ----------
-
-  // Initialize proxy
-  await proxy.connect(team).initialize(mockUsdc.address, tUsdc.address, tangibleNft.address);
-
-  // ---------- IMPLEMENTATIONS ----------
-  const lending = await deployContract("Lending", team);
-  const borrowing = await deployContract("Borrowing", team);
-  const info = await deployContract("Info", team);
+  const tangibleNft = await TangibleNft.connect(team).deploy(proxy.address);
 
   // ---------- SELECTORS ------------
+
+  // Auctions
+  console.log("");
+  console.log("setting auctionSelectors...");
+  const Auctions = await ethers.getContractFactory("Auctions");
+  const auctionSelectors = [
+    Auctions.interface.getSighash("bid"),
+    Auctions.interface.getSighash("cancelBid"),
+    Auctions.interface.getSighash("acceptBid"),
+  ];
+  await proxy.connect(team).setSelectorsTarget(auctionSelectors, auctions.address);
+  console.log("auctionSelectors set.");
+
+  // Borrowing
+  console.log("");
+  console.log("setting borrowingSelectors...");
+  const Borrowing = await ethers.getContractFactory("Borrowing");
+  const borrowingSelectors = [
+    Borrowing.interface.getSighash("payMortgage"),
+    Borrowing.interface.getSighash("redeemMortgage"),
+    Borrowing.interface.getSighash("debtTransfer"),
+    // Borrowing.interface.getSighash("refinance"),
+    Borrowing.interface.getSighash("foreclose"),
+    Borrowing.interface.getSighash("increaseOtherDebt"),
+    Borrowing.interface.getSighash("decreaseOtherDebt"),
+  ];
+  await proxy.connect(team).setSelectorsTarget(borrowingSelectors, borrowing.address);
+  console.log("borrowingSelectors set.");
+
+  // Info
+  console.log("");
+  console.log("setting infoSelectors...");
+  const Info = await ethers.getContractFactory("Info");
+  const infoSelectors = [
+    Info.interface.getSighash("isResident"),
+    Info.interface.getSighash("addressToResident"),
+    Info.interface.getSighash("residentToAddress"),
+    Info.interface.getSighash("availableLiquidity"),
+    Info.interface.getSighash("utilization"),
+    Info.interface.getSighash("usdcToTUsdc"),
+    Info.interface.getSighash("tUsdcToUsdc"),
+    Info.interface.getSighash("borrowerApr"),
+    Info.interface.getSighash("bids"),
+    Info.interface.getSighash("bidsLength"),
+    Info.interface.getSighash("bidActionable"),
+    Info.interface.getSighash("userBids"),
+    Info.interface.getSighash("minSalePrice"),
+    Info.interface.getSighash("unpaidPrincipal"),
+    Info.interface.getSighash("accruedInterest"),
+    Info.interface.getSighash("status"),
+    Info.interface.getSighash("redeemable"),
+    Info.interface.getSighash("loanChart"),
+    Info.interface.getSighash("maxLtv")
+  ];
+  await proxy.connect(team).setSelectorsTarget(infoSelectors, info.address);
+  console.log("infoSelectors set.");
+
+  // Initializer
+  console.log("");
+  console.log("setting initializerSelectors...");
+  const Intializer = await ethers.getContractFactory("Initializer");
+  const initializerSelectors = [
+    Intializer.interface.getSighash("initialize"),
+  ];
+  await proxy.connect(team).setSelectorsTarget(initializerSelectors, initializer.address);
+  console.log("initializerSelectors set.");
 
   // Lending
   console.log("");
@@ -69,50 +135,60 @@ module.exports = deploy = async () => {
   await proxy.connect(team).setSelectorsTarget(lendingSelectors, lending.address);
   console.log("lendingSelectors set.");
 
-  // Borrowing
+  // Resident
   console.log("");
-  console.log("setting borrowingSelectors...");
-  const Borrowing = await ethers.getContractFactory("Borrowing");
-  const borrowingSelectors = [
-    Borrowing.interface.getSighash("startNewLoan"),
-    Borrowing.interface.getSighash("payLoan"),
-    Borrowing.interface.getSighash("redeemLoan"),
+  console.log("setting residentsSelectors...");
+  const Residents = await ethers.getContractFactory("Residents");
+  const residentsSelectors = [
+    Residents.interface.getSighash("verifyResident")
   ];
-  await proxy.connect(team).setSelectorsTarget(borrowingSelectors, borrowing.address);
-  console.log("borrowingSelectors set.");
+  await proxy.connect(team).setSelectorsTarget(residentsSelectors, residents.address);
+  console.log("residentsSelectors set.");
 
-  // Info
+  // Resident
   console.log("");
-  console.log("setting infoSelectors...");
-  const Info = await ethers.getContractFactory("Info");
-  const infoSelectors = [
-    Info.interface.getSighash("loans"),
-    Info.interface.getSighash("availableLiquidity"),
-    Info.interface.getSighash("userLoans"),
-    Info.interface.getSighash("loansTokenIdsLength"),
-    Info.interface.getSighash("loansTokenIdsAt"),
-    Info.interface.getSighash("redemptionFeeSpread"),
-    Info.interface.getSighash("defaultFeeSpread"),
-    Info.interface.getSighash("unpaidPrincipal"),
-    Info.interface.getSighash("accruedInterest"),
-    Info.interface.getSighash("lenderApy"),
-    Info.interface.getSighash("usdcToTUsdc"),
-    Info.interface.getSighash("tUsdcToUsdc"),
-    Info.interface.getSighash("status"),
-    Info.interface.getSighash("utilization"),
-    Info.interface.getSighash("borrowerApr")
+  console.log("setting setterSelectors...");
+  const Setter = await ethers.getContractFactory("Setter");
+  const setterSelectors = [
+    Setter.interface.getSighash("updateOptimalUtilization"),
+    Setter.interface.getSighash("updateMaxLtv"),
+    Setter.interface.getSighash("updateMaxLoanMonths"),
+    Setter.interface.getSighash("updateRedemptionWindow"),
+    Setter.interface.getSighash("updateM1"),
+    Setter.interface.getSighash("updateB1"),
+    Setter.interface.getSighash("updateM2"),
+    Setter.interface.getSighash("updateBaseSaleFeeSpread"),
+    Setter.interface.getSighash("updateInterestFeeSpread"),
+    Setter.interface.getSighash("updateRedemptionFeeSpread"),
+    Setter.interface.getSighash("updateDefaultFeeSpread")
   ];
-  await proxy.connect(team).setSelectorsTarget(infoSelectors, info.address);
-  console.log("infoSelectors set.");
+  await proxy.connect(team).setSelectorsTarget(setterSelectors, setter.address);
+  console.log("setterSelectors set.");
+
+  // ---------- INITIALIZE ----------
+  console.log("");
+  console.log("initializing...");
+  const initializerProxy = initializer.attach(proxy.address);
+  await initializerProxy.connect(team).initialize(mockUsdc.address, tUsdc.address, tangibleNft.address, TANGIBLE.address, GSP.address, PAC.address);
+  console.log("initialized.");
 
   return {
     team: team,
+    multiSigs: {
+      tangible: TANGIBLE,
+      gsp: GSP,
+      pac: PAC
+    },
     protocol: {
       proxy: proxy,
       implementations: {
-        lending: lending,
+        auctions: auctions,
         borrowing: borrowing,
-        info: info
+        info: info,
+        initializer: initializer,
+        lending: lending,
+        residents: residents,
+        setter: setter
       }
     },
     tokens: {
