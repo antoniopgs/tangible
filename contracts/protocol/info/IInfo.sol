@@ -6,6 +6,12 @@ import { Status, Bid } from "../../types/Types.sol";
 
 interface IInfo {
 
+    struct BidInfo {
+        uint tokenId;
+        uint idx;
+        Bid bid;
+    }
+
     // Pool
     function totalPrincipal() external view returns(uint);
     function totalDeposits() external view returns(uint);
@@ -21,10 +27,11 @@ interface IInfo {
     function residentToAddress(uint id) external view returns(address);
 
     // Auctions
+    // function bids(uint tokenId) external view returns(Bid[] memory); // Todo: implement later
     function bids(uint tokenId, uint idx) external view returns(Bid memory);
     function bidsLength(uint tokenId) external view returns(uint);
     function bidActionable(uint tokenId, uint idx) external view returns(bool);
-    function userBids(address user) external view returns(uint[] memory tokenIds, uint[] memory idxs);
+    function userBids(address user) external view returns(BidInfo[] memory _userBids);
     function minSalePrice(uint tokenId) external view returns(uint);
 
     // Loans

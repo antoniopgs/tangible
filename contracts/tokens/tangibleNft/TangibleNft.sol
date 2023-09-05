@@ -53,7 +53,7 @@ contract TangibleNft is ITangibleNft, ERC721URIStorage, ERC721Enumerable {
         super._burn(tokenId);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721Enumerable, ERC721URIStorage) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721Enumerable/* , ERC721URIStorage */, ERC721) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 
