@@ -12,11 +12,10 @@ abstract contract LendingInfo is State {
 
         // If tUsdcSupply or totalDeposits = 0, 1:1
         if (tUsdcSupply == 0 || _totalDeposits == 0) {
-            return tUsdcAmount = usdcAmount;
+            tUsdcAmount = usdcAmount * 1e12; // Note: tUSDC has 12 more decimals than USDC
+
+        } else {
+            tUsdcAmount = usdcAmount * tUsdcSupply / _totalDeposits; // Note: multiplying by tUsdcSupply removes need to add 12 decimals
         }
-
-        // Calculate tUsdcAmount
-        return tUsdcAmount = usdcAmount * tUsdcSupply / _totalDeposits;
     }
-
 }
