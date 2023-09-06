@@ -42,11 +42,11 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus, Interest {
 
         // If tUsdcSupply or totalDeposits = 0, 1:1
         if (tUsdcSupply == 0 || _totalDeposits == 0) {
-            return usdcAmount = tUsdcAmount;
-        }
+            usdcAmount = tUsdcAmount / 1e12; // Note: USDC has 12 less decimals than tUSDC
 
-        // Calculate usdcAmount
-        return usdcAmount = tUsdcAmount * _totalDeposits / tUsdcSupply;
+        } else {
+            usdcAmount = tUsdcAmount * _totalDeposits / tUsdcSupply; // Note: dividing by tUsdcSupply removes need to remove 12 decimals
+        }
     }
 
     function borrowerApr(UD60x18 _utilization) external view returns(UD60x18 apr) {
