@@ -67,7 +67,8 @@ class Loan:
 years = 10
 activeLoans = []
 yearlyInterestPayments = {}
-interestFee = 0.02
+interestFee = 0.01
+totalPrincipal = 0
 
 for y in range(1, years):
 
@@ -80,8 +81,7 @@ for y in range(1, years):
 
         # Calculate newLoans vars
         newLoansAmount = newLoans["mortgageNeed"] * newLoans["units"]
-        combinedPrincipal = newLoansAmount * newLoans["avgPrice"] * newLoans[
-            "ltv"]
+        combinedPrincipal = newLoansAmount * newLoans["avgPrice"] * newLoans["ltv"]
 
         print(f"- newLoans: {newLoansAmount}")
         print(f"- combinedPrincipal: {combinedPrincipal}")
@@ -89,6 +89,8 @@ for y in range(1, years):
         # Push newLoans to activeLoans
         activeLoans.append(
             Loan(combinedPrincipal, newLoans["apr"], newLoans["maxYears"]))
+
+        totalPrincipal += combinedPrincipal
 
     print()
 
@@ -104,9 +106,14 @@ for y in range(1, years):
 
     print()
 
+    tangibleInterestProfit = interestFee * combinedInterestPayments
+    lenderProfit = combinedInterestPayments - tangibleInterestProfit
+    lenderApy = lenderProfit * 100 / totalPrincipal
+
     yearlyInterestPayments[y] = {
         "tangibleInterestProfit": interestFee * combinedInterestPayments,
-        "lenderProfit": (1 - interestFee) * combinedInterestPayments
+        "lenderProfit": lenderProfit,
+        "lenderApy": lenderApy
     }
 
 print(json.dumps(yearlyInterestPayments, indent=4))
