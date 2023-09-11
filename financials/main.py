@@ -1,17 +1,15 @@
 from data import yearlyNewLoans
 import json
 
-
 class Loan:
 
-    loanIDs = 1
     yearSeconds = 365 * 24 * 60 * 60
+    loanIDs = 1
 
     def __init__(self, principal, apr, maxYears):
 
         # Calculate Vars
-        ratePerSecond, maxSeconds, paymentPerSecond = self.calculateVars(
-            principal, apr, maxYears)
+        ratePerSecond, maxSeconds, paymentPerSecond = self.calculateVars(principal, apr, maxYears)
 
         # Store Instance Vars
         self.id = Loan.loanIDs
@@ -37,19 +35,15 @@ class Loan:
         return ratePerSecond, maxSeconds, paymentPerSecond
 
     def balanceAtSecond(self, second):
-        return ((self.paymentPerSecond *
-                 (1 -
-                  (1 + self.ratePerSecond)**(second - self.maxSeconds - 1))) /
-                self.ratePerSecond)
+        balance = (self.paymentPerSecond * (1 - (1 + self.ratePerSecond) ** (second - self.maxSeconds - 1))) / self.ratePerSecond
+        return balance if balance > 0 else 0
 
     def yearStartTime(self, yearNumber):
         return Loan.yearSeconds * (yearNumber - 1)
 
     def yearlyRepayments(self):
-        currentYearStartBalance = self.balanceAtSecond(
-            self.yearStartTime(self.currentYear))
-        nextYearStartBalance = self.balanceAtSecond(
-            self.yearStartTime(self.currentYear + 1))
+        currentYearStartBalance = self.balanceAtSecond(self.yearStartTime(self.currentYear))
+        nextYearStartBalance = self.balanceAtSecond(self.yearStartTime(self.currentYear + 1))
         return currentYearStartBalance - nextYearStartBalance
 
     def yearlyPayments(self):
