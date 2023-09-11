@@ -1,4 +1,6 @@
 from data import yearlyNewLoans
+import json
+
 
 class Loan:
 
@@ -44,8 +46,10 @@ class Loan:
         return Loan.yearSeconds * (yearNumber - 1)
 
     def yearlyRepayments(self):
-        currentYearStartBalance = self.balanceAtSecond(self.yearStartTime(self.currentYear))
-        nextYearStartBalance = self.balanceAtSecond(self.yearStartTime(self.currentYear + 1))
+        currentYearStartBalance = self.balanceAtSecond(
+            self.yearStartTime(self.currentYear))
+        nextYearStartBalance = self.balanceAtSecond(
+            self.yearStartTime(self.currentYear + 1))
         return currentYearStartBalance - nextYearStartBalance
 
     def yearlyPayments(self):
@@ -63,6 +67,7 @@ class Loan:
 years = 10
 activeLoans = []
 yearlyInterestPayments = {}
+interestFee = 0.02
 
 for y in range(1, years):
 
@@ -91,15 +96,19 @@ for y in range(1, years):
     combinedInterestPayments = 0
     for loan in activeLoans:
         print(f"Loan {loan.id}:")
-        print(f"- balance at start of year {loan.currentYear}: {loan.balanceAtSecond(loan.yearStartTime(loan.currentYear))}")
+        print(
+            f"- balance at start of year {loan.currentYear}: {loan.balanceAtSecond(loan.yearStartTime(loan.currentYear))}"
+        )
         combinedInterestPayments += loan.calculateYearlyInterestPaid()
         loan.incrementYear()
 
     print()
 
-    yearlyInterestPayments[y] = combinedInterestPayments
+    yearlyInterestPayments[y] = {
+        "tangibleInterestProfit": interestFee * combinedInterestPayments,
+        "lenderProfit": (1 - interestFee) * combinedInterestPayments
+    }
 
-print(yearlyInterestPayments)
-
+print(json.dumps(yearlyInterestPayments, indent=4))
 
 # Todo: remove loans from activeLoans

@@ -15,7 +15,7 @@ yearlyNewLoans = {
         "apr": 0.06,
         "maxYears": 5
     },
-    5: {
+    4: {
         "units": 82,
         "mortgageNeed": 0.6,
         "avgPrice": 155_000,
