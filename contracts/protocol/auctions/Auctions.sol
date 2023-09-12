@@ -21,6 +21,9 @@ contract Auctions is IAuctions, LoanStatus {
         UD60x18 ltv = convert(uint(1)).sub(convert(downPayment).div(convert(propertyValue)));
         require(ltv.lte(_maxLtv), "ltv cannot exceed maxLtv");
 
+        // Validate minSalePrice
+        require(propertyValue >= _minSalePrice(_debts[tokenId].loan), "propertyValue must cover minSalePrice");
+
         // Pull downPayment from bidder
         USDC.safeTransferFrom(msg.sender, address(this), downPayment);
 
