@@ -9,7 +9,8 @@ import { intoUD60x18 } from "@prb/math/src/sd59x18/Casting.sol";
 abstract contract Interest is State {
 
     function borrowerRatePerSecond(UD60x18 utilization) internal view returns(UD60x18 ratePerSecond) {
-        ratePerSecond = _borrowerApr(utilization).div(convert(yearSeconds)); // Todo: improve precision
+        // ratePerSecond = _borrowerApr(utilization).div(convert(yearSeconds)); // Todo: improve precision
+        ratePerSecond = convert(uint(6)).div(convert(uint(100))).div(convert(yearSeconds)); // Note: 6% APR
     }
 
     function _borrowerApr(UD60x18 utilization) internal view returns(UD60x18 apr) {
