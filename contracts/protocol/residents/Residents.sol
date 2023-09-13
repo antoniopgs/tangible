@@ -6,7 +6,9 @@ import "../state/state/State.sol";
 
 contract Residents is IResidents, State {
 
-    function verifyResident(address addr, uint resident) external onlyRole(GSP) { // Todo: add functionality to update resident address
+    // Todo: add functionality to update resident address
+    // Note: access control temporarily commented, so that anyone can play with MVP
+    function verifyResident(address addr, uint resident) external /* onlyRole(GSP) */ {
         require(!_isResident(addr), "address already associated to an eResident");
         require(_residentToAddress[resident] == address(0), "resident already associated to an address");
         _addressToResident[addr] = resident;

@@ -23,6 +23,7 @@ contract TangibleNft is ITangibleNft, ERC721URIStorage, ERC721Enumerable {
         protocolProxy = _protocolProxy;
     }
 
+    // Note: access control temporarily commented, so that anyone can play with MVP
     // Note: tokenURI will point to Prospera Property Registry (example: https://prospera-sure.hn/view/27) we might not even need IPFS
     function mint(address to, string memory _tokenURI) external /* onlyRole(GSP) */ returns (uint newTokenId) {
         newTokenId = _tokenIds.current();
