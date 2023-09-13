@@ -32,6 +32,7 @@ module.exports = deploy = async () => {
   const team = await getMnemonicTeam();
   // const team = await ethers.getSigner();
   console.log("team.address:", team.address);
+  console.log("await ethers.provider.getBalance(team.address):", await ethers.provider.getBalance(team.address))
 
   // ---------- MULTI-SIGS ----------
   const TANGIBLE = team;
