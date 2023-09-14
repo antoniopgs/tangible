@@ -1,11 +1,9 @@
 import json
 from data import yearlyNewLoans
 
-
 class Loan:
 
     yearSeconds = 365 * 24 * 60 * 60
-    loanCounter = 0
 
     def __init__(self, principal, apr, maxYears):
 
@@ -40,22 +38,31 @@ class Loan:
         balance = (self.paymentPerSecond * (1 - (1 + self.ratePerSecond) ** (second - self.maxSeconds))) / self.ratePerSecond
         return balance if balance > 0 else 0
 
+class LoanGroup(Loan):
+    
+    def __init__(self, principal, apr, maxYears, units, mortgageNeed):
+        Loan.__init__(self, principal, apr, maxYears)
+        self.loanCount = units * mortgageNeed
+
     def combinedBalanceAt(self, second):
-        loanCount = units * mortgageNeed
-        return loanCount * self.balanceAt(second)
+        return self.loanCount * self.balanceAt(second)
 
     def combinedRepaymentPaidAt(self, second):
         return self.combinedBalanceAt(0) - self.combinedBalanceAt(second)
 
     def combinedInterestPaidAt(self, second):
-        loanCount = units * mortgageNeed
-        totalPaidAtSecond = loanCount * second * self.paymentPerSecond
+        totalPaidAtSecond = self.loanCount * second * self.paymentPerSecond
         return totalPaidAtSecond - self.combinedRepaymentPaidAt(second)
 
-    def yearlyInterest(self, year):
+    def combinedYearlyInterest(self, year):
         yearStart = (year - 1) * Loan.yearSeconds
         yearEnd = year * Loan.yearSeconds
         self.combinedInterestPaidAt(yearEnd) - self.combinedInterestPaidAt(yearStart)
+
+    
+
+    
+
 
 # Yearly New Loans
 years = 10
