@@ -33,10 +33,9 @@ class Loan:
         return ratePerSecond, maxSeconds, paymentPerSecond
 
     def balanceAt(self, loanSecond):
-        balance = (self.paymentPerSecond *
+        return (self.paymentPerSecond *
                    (1 - (1 + self.ratePerSecond)**
                     (loanSecond - self.maxSeconds))) / self.ratePerSecond
-        return balance if balance > 0 else 0
 
 
 class LoanGroup(Loan):
@@ -64,13 +63,6 @@ class LoanGroup(Loan):
         loanYear = self.loanYear(currentYear)
         loanYearEndSecond = loanYear * Loan.yearSeconds
         loanYearStartSecond = (loanYear - 1) * Loan.yearSeconds
-        print("currentYear:", currentYear)
-        print("loanYear:", loanYear)
-        print("loanYearEndSecond:", loanYearEndSecond)
-        print("loanYearStartSecond:", loanYearStartSecond)
-        print("self.combinedInterestPaidAt(yearEnd):", self.combinedInterestPaidAt(loanYearEndSecond))
-        print("self.combinedInterestPaidAt(yearStart):", self.combinedInterestPaidAt(loanYearStartSecond))
-        print()
         return self.combinedInterestPaidAt(loanYearEndSecond) - self.combinedInterestPaidAt(loanYearStartSecond)
 
 
@@ -112,14 +104,9 @@ for year in range(1, years + 1):
 
         # If loan not over
         interest = loanGroup.combinedYearlyInterest(year)
-        print("interest:", interest)
         if (interest > 0):
             allLoanGroupsYearlyInterest += interest
             allLoanGroupsYearlyPrincipal += loanGroup.combinedPrincipal
 
     # Print
-    print(f"- allLoanGroupsYearlyInterest: {allLoanGroupsYearlyInterest}")
-    print(f"- allLoanGroupsYearlyPrincipal: {allLoanGroupsYearlyPrincipal}")
-    print(
-        f"- Net Apy: {netApyPct(allLoanGroupsYearlyInterest, allLoanGroupsYearlyPrincipal)}%\n"
-    )
+    print(f"- Net Apy: {netApyPct(allLoanGroupsYearlyInterest, allLoanGroupsYearlyPrincipal)}%\n")
