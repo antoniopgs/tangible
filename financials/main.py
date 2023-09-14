@@ -10,8 +10,7 @@ class Loan:
     def __init__(self, principal, apr, maxYears):
 
         # Calculate Vars
-        ratePerSecond, maxSeconds, paymentPerSecond = self.calculateVars(
-            principal, apr, maxYears)
+        ratePerSecond, maxSeconds, paymentPerSecond = self.calculateVars(principal, apr, maxYears)
 
         # Increment Loan Counter
         Loan.loanCounter = Loan.loanCounter + 1
@@ -21,7 +20,6 @@ class Loan:
         self.ratePerSecond = ratePerSecond
         self.maxSeconds = maxSeconds
         self.paymentPerSecond = paymentPerSecond
-        self.currentYear = 1  # start on 1st year
 
     def calculateVars(self, principal, apr, maxYears):
 
@@ -37,9 +35,6 @@ class Loan:
 
         # Return
         return ratePerSecond, maxSeconds, paymentPerSecond
-
-    def yearStartTime(self, yearNumber):
-        return Loan.yearSeconds * (yearNumber - 1)
 
     def balanceAt(self, second):
         balance = (self.paymentPerSecond * (1 - (1 + self.ratePerSecond) ** (second - self.maxSeconds))) / self.ratePerSecond
@@ -58,7 +53,9 @@ class Loan:
         return totalPaidAtSecond - self.combinedRepaymentPaidAt(second)
 
     def yearlyInterest(self, year):
-        self.combinedInterestPaidAt(self.yearStartTime(year+1)) - self.combinedInterestPaidAt(self.yearStartTime(year))
+        yearStart = (year - 1) * Loan.yearSeconds
+        yearEnd = year * Loan.yearSeconds
+        self.combinedInterestPaidAt(yearEnd) - self.combinedInterestPaidAt(yearStart)
 
 # Yearly New Loans
 years = 10
