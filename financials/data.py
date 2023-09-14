@@ -22,5 +22,5 @@ yearlyNewLoans = {
         "ltv": 0.5,
         "apr": 0.06,
         "maxYears": 5
-    },
+    }
 }

@@ -15,7 +15,8 @@ class Loan:
         self.principal = unitPrice * ltv
         self.startYear = currentYear
         self.maxYears = maxYears
-        self.ratePerSecond, self.maxSeconds, self.paymentPerSecond = self.calculateVars(self.principal, apr, maxYears)
+        self.ratePerSecond, self.maxSeconds, self.paymentPerSecond = self.calculateVars(
+            self.principal, apr, maxYears)
 
     def calculateVars(self, principal, apr, maxYears):
 
@@ -34,13 +35,14 @@ class Loan:
 
     def balanceAt(self, loanSecond):
         return (self.paymentPerSecond *
-                   (1 - (1 + self.ratePerSecond)**
-                    (loanSecond - self.maxSeconds))) / self.ratePerSecond
+                (1 - (1 + self.ratePerSecond)**
+                 (loanSecond - self.maxSeconds))) / self.ratePerSecond
 
 
 class LoanGroup(Loan):
 
-    def __init__(self, unitPrice, ltv, apr, maxYears, units, mortgageNeed, currentYear):
+    def __init__(self, unitPrice, ltv, apr, maxYears, units, mortgageNeed,
+                 currentYear):
         Loan.__init__(self, unitPrice, ltv, apr, maxYears, currentYear)
         self.loanCount = units * mortgageNeed
         principal = unitPrice * ltv
@@ -59,11 +61,13 @@ class LoanGroup(Loan):
     def loanYear(self, currentYear):
         return currentYear - self.startYear + 1
 
-    def combinedYearlyInterest(self, currentYear): # year comes in as 3
+    def combinedYearlyInterest(self, currentYear):  # year comes in as 3
         loanYear = self.loanYear(currentYear)
         loanYearEndSecond = loanYear * Loan.yearSeconds
         loanYearStartSecond = (loanYear - 1) * Loan.yearSeconds
-        return self.combinedInterestPaidAt(loanYearEndSecond) - self.combinedInterestPaidAt(loanYearStartSecond)
+        return self.combinedInterestPaidAt(
+            loanYearEndSecond) - self.combinedInterestPaidAt(
+                loanYearStartSecond)
 
 
 # Standalone Functions
@@ -91,11 +95,17 @@ for year in range(1, years + 1):
     newLoans = yearlyNewLoans.get(year)
     if (newLoans is not None):
 
+        print(
+            f"- New Loans: {int(newLoans['units'] * newLoans['mortgageNeed'])}"
+        )
+
         # Add new LoanGroup
         loanGroups.append(
             LoanGroup(newLoans["avgPrice"], newLoans["ltv"], newLoans["apr"],
                       newLoans["maxYears"], newLoans["units"],
                       newLoans["mortgageNeed"], year))
+    else:
+        print(f"- New Loans: 0")
 
     # Loop Loan Groups
     allLoanGroupsYearlyInterest = 0
@@ -109,4 +119,7 @@ for year in range(1, years + 1):
             allLoanGroupsYearlyPrincipal += loanGroup.combinedPrincipal
 
     # Print
-    print(f"- Net Apy: {netApyPct(allLoanGroupsYearlyInterest, allLoanGroupsYearlyPrincipal)}%\n")
+    print(f"- Principal: {allLoanGroupsYearlyPrincipal:,.2f}$")
+    print(f"- Gross Interest Profits: {allLoanGroupsYearlyInterest:,.2f}$")
+    print(f"- Lender Net Interest Profits: {(1 - interestFee) * allLoanGroupsYearlyInterest:,.2f}$")
+    print(f"- Lender Net Apy: {round(netApyPct(allLoanGroupsYearlyInterest, allLoanGroupsYearlyPrincipal), 2)}%\n")
