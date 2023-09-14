@@ -1,6 +1,5 @@
 # Imports
 import json
-from re import X
 from data import yearlyNewLoans
 
 
@@ -15,8 +14,7 @@ class Loan:
         self.principal = unitPrice * ltv
         self.startYear = currentYear
         self.maxYears = maxYears
-        self.ratePerSecond, self.maxSeconds, self.paymentPerSecond = self.calculateVars(
-            self.principal, apr, maxYears)
+        self.ratePerSecond, self.maxSeconds, self.paymentPerSecond = self.calculateVars(self.principal, apr, maxYears)
 
     def calculateVars(self, principal, apr, maxYears):
 
@@ -34,10 +32,7 @@ class Loan:
         return ratePerSecond, maxSeconds, paymentPerSecond
 
     def balanceAt(self, loanSecond):
-        return (self.paymentPerSecond *
-                (1 - (1 + self.ratePerSecond)**
-                 (loanSecond - self.maxSeconds))) / self.ratePerSecond
-
+        return (self.paymentPerSecond * (1 - (1 + self.ratePerSecond) ** (loanSecond - self.maxSeconds))) / self.ratePerSecond
 
 class LoanGroup(Loan):
 
@@ -74,10 +69,8 @@ class LoanGroup(Loan):
 def apy(interest, principal):
     return interest / principal if principal > 0 else 0
 
-
 def netApy(interest, principal):
     return (1 - interestFee) * apy(interest, principal)
-
 
 def netApyPct(interest, principal):
     return netApy(interest, principal) * 100
@@ -100,9 +93,9 @@ for year in range(1, years + 1):
 
         # Add new LoanGroup
         loanGroups.append(
-            LoanGroup(newLoans["avgPrice"], newLoans["ltv"], newLoans["apr"],
-                      newLoans["maxYears"], newLoans["units"],
-                      newLoans["mortgageNeed"], year))
+            LoanGroup(newLoans["avgPrice"], newLoans["ltv"], newLoans["apr"], newLoans["maxYears"], newLoans["units"], newLoans["mortgageNeed"], year)
+        )
+
     else:
         print(f"- New Loans: 0")
         print(f"- New Principal: 0$")
@@ -121,9 +114,5 @@ for year in range(1, years + 1):
     # Print
     print(f"- Active Principal: {allLoanGroupsYearlyPrincipal:,.2f}$")
     print(f"- Gross Interest Profits: {allLoanGroupsYearlyInterest:,.2f}$")
-    print(
-        f"- Lender Net Interest Profits: {(1 - interestFee) * allLoanGroupsYearlyInterest:,.2f}$"
-    )
-    print(
-        f"- Lender Net Apy: {round(netApyPct(allLoanGroupsYearlyInterest, allLoanGroupsYearlyPrincipal), 2)}%\n"
-    )
+    print(f"- Lender Net Interest Profits: {(1 - interestFee) * allLoanGroupsYearlyInterest:,.2f}$")
+    print(f"- Lender Net Apy: {round(netApyPct(allLoanGroupsYearlyInterest, allLoanGroupsYearlyPrincipal), 2)}%\n")
