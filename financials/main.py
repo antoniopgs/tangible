@@ -95,9 +95,8 @@ for year in range(1, years + 1):
     newLoans = yearlyNewLoans.get(year)
     if (newLoans is not None):
 
-        print(
-            f"- New Loans: {int(newLoans['units'] * newLoans['mortgageNeed'])}"
-        )
+        print(f"- New Loans: {int(newLoans['units'] * newLoans['mortgageNeed'])}")
+        print(f"- New Principal: {(newLoans['units'] * newLoans['mortgageNeed']) * newLoans['avgPrice'] * newLoans['ltv']:,.2f}$")
 
         # Add new LoanGroup
         loanGroups.append(
@@ -106,6 +105,7 @@ for year in range(1, years + 1):
                       newLoans["mortgageNeed"], year))
     else:
         print(f"- New Loans: 0")
+        print(f"- New Principal: 0$")
 
     # Loop Loan Groups
     allLoanGroupsYearlyInterest = 0
@@ -119,7 +119,11 @@ for year in range(1, years + 1):
             allLoanGroupsYearlyPrincipal += loanGroup.combinedPrincipal
 
     # Print
-    print(f"- Principal: {allLoanGroupsYearlyPrincipal:,.2f}$")
+    print(f"- Active Principal: {allLoanGroupsYearlyPrincipal:,.2f}$")
     print(f"- Gross Interest Profits: {allLoanGroupsYearlyInterest:,.2f}$")
-    print(f"- Lender Net Interest Profits: {(1 - interestFee) * allLoanGroupsYearlyInterest:,.2f}$")
-    print(f"- Lender Net Apy: {round(netApyPct(allLoanGroupsYearlyInterest, allLoanGroupsYearlyPrincipal), 2)}%\n")
+    print(
+        f"- Lender Net Interest Profits: {(1 - interestFee) * allLoanGroupsYearlyInterest:,.2f}$"
+    )
+    print(
+        f"- Lender Net Apy: {round(netApyPct(allLoanGroupsYearlyInterest, allLoanGroupsYearlyPrincipal), 2)}%\n"
+    )
