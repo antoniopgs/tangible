@@ -1,6 +1,8 @@
 import json
 from data import yearlyNewLoans
 
+interestFee = 0.02
+
 class Loan:
 
     yearSeconds = 365 * 24 * 60 * 60
@@ -15,6 +17,7 @@ class Loan:
 
         # Store Instance Vars
         self.id = Loan.loanCounter
+        self.principal = principal
         self.ratePerSecond = ratePerSecond
         self.maxSeconds = maxSeconds
         self.paymentPerSecond = paymentPerSecond
@@ -57,7 +60,17 @@ class LoanGroup(Loan):
     def combinedYearlyInterest(self, year):
         yearStart = (year - 1) * Loan.yearSeconds
         yearEnd = year * Loan.yearSeconds
-        self.combinedInterestPaidAt(yearEnd) - self.combinedInterestPaidAt(yearStart)
+        return self.combinedInterestPaidAt(yearEnd) - self.combinedInterestPaidAt(yearStart)
+
+    def grossCombinedApy(self, year):
+        combinedPrincipal = self.loanCount * self.principal
+        return self.combinedYearlyInterest(year) / combinedPrincipal
+
+    def netCombinedApy(self, year):
+        return (1 - interestFee) * self.grossCombinedApy(year)
+
+    def netCombinedApyPct(self, year):
+        return self.netCombinedApy(year) * 100
 
     
 
@@ -67,9 +80,6 @@ class LoanGroup(Loan):
 # Yearly New Loans
 years = 10
 activeLoans = []
-yearlyInterestPayments = {}
-interestFee = 0.02
-totalPrincipal = 0
 
 for y in range(1, years):
 
