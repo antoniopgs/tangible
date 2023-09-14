@@ -1,19 +1,23 @@
-from data import yearlyNewLoans
 import json
+from data import yearlyNewLoans
+
 
 class Loan:
 
     yearSeconds = 365 * 24 * 60 * 60
-    loanIDs = 1
+    loanCounter = 0
 
     def __init__(self, principal, apr, maxYears):
 
         # Calculate Vars
-        ratePerSecond, maxSeconds, paymentPerSecond = self.calculateVars(principal, apr, maxYears)
+        ratePerSecond, maxSeconds, paymentPerSecond = self.calculateVars(
+            principal, apr, maxYears)
+
+        # Increment Loan Counter
+        Loan.loanCounter = Loan.loanCounter + 1
 
         # Store Instance Vars
-        self.id = Loan.loanIDs
-        Loan.loanIDs = Loan.loanIDs + 1
+        self.id = Loan.loanCounter
         self.ratePerSecond = ratePerSecond
         self.maxSeconds = maxSeconds
         self.paymentPerSecond = paymentPerSecond
@@ -34,40 +38,38 @@ class Loan:
         # Return
         return ratePerSecond, maxSeconds, paymentPerSecond
 
-    def balanceAtSecond(self, second):
-        balance = (self.paymentPerSecond * (1 - (1 + self.ratePerSecond) ** (second - self.maxSeconds - 1))) / self.ratePerSecond
-        return balance if balance > 0 else 0
-
     def yearStartTime(self, yearNumber):
         return Loan.yearSeconds * (yearNumber - 1)
 
-    def yearlyRepayments(self):
-        currentYearStartBalance = self.balanceAtSecond(self.yearStartTime(self.currentYear))
-        nextYearStartBalance = self.balanceAtSecond(self.yearStartTime(self.currentYear + 1))
-        return currentYearStartBalance - nextYearStartBalance
+    def balanceAt(self, second):
+        balance = (self.paymentPerSecond * (1 - (1 + self.ratePerSecond) ** (second - self.maxSeconds))) / self.ratePerSecond
+        return balance if balance > 0 else 0
 
-    def yearlyPayments(self):
-        return self.paymentPerSecond * Loan.yearSeconds
+    def combinedBalanceAt(self, second):
+        loanCount = units * mortgageNeed
+        return loanCount * self.balanceAt(second)
 
-    def incrementYear(self):
-        self.currentYear = self.currentYear + 1
+    def combinedRepaymentPaidAt(self, second):
+        return self.combinedBalanceAt(0) - self.combinedBalanceAt(second)
 
-    def calculateYearlyInterestPaid(self):
-        yearlyInterestPaid = self.yearlyPayments() - self.yearlyRepayments()
-        return yearlyInterestPaid if yearlyInterestPaid > 0 else 0
+    def combinedInterestPaidAt(self, second):
+        loanCount = units * mortgageNeed
+        totalPaidAtSecond = loanCount * second * self.paymentPerSecond
+        return totalPaidAtSecond - self.combinedRepaymentPaidAt(second)
 
+    def yearlyInterest(self, year):
+        self.combinedInterestPaidAt(self.yearStartTime(year+1)) - self.combinedInterestPaidAt(self.yearStartTime(year))
 
 # Yearly New Loans
 years = 10
 activeLoans = []
 yearlyInterestPayments = {}
-interestFee = 0.01
+interestFee = 0.02
 totalPrincipal = 0
 
 for y in range(1, years):
 
     print(f"----- YEAR: {y} -----")
-    print(f"- activeLoans: {len(activeLoans)}")
 
     # If there are newLoans
     newLoans = yearlyNewLoans.get(y)
@@ -75,7 +77,8 @@ for y in range(1, years):
 
         # Calculate newLoans vars
         newLoansAmount = newLoans["mortgageNeed"] * newLoans["units"]
-        combinedPrincipal = newLoansAmount * newLoans["avgPrice"] * newLoans["ltv"]
+        combinedPrincipal = newLoansAmount * newLoans["avgPrice"] * newLoans[
+            "ltv"]
 
         print(f"- newLoans: {newLoansAmount}")
         print(f"- combinedPrincipal: {combinedPrincipal}")
@@ -103,6 +106,9 @@ for y in range(1, years):
     tangibleInterestProfit = interestFee * combinedInterestPayments
     lenderProfit = combinedInterestPayments - tangibleInterestProfit
     lenderApy = lenderProfit * 100 / totalPrincipal
+
+    print(f"lenderProfit: {lenderProfit}")
+    print(f"totalPrincipal: {totalPrincipal}")
 
     yearlyInterestPayments[y] = {
         "tangibleInterestProfit": interestFee * combinedInterestPayments,
