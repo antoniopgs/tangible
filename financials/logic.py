@@ -24,9 +24,6 @@ class Loan:
         # Return
         return ratePerSecond, maxSeconds, paymentPerSecond
 
-    def loanYear(self, currentYear):
-        return currentYear - self.startYear + 1
-
     def balanceAt(self, loanSecond):
         return (self.paymentPerSecond * (1 - (1 + self.ratePerSecond) ** (loanSecond - self.maxSeconds))) / self.ratePerSecond
 
@@ -42,13 +39,16 @@ class Loan:
         loanYearStartSecond = (loanYear - 1) * Loan.yearSeconds
         return self.interestPaidAt(loanYearEndSecond) - self.interestPaidAt(loanYearStartSecond)
 
-    def curYearYearlyInterest(self, currentYear):
-        return self.yearlyInterest(self.loanYear(currentYear))
-    
+    def loanYear(self, currentYear):
+        return currentYear - self.startYear + 1
+
     def curYearStartBalanceAt(self, currentYear):
         loanYear = self.loanYear(currentYear)
         loanYearStartSecond = (loanYear - 1) * Loan.yearSeconds
         return self.balanceAt(loanYearStartSecond)
+
+    def curYearYearlyInterest(self, currentYear):
+        return self.yearlyInterest(self.loanYear(currentYear))
 
 
 # Standalone Functions
