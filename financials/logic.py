@@ -58,17 +58,15 @@ def apy(interest, principal):
 def netApy(interestFee, interest, principal):
     return (1 - interestFee) * apy(interest, principal)
 
-def netApyPct(interestFee, interest, principal):
-    return netApy(interestFee, interest, principal) * 100
-
 def salesProfits(newLoanCount, avgSalePrice, saleFee):
-    unitsSold = newLoanCount # assuming we only sell mortgages
+    unitsSold = newLoanCount # only counting sales of initial mortgages
     salesVolume = unitsSold * avgSalePrice
     return saleFee * salesVolume
 
 def simulate(yearlyNewLoans, saleFee, interestFee):
     
     loans = []
+    output = {}
 
     # Calculate lastYear
     lastLoanStartYear = list(yearlyNewLoans)[-1]
@@ -78,7 +76,12 @@ def simulate(yearlyNewLoans, saleFee, interestFee):
     # Loop years
     for year in range(1, lastYear + 1):
 
-        print(f"----- YEAR: {year} -----")
+        # Year vars
+        newLoanCount = 0
+        combinedNewPrincipal = 0
+        tangibleSaleFees = 0
+        combinedActivePrincipal = 0
+        combinedInterest = 0
 
         # If there are newLoans
         newLoans = yearlyNewLoans.get(year)
@@ -95,10 +98,8 @@ def simulate(yearlyNewLoans, saleFee, interestFee):
             # Calculate info
             principal = ltv * avgPrice
             newLoanCount = int(mortgageNeed * units)
-
-            print(f"- New Loans: {newLoanCount}")
-            print(f"- Tangible Sale Fees: {salesProfits(newLoanCount, avgPrice, saleFee):,.2f}$")
-            print(f"- New Principal: {newLoanCount * principal:,.2f}$")
+            combinedNewPrincipal = principal * newLoanCount
+            tangibleSaleFees = salesProfits(newLoanCount, avgPrice, saleFee) # only counting sales of initial mortgages
 
             # Loop newLoanCount
             for i in range(newLoanCount):
@@ -107,10 +108,6 @@ def simulate(yearlyNewLoans, saleFee, interestFee):
                 loans.append(
                     Loan(principal, apr, maxYears, year)
                 )
-
-        # Loop Loan Groups
-        combinedActivePrincipal = 0
-        combinedInterest = 0
 
         # Loop loans
         for loan in loans:
@@ -123,9 +120,18 @@ def simulate(yearlyNewLoans, saleFee, interestFee):
                 combinedActivePrincipal += loan.curYearStartBalanceAt(year)
                 combinedInterest += interest
 
-        # Print
-        print(f"- Active Principal: {combinedActivePrincipal:,.2f}$")
-        print(f"- Gross Interest Profits: {combinedInterest:,.2f}$")
-        print(f"- Tangible Interest Fees: {interestFee * combinedInterest:,.2f}$")
-        print(f"- Lender Net Interest Profits: {(1 - interestFee) * combinedInterest:,.2f}$")
-        print(f"- Lender Net Apy: {round(netApyPct(interestFee, combinedInterest, combinedActivePrincipal), 2)}%\n")
+        # Output year
+        output[year] = {
+            "newLoanCount": newLoanCount,
+            "combinedNewPrincipal": combinedNewPrincipal,
+            "tangibleSaleFees": tangibleSaleFees,
+            "combinedActivePrincipal": combinedActivePrincipal,
+            "combinedInterest": combinedInterest,
+            "tangibleInterestFees": interestFee * combinedInterest,
+            "lenderNetInterestProfits": (1 - interestFee) * combinedInterest,
+            "lenderNetApy": netApy(interestFee, combinedInterest, combinedActivePrincipal) * 100,
+            "tangibleTotalProfits": tangibleSaleFees + (interestFee * combinedInterest)
+        }
+
+    # Return output
+    return output

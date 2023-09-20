@@ -1,4 +1,10 @@
 from logic import simulate
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def addlabels(x,y):
+    for i in range(len(x)):
+        plt.text(i,y[i],y[i])
 
 # Edit year by year assumptions below
 yearlyNewLoans = {
@@ -29,8 +35,23 @@ yearlyNewLoans = {
 }
 
 # Edit assumptions below
-simulate(
+data = simulate(
     yearlyNewLoans, # don't touch this
     saleFee = 0.01,
     interestFee = 0.01
 )
+
+df = pd.DataFrame.from_dict(data)
+transposed = df.T
+
+apys = transposed["lenderNetApy"].plot(
+    kind="bar",
+    xlabel="Year",
+    ylabel="Lender Net Apy %"
+)
+
+x = [ year for year in list(data) ]
+y = [ round(data[year]["lenderNetApy"], 2) for year in list(data) ]
+addlabels(x, y)
+
+plt.show()
