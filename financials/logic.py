@@ -24,11 +24,11 @@ class Loan:
         # Return
         return ratePerSecond, maxSeconds, paymentPerSecond
 
-    def balanceAt(self, loanSecond):
-        return (self.paymentPerSecond * (1 - (1 + self.ratePerSecond) ** (loanSecond - self.maxSeconds))) / self.ratePerSecond
-
     def loanYear(self, currentYear):
         return currentYear - self.startYear + 1
+
+    def balanceAt(self, loanSecond):
+        return (self.paymentPerSecond * (1 - (1 + self.ratePerSecond) ** (loanSecond - self.maxSeconds))) / self.ratePerSecond
 
     def repaymentPaidAt(self, loanSecond):
         return self.balanceAt(0) - self.balanceAt(loanSecond)
@@ -37,17 +37,18 @@ class Loan:
         totalPaidAtSecond = loanSecond * self.paymentPerSecond
         return totalPaidAtSecond - self.repaymentPaidAt(loanSecond)
 
-    def yearlyInterest(self, currentYear):
-        loanYear = self.loanYear(currentYear)
+    def yearlyInterest(self, loanYear):
         loanYearEndSecond = loanYear * Loan.yearSeconds
         loanYearStartSecond = (loanYear - 1) * Loan.yearSeconds
         return self.interestPaidAt(loanYearEndSecond) - self.interestPaidAt(loanYearStartSecond)
 
-    def yearlyRepayment(self, currentYear):
+    def curYearYearlyInterest(self, currentYear):
+        return self.yearlyInterest(self.loanYear(currentYear))
+    
+    def curYearStartBalanceAt(self, currentYear):
         loanYear = self.loanYear(currentYear)
-        loanYearEndSecond = loanYear * Loan.yearSeconds
         loanYearStartSecond = (loanYear - 1) * Loan.yearSeconds
-        return self.balanceAt(loanYearStartSecond) - self.balanceAt(loanYearEndSecond)
+        return self.balanceAt(loanYearStartSecond)
 
 
 # Standalone Functions
@@ -68,7 +69,6 @@ def salesProfits(newLoanCount, avgSalePrice, saleFee):
 def simulate(yearlyNewLoans, saleFee, interestFee):
     
     loans = []
-    combinedUnpaidPrincipal = 0 # assuming lender keeps utilization at 100%
 
     # Calculate lastYear
     lastLoanStartYear = list(yearlyNewLoans)[-1]
@@ -102,9 +102,6 @@ def simulate(yearlyNewLoans, saleFee, interestFee):
 
             # Loop newLoanCount
             for i in range(newLoanCount):
-                
-                # Increase combinedUnpaidPrincipal
-                combinedUnpaidPrincipal += principal
 
                 # Add new Loan
                 loans.append(
@@ -112,22 +109,23 @@ def simulate(yearlyNewLoans, saleFee, interestFee):
                 )
 
         # Loop Loan Groups
-        combinedYearlyInterest = 0
+        combinedActivePrincipal = 0
+        combinedInterest = 0
 
         # Loop loans
         for loan in loans:
 
             # If loan not over
-            interest = loan.yearlyInterest(year)
-            if (interest > 0):
-                
-                # Update activePrincipal and combinedYearlyInterest
-                #combinedUnpaidPrincipal -= loan.yearlyRepayment(year) # TODO: figure this out
-                combinedYearlyInterest += interest
+            interest = loan.curYearYearlyInterest(year)
+            if (interest > 0): # if loan is over interest will return negative
+
+                # Update combinedActivePrincipal & combinedInterest
+                combinedActivePrincipal += loan.curYearStartBalanceAt(year)
+                combinedInterest += interest
 
         # Print
-        print(f"- Active Principal: {combinedUnpaidPrincipal:,.2f}$")
-        print(f"- Gross Interest Profits: {combinedYearlyInterest:,.2f}$")
-        print(f"- Tangible Interest Fees: {interestFee * combinedYearlyInterest:,.2f}$")
-        print(f"- Lender Net Interest Profits: {(1 - interestFee) * combinedYearlyInterest:,.2f}$")
-        print(f"- Lender Net Apy: {round(netApyPct(interestFee, combinedYearlyInterest, combinedUnpaidPrincipal), 2)}%\n")
+        print(f"- Active Principal: {combinedActivePrincipal:,.2f}$")
+        print(f"- Gross Interest Profits: {combinedInterest:,.2f}$")
+        print(f"- Tangible Interest Fees: {interestFee * combinedInterest:,.2f}$")
+        print(f"- Lender Net Interest Profits: {(1 - interestFee) * combinedInterest:,.2f}$")
+        print(f"- Lender Net Apy: {round(netApyPct(interestFee, combinedInterest, combinedActivePrincipal), 2)}%\n")

@@ -32,5 +32,5 @@ yearlyNewLoans = {
 simulate(
     yearlyNewLoans, # don't touch this
     saleFee = 0.01,
-    interestFee = 0.02
+    interestFee = 0.01
 )
