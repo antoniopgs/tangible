@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import { Loan } from "./types/Types.sol";
+import { Loan, Status } from "./types/Types.sol";
 
 contract Math {
 
@@ -14,8 +14,7 @@ contract Math {
         return (loan.paymentPerSecond * (1 - (1 + loan.ratePerSecond) ** (second - loan.maxDurationSeconds))) / loan.ratePerSecond;
     }
 
-    function principalCapAt(Loan memory loan, uint loanMonth) public view returns(uint) {
-        require(loanMonth >= 1 && loanMonth <= loan.maxMonths, "invalid loanMonth");
+    function principalCapAt(Loan memory loan, uint loanMonth) private view returns(uint) {
         uint loanMonthStart = (loanMonth - 1) * monthSeconds;
         return balanceAt(loan, loanMonthStart);
     }
@@ -29,8 +28,24 @@ contract Math {
         return principalCapAt(loan, loanCurrentMonth(loan));
     }
 
-    function defaulted(Loan memory loan) private view returns(bool _defaulted, uint defaultTime) {
+    // Note: return defaultTime here too?
+    function defaulted(Loan memory loan) private view returns(bool _defaulted) {
+        return loan.unpaidPrincipal > currentPrincipalCap(loan);
+    }
 
-        _defaulted = loan.unpaidPrincipal > currentPrincipalCap(loan);
+    function status(Loan memory loan) private view returns(Status) {
+
+        if (loan.unpaidPrincipal == 0) {
+            return Status.ResidentOwned;
+
+        } else {
+
+            if (defaulted(loan)) {
+                return Status.Default;
+
+            } else {
+                return Status.Mortgage;
+            }
+        }
     }
 }
