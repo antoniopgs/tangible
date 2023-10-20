@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import { Loan, Status } from "./types/Types.sol";
 
-contract Math {
+contract Amortization {
 
     // Time constants
     uint public constant yearSeconds = 365 days;
@@ -14,14 +14,17 @@ contract Math {
         return (loan.paymentPerSecond * (1 - (1 + loan.ratePerSecond) ** (second - loan.maxDurationSeconds))) / loan.ratePerSecond;
     }
 
+    function loanMonthStartSecond(uint loanMonth) private view returns(uint) {
+        return (loanMonth - 1) * monthSeconds;
+    }
+
     function principalCapAt(Loan memory loan, uint loanMonth) private view returns(uint) {
-        uint loanMonthStart = (loanMonth - 1) * monthSeconds;
-        return balanceAt(loan, loanMonthStart);
+        return balanceAt(loan, loanMonthStartSecond(loanMonth));
     }
 
     function loanCurrentMonth(Loan memory loan) public view returns(uint) {
         uint activeTime = block.timestamp - loan.startTime;
-        return (activeTime / monthSeconds) + 1;
+        return (activeTime / monthSeconds) + 1; // Note: activeTime / monthSeconds always rounds down
     }
 
     function currentPrincipalCap(Loan memory loan) private view returns(uint) {
