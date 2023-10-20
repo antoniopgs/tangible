@@ -119,6 +119,10 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus, Interest {
         return _redeemable(tokenId);
     }
 
+    function _loanMaxMonths(Loan memory loan) internal pure returns (uint) {
+        return yearMonths * loan.maxDurationSeconds / yearSeconds;
+    }
+
     function loanChart(uint tokenId) external view returns(uint[] memory x, uint[] memory y) {
 
         // Get loan

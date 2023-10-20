@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import "../state/state/State.sol";
+import "../../types/TimeConstants.sol";
+import { UD60x18 } from "@prb/math/src/UD60x18.sol";
 import { SD59x18 } from "@prb/math/src/SD59x18.sol";
 import { intoSD59x18 } from "@prb/math/src/ud60x18/Casting.sol";
 import { intoUD60x18 } from "@prb/math/src/sd59x18/Casting.sol";
 
-abstract contract Interest is State {
+abstract contract Interest is TimeConstants {
 
     function borrowerRatePerSecond(UD60x18 utilization) internal view returns(UD60x18 ratePerSecond) {
         // ratePerSecond = _borrowerApr(utilization).div(convert(yearSeconds)); // Todo: improve precision

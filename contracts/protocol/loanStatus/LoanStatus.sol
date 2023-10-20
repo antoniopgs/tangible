@@ -2,20 +2,26 @@
 pragma solidity ^0.8.15;
 
 import "../state/state/State.sol";
-import { Loan } from "../../types/Types.sol";
-import { SD59x18, convert } from "@prb/math/src/SD59x18.sol";
-import { intoUD60x18 } from "@prb/math/src/sd59x18/Casting.sol";
-import { intoSD59x18 } from "@prb/math/src/ud60x18/Casting.sol";
+// import { Loan } from "../../types/Types.sol";
+// import { SD59x18, convert } from "@prb/math/src/SD59x18.sol";
+// import { intoUD60x18 } from "@prb/math/src/sd59x18/Casting.sol";
+// import { intoSD59x18 } from "@prb/math/src/ud60x18/Casting.sol";
+import "./Amortization.sol";
 
-abstract contract LoanStatus is State {
+abstract contract LoanStatus is State, Amortization {
 
-    function _status(Loan memory loan) internal view returns (Status) {
-        
+    // Note: return defaultTime here too?
+    function defaulted(Loan memory loan) private view returns(bool _defaulted) {
+        return loan.unpaidPrincipal > currentPrincipalCap(loan);
+    }
+
+    function _status(Loan memory loan) internal view returns(Status) {
+
         if (loan.unpaidPrincipal == 0) {
             return Status.ResidentOwned;
 
         } else {
-            
+
             if (defaulted(loan)) {
                 return Status.Default;
 
@@ -23,56 +29,6 @@ abstract contract LoanStatus is State {
                 return Status.Mortgage;
             }
         }
-    }
-
-    function defaulted(Loan memory loan) private view returns(bool) {
-
-        // Get loanCompletedMonths
-        uint _loanCompletedMonths = loanCompletedMonths(loan);
-
-        if (_loanCompletedMonths == 0) {
-            return false;
-        }
-
-        // Calculate loanMaxDurationMonths
-        uint loanMaxDurationMonths = loan.maxDurationSeconds / yearSeconds * yearMonths;
-
-        // If loan exceeded allowed months
-        if (_loanCompletedMonths > loanMaxDurationMonths) {
-            return true;
-        }
-
-        return loan.unpaidPrincipal > _principalCap(loan, _loanCompletedMonths);
-    }
-
-    // Note: truncates on purpose (to enforce payment after monthSeconds, but not every second)
-    function loanCompletedMonths(Loan memory loan) private view returns(uint) {
-        uint completedMonths = (block.timestamp - loan.startTime) / monthSeconds;
-        uint loanMaxMonths = _loanMaxMonths(loan);
-        return completedMonths > loanMaxMonths ? loanMaxMonths : completedMonths;
-    }
-
-    function _loanMaxMonths(Loan memory loan) internal pure returns (uint) {
-        return yearMonths * loan.maxDurationSeconds / yearSeconds;
-    }
-
-    function _principalCap(Loan memory loan, uint month) internal pure returns(uint cap) {
-
-        // Ensure month doesn't exceed loanMaxDurationMonths
-        require(month <= _loanMaxMonths(loan), "month must be <= loanMaxDurationMonths");
-
-        // Calculate elapsedSeconds
-        uint elapsedSeconds = month * monthSeconds;
-
-        // Calculate negExponent
-        SD59x18 negExponent = convert(int(elapsedSeconds)).sub(convert(int(loan.maxDurationSeconds))).sub(convert(int(1)));
-
-        // Calculate numerator
-        SD59x18 z = convert(int(1)).sub(intoSD59x18(convert(uint(1)).add(loan.ratePerSecond)).pow(negExponent));
-        UD60x18 numerator = intoUD60x18(intoSD59x18(loan.paymentPerSecond).mul(z));
-
-        // Calculate cap
-        cap = convert(numerator.div(loan.ratePerSecond));
     }
 
     function _redeemable(uint tokenId) internal view returns(bool) {
@@ -100,6 +56,13 @@ abstract contract LoanStatus is State {
         assert(_defaultTime > 0);
     }
 
+
+
+    
+    function _availableLiquidity() internal view returns(uint) {
+        return _totalDeposits - _totalPrincipal; // - protocolMoney?
+    }
+
     // Todo: add otherDebt later?
     function _bidActionable(Bid memory _bid, uint minSalePrice) internal view returns(bool) {
 
@@ -115,10 +78,6 @@ abstract contract LoanStatus is State {
             ltv.lte(_maxLtv) && // Note: LTV already validated in bid(), but re-validate it here (because admin may have updated it)
             _bid.propertyValue >= minSalePrice
         );
-    }
-
-    function _availableLiquidity() internal view returns(uint) {
-        return _totalDeposits - _totalPrincipal; // - protocolMoney?
     }
 
     function _minSalePrice(Loan memory loan) internal view returns(uint) {

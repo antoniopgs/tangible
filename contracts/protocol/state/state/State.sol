@@ -10,11 +10,6 @@ import "../../../tokens/tangibleNft/TangibleNft.sol";
 
 abstract contract State is TargetManager {
 
-    // Time constants
-    uint public constant yearSeconds = 365 days;
-    uint public constant yearMonths = 12;
-    uint public constant monthSeconds = yearSeconds / yearMonths; // Note: yearSeconds % yearMonths = 0 (no precision loss)
-
     uint public protocolMoney; // Question: do I actually need this?
     bool public initialized;
 
