@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts//token/ERC1155/extensions/ERC1155URIStorage.sol";
+import "@openzeppelin/contracts//access/Ownable.sol";
 import "../protocol/Registry.sol";
 
 // TODOs:
 // - market to buy/sell fractional/underlying? create AMM? or auctions (where valuation depends on bid amounts and equity %s)?
 // - debt transfers?
-contract Fractional is Ownable {
+contract Fractional is ERC1155URIStorage, Ownable {
 
     // Links
     Registry registry;
@@ -17,33 +18,31 @@ contract Fractional is Ownable {
     uint private tokenCount;
 
     // Mappings
-    mapping(address user => mapping(uint tokenId => uint balance)) balances;
-    mapping(uint256 tokenId => string URI) private URIs;
     mapping(address user => mapping(uint tokenId => uint unpaidPrincipal)) debts;
 
-    constructor(address issuer) Ownable(issuer) {
+    constructor(address issuer) ERC1155("") Ownable(issuer) {
 
     }
 
-    // Issuer
-    function mint(string memory _tokenURI, address to) external onlyOwner returns (uint newTokenId) {
+    function mint(address to, string memory tokenURI) external onlyOwner {
 
-        // Get newTokenId
-        newTokenId = tokenCount;
+        // Mint
+        _mint(to, tokenCount, ONE_HUNDRED_PCT_SHARES, "");
 
-        // Mint new token
-        balances[to][newTokenId] = ONE_HUNDRED_PCT_SHARES;
-
-        // Store new token's URI
-        URIs[newTokenId] = _tokenURI;
+        // Set URI
+        _setURI(tokenCount, tokenURI);
 
         // Increment tokenCount
         tokenCount++;
     }
 
-    function _update(address from, address to, uint256 value) internal override {
+    function _update(address from, address to, uint256[] memory ids, uint256[] memory values) internal override {
+
+        // Ensure receiver is resident and non-american
         require(registry.isResident(to), "receiver isn't resident");
         require(registry.isNotAmerican(to), "receiver might be american");
-        super._update(from, to, value);
+
+        // Update
+        super._update(from, to, ids, values);
     }
 }
