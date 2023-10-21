@@ -3,8 +3,11 @@ pragma solidity ^0.8.21;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "../protocol/Registry.sol";
 
 contract Yield is ERC20, Ownable {
+
+    Registry registry;
 
     constructor(address protocol) ERC20("Tangible Yield Token", "tUSDC") Ownable(protocol) {
         
@@ -20,11 +23,7 @@ contract Yield is ERC20, Ownable {
     }
 
     function _update(address from, address to, uint256 value) internal override {
-        require(isNotAmerican(to), "receiver might be american");
+        require(registry.isNotAmerican(to), "receiver might be american");
         super._update(from, to, value);
-    }
-
-    function isNotAmerican(address account) private view returns(bool) {
-
     }
 }

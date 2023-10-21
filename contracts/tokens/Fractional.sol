@@ -2,8 +2,12 @@
 pragma solidity ^0.8.21;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "../protocol/Registry.sol";
 
 contract Fractional is Ownable {
+
+    // Links
+    Registry registry;
 
     // Vars
     uint private constant ONE_HUNDRED_PCT_SHARES = 100 * 1e18;
@@ -14,11 +18,11 @@ contract Fractional is Ownable {
     mapping(uint256 tokenId => string URI) private URIs;
 
     constructor(address issuer) Ownable(issuer) {
-        
+
     }
 
     // Issuer
-    function mint(string memory _tokenURI, address to) external onlyOwner onlyToResident(to) returns (uint newTokenId) {
+    function mint(string memory _tokenURI, address to) external onlyOwner returns (uint newTokenId) {
 
         // Get newTokenId
         newTokenId = tokenCount;
@@ -32,23 +36,10 @@ contract Fractional is Ownable {
         // Increment tokenCount
         tokenCount++;
     }
-    
-    // Users
-    function transfer(uint tokenId, uint amount, address to) external onlyToResident(to) {
 
-    }
-
-    // Views
-    function isResident(address addr) public view returns(bool) {
-
-    }
-
-    function isNotAmerican(address addr) public view returns(bool) {
-
-    }
-
-    modifier onlyToResident(address addr) {
-        require(isResident(addr), "addr not resident");
-        _;
+    function _update(address from, address to, uint256 value) internal override {
+        require(registry.isResident(to), "receiver isn't resident");
+        require(registry.isNotAmerican(to), "receiver might be american");
+        super._update(from, to, value);
     }
 }
