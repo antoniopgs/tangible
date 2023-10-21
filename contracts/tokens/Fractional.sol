@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../protocol/Registry.sol";
 
 // TODOs:
-// - market to buy/sell fractional/underlying? do I need an AMM?
+// - market to buy/sell fractional/underlying? create AMM? or auctions (where valuation depends on bid amounts and equity %s)?
 // - debt transfers?
 contract Fractional is Ownable {
 
