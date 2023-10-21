@@ -6,16 +6,15 @@ import "@openzeppelin/contracts//access/Ownable.sol";
 import "../protocol/Registry.sol";
 
 // TODOs:
-// - market to buy/sell fractional/underlying? create AMM? or auctions (where valuation depends on bid amounts and equity %s)?
 // - debt transfers?
-contract Fractional is ERC1155URIStorage, Ownable {
+contract Shares is ERC1155URIStorage, Ownable {
 
     // Links
     Registry registry;
 
     // Vars
     uint private constant ONE_HUNDRED_PCT_SHARES = 100 * 1e18;
-    uint private tokenCount;
+    uint public tokenCount;
 
     // Mappings
     mapping(address user => mapping(uint tokenId => uint unpaidPrincipal)) debts;
