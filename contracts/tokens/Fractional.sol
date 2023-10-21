@@ -4,6 +4,9 @@ pragma solidity ^0.8.21;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../protocol/Registry.sol";
 
+// TODOs:
+// - market to buy/sell fractional/underlying? do I need an AMM?
+// - debt transfers?
 contract Fractional is Ownable {
 
     // Links
@@ -16,6 +19,7 @@ contract Fractional is Ownable {
     // Mappings
     mapping(address user => mapping(uint tokenId => uint balance)) balances;
     mapping(uint256 tokenId => string URI) private URIs;
+    mapping(address user => mapping(uint tokenId => uint unpaidPrincipal)) debts;
 
     constructor(address issuer) Ownable(issuer) {
 
