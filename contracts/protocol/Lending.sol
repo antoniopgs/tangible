@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./YieldToken.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../tokens/Yield.sol";
 
 contract Lending {
 
@@ -12,7 +12,7 @@ contract Lending {
 
     // Tokens
     IERC20 underlyingToken;
-    YieldToken yieldToken;
+    Yield yieldToken;
 
     // Vars
     uint _totalPrincipal;

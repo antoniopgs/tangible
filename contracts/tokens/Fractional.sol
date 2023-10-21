@@ -1,31 +1,27 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
-import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Fractional is Ownable {
 
     // Vars
     uint private constant ONE_HUNDRED_PCT_SHARES = 100 * 1e18;
-    Counters.Counter private _tokenIds;
+    uint private tokenCount;
 
     // Mappings
     mapping(address user => mapping(uint tokenId => uint balance)) balances;
     mapping(uint256 tokenId => string URI) private URIs;
 
-    // Libs
-    using Counters for Counters.Counter;
-
     constructor(address issuer) Ownable(issuer) {
-
+        
     }
 
     // Issuer
     function mint(string memory _tokenURI, address to) external onlyOwner onlyToResident(to) returns (uint newTokenId) {
 
-        // Get current tokenId
-        newTokenId = _tokenIds.current();
+        // Get newTokenId
+        newTokenId = tokenCount;
 
         // Mint new token
         balances[to][newTokenId] = ONE_HUNDRED_PCT_SHARES;
@@ -33,8 +29,8 @@ contract Fractional is Ownable {
         // Store new token's URI
         URIs[newTokenId] = _tokenURI;
 
-        // Increment tokenIds
-        _tokenIds.increment();
+        // Increment tokenCount
+        tokenCount++;
     }
     
     // Users
