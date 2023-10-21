@@ -44,11 +44,6 @@ abstract contract State is TargetManager {
     UD60x18 internal _redemptionFeeSpread;
     UD60x18 internal _defaultFeeSpread;
 
-    // Interest vars
-    UD60x18 internal m1;
-    UD60x18 internal b1;
-    UD60x18 internal m2;
-
     function _isResident(address addr) internal view returns (bool) {
         return _addressToResident[addr] != 0; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
     }

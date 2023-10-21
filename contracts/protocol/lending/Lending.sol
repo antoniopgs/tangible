@@ -41,6 +41,6 @@ contract Lending is ILending, LendingInfo {
         // Send usdc to withdrawer
         USDC.safeTransfer(msg.sender, usdc);
 
-        emit Deposit(msg.sender, usdc, _tUsdc);
+        emit Withdraw(msg.sender, usdc, _tUsdc);
     }
 }

@@ -39,11 +39,6 @@ contract Initializer is State {
         _maxLoanMonths = 120; // Note: 10 years
         _redemptionWindow = 45 days;
 
-        // Interest vars
-        m1 = convert(4).div(convert(100)); // Note: 0.04
-        b1 = convert(3).div(convert(100)); // Note: 0.03
-        m2 = convert(9); // Note: 9
-
         // Fees/Spreads
         _baseSaleFeeSpread = convert(1).div(convert(100)); // Note: 1%
         _interestFeeSpread = convert(2).div(convert(100)); // Note: 2%

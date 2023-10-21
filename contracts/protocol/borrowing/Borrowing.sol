@@ -4,11 +4,11 @@ pragma solidity ^0.8.15;
 import "./IBorrowing.sol";
 import "../loanStatus/LoanStatus.sol";
 import "../borrowingInfo/BorrowingInfo.sol";
-import "../interest/Interest.sol";
+import "../interest/InterestConstant.sol";
 import "../onlySelf/OnlySelf.sol";
 import { Status } from "../../types/Types.sol";
 
-contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, Interest, OnlySelf {
+contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, InterestConstant, OnlySelf {
 
     using SafeERC20 for IERC20;
 

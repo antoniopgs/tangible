@@ -20,45 +20,41 @@ abstract contract LoanStatus is State, Amortization {
         if (loan.unpaidPrincipal == 0) {
             return Status.ResidentOwned;
 
+        } else if (defaulted(loan)) {
+            return Status.Default;
+
         } else {
-
-            if (defaulted(loan)) {
-                return Status.Default;
-
-            } else {
-                return Status.Mortgage;
-            }
+            return Status.Mortgage;
         }
+    }
+
+    function defaultTime(Loan memory loan, uint month) private view returns(bool valid, uint _defaultTime) {
+
+        if (loanCurrentMonth(loan) > month & loan.unpaidPrincipal >= principalCapAt(loan, month)) {
+            valid = true;
+            _defaultTime = loanMonthStartSecond(month);
+        }
+    }
+
+    function timeSinceDefault(Loan memory loan) private view returns(uint) {
+        return block.timestamp - defaultTime(loan);
     }
 
     function _redeemable(uint tokenId) internal view returns(bool) {
-        uint timeSinceDefault = block.timestamp - defaultTime(_debts[tokenId].loan);
-        return timeSinceDefault <= _redemptionWindow;
-    }
-
-    // Note: gas expensive
-    // Note: if return = 0, no default
-    function defaultTime(Loan memory loan) private view returns (uint _defaultTime) {
-
-        uint completedMonths = loanCompletedMonths(loan);
-
-        // Loop backwards from loanCompletedMonths
-        for (uint i = completedMonths; i > 0; i--) { // Todo: reduce gas costs
-
-            uint completedMonthPrincipalCap = _principalCap(loan, i);
-            uint prevCompletedMonthPrincipalCap = i == 1 ? loan.unpaidPrincipal : _principalCap(loan, i - 1);
-
-            if (loan.unpaidPrincipal > completedMonthPrincipalCap && loan.unpaidPrincipal <= prevCompletedMonthPrincipalCap) {
-                _defaultTime = loan.startTime + (i * monthSeconds);
-            }
-        }
-
-        assert(_defaultTime > 0);
+        return timeSinceDefault() <= _redemptionWindow;
     }
 
 
 
-    
+
+
+
+
+
+
+
+
+
     function _availableLiquidity() internal view returns(uint) {
         return _totalDeposits - _totalPrincipal; // - protocolMoney?
     }

@@ -5,9 +5,9 @@ import "./IInfo.sol";
 import "../borrowingInfo/BorrowingInfo.sol";
 import "../lendingInfo/LendingInfo.sol";
 import "../loanStatus/LoanStatus.sol";
-import "../interest/Interest.sol";
+import "../interest/InterestConstant.sol";
 
-contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus, Interest {
+contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus, InterestConstant {
 
     // Residents
     function isResident(address addr) external view returns (bool) {
@@ -49,8 +49,8 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus, Interest {
         }
     }
 
-    function borrowerApr(UD60x18 _utilization) external view returns(UD60x18 apr) {
-        return _borrowerApr(_utilization);
+    function borrowerApr() external view returns(UD60x18 apr) {
+        return calculateNewRatePerSecond() * yearSeconds;
     }
 
     // Auctions
@@ -117,6 +117,26 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus, Interest {
 
     function redeemable(uint tokenId) external view returns(bool) {
         return _redeemable(tokenId);
+    }
+
+    // Note: gas expensive (but in Info, so shouldn't matter)
+    // Note: if return = 0, no default
+    function defaultTime(Loan memory loan) external view returns (uint _defaultTime) {
+
+        uint completedMonths = loanCompletedMonths(loan);
+
+        // Loop backwards from loanCompletedMonths
+        for (uint i = completedMonths; i > 0; i--) { // Todo: reduce gas costs
+
+            uint completedMonthPrincipalCap = _principalCap(loan, i);
+            uint prevCompletedMonthPrincipalCap = i == 1 ? loan.unpaidPrincipal : _principalCap(loan, i - 1);
+
+            if (loan.unpaidPrincipal > completedMonthPrincipalCap && loan.unpaidPrincipal <= prevCompletedMonthPrincipalCap) {
+                _defaultTime = loan.startTime + (i * monthSeconds);
+            }
+        }
+
+        assert(_defaultTime > 0);
     }
 
     function _loanMaxMonths(Loan memory loan) internal pure returns (uint) {

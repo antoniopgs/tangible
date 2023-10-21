@@ -6,7 +6,7 @@ import "./TestUtils.sol";
 
 // Protocol Contracts
 import "../contracts/protocol/borrowing/IBorrowing.sol";
-import "../contracts/protocol/interest/Interest.sol";
+import "../contracts/protocol/interest/InterestConstant.sol";
 import "../contracts/protocol/lending/ILending.sol";
 import { Status } from "../contracts/types/Types.sol";
 

@@ -10,11 +10,11 @@ abstract contract Amortization is TimeConstants {
         return (loan.paymentPerSecond * (1 - (1 + loan.ratePerSecond) ** (second - loan.maxDurationSeconds))) / loan.ratePerSecond;
     }
 
-    function loanMonthStartSecond(uint loanMonth) private view returns(uint) {
+    function loanMonthStartSecond(uint loanMonth) internal view returns(uint) {
         return (loanMonth - 1) * monthSeconds;
     }
 
-    function principalCapAt(Loan memory loan, uint loanMonth) private view returns(uint) {
+    function principalCapAt(Loan memory loan, uint loanMonth) internal view returns(uint) {
         return balanceAt(loan, loanMonthStartSecond(loanMonth));
     }
 
