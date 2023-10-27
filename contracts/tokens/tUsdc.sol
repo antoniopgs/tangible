@@ -2,6 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "../protocol/info/IInfo.sol";
 
 contract tUsdc is ERC20("Tangible Protocol Interest-Bearing USDC", "tUSDC") {
 
@@ -25,7 +26,7 @@ contract tUsdc is ERC20("Tangible Protocol Interest-Bearing USDC", "tUSDC") {
     }
 
     function _update(address from, address to, uint256 value) internal override {
-        require(registry.isNotAmerican(to), "receiver might be american");
+        require(IInfo(protocolProxy).isNotAmerican(to), "receiver might be american");
         super._update(from, to, value);
     }
 }

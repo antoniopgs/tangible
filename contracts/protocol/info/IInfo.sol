@@ -26,6 +26,8 @@ interface IInfo {
     function addressToResident(address addr) external view returns(uint);
     function residentToAddress(uint id) external view returns(address);
 
+    function isNotAmerican(address addr) external view returns (bool);
+
     // Auctions
     // function bids(uint tokenId) external view returns(Bid[] memory); // Todo: implement later
     function bids(uint tokenId, uint idx) external view returns(Bid memory);

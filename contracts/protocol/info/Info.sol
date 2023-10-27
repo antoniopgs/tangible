@@ -199,4 +199,8 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus {
     function totalPrincipal() external view returns(uint) {
         return _totalPrincipal;
     }
+
+    function isNotAmerican(address addr) external view returns (bool) {
+        return _notAmerican[addr];
+    }
 }

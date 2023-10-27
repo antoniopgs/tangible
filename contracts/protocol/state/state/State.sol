@@ -27,6 +27,8 @@ abstract contract State is TargetManager {
     mapping(address => uint) internal _addressToResident; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
     mapping(uint => address) internal _residentToAddress;
 
+    mapping(address => bool) internal _notAmerican;
+
     // Bids
     mapping(uint => Bid[]) internal _bids; // Todo: figure out multiple bids by same bidder on same nft late
 
