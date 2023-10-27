@@ -63,4 +63,8 @@ abstract contract State is TargetManager {
     function secondsSinceLastPayment(Loan memory loan) private view returns(uint) {
         return block.timestamp - loan.lastPaymentTime;
     }
+
+    function _availableLiquidity() internal view returns(uint) {
+        return _totalDeposits - _totalPrincipal - locked; // Question: - protocolMoney?
+    }
 }

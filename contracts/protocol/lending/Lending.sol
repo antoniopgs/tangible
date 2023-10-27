@@ -27,6 +27,7 @@ contract Lending is ILending, LendingInfo {
     }
 
     function withdraw(uint usdc) external {
+        require(usdc <= _availableLiquidity(), "not enough available liquidity");
 
         // Calulate withdrawer tUsdc
         uint _tUsdc = _usdcToTUsdc(usdc);
@@ -36,7 +37,6 @@ contract Lending is ILending, LendingInfo {
 
         // Update pool
         _totalDeposits -= usdc; // Note: must come after _usdcToTUsdc()
-        require(_totalPrincipal <= _totalDeposits, "utilization can't exceed 100%");
 
         // Send usdc to withdrawer
         USDC.safeTransfer(msg.sender, usdc);

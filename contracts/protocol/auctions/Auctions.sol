@@ -65,13 +65,13 @@ contract Auctions is IAuctions, LoanStatus {
         require(!pendingBid[tokenId], "nft already has pending bid"); // Note: only allowing owner to have one accepted bid at a time should simplify things
 
         // Get bid
-        Bid storage bid = _bids[tokenId][idx];
+        Bid storage _bid = _bids[tokenId][idx];
 
         // Lock principal (propertyValue - downPayment)
-        locked += bid.propertyValue - bid.downPayment;
+        locked += _bid.propertyValue - _bid.downPayment;
 
         // Accept bid
-        bid.accepted = true;
+        _bid.accepted = true;
 
         // Change nft's pendingBid to true
         pendingBid[tokenId] = true;
@@ -81,16 +81,16 @@ contract Auctions is IAuctions, LoanStatus {
     function confirmSale(uint tokenId, uint idx) external onlyRole(GSP) {
 
         // Get bid
-        Bid memory bid = _bids[tokenId][idx];
+        Bid memory _bid = _bids[tokenId][idx];
 
         // Ensure bid was accepted
-        require(bid.accepted, "bid not yet accepted by nft owner");
+        require(_bid.accepted, "bid not yet accepted by nft owner");
 
         // Debt Transfer NFT from seller to bidder
         IBorrowing(address(this)).debtTransfer({
             tokenId: tokenId,
             seller: tangibleNft.ownerOf(tokenId),
-            _bid: bid
+            _bid: _bid
         });
 
         // Delete accepted bid
@@ -100,7 +100,7 @@ contract Auctions is IAuctions, LoanStatus {
         pendingBid[tokenId] = false;
 
         // Unlock principal (propertyValue - downPayment)
-        locked -= bid.propertyValue - bid.downPayment;
+        locked -= _bid.propertyValue - _bid.downPayment;
     }
 
     // Todo: implement bid/neededLoan unlocks
@@ -108,16 +108,16 @@ contract Auctions is IAuctions, LoanStatus {
         require(msg.sender == tangibleNft.ownerOf(tokenId) || hasRole(GSP, msg.sender), "only nft owner or admin can cancel sale");
 
         // Get bid
-        Bid memory bid = _bids[tokenId][idx];
+        Bid memory _bid = _bids[tokenId][idx];
 
         // Ensure bid was accepted
-        require(bid.accepted, "bid not yet accepted by nft owner");
+        require(_bid.accepted, "bid not yet accepted by nft owner");
 
         // Change nft's pendingBid back to false
         pendingBid[tokenId] = false;
 
         // Unlock principal (propertyValue - downPayment)
-        locked -= bid.propertyValue - bid.downPayment;
+        locked -= _bid.propertyValue - _bid.downPayment;
     }
 
     function deleteBid(Bid[] storage tokenBids, uint idx) private {
