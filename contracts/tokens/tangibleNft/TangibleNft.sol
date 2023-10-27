@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/access/IAccessControl.sol";
 import { PAC } from "../../types/RoleNames.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-// Todo: override to allow protocol/PAC to move tokens (don't use operators, as they can be revoked)
 contract TangibleNft is ITangibleNft, ERC721URIStorage, ERC721Enumerable {
 
     address immutable protocolProxy;

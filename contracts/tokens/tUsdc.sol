@@ -23,4 +23,9 @@ contract tUsdc is ERC20("Tangible Protocol Interest-Bearing USDC", "tUSDC") {
         require(msg.sender == protocolProxy, "caller not protocol");
         _;
     }
+
+    function _update(address from, address to, uint256 value) internal override {
+        require(registry.isNotAmerican(to), "receiver might be american");
+        super._update(from, to, value);
+    }
 }
