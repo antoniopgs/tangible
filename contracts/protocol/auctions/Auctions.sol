@@ -67,6 +67,7 @@ contract Auctions is IAuctions, LoanStatus {
         _bids[tokenId][idx].accepted = true;
     }
 
+    // Todo: implement bid/neededLoan unlocks
     function confirmSale(uint tokenId, uint idx) external onlyRole(GSP) {
         require(_bids[tokenId][idx].accepted, "bid not accepted by nft owner");
 
@@ -82,6 +83,11 @@ contract Auctions is IAuctions, LoanStatus {
 
         // Change nft's pendingBid back to false
         pendingBid[tokenId] = false;
+    }
+
+    // Todo: implement bid/neededLoan unlocks
+    function cancelSale(uint tokenId, uint idx) external {
+        require(msg.sender == tangibleNft.ownerOf(tokenId) || hasRole(GSP, msg.sender), "only nft owner or admin can cancel sale");
     }
 
     function deleteBid(Bid[] storage tokenBids, uint idx) private {
