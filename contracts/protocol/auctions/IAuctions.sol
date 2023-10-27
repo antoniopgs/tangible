@@ -9,4 +9,7 @@ interface IAuctions {
 
     // Seller
     function acceptBid(uint tokenId, uint idx) external; // Question: maybe move to Borrowing.sol & rename it to Sellers.sol?
+
+    // Admin
+    function confirmSale(uint tokenId, uint idx) external;
 }

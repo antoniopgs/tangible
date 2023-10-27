@@ -24,4 +24,5 @@ struct Bid {
     uint propertyValue;
     uint downPayment;
     uint loanMonths;
+    bool accepted;
 }

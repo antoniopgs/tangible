@@ -30,7 +30,8 @@ abstract contract State is TargetManager {
     mapping(address => bool) internal _notAmerican;
 
     // Bids
-    mapping(uint => Bid[]) internal _bids; // Todo: figure out multiple bids by same bidder on same nft late
+    mapping(uint tokenId => Bid[]) internal _bids; // Todo: figure out multiple bids by same bidder on same nft late
+    mapping(uint tokenId => bool bidAccepted) internal pendingBid;
 
     // Debts
     mapping(uint => Debt) internal _debts;

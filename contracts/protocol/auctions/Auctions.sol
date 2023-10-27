@@ -33,7 +33,8 @@ contract Auctions is IAuctions, LoanStatus {
                 bidder: msg.sender,
                 propertyValue: propertyValue,
                 downPayment: downPayment,
-                loanMonths: loanMonths
+                loanMonths: loanMonths,
+                accepted: false
             })
         );
     }
@@ -57,22 +58,30 @@ contract Auctions is IAuctions, LoanStatus {
         deleteBid(tokenBids, idx);
     }
     
-    // Todo: what if seller has no debt? might need to implement that option
+    // Todo: implement bid/neededLoan locks
     function acceptBid(uint tokenId, uint idx) external {
-        require(msg.sender == tangibleNft.ownerOf(tokenId), "only token owner can accept bid"); // Question: maybe PAC should be able too (for foreclosures?)
+        require(msg.sender == tangibleNft.ownerOf(tokenId), "only nft owner can accept bid"); // Question: maybe PAC should be able too (for foreclosures?)
+        require(!pendingBid[tokenId], "nft already has pending bid"); // Note: only allowing owner to have one accepted bid at a time should simplify things
 
-        // Get Bid
-        Bid memory _bid = _bids[tokenId][idx];
+        // Accept bid
+        _bids[tokenId][idx].accepted = true;
+    }
+
+    function confirmSale(uint tokenId, uint idx) external onlyRole(GSP) {
+        require(_bids[tokenId][idx].accepted, "bid not accepted by nft owner");
 
         // Debt Transfer NFT from seller to bidder
         IBorrowing(address(this)).debtTransfer({
             tokenId: tokenId,
             seller: tangibleNft.ownerOf(tokenId),
-            _bid: _bid
+            _bid: _bids[tokenId][idx]
         });
 
         // Delete accepted bid
         deleteBid(_bids[tokenId], idx);
+
+        // Change nft's pendingBid back to false
+        pendingBid[tokenId] = false;
     }
 
     function deleteBid(Bid[] storage tokenBids, uint idx) private {
