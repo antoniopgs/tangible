@@ -39,7 +39,7 @@ contract Shares is ERC1155URIStorage, Ownable {
 
         // Ensure receiver is resident and non-american
         require(registry.isResident(to), "receiver isn't resident");
-        require(registry.isNotAmerican(to), "receiver might be american");
+        // require(registry.isNotAmerican(to), "receiver might be american"); // Note: Ramona said american eResidents should be able to have mortgages
 
         // Update
         super._update(from, to, ids, values);
