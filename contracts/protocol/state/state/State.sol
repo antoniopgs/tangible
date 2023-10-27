@@ -22,6 +22,7 @@ abstract contract State is TargetManager {
     uint internal _totalPrincipal;
     uint internal _totalDeposits;
     UD60x18 internal _optimalUtilization;
+    uint locked;
 
     // Residents
     mapping(address => uint) internal _addressToResident; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
