@@ -52,11 +52,8 @@ abstract contract LoanStatus is State, Amortization {
 
 
 
-
-
-
     function _availableLiquidity() internal view returns(uint) {
-        return _totalDeposits - _totalPrincipal; // - protocolMoney?
+        return _totalDeposits - _totalPrincipal - locked; // Question: - protocolMoney?
     }
 
     // Todo: add otherDebt later?
