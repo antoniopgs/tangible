@@ -58,7 +58,7 @@ contract DeployScript is Script {
         deployImplementations();
 
         // Deploy Tokens
-        deployTokens();
+        deployTokens(proxy);
 
         // Set Function Selectors
         setSelectors();
@@ -79,15 +79,13 @@ contract DeployScript is Script {
         setter = new Setter();
     }
 
-    function deployTokens() private {
+    function deployTokens(address _proxy) private {
 
         // Deploy mockUSDC
         USDC = new MockUsdc();
 
         // Deploy tUSDC
-        address[] memory tUsdcDefaultOperators = new address[](1);
-        tUsdcDefaultOperators[0] = address(proxy);
-        tUSDC = new tUsdc(tUsdcDefaultOperators);
+        tUSDC = new tUsdc(_proxy);
 
         // Deploy nftContract
         nftContract = new TangibleNft(proxy);
@@ -153,18 +151,15 @@ contract DeployScript is Script {
         ITargetManager(proxy).setSelectorsTarget(residentSelectors, address(residents));
 
         // Set setterSelectors
-        bytes4[] memory setterSelectors = new bytes4[](11);
+        bytes4[] memory setterSelectors = new bytes4[](8);
         setterSelectors[0] = ISetter.updateOptimalUtilization.selector;
         setterSelectors[1] = ISetter.updateMaxLtv.selector;
         setterSelectors[2] = ISetter.updateMaxLoanMonths.selector;
         setterSelectors[3] = ISetter.updateRedemptionWindow.selector;
-        setterSelectors[4] = ISetter.updateM1.selector;
-        setterSelectors[5] = ISetter.updateB1.selector;
-        setterSelectors[6] = ISetter.updateM2.selector;
-        setterSelectors[7] = ISetter.updateBaseSaleFeeSpread.selector;
-        setterSelectors[8] = ISetter.updateInterestFeeSpread.selector;
-        setterSelectors[9] = ISetter.updateRedemptionFeeSpread.selector;
-        setterSelectors[10] = ISetter.updateDefaultFeeSpread.selector;
+        setterSelectors[4] = ISetter.updateBaseSaleFeeSpread.selector;
+        setterSelectors[5] = ISetter.updateInterestFeeSpread.selector;
+        setterSelectors[6] = ISetter.updateRedemptionFeeSpread.selector;
+        setterSelectors[7] = ISetter.updateDefaultFeeSpread.selector;
         ITargetManager(proxy).setSelectorsTarget(setterSelectors, address(setter));
     }
 }

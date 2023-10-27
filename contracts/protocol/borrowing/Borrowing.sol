@@ -15,7 +15,7 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, InterestConstant, O
     function startNewMortgage(Loan storage loan, uint principal, uint maxDurationMonths) private {
 
         // Get ratePerSecond
-        UD60x18 ratePerSecond = borrowerRatePerSecond(_utilization());
+        UD60x18 ratePerSecond = IInterest(address(this)).calculateNewRatePerSecond(_utilization());
 
         // Calculate maxDurationSeconds
         uint maxDurationSeconds = maxDurationMonths * monthSeconds;
@@ -92,7 +92,7 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, InterestConstant, O
 
         // Ensure default & redeemable
         require(_status(loan) == Status.Default, "no default");
-        require(_redeemable(tokenId), "redemption window is over");
+        require(_redeemable(loan), "redemption window is over");
 
         // Calculate interest
         uint interest = _accruedInterest(loan);
@@ -119,7 +119,7 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, InterestConstant, O
     function foreclose(uint tokenId) external onlyRole(PAC) {
 
         require(_status(_debts[tokenId].loan) == Status.Default, "no default");
-        require(!_redeemable(tokenId), "redemption window not over");
+        require(!_redeemable(_debts[tokenId].loan), "redemption window not over");
 
         // Get idx
         uint idx = highestActionableBid(tokenId);

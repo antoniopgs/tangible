@@ -1,24 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import "@openzeppelin/contracts/token/ERC777/ERC777.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract tUsdc is ERC777 {
+contract tUsdc is ERC20("Tangible Protocol Interest-Bearing USDC", "tUSDC") {
 
-    constructor(address[] memory defaultOperators_) ERC777("Tangible USDC", "tUSDC", defaultOperators_) {
+    address private immutable protocolProxy;
 
+    constructor(address _protocolProxy) {
+        protocolProxy = _protocolProxy;
     }
 
-    function defaultOperatorMint(address account, uint amount) external {
-        require(isDefaultOperator(msg.sender), "caller not default operator");
-        _mint(account, amount, "", "");
+    function mint(address account, uint256 value) external onlyProtocolProxy {
+        _mint(account, value);
     }
 
-    // Note: will return true for default operators, but false for non-default operators, so long as:
-    // - address(this) isn't msg.sender
-    // - address(this) doesn't revoke any defaultOperators
-    // - address(this) never calls authorizeOperator()
-    function isDefaultOperator(address operator) private view returns (bool) {
-        return isOperatorFor(operator, address(this));
+    function burn(address account, uint256 value) external onlyProtocolProxy {
+        _burn(account, value);
+    }
+
+    modifier onlyProtocolProxy {
+        require(msg.sender == protocolProxy, "caller not protocol");
+        _;
     }
 }

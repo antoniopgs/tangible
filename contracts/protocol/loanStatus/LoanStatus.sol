@@ -28,20 +28,20 @@ abstract contract LoanStatus is State, Amortization {
         }
     }
 
-    function defaultTime(Loan memory loan, uint month) private view returns(bool valid, uint _defaultTime) {
+    function validDefaultTime(Loan memory loan, uint month) private view returns(bool valid, uint _defaultTime) {
 
-        if (loanCurrentMonth(loan) > month & loan.unpaidPrincipal >= principalCapAt(loan, month)) {
+        if (loanCurrentMonth(loan) > month && loan.unpaidPrincipal >= principalCapAtMonth(loan, month)) { // Todo: rethink this
             valid = true;
             _defaultTime = loanMonthStartSecond(month);
         }
     }
 
     function timeSinceDefault(Loan memory loan) private view returns(uint) {
-        return block.timestamp - defaultTime(loan);
+        // return block.timestamp - defaultTime(loan);
     }
 
-    function _redeemable(uint tokenId) internal view returns(bool) {
-        return timeSinceDefault() <= _redemptionWindow;
+    function _redeemable(Loan memory loan) internal view returns(bool) {
+        return timeSinceDefault(loan) <= _redemptionWindow;
     }
 
 

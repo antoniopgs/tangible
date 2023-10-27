@@ -5,9 +5,10 @@ import "./IInfo.sol";
 import "../borrowingInfo/BorrowingInfo.sol";
 import "../lendingInfo/LendingInfo.sol";
 import "../loanStatus/LoanStatus.sol";
-import "../interest/InterestConstant.sol";
 
-contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus, InterestConstant {
+import "../interest/IInterest.sol";
+
+contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus {
 
     // Residents
     function isResident(address addr) external view returns (bool) {
@@ -50,7 +51,7 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus, InterestConstant
     }
 
     function borrowerApr() external view returns(UD60x18 apr) {
-        return calculateNewRatePerSecond() * yearSeconds;
+        apr = IInterest(address(this)).calculateNewRatePerSecond(_utilization()).mul(convert(yearSeconds));
     }
 
     // Auctions
@@ -116,20 +117,20 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus, InterestConstant
     }
 
     function redeemable(uint tokenId) external view returns(bool) {
-        return _redeemable(tokenId);
+        return _redeemable(_debts[tokenId].loan);
     }
 
     // Note: gas expensive (but in Info, so shouldn't matter)
     // Note: if return = 0, no default
     function defaultTime(Loan memory loan) external view returns (uint _defaultTime) {
 
-        uint completedMonths = loanCompletedMonths(loan);
+        uint completedMonths = (block.timestamp - loan.startTime) / monthSeconds; // Note: might be missing + 1
 
         // Loop backwards from loanCompletedMonths
         for (uint i = completedMonths; i > 0; i--) { // Todo: reduce gas costs
 
-            uint completedMonthPrincipalCap = _principalCap(loan, i);
-            uint prevCompletedMonthPrincipalCap = i == 1 ? loan.unpaidPrincipal : _principalCap(loan, i - 1);
+            uint completedMonthPrincipalCap = principalCapAtMonth(loan, i);
+            uint prevCompletedMonthPrincipalCap = i == 1 ? loan.unpaidPrincipal : principalCapAtMonth(loan, i - 1);
 
             if (loan.unpaidPrincipal > completedMonthPrincipalCap && loan.unpaidPrincipal <= prevCompletedMonthPrincipalCap) {
                 _defaultTime = loan.startTime + (i * monthSeconds);
@@ -149,15 +150,13 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus, InterestConstant
         Loan memory loan = _debts[tokenId].loan;
 
         // Loop loan months
-        for (uint i = 0; i <= _loanMaxMonths(loan); i++) {
+        for (uint i = 1; i <= _loanMaxMonths(loan); i++) {
             
-            // Add month to x
-            // x.push(i);
+            // Add i to x
             x[i] = i;
 
             // Add month's principal cap to y
-            // y.push(principalCap(loan, i));
-            y[i] = _principalCap(loan, i);
+            y[i] = principalCapAtMonth(loan, i);
         }
     }
 

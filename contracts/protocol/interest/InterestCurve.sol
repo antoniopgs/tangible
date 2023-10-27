@@ -3,23 +3,22 @@ pragma solidity ^0.8.15;
 
 import "./IInterest.sol";
 import "../state/state/State.sol";
+import { yearSeconds } from "../../types/TimeConstants.sol";
+import { powu } from "@prb/math/src/UD60x18.sol";
 
 contract InterestCurve is IInterest, State {
 
-    // Time constants
-    uint private constant yearSeconds = 365 days;
-
     // Deployer inputs needed in storage
-    uint private /* immutable */ baseYearlyRate;
-    uint private /* immutable */ optimalUtilization;
+    UD60x18 private immutable baseYearlyRate;
+    UD60x18 private immutable optimalUtilization;
 
     // Math constants
-    uint private /* immutable */ k1;
-    uint private /* immutable */ k2;
+    UD60x18 private immutable k1;
+    UD60x18 private immutable k2;
 
     constructor (
-        uint _baseYearlyRate,
-        uint _optimalUtilization
+        UD60x18 _baseYearlyRate,
+        UD60x18 _optimalUtilization
     ) {
 
         // Store needed inputs
@@ -27,15 +26,15 @@ contract InterestCurve is IInterest, State {
         optimalUtilization = _optimalUtilization;
 
         // Calculate math constants
-        k2 = (1 - optimalUtilization) ** 2;
-        k1 = baseYearlyRate - k2;
+        k2 = convert(uint(1)).sub(optimalUtilization).powu(2);
+        k1 = baseYearlyRate.sub(k2);
     }
 
-    function calculateNewRate(uint utilization) private view returns(uint) {
-        return k1 + k2 / (1 - utilization);
+    function calculateNewRate(UD60x18 utilization) private view returns(UD60x18) {
+        return k1.add(k2).div(convert(uint(1)).sub(utilization));
     }
 
-    function calculateNewRatePerSecond(uint utilization) external view returns(uint) {
-        return calculateNewRate(utilization) / yearSeconds;
+    function calculateNewRatePerSecond(UD60x18 utilization) external view returns(UD60x18) {
+        return calculateNewRate(utilization).div(convert(yearSeconds));
     }
 }

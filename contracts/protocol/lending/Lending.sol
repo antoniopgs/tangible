@@ -21,7 +21,7 @@ contract Lending is ILending, LendingInfo {
         _totalDeposits += usdc; // Note: must come after _usdcToTUsdc()
 
         // Mint tUsdc to depositor
-        tUSDC.defaultOperatorMint(msg.sender, _tUsdc);
+        tUSDC.mint(msg.sender, _tUsdc);
 
         emit Deposit(msg.sender, usdc, _tUsdc);
     }
@@ -32,7 +32,7 @@ contract Lending is ILending, LendingInfo {
         uint _tUsdc = _usdcToTUsdc(usdc);
 
         // Burn withdrawer tUsdc
-        tUSDC.operatorBurn(msg.sender, _tUsdc, "", "");
+        tUSDC.burn(msg.sender, _tUsdc);
 
         // Update pool
         _totalDeposits -= usdc; // Note: must come after _usdcToTUsdc()

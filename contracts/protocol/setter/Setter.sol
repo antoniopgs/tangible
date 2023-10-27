@@ -24,18 +24,6 @@ contract Setter is ISetter, State {
         _redemptionWindow = _days * 1 days;
     }
 
-    function updateM1(uint newM1) external onlyRole(TANGIBLE) {
-        m1 = convert(newM1).div(convert(100));
-    }
-
-    function updateB1(uint newB1) external onlyRole(TANGIBLE) {
-        b1 = convert(newB1).div(convert(100));
-    }
-
-    function updateM2(uint newM2) external onlyRole(TANGIBLE) {
-        m2 = convert(newM2).div(convert(100));
-    }
-
     function updateBaseSaleFeeSpread(uint newBaseSaleFeeSpreadPct) external onlyRole(TANGIBLE) {
         require(newBaseSaleFeeSpreadPct <= 100, "invalid pct");
         _baseSaleFeeSpread = convert(newBaseSaleFeeSpreadPct).div(convert(100));

@@ -44,7 +44,7 @@ interface IInfo {
     // Loan Terms
     function maxLtv() external view returns(UD60x18);
     function maxLoanMonths() external view returns(uint);
-    function borrowerApr(UD60x18 utilization) external view returns(UD60x18 apr);
+    function borrowerApr() external view returns(UD60x18 apr);
     function redemptionWindow() external view returns(uint);
 
     // Fees/Spreads

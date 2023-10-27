@@ -7,9 +7,6 @@ interface ISetter {
     function updateMaxLtv(uint newMaxLtvPct) external;
     function updateMaxLoanMonths(uint newMaxLoanMonths) external;
     function updateRedemptionWindow(uint _days) external;
-    function updateM1(uint newM1) external;
-    function updateB1(uint newB1) external;
-    function updateM2(uint newM2) external;
     function updateBaseSaleFeeSpread(uint newBaseSaleFeeSpreadPct) external;
     function updateInterestFeeSpread(uint newInterestFeeSpreadPct) external;
     function updateRedemptionFeeSpread(uint newRedemptionFeeSpreadPct) external;

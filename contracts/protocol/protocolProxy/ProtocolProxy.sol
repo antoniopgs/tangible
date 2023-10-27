@@ -10,4 +10,8 @@ contract ProtocolProxy is TargetManager, Proxy {
         target = logicTargets[msg.sig];
         require(target != address(0), "sig has no target");
     }
+
+    receive() external payable {
+        // Todo: implement logic
+    }
 }
