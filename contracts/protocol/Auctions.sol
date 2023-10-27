@@ -30,6 +30,7 @@ contract Auctions {
     function bid(uint tokenId, uint shares, uint propertyValue, uint downPayment, uint loanMonths) external {
         require(exists(tokenId), "tokenId doesn't exist");
         require(registry.isResident(msg.sender), "only residents can bid"); // Note: shares transfer to non-resident bidder would fail anyways (but I think its best to avoid invalid bids for sellers)
+        // require(registry.isNotAmerican(msg.sender), "only non-americans can bid"); // Note: Ramona said american eResidents can have mortgages
         require(downPayment <= propertyValue, "downPayment cannot exceed propertyValue");
         require(loanMonths > 0 && loanMonths <= _maxLoanMonths, "unallowed loanMonths");
 

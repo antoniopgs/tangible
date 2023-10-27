@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
-import "@openzeppelin/contracts//token/ERC1155/extensions/ERC1155URIStorage.sol";
+import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155URIStorage.sol";
 import "@openzeppelin/contracts//access/Ownable.sol";
 import "../protocol/Registry.sol";
 
@@ -39,7 +39,7 @@ contract Shares is ERC1155URIStorage, Ownable {
 
         // Ensure receiver is resident and non-american
         require(registry.isResident(to), "receiver isn't resident");
-        // require(registry.isNotAmerican(to), "receiver might be american"); // Note: Ramona said american eResidents should be able to have mortgages
+        // require(registry.isNotAmerican(to), "receiver might be american"); // Note: Ramona said american eResidents can have mortgages
 
         // Update
         super._update(from, to, ids, values);
