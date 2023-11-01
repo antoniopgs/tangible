@@ -5,10 +5,11 @@ import { UD60x18 } from "@prb/math/src/UD60x18.sol";
 
 interface ILending {
     
-    event Deposit(address depositor, uint amount, uint tUsdcMint);
-    event Withdraw(address withdrawer, uint amount, uint tUsdcBurn);
+    // Events
+    event Deposit(address depositor, uint assets, uint shares);
+    event Withdraw(address withdrawer, uint assets, uint shares);
 
     // Functions
-    function deposit(uint usdc) external;
-    function withdraw(uint usdc) external;
+    function deposit(uint assets) external;
+    function withdraw(uint assets) external;
 }

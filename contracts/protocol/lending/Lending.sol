@@ -2,9 +2,10 @@
 pragma solidity ^0.8.15;
 
 import "./ILending.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "../state/state/State.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract Lending is ILending {
+contract Lending is ILending, State {
 
     // Libs
     using SafeERC20 for IERC20;
@@ -30,7 +31,7 @@ contract Lending is ILending {
     }
 
     function withdraw(uint assets) external {
-        require(assets <= _availableLiquidity(), "not enough available liquidity");
+        require(assets <= availableLiquidity(), "not enough available liquidity");
 
         // Calulate withdrawer shares
         uint shares = assetsToShares(assets);
@@ -64,7 +65,7 @@ contract Lending is ILending {
         }
     }
 
-    function availableLiquidity() internal view returns(uint) {
+    function availableLiquidity() private view returns(uint) {
         return _totalDeposits - _totalPrincipal; // Question: - protocolMoney?
     }
 }
