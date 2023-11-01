@@ -2,45 +2,69 @@
 pragma solidity ^0.8.15;
 
 import "./ILending.sol";
-import "../lendingInfo/LendingInfo.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-contract Lending is ILending, LendingInfo {
+contract Lending is ILending {
 
     // Libs
     using SafeERC20 for IERC20;
 
-    function deposit(uint usdc) external {
+    function deposit(uint assets) external {
         
-        // Pull usdc from depositor
-        USDC.safeTransferFrom(msg.sender, address(this), usdc); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
+        // Pull assets from depositor
+        ASSETS.safeTransferFrom(msg.sender, address(this), assets);
 
-        // Calulate depositor tUsdc
-        uint _tUsdc = _usdcToTUsdc(usdc);
+        // Calulate depositor shares
+        uint shares = assetsToShares(assets);
 
         // Update pool
-        _totalDeposits += usdc; // Note: must come after _usdcToTUsdc()
+        // Note: must come after assetsToShares()
+        // Note: use _totalDeposits var instead of balanceOf(address(this)) to avoid donation attack
+        _totalDeposits += assets;
 
-        // Mint tUsdc to depositor
-        tUSDC.mint(msg.sender, _tUsdc);
+        // Mint shares to depositor
+        SHARES.mint(msg.sender, shares);
 
-        emit Deposit(msg.sender, usdc, _tUsdc);
+        // Emit Deposit event
+        emit Deposit(msg.sender, assets, shares);
     }
 
-    function withdraw(uint usdc) external {
-        require(usdc <= _availableLiquidity(), "not enough available liquidity");
+    function withdraw(uint assets) external {
+        require(assets <= _availableLiquidity(), "not enough available liquidity");
 
-        // Calulate withdrawer tUsdc
-        uint _tUsdc = _usdcToTUsdc(usdc);
+        // Calulate withdrawer shares
+        uint shares = assetsToShares(assets);
 
-        // Burn withdrawer tUsdc
-        tUSDC.burn(msg.sender, _tUsdc);
+        // Burn withdrawer shares
+        SHARES.burn(msg.sender, shares);
 
         // Update pool
-        _totalDeposits -= usdc; // Note: must come after _usdcToTUsdc()
+        // Note: must come after assetsToShares()
+        // Note: use _totalDeposits var instead of balanceOf(address(this)) to avoid donation attack
+        _totalDeposits -= assets;
 
-        // Send usdc to withdrawer
-        USDC.safeTransfer(msg.sender, usdc);
+        // Send assets to withdrawer
+        ASSETS.safeTransfer(msg.sender, assets);
 
-        emit Withdraw(msg.sender, usdc, _tUsdc);
+        // Emit Withdrawal event
+        emit Withdraw(msg.sender, assets, shares);
+    }
+
+    function assetsToShares(uint assets) private view returns(uint shares) {
+        
+        // Get totalShares
+        uint totalShares = SHARES.totalSupply();
+
+        // If totalShares or totalDeposits = 0, 1:1
+        if (totalShares == 0 || _totalDeposits == 0) {
+            shares = assets * 1e12; // Note: shares has 12 more decimals than assets
+
+        } else {
+            shares = assets * totalShares / _totalDeposits; // Note: multiplying by totalShares removes need to add 12 decimals
+        }
+    }
+
+    function availableLiquidity() internal view returns(uint) {
+        return _totalDeposits - _totalPrincipal; // Question: - protocolMoney?
     }
 }
