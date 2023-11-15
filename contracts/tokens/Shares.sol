@@ -9,6 +9,19 @@ import "../protocol/Registry.sol";
 // - debt transfers?
 contract Shares is ERC1155URIStorage, Ownable {
 
+    enum OwnershipType {
+        EconomicBenefits, //
+        Ownership, // Actual Onwrship
+        Occupation, // Permission to live in the house (time slots with nft supply of 365 days/12 months, etc.)
+        Rent, // Permission to rent out the house to someone
+        Debt // Mortgage Debt
+    }
+
+    struct Debt {
+        uint owed;
+        address owedTo;
+    }
+
     // Links
     Registry registry;
 
@@ -17,7 +30,8 @@ contract Shares is ERC1155URIStorage, Ownable {
     uint public tokenCount;
 
     // Mappings
-    mapping(address user => mapping(uint tokenId => uint unpaidPrincipal)) debts;
+    mapping(uint propertyId => mapping(OwnershipType => uint tokenId)) propertyTypeTokenIds;
+    mapping(address user => mapping(uint tokenId => Debt)) debts;
 
     constructor(address issuer) ERC1155("") Ownable(issuer) {
 
@@ -43,5 +57,20 @@ contract Shares is ERC1155URIStorage, Ownable {
 
         // Update
         super._update(from, to, ids, values);
+    }
+
+    function transferFullOwnership() external {
+        // transfers everything
+    }
+
+    function transferFullUse() external {
+        // transfers:
+        // - economic benefits
+        // - occupation
+        // - economic benefits
+    }
+
+    function confirm2stepTx() external {
+
     }
 }
