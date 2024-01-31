@@ -6,9 +6,17 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/proxy/Proxy.sol";
 
 contract ProtocolProxy is State, ERC721Holder, Proxy {
+
+    constructor() Ownable(msg.sender) {
+
+    }
     
     function _implementation() internal view override returns (address target) {
         target = logicTargets[msg.sig];
         require(target != address(0), "sig has no target");
+    }
+
+    receive() external payable {
+
     }
 }
