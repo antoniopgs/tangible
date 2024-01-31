@@ -112,7 +112,7 @@ contract DeployScript is Script {
         ITargetManager(proxy).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set infoSelectors
-        bytes4[] memory infoSelectors = new bytes4[](19);
+        bytes4[] memory infoSelectors = new bytes4[](20);
         infoSelectors[0] = IInfo.isResident.selector;
         infoSelectors[1] = IInfo.addressToResident.selector;
         infoSelectors[2] = IInfo.residentToAddress.selector;
@@ -132,6 +132,7 @@ contract DeployScript is Script {
         infoSelectors[16] = IInfo.redeemable.selector;
         infoSelectors[17] = IInfo.loanChart.selector;
         infoSelectors[18] = IInfo.maxLtv.selector;
+        infoSelectors[19] = IInfo.isNotAmerican.selector;
         ITargetManager(proxy).setSelectorsTarget(infoSelectors, address(info));
 
         // Set initializerSelectors
