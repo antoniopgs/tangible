@@ -4,7 +4,6 @@ pragma solidity ^0.8.15;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract TangibleNft is ERC721URIStorage, ERC721Enumerable, Ownable {
 
@@ -15,14 +14,11 @@ contract TangibleNft is ERC721URIStorage, ERC721Enumerable, Ownable {
     mapping(uint => address) public eResidentToAddress;
 
     // Other Vars
-    Counters.Counter private _tokenIds;
+    uint private tokensCount;
     address protocol;
     address immutable PAC; // Note: Multi-Sig
 
-    // Libs
-    using Counters for Counters.Counter;
-
-    constructor(address _protocol, address _PAC) ERC721("Prospera Real Estate Token", "PROSPERA") {
+    constructor(address _protocol, address _PAC) ERC721("Prospera Real Estate Token", "PROSPERA") Ownable(msg.sender) {
         protocol = _protocol;
         PAC = _PAC;
     }
@@ -40,10 +36,9 @@ contract TangibleNft is ERC721URIStorage, ERC721Enumerable, Ownable {
     }
 
     function mint(address to, string memory _tokenURI) external onlyOwner returns (uint newTokenId) {
-        newTokenId = _tokenIds.current();
-        _safeMint(to, newTokenId);
+        _safeMint(to, tokensCount);
         _setTokenURI(newTokenId, _tokenURI);
-        _tokenIds.increment();
+        tokensCount ++;
     }
 
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view override returns (bool) {
