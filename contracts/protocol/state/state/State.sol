@@ -1,14 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../targetManager/TargetManager.sol";
+import "../../../../interfaces/state/IState.sol";
+import "./TargetManager.sol";
 import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
-import { Debt, Loan, Bid } from "../../../types/Types.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../../tokens/tUsdc.sol";
 import "../../../tokens/tangibleNft/TangibleNft.sol";
 
-abstract contract State is TargetManager {
+abstract contract State is IState, TargetManager {
+
+    // Time Constants
+    uint constant SECONDS_IN_YEAR = 365 days;
+    uint constant MONTHS_IN_YEAR = 12;
+    uint constant SECONDS_IN_MONTH = SECONDS_IN_YEAR / MONTHS_IN_YEAR; // Note: SECONDS_IN_YEAR % MONTHS_IN_YEAR = 0 (no precision loss)
 
     uint public protocolMoney; // Question: do I actually need this?
     bool public initialized;

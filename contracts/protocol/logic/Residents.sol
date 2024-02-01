@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./IResidents.sol";
+import "../../../interfaces/logic/IResidents.sol";
 import "../state/state/State.sol";
 
 contract Residents is IResidents, State {

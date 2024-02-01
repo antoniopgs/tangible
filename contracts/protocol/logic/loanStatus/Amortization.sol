@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../../types/TimeConstants.sol";
-import { Loan, Status } from "../../types/Types.sol";
-import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
+// import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
+import "../../state/state/State.sol";
 
-abstract contract Amortization {
+abstract contract Amortization is State {
 
     UD60x18 immutable one = convert(uint(1));
 
@@ -14,7 +13,7 @@ abstract contract Amortization {
     }
 
     function loanMonthStartSecond(uint loanMonth) internal pure returns(uint) {
-        return (loanMonth - 1) * monthSeconds;
+        return (loanMonth - 1) * SECONDS_IN_MONTH;
     }
 
     function principalCapAtMonth(Loan memory loan, uint loanMonth) internal view returns(uint) {
@@ -23,7 +22,7 @@ abstract contract Amortization {
 
     function loanCurrentMonth(Loan memory loan) public view returns(uint) {
         uint activeTime = block.timestamp - loan.startTime;
-        return (activeTime / monthSeconds) + 1; // Note: activeTime / monthSeconds always rounds down
+        return (activeTime / SECONDS_IN_MONTH) + 1; // Note: activeTime / SECONDS_IN_MONTH always rounds down
     }
 
     function currentPrincipalCap(Loan memory loan) internal view returns(uint) {

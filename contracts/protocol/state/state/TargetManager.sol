@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./ITargetManager.sol";
-import "../roles/Roles.sol";
+import "../../../../interfaces/state/ITargetManager.sol";
+import "../Roles.sol";
 
 abstract contract TargetManager is ITargetManager, Roles {
 

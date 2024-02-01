@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "../protocol/info/IInfo.sol";
+import "../../interfaces/logic/IInfo.sol";
 
 contract tUsdc is ERC20("Tangible Protocol Interest-Bearing USDC", "tUSDC") {
 

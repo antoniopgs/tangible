@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./IInfo.sol";
-import "../borrowingInfo/BorrowingInfo.sol";
-import "../lendingInfo/LendingInfo.sol";
-import "../loanStatus/LoanStatus.sol";
+import "../../../interfaces/logic/IInfo.sol";
+import "./loanStatus/LoanStatus.sol";
+import "../../../interfaces/logic/IInterest.sol";
 
-import "../interest/IInterest.sol";
-
-contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus {
+contract Info is IInfo, LoanStatus {
 
     // Residents
     function isResident(address addr) external view returns (bool) {
@@ -28,14 +25,6 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus {
         return _availableLiquidity();
     }
 
-    function utilization() external view returns(UD60x18) {
-        return _utilization();
-    }
-
-    function usdcToTUsdc(uint usdcAmount) external view returns(uint tUsdcAmount) {
-        return _usdcToTUsdc(usdcAmount);
-    }
-
     function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount) {
         
         // Get tUsdcSupply
@@ -48,10 +37,6 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus {
         } else {
             usdcAmount = tUsdcAmount * _totalDeposits / tUsdcSupply; // Note: dividing by tUsdcSupply removes need to remove 12 decimals
         }
-    }
-
-    function borrowerApr() external view returns(UD60x18 apr) {
-        apr = IInterest(address(this)).calculateNewRatePerSecond(_utilization()).mul(convert(yearSeconds));
     }
 
     // Auctions
@@ -124,7 +109,7 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus {
     // Note: if return = 0, no default
     function defaultTime(Loan memory loan) external view returns (uint _defaultTime) {
 
-        uint completedMonths = (block.timestamp - loan.startTime) / monthSeconds; // Note: might be missing + 1
+        uint completedMonths = (block.timestamp - loan.startTime) / SECONDS_IN_MONTH; // Note: might be missing + 1
 
         // Loop backwards from loanCompletedMonths
         for (uint i = completedMonths; i > 0; i--) { // Todo: reduce gas costs
@@ -133,7 +118,7 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus {
             uint prevCompletedMonthPrincipalCap = i == 1 ? loan.unpaidPrincipal : principalCapAtMonth(loan, i - 1);
 
             if (loan.unpaidPrincipal > completedMonthPrincipalCap && loan.unpaidPrincipal <= prevCompletedMonthPrincipalCap) {
-                _defaultTime = loan.startTime + (i * monthSeconds);
+                _defaultTime = loan.startTime + (i * SECONDS_IN_MONTH);
             }
         }
 
@@ -141,7 +126,7 @@ contract Info is IInfo, BorrowingInfo, LendingInfo, LoanStatus {
     }
 
     function _loanMaxMonths(Loan memory loan) internal pure returns (uint) {
-        return yearMonths * loan.maxDurationSeconds / yearSeconds;
+        return MONTHS_IN_YEAR * loan.maxDurationSeconds / SECONDS_IN_YEAR;
     }
 
     function loanChart(uint tokenId) external view returns(uint[] memory x, uint[] memory y) {

@@ -5,10 +5,10 @@ pragma solidity ^0.8.15;
 import "./TestUtils.sol";
 
 // Protocol Contracts
-import "../contracts/protocol/borrowing/IBorrowing.sol";
-import "../contracts/protocol/interest/InterestConstant.sol";
-import "../contracts/protocol/lending/ILending.sol";
-import { Status } from "../contracts/types/Types.sol";
+import "../interfaces/logic/IBorrowing.sol";
+import "../interfaces/logic/ILending.sol";
+import "../contracts/protocol/logic/interest/InterestConstant.sol";
+// import { Status } from "../contracts/protocol/state/state/State.sol";
 
 // Other
 // import { convert } from "@prb/math/src/UD60x18.sol";
@@ -194,7 +194,7 @@ contract GeneralFuzz is TestUtils {
         uint availableLiquidity = IInfo(proxy).availableLiquidity();
         uint usdc = bound(randomness, 0, availableLiquidity);
         console.log("usdc:", usdc);
-        uint tUsdcBurn = IInfo(proxy).usdcToTUsdc(usdc);
+        uint tUsdcBurn = ILending(proxy).usdcToTUsdc(usdc);
 
         // Deal tUsdcBurn to withdrawer
         deal(address(tUSDC), withdrawer, tUsdcBurn);

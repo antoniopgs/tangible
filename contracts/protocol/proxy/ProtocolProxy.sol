@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "@openzeppelin/contracts/proxy/Proxy.sol";
-import "../state/targetManager/TargetManager.sol";
+import "../state/state/TargetManager.sol";
 
 contract ProtocolProxy is TargetManager, Proxy {
 

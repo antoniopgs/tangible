@@ -11,4 +11,7 @@ interface ILending {
     // Functions
     function deposit(uint usdc) external;
     function withdraw(uint usdc) external;
+
+    // Views
+    function usdcToTUsdc(uint usdcAmount) external view returns(uint tUsdcAmount);
 }

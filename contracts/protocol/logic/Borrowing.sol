@@ -1,24 +1,21 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./IBorrowing.sol";
-import "../loanStatus/LoanStatus.sol";
-import "../borrowingInfo/BorrowingInfo.sol";
-import "../interest/InterestConstant.sol";
-import "../onlySelf/OnlySelf.sol";
-import { Status } from "../../types/Types.sol";
+import "../../../interfaces/logic/IBorrowing.sol";
+import "./loanStatus/LoanStatus.sol";
+import "./interest/InterestConstant.sol";
 
-contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, InterestConstant, OnlySelf {
+contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
 
     using SafeERC20 for IERC20;
 
     function startNewMortgage(Loan storage loan, uint principal, uint maxDurationMonths) private {
 
         // Get ratePerSecond
-        UD60x18 ratePerSecond = IInterest(address(this)).calculateNewRatePerSecond(_utilization());
+        UD60x18 ratePerSecond = IInterest(address(this)).calculateNewRatePerSecond(utilization());
 
         // Calculate maxDurationSeconds
-        uint maxDurationSeconds = maxDurationMonths * monthSeconds;
+        uint maxDurationSeconds = maxDurationMonths * SECONDS_IN_MONTH;
 
         // Calculate paymentPerSecond
         UD60x18 paymentPerSecond = calculatePaymentPerSecond(principal, ratePerSecond, maxDurationSeconds);
@@ -201,23 +198,40 @@ contract Borrowing is IBorrowing, LoanStatus, BorrowingInfo, InterestConstant, O
 
         // Calculate x
         // - (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
-        // - (1 + ratePerSecond) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18
-        // - maxDurationMonths * monthSeconds <= log_(1 + ratePerSecond)_MAX_UD60x18
-        // - maxDurationMonths * monthSeconds <= log(MAX_UD60x18) / log(1 + ratePerSecond)
-        // - maxDurationMonths <= (log(MAX_UD60x18) / log(1 + ratePerSecond)) / monthSeconds // Note: ratePerSecond depends on util (so solve for maxDurationMonths)
-        // - maxDurationMonths <= log(MAX_UD60x18) / (monthSeconds * log(1 + ratePerSecond))
+        // - (1 + ratePerSecond) ** (maxDurationMonths * SECONDS_IN_MONTH) <= MAX_UD60x18
+        // - maxDurationMonths * SECONDS_IN_MONTH <= log_(1 + ratePerSecond)_MAX_UD60x18
+        // - maxDurationMonths * SECONDS_IN_MONTH <= log(MAX_UD60x18) / log(1 + ratePerSecond)
+        // - maxDurationMonths <= (log(MAX_UD60x18) / log(1 + ratePerSecond)) / SECONDS_IN_MONTH // Note: ratePerSecond depends on util (so solve for maxDurationMonths)
+        // - maxDurationMonths <= log(MAX_UD60x18) / (SECONDS_IN_MONTH * log(1 + ratePerSecond))
         UD60x18 x = convert(uint(1)).add(ratePerSecond).powu(maxDurationSeconds);
 
         // principal * ratePerSecond * x <= MAX_UD60x18
         // principal * ratePerSecond * (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
-        // principal * ratePerSecond * (1 + ratePerSecond) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18
-        // (1 + ratePerSecond) ** (maxDurationMonths * monthSeconds) <= MAX_UD60x18 / (principal * ratePerSecond)
-        // maxDurationMonths * monthSeconds <= log_(1 + ratePerSecond)_(MAX_UD60x18 / (principal * ratePerSecond))
-        // maxDurationMonths * monthSeconds <= log(MAX_UD60x18 / (principal * ratePerSecond)) / log(1 + ratePerSecond)
-        // maxDurationMonths <= (log(MAX_UD60x18 / (principal * ratePerSecond)) / log(1 + ratePerSecond)) / monthSeconds
-        // maxDurationMonths <= log(MAX_UD60x18 / (principal * ratePerSecond)) / (monthSeconds * log(1 + ratePerSecond))
+        // principal * ratePerSecond * (1 + ratePerSecond) ** (maxDurationMonths * SECONDS_IN_MONTH) <= MAX_UD60x18
+        // (1 + ratePerSecond) ** (maxDurationMonths * SECONDS_IN_MONTH) <= MAX_UD60x18 / (principal * ratePerSecond)
+        // maxDurationMonths * SECONDS_IN_MONTH <= log_(1 + ratePerSecond)_(MAX_UD60x18 / (principal * ratePerSecond))
+        // maxDurationMonths * SECONDS_IN_MONTH <= log(MAX_UD60x18 / (principal * ratePerSecond)) / log(1 + ratePerSecond)
+        // maxDurationMonths <= (log(MAX_UD60x18 / (principal * ratePerSecond)) / log(1 + ratePerSecond)) / SECONDS_IN_MONTH
+        // maxDurationMonths <= log(MAX_UD60x18 / (principal * ratePerSecond)) / (SECONDS_IN_MONTH * log(1 + ratePerSecond))
         
         // Calculate paymentPerSecond
         paymentPerSecond = convert(principal).mul(ratePerSecond).mul(x).div(x.sub(convert(uint(1))));
+    }
+
+    function utilization() public view returns(UD60x18) {
+        if (_totalDeposits == 0) {
+            assert(_totalPrincipal == 0);
+            return convert(uint(0));
+        }
+        return convert(_totalPrincipal).div(convert(_totalDeposits));
+    }
+
+    function borrowerApr() external view returns(UD60x18 apr) {
+        apr = IInterest(address(this)).calculateNewRatePerSecond(utilization()).mul(convert(SECONDS_IN_YEAR));
+    }
+
+    modifier onlySelf {
+        require(msg.sender == address(this), "onlySelf: caller not address(this)");
+        _;
     }
 }

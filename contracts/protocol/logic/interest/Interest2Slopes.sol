@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.15;
 
-import "./IInterest.sol";
-import "../state/state/State.sol";
-import { yearSeconds } from "../../types/TimeConstants.sol";
+import "../../../../interfaces/logic/IInterest.sol";
+import "../../state/state/State.sol";
 
 contract Interest2Slopes is IInterest, State {
 
@@ -53,6 +52,6 @@ contract Interest2Slopes is IInterest, State {
     }
 
     function calculateNewRatePerSecond(UD60x18 utilization) external view returns(UD60x18) {
-        return calculateNewRate(utilization).div(convert(yearSeconds));
+        return calculateNewRate(utilization).div(convert(SECONDS_IN_YEAR));
     }
 }

@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./IInterest.sol";
-import "../state/state/State.sol";
-import { yearSeconds } from "../../types/TimeConstants.sol";
+import "../../../../interfaces/logic/IInterest.sol";
+import "../../state/state/State.sol";
 import { powu } from "@prb/math/src/UD60x18.sol";
 
 contract InterestCurve is IInterest, State {
@@ -35,6 +34,6 @@ contract InterestCurve is IInterest, State {
     }
 
     function calculateNewRatePerSecond(UD60x18 utilization) external view returns(UD60x18) {
-        return calculateNewRate(utilization).div(convert(yearSeconds));
+        return calculateNewRate(utilization).div(convert(SECONDS_IN_YEAR));
     }
 }

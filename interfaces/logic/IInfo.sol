@@ -2,9 +2,9 @@
 pragma solidity ^0.8.15;
 
 import { UD60x18 } from "@prb/math/src/UD60x18.sol";
-import { Status, Bid } from "../../types/Types.sol";
+import "../state/IState.sol"; // Todo: move types? or maybe move interfaces inside of contracts?
 
-interface IInfo {
+interface IInfo is IState { // Todo: fix later
 
     struct BidInfo {
         uint tokenId;
@@ -16,9 +16,7 @@ interface IInfo {
     function totalPrincipal() external view returns(uint);
     function totalDeposits() external view returns(uint);
     function availableLiquidity() external view returns(uint);
-    function utilization() external view returns(UD60x18);
     function optimalUtilization() external view returns(UD60x18);
-    function usdcToTUsdc(uint usdcAmount) external view returns(uint tUsdcAmount);
     function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount);
 
     // Residents
@@ -46,7 +44,6 @@ interface IInfo {
     // Loan Terms
     function maxLtv() external view returns(UD60x18);
     function maxLoanMonths() external view returns(uint);
-    function borrowerApr() external view returns(UD60x18 apr);
     function redemptionWindow() external view returns(uint);
 
     // Fees/Spreads

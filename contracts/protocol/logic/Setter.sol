@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./ISetter.sol";
+import "../../../interfaces/logic/ISetter.sol";
 import "../state/state/State.sol";
 
 contract Setter is ISetter, State {

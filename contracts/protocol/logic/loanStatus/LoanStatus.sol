@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../state/state/State.sol";
 // import { Loan } from "../../types/Types.sol";
 // import { SD59x18, convert } from "@prb/math/src/SD59x18.sol";
 // import { intoUD60x18 } from "@prb/math/src/sd59x18/Casting.sol";
 // import { intoSD59x18 } from "@prb/math/src/ud60x18/Casting.sol";
 import "./Amortization.sol";
 
-abstract contract LoanStatus is State, Amortization {
+abstract contract LoanStatus is Amortization {
 
     // Note: return defaultTime here too?
     function defaulted(Loan memory loan) private view returns(bool _defaulted) {

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "./IAuctions.sol";
-import "../loanStatus/LoanStatus.sol";
-import "../borrowing/IBorrowing.sol";
+import "../../../interfaces/logic/IAuctions.sol";
+import "./loanStatus/LoanStatus.sol";
+import "../../../interfaces/logic/IBorrowing.sol";
 
 contract Auctions is IAuctions, LoanStatus {
 

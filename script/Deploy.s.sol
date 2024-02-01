@@ -1,33 +1,33 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-// ProtocolProxy
-import "../contracts/protocol/protocolProxy/ProtocolProxy.sol";
+// Proxy
+import "../contracts/protocol/proxy/ProtocolProxy.sol";
 
-// Non-Abstract Implementations
-import "../contracts/protocol/auctions/Auctions.sol";
-import "../contracts/protocol/borrowing/Borrowing.sol";
-import "../contracts/protocol/info/Info.sol";
-import "../contracts/protocol/initializer/Initializer.sol";
-import "../contracts/protocol/lending/Lending.sol";
-import "../contracts/protocol/residents/Residents.sol";
-import "../contracts/protocol/setter/Setter.sol";
+// Logic
+import "../contracts/protocol/logic/Auctions.sol";
+import "../contracts/protocol/logic/Borrowing.sol";
+import "../contracts/protocol/logic/Info.sol";
+import "../contracts/protocol/logic/Initializer.sol";
+import "../contracts/protocol/logic/Lending.sol";
+import "../contracts/protocol/logic/Residents.sol";
+import "../contracts/protocol/logic/Setter.sol";
 
 // Tokens
 import "../contracts/mock/MockUsdc.sol";
 import "../contracts/tokens/tUsdc.sol";
 import "../contracts/tokens/tangibleNft/TangibleNft.sol";
 
-// Other Imports
+// Other
 import "forge-std/Script.sol";
-import "../contracts/protocol/state/targetManager/ITargetManager.sol";
+import "../interfaces/state/ITargetManager.sol";
 
 contract DeployScript is Script {
 
-    // ProtocolProxy
+    // Proxy
     address payable proxy;
 
-    // Non-Abstract Implementations
+    // Logic
     Auctions auctions;
     Borrowing borrowing;
     Info info;
@@ -48,8 +48,8 @@ contract DeployScript is Script {
 
     constructor() {
 
-        // Fork (needed for tUSDC's ERC777 registration in the ERC1820 registry)
-        vm.createSelectFork("https://mainnet.infura.io/v3/9a2aca5b5e794f5c929bca9e494fae24");
+        // Fork (needed for tUSDC's ERC777 registration in the ERC1820 registry) // Note: no longer using ERC777 (replaced it with ERC20)
+        // vm.createSelectFork("https://mainnet.infura.io/v3/9a2aca5b5e794f5c929bca9e494fae24"); // Note: Commented for speed
 
         // Deploy protocolProxy
         proxy = payable(new ProtocolProxy());
@@ -101,7 +101,7 @@ contract DeployScript is Script {
         ITargetManager(proxy).setSelectorsTarget(auctionSelectors, address(auctions));
 
         // Set borrowingSelectors
-        bytes4[] memory borrowingSelectors = new bytes4[](6);
+        bytes4[] memory borrowingSelectors = new bytes4[](8);
         borrowingSelectors[0] = IBorrowing.payMortgage.selector;
         borrowingSelectors[1] = IBorrowing.redeemMortgage.selector;
         borrowingSelectors[2] = IBorrowing.debtTransfer.selector;
@@ -109,30 +109,29 @@ contract DeployScript is Script {
         borrowingSelectors[3] = IBorrowing.foreclose.selector;
         borrowingSelectors[4] = IBorrowing.increaseOtherDebt.selector;
         borrowingSelectors[5] = IBorrowing.decreaseOtherDebt.selector;
+        borrowingSelectors[6] = IBorrowing.borrowerApr.selector;
+        borrowingSelectors[7] = IBorrowing.utilization.selector;
         ITargetManager(proxy).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set infoSelectors
-        bytes4[] memory infoSelectors = new bytes4[](20);
+        bytes4[] memory infoSelectors = new bytes4[](17);
         infoSelectors[0] = IInfo.isResident.selector;
         infoSelectors[1] = IInfo.addressToResident.selector;
         infoSelectors[2] = IInfo.residentToAddress.selector;
         infoSelectors[3] = IInfo.availableLiquidity.selector;
-        infoSelectors[4] = IInfo.utilization.selector;
-        infoSelectors[5] = IInfo.usdcToTUsdc.selector;
-        infoSelectors[6] = IInfo.tUsdcToUsdc.selector;
-        infoSelectors[7] = IInfo.borrowerApr.selector;
-        infoSelectors[8] = IInfo.bids.selector;
-        infoSelectors[9] = IInfo.bidsLength.selector;
-        infoSelectors[10] = IInfo.bidActionable.selector;
-        infoSelectors[11] = IInfo.userBids.selector;
-        infoSelectors[12] = IInfo.minSalePrice.selector;
-        infoSelectors[13] = IInfo.unpaidPrincipal.selector;
-        infoSelectors[14] = IInfo.accruedInterest.selector;
-        infoSelectors[15] = IInfo.status.selector;
-        infoSelectors[16] = IInfo.redeemable.selector;
-        infoSelectors[17] = IInfo.loanChart.selector;
-        infoSelectors[18] = IInfo.maxLtv.selector;
-        infoSelectors[19] = IInfo.isNotAmerican.selector;
+        infoSelectors[4] = IInfo.tUsdcToUsdc.selector;
+        infoSelectors[5] = IInfo.bids.selector;
+        infoSelectors[6] = IInfo.bidsLength.selector;
+        infoSelectors[7] = IInfo.bidActionable.selector;
+        infoSelectors[8] = IInfo.userBids.selector;
+        infoSelectors[9] = IInfo.minSalePrice.selector;
+        infoSelectors[10] = IInfo.unpaidPrincipal.selector;
+        infoSelectors[11] = IInfo.accruedInterest.selector;
+        infoSelectors[12] = IInfo.status.selector;
+        infoSelectors[13] = IInfo.redeemable.selector;
+        infoSelectors[14] = IInfo.loanChart.selector;
+        infoSelectors[15] = IInfo.maxLtv.selector;
+        infoSelectors[16] = IInfo.isNotAmerican.selector;
         ITargetManager(proxy).setSelectorsTarget(infoSelectors, address(info));
 
         // Set initializerSelectors
@@ -141,9 +140,10 @@ contract DeployScript is Script {
         ITargetManager(proxy).setSelectorsTarget(initializerSelectors, address(initializer));
 
         // Set lendingSelectors
-        bytes4[] memory lendingSelectors = new bytes4[](2);
+        bytes4[] memory lendingSelectors = new bytes4[](3);
         lendingSelectors[0] = ILending.deposit.selector;
         lendingSelectors[1] = ILending.withdraw.selector;
+        lendingSelectors[2] = ILending.usdcToTUsdc.selector;
         ITargetManager(proxy).setSelectorsTarget(lendingSelectors, address(lending));
 
         // Set residentSelectors
