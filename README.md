@@ -25,11 +25,13 @@ Tangible is an RWA DeFi Mortgages protocol. It allows anyone
         - Residents.sol (Tracks who are the legitimate residents of the jurisdiction, which are the only eligible receivers of the NFT)
         - Setter.sol (originally made to contain all external setters, and reduce size of other implementations. might get rid of it. under review)
         - interest/
-            - Interest2Slopes.sol ()
-            - Interest2Constant.sol
-            - InterestCurve.sol
+            - InterestConstant.sol: Implementation of a Fixed/Constant Interest Rate Model
+            - Interest2Slopes.sol: Implementation of a AAVE style 2 slope Interest Rate Model: https://www.desmos.com/calculator/cd10wksudo
+            - InterestCurve.sol: Implementation of a smooth curve Interest Rate Model: https://www.desmos.com/calculator/nimb8tbzgb
         - loanStatus/
-            - Amortization.sol (holds implementation of a flexible & gas-efficient amortization schedule. explained here: )
+            - Amortization.sol (holds implementation of a flexible & gas-efficient amortization schedule)
+                - Mathematics Explanation: 
+                - Desmos Implementation: https://www.desmos.com/calculator/cd10wksudo
             - LoanStatus.sol (inherits from Amortization.sol, to differentiate Active Mortgages from Defaults, and so on)
 - tokens/
     - TangibleNft.sol
