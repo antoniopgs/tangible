@@ -35,8 +35,6 @@ I built an RWA DeFi Mortgages Protocol from the ground up, to:
             - InterestCurve.sol: Implementation of a smooth curve Interest Rate Model: https://www.desmos.com/calculator/nimb8tbzgb
         - **loanStatus**
             - Amortization.sol (holds implementation of a flexible & gas-efficient amortization schedule)
-                - Mathematics Explanation: 
-                - Desmos Implementation: https://www.desmos.com/calculator/cd10wksudo
             - LoanStatus.sol (inherits from Amortization.sol, to differentiate Active Mortgages from Defaults, and so on)
 - **tokens**
     - TangibleNft.sol
@@ -46,6 +44,8 @@ I built an RWA DeFi Mortgages Protocol from the ground up, to:
 - MVP: https://tangible-frontend.vercel.app/
 - MVP Demo: https://drive.google.com/file/d/1wTIdks_wdpMdmPu6DnEVThOgOw6iFtRA/view?usp=sharing
 - On-Chain Gas-Efficient Amortization Schedule Mathematics:
+    - Explanation: 
+    - Desmos Implementation: https://www.desmos.com/calculator/cd10wksudo
 
 ### TODOs/Fixes
 - Main
