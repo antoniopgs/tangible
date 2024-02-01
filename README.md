@@ -1,8 +1,7 @@
 # Tangible
 
 ### Description
-I partnered with https://www.prospera.co/ (the world’s premiere private city), and became a member of their City Builders Network: https://www.prospera.co/join
-I built an RWA DeFi Mortgages Protocol from the ground up, to:
+I joined the [City Builders Network](https://www.prospera.co/join) of [Prospera](https://www.prospera.co/), and built an RWA DeFi Mortgages Protocol from the ground up, to:
 - Allow lenders worldwide to supply mortgage capital to the city and earn yields
 - Bring mortgage access to Prospera Residents (who are blocked from TradFi alternatives)
 
@@ -31,8 +30,8 @@ I built an RWA DeFi Mortgages Protocol from the ground up, to:
         - Setter.sol (originally made to contain all external setters, and reduce size of other implementations. might get rid of it. under review)
         - **interest**
             - InterestConstant.sol: Implementation of a Fixed/Constant Interest Rate Model
-            - Interest2Slopes.sol: Implementation of a AAVE style 2 slope Interest Rate Model: https://www.desmos.com/calculator/ryesiw7hau
-            - InterestCurve.sol: Implementation of a smooth curve Interest Rate Model: https://www.desmos.com/calculator/nimb8tbzgb
+            - Interest2Slopes.sol: Implementation of an [Two-Slope Interest Rate Model](https://www.desmos.com/calculator/ryesiw7hau)
+            - InterestCurve.sol: Implementation of a [Smooth Curve Interest Rate Model](https://www.desmos.com/calculator/nimb8tbzgb)
         - **loanStatus**
             - Amortization.sol (holds implementation of a flexible & gas-efficient amortization schedule)
             - LoanStatus.sol (inherits from Amortization.sol, to differentiate Active Mortgages from Defaults, and so on)
@@ -41,11 +40,11 @@ I built an RWA DeFi Mortgages Protocol from the ground up, to:
     - tUSDC.sol
 
 ### Links
-- MVP: https://tangible-frontend.vercel.app/
-- MVP Demo: https://drive.google.com/file/d/1wTIdks_wdpMdmPu6DnEVThOgOw6iFtRA/view?usp=sharing
+- [MVP](https://tangible-frontend.vercel.app/)
+- [MVP Demo](https://drive.google.com/file/d/1wTIdks_wdpMdmPu6DnEVThOgOw6iFtRA/view?usp=sharing)
 - On-Chain Gas-Efficient Amortization Schedule Mathematics:
     - Explanation: 
-    - Desmos Implementation: https://www.desmos.com/calculator/cd10wksudo
+    - [Desmos Implementation](https://www.desmos.com/calculator/cd10wksudo)
 
 ### TODOs/Fixes
 - Main
