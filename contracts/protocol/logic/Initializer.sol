@@ -16,11 +16,13 @@ contract Initializer is State {
 
         // Ensure this is 1st and only Initialization
         require(!initialized, "already initialized");
-        initialized = true;
 
         initializeContractLinks(_USDC, _tUSDC, _tangibleNft);
         initializeState();
         initializeRoles(tangible, gsp, pac);
+
+        // Set to initialized
+        initialized = true;
     }
 
     function initializeContractLinks(address _USDC, address _tUSDC, address _tangibleNft) private {
