@@ -26,7 +26,9 @@ contract tUsdc is ERC20("Tangible Protocol Interest-Bearing USDC", "tUSDC") {
     }
 
     function _update(address from, address to, uint256 value) internal override {
-        require(IInfo(protocolProxy).isNotAmerican(to), "receiver might be american");
+        if (to != address(0)) { // Note: "to" is NULL_ADDRESS in burns. but this has further security implications. revisit later
+            require(IInfo(protocolProxy).isNotAmerican(to), "receiver might be american");
+        }
         super._update(from, to, value);
     }
 }

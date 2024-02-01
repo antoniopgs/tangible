@@ -26,6 +26,5 @@ interface IState {
         uint propertyValue;
         uint downPayment;
         uint loanMonths;
-        bool accepted;
     }
 }

@@ -39,19 +39,22 @@ contract TestUtils is DeployScript, Test {
 
     function _deposit(uint randomness) internal {
 
-        // Get buyer
-        address buyer = _randomAddress(randomness);
+        // Get depositor
+        address depositor = _randomAddress(randomness);
         uint amount = bound(randomness, 10e6, 1_000_000_000e6); // Note: USDC has 6 decimals
 
         // Deal
-        deal(address(USDC), buyer, amount);
+        deal(address(USDC), depositor, amount);
 
         // Approve
-        vm.prank(buyer);
+        vm.prank(depositor);
         USDC.approve(proxy, amount);
 
+        // Register Depositor as Non-American
+        ISetter(proxy).updateNotAmerican(depositor, true);
+
         // Deposit
-        vm.prank(buyer);
+        vm.prank(depositor);
         ILending(proxy).deposit(amount);
     }
 
@@ -81,6 +84,9 @@ contract TestUtils is DeployScript, Test {
             uint neededLiquidity = downPayment - availableLiquidity;
             deal(address(USDC), depositor, neededLiquidity);
 
+            // Register Depositor as Non-American
+            ISetter(proxy).updateNotAmerican(depositor, true);
+
             // Depositor approves & deposits
             vm.startPrank(depositor);
             USDC.approve(proxy, neededLiquidity);
@@ -109,11 +115,13 @@ contract TestUtils is DeployScript, Test {
 
         // Pick actionable propertyValue/salePrice
         uint minPropertyValue = IInfo(proxy).unpaidPrincipal(tokenId) > 0 ? IInfo(proxy).minSalePrice(tokenId) : 1;
-        uint propertyValue = bound(randomness, minPropertyValue, minPropertyValue + 1_000_000_000e6); // Note: minPropertyValue to minPropertyValue + 1 billion
+        uint propertyValue = bound(randomness, minPropertyValue, minPropertyValue + 100_000_000e6); // Note: minPropertyValue to minPropertyValue + 100 millon // Note: USDC has 6 Decimals
 
         // Pick actionable downPayment
         UD60x18 maxLtv = IInfo(proxy).maxLtv();
         uint downPayment = bound(randomness, convert(maxLtv.mul(convert(propertyValue))) + 1, 9 * propertyValue / 10); // Note: 50% to 90% of propertyValue
+        
+        assert(propertyValue - downPayment > 0);
 
         // Ensure there's enough availableLiquidity
         uint availableLiquidity = IInfo(proxy).availableLiquidity();
@@ -125,6 +133,9 @@ contract TestUtils is DeployScript, Test {
             // Give neededLiquidity to depositor
             uint neededLiquidity = downPayment - availableLiquidity;
             deal(address(USDC), depositor, neededLiquidity);
+
+            // Admin verifies depositor is non-american
+            ISetter(proxy).updateNotAmerican(depositor, true);
 
             // Depositor approves & deposits
             vm.startPrank(depositor);

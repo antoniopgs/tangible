@@ -13,6 +13,9 @@ import "../contracts/protocol/logic/Lending.sol";
 import "../contracts/protocol/logic/Residents.sol";
 import "../contracts/protocol/logic/Setter.sol";
 
+// Interest
+import "../contracts/protocol/logic/interest/InterestCurve.sol";
+
 // Tokens
 import "../contracts/mock/MockUsdc.sol";
 import "../contracts/tokens/tUsdc.sol";
@@ -36,6 +39,9 @@ contract DeployScript is Script {
     Residents residents;
     Setter setter;
 
+    // Chosen Interest Rate Module
+    InterestCurve interest;
+
     // Multi-Sigs
     address _TANGIBLE = vm.addr(1); // Todo: fix later
     address _GSP = vm.addr(2); // Todo: fix later
@@ -56,6 +62,11 @@ contract DeployScript is Script {
 
         // Deploy Non-Abstract Implementations
         deployImplementations();
+
+        // Deploy chosen interest module
+        UD60x18 baseYearlyRate = convert(uint(4)).div(convert(uint(100)));
+        UD60x18 optimalUtilization = convert(uint(90)).div(convert(uint(100)));
+        interest = new InterestCurve(baseYearlyRate, optimalUtilization);
 
         // Deploy Tokens
         deployTokens(proxy);
@@ -152,7 +163,7 @@ contract DeployScript is Script {
         ITargetManager(proxy).setSelectorsTarget(residentSelectors, address(residents));
 
         // Set setterSelectors
-        bytes4[] memory setterSelectors = new bytes4[](8);
+        bytes4[] memory setterSelectors = new bytes4[](9);
         setterSelectors[0] = ISetter.updateOptimalUtilization.selector;
         setterSelectors[1] = ISetter.updateMaxLtv.selector;
         setterSelectors[2] = ISetter.updateMaxLoanMonths.selector;
@@ -161,6 +172,12 @@ contract DeployScript is Script {
         setterSelectors[5] = ISetter.updateInterestFeeSpread.selector;
         setterSelectors[6] = ISetter.updateRedemptionFeeSpread.selector;
         setterSelectors[7] = ISetter.updateDefaultFeeSpread.selector;
+        setterSelectors[8] = ISetter.updateNotAmerican.selector;
         ITargetManager(proxy).setSelectorsTarget(setterSelectors, address(setter));
+
+        // Set interestSelectors
+        bytes4[] memory interestSelectors = new bytes4[](1);
+        interestSelectors[0] = IInterest.calculateNewRatePerSecond.selector;
+        ITargetManager(proxy).setSelectorsTarget(interestSelectors, address(interest));
     }
 }

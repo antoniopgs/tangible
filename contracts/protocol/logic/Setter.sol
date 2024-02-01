@@ -43,4 +43,8 @@ contract Setter is ISetter, State {
         require(newDefaultFeeSpreadPct <= 100, "invalid pct");
         _defaultFeeSpread = convert(newDefaultFeeSpreadPct).div(convert(100));
     }
+
+    function updateNotAmerican(address user, bool notAmerican) external { // Todo: add admin access controls later
+        _notAmerican[user] = notAmerican;
+    }
 }

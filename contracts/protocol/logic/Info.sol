@@ -3,7 +3,6 @@ pragma solidity ^0.8.15;
 
 import "../../../interfaces/logic/IInfo.sol";
 import "./loanStatus/LoanStatus.sol";
-import "../../../interfaces/logic/IInterest.sol";
 
 contract Info is IInfo, LoanStatus {
 
@@ -105,24 +104,8 @@ contract Info is IInfo, LoanStatus {
         return _redeemable(_debts[tokenId].loan);
     }
 
-    // Note: gas expensive (but in Info, so shouldn't matter)
-    // Note: if return = 0, no default
-    function defaultTime(Loan memory loan) external view returns (uint _defaultTime) {
-
-        uint completedMonths = (block.timestamp - loan.startTime) / SECONDS_IN_MONTH; // Note: might be missing + 1
-
-        // Loop backwards from loanCompletedMonths
-        for (uint i = completedMonths; i > 0; i--) { // Todo: reduce gas costs
-
-            uint completedMonthPrincipalCap = principalCapAtMonth(loan, i);
-            uint prevCompletedMonthPrincipalCap = i == 1 ? loan.unpaidPrincipal : principalCapAtMonth(loan, i - 1);
-
-            if (loan.unpaidPrincipal > completedMonthPrincipalCap && loan.unpaidPrincipal <= prevCompletedMonthPrincipalCap) {
-                _defaultTime = loan.startTime + (i * SECONDS_IN_MONTH);
-            }
-        }
-
-        assert(_defaultTime > 0);
+    function defaultTime(Loan memory loan) external view returns (uint) {
+        return _defaultTime(loan);
     }
 
     function _loanMaxMonths(Loan memory loan) internal pure returns (uint) {

@@ -1,16 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-// import { Loan } from "../../types/Types.sol";
-// import { SD59x18, convert } from "@prb/math/src/SD59x18.sol";
-// import { intoUD60x18 } from "@prb/math/src/sd59x18/Casting.sol";
-// import { intoSD59x18 } from "@prb/math/src/ud60x18/Casting.sol";
 import "./Amortization.sol";
 
 abstract contract LoanStatus is Amortization {
 
     // Note: return defaultTime here too?
-    function defaulted(Loan memory loan) private view returns(bool _defaulted) {
+    function defaulted(Loan memory loan) private view returns(bool) {
         return loan.unpaidPrincipal > currentPrincipalCap(loan);
     }
 
@@ -27,33 +23,44 @@ abstract contract LoanStatus is Amortization {
         }
     }
 
-    function validDefaultTime(Loan memory loan, uint month) private view returns(bool valid, uint _defaultTime) {
+    function validDefaultTime(Loan memory loan, uint month) private view returns(bool valid, uint defaultTime) {
 
         if (loanCurrentMonth(loan) > month && loan.unpaidPrincipal >= principalCapAtMonth(loan, month)) { // Todo: rethink this
             valid = true;
-            _defaultTime = loanMonthStartSecond(month);
+            defaultTime = loanMonthStartSecond(month);
         }
     }
 
     function timeSinceDefault(Loan memory loan) private view returns(uint) {
-        // return block.timestamp - defaultTime(loan);
+        return block.timestamp - _defaultTime(loan);
     }
 
     function _redeemable(Loan memory loan) internal view returns(bool) {
         return timeSinceDefault(loan) <= _redemptionWindow;
     }
 
+    // Note: gas expensive
+    // Note: if return = 0, no default
+    function _defaultTime(Loan memory loan) internal view returns (uint _loanDefaultTime) {
 
+        uint completedMonths = (block.timestamp - loan.startTime) / SECONDS_IN_MONTH; // Note: might be missing + 1
 
+        // Loop backwards from loanCompletedMonths
+        for (uint i = completedMonths; i > 0; i--) { // Todo: reduce gas costs
 
+            uint completedMonthPrincipalCap = principalCapAtMonth(loan, i);
+            uint prevCompletedMonthPrincipalCap = i == 1 ? loan.unpaidPrincipal : principalCapAtMonth(loan, i - 1);
 
+            if (loan.unpaidPrincipal > completedMonthPrincipalCap && loan.unpaidPrincipal <= prevCompletedMonthPrincipalCap) {
+                _loanDefaultTime = loan.startTime + (i * SECONDS_IN_MONTH);
+            }
+        }
 
-
-
-
+        assert(_loanDefaultTime > 0);
+    }
 
     // Todo: add otherDebt later?
-    function _bidActionable(Bid memory _bid, uint minSalePrice) internal view returns(bool) {
+    function _bidActionable(Bid memory _bid, uint minSalePrice) internal view returns(bool) { // Todo: move this to Auctions.sol?
 
         // Calculate bid principal
         uint principal = _bid.propertyValue - _bid.downPayment;

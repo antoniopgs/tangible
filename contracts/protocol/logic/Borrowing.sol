@@ -32,6 +32,9 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         loan.maxDurationSeconds = maxDurationSeconds;
         loan.lastPaymentTime = currentTime; // Note: no payment here, but needed so lastPaymentElapsedSeconds only counts from now
 
+        // Validate currentPrincipalCap
+        assert(currentPrincipalCap(loan) == loan.unpaidPrincipal);
+
         // Update pool
         _totalPrincipal += principal;
         assert(_totalPrincipal <= _totalDeposits);
@@ -52,9 +55,6 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         // Calculate interest
         uint interest = _accruedInterest(loan);
 
-        //require(payment <= loan.unpaidPrincipal + interest, "payment must be <= unpaidPrincipal + interest");
-        //require(payment >= interest, "payment must be >= interest"); // Question: maybe don't calculate repayment if payment < interest?
-
         // Bound payment
         if (payment > loan.unpaidPrincipal + interest) {
             payment = loan.unpaidPrincipal + interest;
@@ -64,7 +64,7 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         USDC.safeTransferFrom(msg.sender, address(this), payment); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
 
         // Calculate repayment
-        uint repayment = payment - interest; // Todo: Add payLoanFee // Question: should payLoanFee come off the interest to lenders? Or only come off the borrower's repayment?
+        uint repayment = payment >= interest ? payment - interest : 0;
 
         // Update loan
         loan.unpaidPrincipal -= repayment;
@@ -230,8 +230,8 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         apr = IInterest(address(this)).calculateNewRatePerSecond(utilization()).mul(convert(SECONDS_IN_YEAR));
     }
 
-    modifier onlySelf {
-        require(msg.sender == address(this), "onlySelf: caller not address(this)");
-        _;
-    }
+    // modifier onlySelf {
+    //     require(msg.sender == address(this), "onlySelf: caller not address(this)");
+    //     _;
+    // }
 }

@@ -8,6 +8,7 @@ abstract contract TargetManager is ITargetManager, Roles {
 
     mapping (bytes4 => address) public logicTargets; // Todo: maybe make public and move to Info?
 
+    // Note: add safety mechanism to avoid function selector key collisions
     function setSelectorsTarget(bytes4[] calldata selectorsArr, address target) external /* onlyRole(TANGIBLE) */ {
 
         for (uint256 i = 0; i < selectorsArr.length; i++) {

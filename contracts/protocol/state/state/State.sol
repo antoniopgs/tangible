@@ -27,17 +27,15 @@ abstract contract State is IState, TargetManager {
     uint internal _totalPrincipal;
     uint internal _totalDeposits;
     UD60x18 internal _optimalUtilization;
-    uint locked;
 
     // Residents
     mapping(address => uint) internal _addressToResident; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
     mapping(uint => address) internal _residentToAddress;
 
-    mapping(address => bool) internal _notAmerican;
+    mapping(address => bool) internal _notAmerican; // Note: Ban Americans from tUSDC (to avoid SEC regulations)
 
     // Bids
     mapping(uint tokenId => Bid[]) internal _bids; // Todo: figure out multiple bids by same bidder on same nft late
-    mapping(uint tokenId => bool bidAccepted) internal pendingBid;
 
     // Debts
     mapping(uint => Debt) internal _debts;
@@ -69,7 +67,7 @@ abstract contract State is IState, TargetManager {
         return block.timestamp - loan.lastPaymentTime;
     }
 
-    function _availableLiquidity() internal view returns(uint) {
-        return _totalDeposits - _totalPrincipal - locked; // Question: - protocolMoney?
+    function _availableLiquidity() internal view returns(uint) { // Todo: figure out where to move this later
+        return _totalDeposits - _totalPrincipal; // - protocolMoney?
     }
 }

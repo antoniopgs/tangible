@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
+// Inheritance
+import "./ITangibleNft.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+
+// Other
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/IAccessControl.sol";
-
-import "./ITangibleNft.sol";
 import "../../../interfaces/logic/IInfo.sol";
 // import { PAC } from "../../protocol/state/Roles.sol";
 
@@ -41,7 +43,8 @@ contract TangibleNft is ITangibleNft, ERC721URIStorage, ERC721Enumerable {
     }
 
     function isApprovedForAll(address owner, address operator) public view override(ERC721, IERC721) returns (bool) {
-        return super.isApprovedForAll(owner, operator) 
+        return super.isApprovedForAll(owner, operator)
+        || operator == protocolProxy // Note: protocolProxy should always be able to transfer, regardless of approvals // Note: this introduces security implications, revisit later
         /* || IAccessControl(protocolProxy).hasRole(PAC, operator)*/; // Note: PAC should always be able to transfer, regardless of approvals
     }
 

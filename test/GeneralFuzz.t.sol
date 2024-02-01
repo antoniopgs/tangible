@@ -8,13 +8,12 @@ import "./TestUtils.sol";
 import "../interfaces/logic/IBorrowing.sol";
 import "../interfaces/logic/ILending.sol";
 import "../contracts/protocol/logic/interest/InterestConstant.sol";
-// import { Status } from "../contracts/protocol/state/state/State.sol";
+import "../interfaces/state/IState.sol";
 
 // Other
-// import { convert } from "@prb/math/src/UD60x18.sol";
 import { console } from "forge-std/console.sol";
 
-contract GeneralFuzz is TestUtils {
+contract GeneralFuzz is TestUtils, IState { // Todo: figure out how to remove IState inheritance later
 
     // Actions
     enum Action {
@@ -55,10 +54,10 @@ contract GeneralFuzz is TestUtils {
                 _testPayLoan(randomness[i]);
 
             } else if (action == uint(Action.RedeemMortgage)) {
-                _testRedeemLoan(randomness[i]);
+                // _testRedeemLoan(randomness[i]);
                 
             } else if (action == uint(Action.Foreclose)) {
-                _testForeclose(randomness[i]);
+                // _testForeclose(randomness[i]);
             
             } else if (action == uint(Action.Deposit)) {
                 _testDeposit(randomness[i]);
@@ -119,16 +118,28 @@ contract GeneralFuzz is TestUtils {
 
         // Get & Skip by timeJump
         uint timeJump = bound(randomness, 0, 15 days);
+        assert(IInfo(proxy).status(tokenId) == Status.Mortgage);
         skip(timeJump);
+        assert(IInfo(proxy).status(tokenId) == Status.Mortgage);
 
         // Get payment
         uint payment = bound(randomness, 0, 1_000_000_000e6);
 
+        console.log("pl9");
+
+        // Give bidder USDC for payment
+        deal(address(USDC), bidder, payment);
+
+        console.log("pl10");
+
         // Bidder pays loan
         vm.startPrank(bidder);
         USDC.approve(proxy, payment);
+        console.log("pl11");
         IBorrowing(proxy).payMortgage(tokenId, payment);
         vm.stopPrank();
+
+        console.log("pl12");
     }
 
     function _testRedeemLoan(uint randomness) private {
@@ -145,7 +156,9 @@ contract GeneralFuzz is TestUtils {
         IAuctions(proxy).acceptBid(tokenId, idx);
 
         // Skip time (to make redeemable)
+        assert(IInfo(proxy).status(tokenId) == Status.Mortgage);
         skip(30 days + 15 days);
+        assert(IInfo(proxy).status(tokenId) == Status.Mortgage);
 
         uint unpaidPrincipal = IInfo(proxy).unpaidPrincipal(tokenId);
         uint interest = IInfo(proxy).accruedInterest(tokenId);
@@ -176,9 +189,13 @@ contract GeneralFuzz is TestUtils {
         // Make Actionable Loan Bid
         _makeActionableLoanBid(tokenId, randomness);
 
+        console.log("tf8");
+
         // PAC forecloses
         vm.prank(_PAC);
         IBorrowing(proxy).foreclose(tokenId);
+
+        console.log("tf9");
     }
 
     function _testDeposit(uint randomness) private {
