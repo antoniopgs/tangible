@@ -3,17 +3,37 @@
 ### Description
 Tangible is an RWA DeFi Mortgages protocol. It allows anyone
 
-### Components
-- NFTs
-- Lending Pool
-- On-Chain Mortgages
-- Auctions
+### Features
+- NFTs: Legally Compliant NFTs, capable of representing RWA (property disputes can also be solved on-chain via arbitrator multisig)
+- Lending Pool: Allows anyone to supply capital to the protocol and earn yeilds from mortgages. Includes tUSDC an SEC Compliant interest-bearing token (unavailable to US Citizens)
+- On-Chain Mortgages: Gas-Efficient Amortization Schedule
+- Auctions: Bidding mechanism to allow seamless real estate transactions. A user with an active mortgage can accept a bid, sell his house, pay off any mortgage debt, and keep the difference (all in one transaction).
 - etc
 
-### Features
-- Gas-Efficient Amortization Schedule
-- Legally Compliant NFTs (capable of representing Real-Estate and property disputed can be solved on-chain by multisig)
-- 
+### Architecture
+- protocol/
+    - state/
+
+    - proxy/
+        - ProtocolProxy.sol:  (the proxy responsible for mapping each function selector to the appropriate implementation)
+    - logic/ (all non-abstract implementations inherit from State.sol)
+        - Auctions.sol
+        - Borrowing.sol
+        - Info.sol (originally made to contain all external getters, and reduce size of other implementations. might get rid of it. under review)
+        - Initializer.sol
+        - Lending.sol
+        - Residents.sol (Tracks who are the legitimate residents of the jurisdiction, which are the only eligible receivers of the NFT)
+        - Setter.sol (originally made to contain all external setters, and reduce size of other implementations. might get rid of it. under review)
+        - interest/
+            - Interest2Slopes.sol ()
+            - Interest2Constant.sol
+            - InterestCurve.sol
+        - loanStatus/
+            - Amortization.sol (holds implementation of a flexible & gas-efficient amortization schedule. explained here: )
+            - LoanStatus.sol (inherits from Amortization.sol, to differentiate Active Mortgages from Defaults, and so on)
+- tokens/
+    - TangibleNft.sol
+    - tUSDC.sol
 
 ### Links
 - MVP: https://tangible-frontend.vercel.app/
