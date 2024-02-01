@@ -31,7 +31,7 @@ I built an RWA DeFi Mortgages Protocol from the ground up, to:
         - Setter.sol (originally made to contain all external setters, and reduce size of other implementations. might get rid of it. under review)
         - **interest**
             - InterestConstant.sol: Implementation of a Fixed/Constant Interest Rate Model
-            - Interest2Slopes.sol: Implementation of a AAVE style 2 slope Interest Rate Model: https://www.desmos.com/calculator/cd10wksudo
+            - Interest2Slopes.sol: Implementation of a AAVE style 2 slope Interest Rate Model: https://www.desmos.com/calculator/ryesiw7hau
             - InterestCurve.sol: Implementation of a smooth curve Interest Rate Model: https://www.desmos.com/calculator/nimb8tbzgb
         - **loanStatus**
             - Amortization.sol (holds implementation of a flexible & gas-efficient amortization schedule)
