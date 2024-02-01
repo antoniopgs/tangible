@@ -1,7 +1,10 @@
 # Tangible
 
 ### Description
-Tangible is an RWA DeFi Mortgages protocol. It allows anyone
+I partnered with https://www.prospera.co/ (the world’s premiere private city), and became a member of their City Builders Network: https://www.prospera.co/join
+I built an RWA DeFi Mortgages Protocol from the ground up, to:
+- Allow lenders worldwide to supply mortgage capital to the city and earn yields
+- Bring mortgage access to Prospera Residents (who are blocked from TradFi alternatives)
 
 ### Features
 - NFTs: Legally Compliant NFTs, capable of representing RWA (property disputes can also be solved on-chain via arbitrator multisig)
