@@ -100,11 +100,11 @@ contract TestUtils is DeployScript, Test {
         // Bidder approves & bids
         vm.startPrank(bidder);
         USDC.approve(proxy, downPayment);
-        IAuctions(proxy).bid(randomTokenId, propertyValue, downPayment, loanMonths);
+        newBidIdx = IAuctions(proxy).bid(randomTokenId, propertyValue, downPayment, loanMonths);
         vm.stopPrank();
 
-        // Get newBidIdx
-        newBidIdx = IInfo(proxy).bidsLength(randomTokenId) - 1;
+        // Ensure new bid is actionable
+        assert(IInfo(proxy).bidActionable(randomTokenId, newBidIdx));
     }
 
     function _makeActionableLoanBid(uint tokenId, uint randomness) internal returns(address bidder, uint newBidIdx) {
@@ -150,10 +150,10 @@ contract TestUtils is DeployScript, Test {
         // Bidder approves & bids
         vm.startPrank(bidder);
         USDC.approve(proxy, downPayment);
-        IAuctions(proxy).bid(tokenId, propertyValue, downPayment, loanMonths);
+        newBidIdx = IAuctions(proxy).bid(tokenId, propertyValue, downPayment, loanMonths);
         vm.stopPrank();
 
-        // Get newBidIdx
-        newBidIdx = IInfo(proxy).bidsLength(tokenId) - 1;
+        // Ensure new bid is actionable
+        assert(IInfo(proxy).bidActionable(tokenId, newBidIdx));
     }
 }

@@ -125,21 +125,14 @@ contract GeneralFuzz is TestUtils, IState { // Todo: figure out how to remove IS
         // Get payment
         uint payment = bound(randomness, 0, 1_000_000_000e6);
 
-        console.log("pl9");
-
         // Give bidder USDC for payment
         deal(address(USDC), bidder, payment);
-
-        console.log("pl10");
 
         // Bidder pays loan
         vm.startPrank(bidder);
         USDC.approve(proxy, payment);
-        console.log("pl11");
         IBorrowing(proxy).payMortgage(tokenId, payment);
         vm.stopPrank();
-
-        console.log("pl12");
     }
 
     function _testRedeemLoan(uint randomness) private {
@@ -158,14 +151,17 @@ contract GeneralFuzz is TestUtils, IState { // Todo: figure out how to remove IS
         // Skip time (to make redeemable)
         assert(IInfo(proxy).status(tokenId) == Status.Mortgage);
         skip(30 days + 15 days);
-        assert(IInfo(proxy).status(tokenId) == Status.Mortgage);
+        assert(IInfo(proxy).status(tokenId) == Status.Default);
 
-        uint unpaidPrincipal = IInfo(proxy).unpaidPrincipal(tokenId);
-        uint interest = IInfo(proxy).accruedInterest(tokenId);
+        // Calculate debt
+        uint debt = IInfo(proxy).unpaidPrincipal(tokenId) + IInfo(proxy).accruedInterest(tokenId);
+
+        // Give bidder debt money
+        deal(address(USDC), bidder, 2 * debt); // Todo: calculate more accurately with redemptionFeeSpread later
 
         // Bidder redeems
         vm.startPrank(bidder);
-        USDC.approve(proxy, 2 * (unpaidPrincipal + interest)); // Todo: improve later
+        USDC.approve(proxy, 2 * debt); // Todo: calculate more accurately with redemptionFeeSpread later
         IBorrowing(proxy).redeemMortgage(tokenId);
         vm.stopPrank();
     }
@@ -189,13 +185,9 @@ contract GeneralFuzz is TestUtils, IState { // Todo: figure out how to remove IS
         // Make Actionable Loan Bid
         _makeActionableLoanBid(tokenId, randomness);
 
-        console.log("tf8");
-
         // PAC forecloses
         vm.prank(_PAC);
         IBorrowing(proxy).foreclose(tokenId);
-
-        console.log("tf9");
     }
 
     function _testDeposit(uint randomness) private {

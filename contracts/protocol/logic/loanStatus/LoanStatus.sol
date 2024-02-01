@@ -83,11 +83,18 @@ abstract contract LoanStatus is Amortization {
 
     function highestActionableBid(uint tokenId) internal view returns (uint highestActionableIdx) {
 
+        // Get tokenBids
+        Bid[] memory tokenBids = _bids[tokenId];
+
+        if (tokenBids.length == 0) {
+            revert("token has no bids");
+        }
+
         // Get minSalePrice
         uint minSalePrice = _minSalePrice(_debts[tokenId].loan);
 
-        // Get tokenBids
-        Bid[] memory tokenBids = _bids[tokenId];
+        // Declare found bool
+        bool found;
 
         // Loop tokenBids
         for (uint i = 0; i < tokenBids.length; i++) {
@@ -96,17 +103,21 @@ abstract contract LoanStatus is Amortization {
             Bid memory bid = tokenBids[i];
 
             // If bid has higher propertyValue and is actionable
-            if (bid.propertyValue > tokenBids[highestActionableIdx].propertyValue && _bidActionable(bid, minSalePrice)) {
+            // Note: If 1st index has actionable bid > wont't work (but >= will)
+            if (bid.propertyValue >= tokenBids[highestActionableIdx].propertyValue && _bidActionable(bid, minSalePrice)) {
+                
+                // Update found if needed
+                if (!found) {
+                    found = true;
+                }
 
                 // Update highestActionableIdx // Note: might run into problems if nothing is returned and it defaults to 0
                 highestActionableIdx = i;
             }    
         }
-
-        if (tokenBids.length == 0) {
-            revert("token has no bids");
-            
-        } else if (highestActionableIdx == 0 && !_bidActionable(tokenBids[0], minSalePrice)) {
+        
+        // If no actionable bids found
+        if (!found) {
             revert("token has no actionable bids");
         }
     }

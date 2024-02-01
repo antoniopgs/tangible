@@ -2,14 +2,14 @@
 pragma solidity ^0.8.15;
 
 // Inheritance
-import "./ITangibleNft.sol";
+import "../../interfaces/tokens/ITangibleNft.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 
 // Other
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/IAccessControl.sol";
-import "../../../interfaces/logic/IInfo.sol";
+import "../../interfaces/logic/IInfo.sol";
 // import { PAC } from "../../protocol/state/Roles.sol";
 
 contract TangibleNft is ITangibleNft, ERC721URIStorage, ERC721Enumerable {

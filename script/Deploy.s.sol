@@ -19,7 +19,7 @@ import "../contracts/protocol/logic/interest/InterestCurve.sol";
 // Tokens
 import "../contracts/mock/MockUsdc.sol";
 import "../contracts/tokens/tUsdc.sol";
-import "../contracts/tokens/tangibleNft/TangibleNft.sol";
+import "../contracts/tokens/TangibleNft.sol";
 
 // Other
 import "forge-std/Script.sol";
