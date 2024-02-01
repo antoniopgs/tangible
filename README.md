@@ -11,12 +11,14 @@ Tangible is an RWA DeFi Mortgages protocol. It allows anyone
 - etc
 
 ### Architecture
-- protocol/
-    - state/
-
-    - proxy/
+- **protocol**
+    - **state**
+        - State.sol (holds all protocol state vars. the proxy and all logic contracts inherit from it, to avoid storage collisions)
+        - TargetManager.sol (handles upgrade and delegatecall logic)
+        - Roles.sol
+    - **proxy**
         - ProtocolProxy.sol:  (the proxy responsible for mapping each function selector to the appropriate implementation)
-    - logic/ (all non-abstract implementations inherit from State.sol)
+    - **logic** (all non-abstract implementations inherit from State.sol)
         - Auctions.sol
         - Borrowing.sol
         - Info.sol (originally made to contain all external getters, and reduce size of other implementations. might get rid of it. under review)
@@ -24,16 +26,16 @@ Tangible is an RWA DeFi Mortgages protocol. It allows anyone
         - Lending.sol
         - Residents.sol (Tracks who are the legitimate residents of the jurisdiction, which are the only eligible receivers of the NFT)
         - Setter.sol (originally made to contain all external setters, and reduce size of other implementations. might get rid of it. under review)
-        - interest/
+        - **interest**
             - InterestConstant.sol: Implementation of a Fixed/Constant Interest Rate Model
             - Interest2Slopes.sol: Implementation of a AAVE style 2 slope Interest Rate Model: https://www.desmos.com/calculator/cd10wksudo
             - InterestCurve.sol: Implementation of a smooth curve Interest Rate Model: https://www.desmos.com/calculator/nimb8tbzgb
-        - loanStatus/
+        - **loanStatus**
             - Amortization.sol (holds implementation of a flexible & gas-efficient amortization schedule)
                 - Mathematics Explanation: 
                 - Desmos Implementation: https://www.desmos.com/calculator/cd10wksudo
             - LoanStatus.sol (inherits from Amortization.sol, to differentiate Active Mortgages from Defaults, and so on)
-- tokens/
+- **tokens**
     - TangibleNft.sol
     - tUSDC.sol
 
