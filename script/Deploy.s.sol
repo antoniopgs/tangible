@@ -130,7 +130,6 @@ contract DeployScript is Script {
         infoSelectors[10] = IInfo.unpaidPrincipal.selector;
         infoSelectors[11] = IInfo.accruedInterest.selector;
         infoSelectors[12] = IInfo.status.selector;
-        infoSelectors[14] = IInfo.loanChart.selector;
         infoSelectors[15] = IInfo.maxLtv.selector;
         ITargetManager(proxy).setSelectorsTarget(infoSelectors, address(info));
 

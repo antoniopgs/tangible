@@ -22,7 +22,6 @@ interface IInfo is IState { // Todo: fix later
     function unpaidPrincipal(uint tokenId) external view returns(uint);
     function accruedInterest(uint tokenId) external view returns(uint);
     function status(uint tokenId) external view returns(Status);
-    function loanChart(uint tokenId) external view returns(uint[] memory x, uint[] memory y);
 
     // Loan Terms
     function maxLtv() external view returns(UD60x18);

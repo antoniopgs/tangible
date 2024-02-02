@@ -35,9 +35,6 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         // Validate currentPrincipalCap
         assert(currentPrincipalCap(loan) == loan.unpaidPrincipal);
 
-        // Update pool
-        // vault.borrow(finalReceiver, principal);
-
         // Emit Event
         emit StartLoan(ratePerSecond, paymentPerSecond, principal, maxDurationMonths, currentTime);
     }
@@ -125,8 +122,14 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         // sellerDebt = loan.unpaidPrincipal + interest + saleFee
         UNDERLYING.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest - saleFee);
 
+        // Calculate principal
+        uint principal = salePrice - downPayment;
+
+        // Borrow from pool
+        vault.borrow(seller, principal);
+
         // Clear seller/caller debt
-        loan.unpaidPrincipal = 0;
+        loan.unpaidPrincipal = 0; // Note: maybe only do this if there's no loan?
 
         // Send nft from seller to bidder
         PROPERTY.safeTransferFrom(seller, _bid.bidder, tokenId);
@@ -137,7 +140,7 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
             // Start new Loan
             _startNewMortgage({
                 loan: loan,
-                principal: salePrice - downPayment,
+                principal: principal,
                 maxDurationMonths: _bid.loanMonths
             });
         }

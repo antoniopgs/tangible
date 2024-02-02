@@ -53,22 +53,6 @@ contract Info is IInfo, LoanStatus {
         return MONTHS_IN_YEAR * loan.maxDurationSeconds / SECONDS_IN_YEAR;
     }
 
-    function loanChart(uint tokenId) external view returns(uint[] memory x, uint[] memory y) {
-
-        // Get loan
-        Loan memory loan = _loans[tokenId];
-
-        // Loop loan months
-        for (uint i = 1; i <= _loanMaxMonths(loan); i++) {
-            
-            // Add i to x
-            x[i] = i;
-
-            // Add month's principal cap to y
-            y[i] = principalCapAtMonth(loan, i);
-        }
-    }
-
     function maxLtv() external view returns(UD60x18) {
         return _maxLtv;
     }
