@@ -14,7 +14,6 @@ interface IBorrowing is IState { // Todo: fix later
     event DebtDecrease(uint tokenId, uint amount, string motive, uint timestamp);
 
     // Views
-    function utilization() external view returns(UD60x18);
     function borrowerApr() external view returns(UD60x18 apr);
 
     // User Functions

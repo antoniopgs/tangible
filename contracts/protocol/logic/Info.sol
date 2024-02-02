@@ -19,20 +19,6 @@ contract Info is IInfo, LoanStatus {
         return _residentToAddress[id];
     }
 
-    function sharesToUnderlying(uint shares) external view returns(uint underlying) {
-        
-        // Get sharesSupply
-        uint sharesSupply = SHARES.totalSupply();
-
-        // If sharesSupply or totalDeposits = 0, 1:1
-        if (sharesSupply == 0 || _totalDeposits == 0) {
-            underlying = shares / 1e12; // Note: UNDERLYING has 12 less decimals than SHARES
-
-        } else {
-            underlying = shares * _totalDeposits / sharesSupply; // Note: dividing by sharesSupply removes need to remove 12 decimals
-        }
-    }
-
     // Auctions
     function bids(uint tokenId, uint idx) external view returns(Bid memory) {
         return _bids[tokenId][idx];
@@ -44,38 +30,6 @@ contract Info is IInfo, LoanStatus {
 
     function bidActionable(uint tokenId, uint idx) external view returns(bool) {
         return _bidActionable(_bids[tokenId][idx], _minSalePrice(_loans[tokenId]));
-    }
-
-    function userBids(address user) external view returns(BidInfo[] memory _userBids) {
-
-        _userBids = new BidInfo[](100);
-        uint realLength;
-        
-        // Loop tokenIds
-        for (uint i = 0; i < PROPERTY.totalSupply(); i++) {
-            
-            // Get tokenIdBids
-            Bid[] memory tokenIdBids = _bids[i];
-
-            // Loop tokenIdBids
-            for (uint n = 0; n < tokenIdBids.length; n++) {
-
-                // Get bid
-                Bid memory bid = tokenIdBids[n];
-                
-                // If bidder is user
-                if (bid.bidder == user) {
-
-                    _userBids[realLength] = BidInfo({
-                        tokenId: i,
-                        idx: n,
-                        bid: bid
-                    });
-
-                    realLength++;
-                }
-            }
-        }
     }
 
     function minSalePrice(uint tokenId) external view returns(uint) {
@@ -129,10 +83,6 @@ contract Info is IInfo, LoanStatus {
 
     function maxLoanMonths() external view returns(uint) {
         return _maxLoanMonths;
-    }
-
-    function optimalUtilization() external view returns(UD60x18) {
-        return _optimalUtilization;
     }
 
     function redemptionFeeSpread() external view returns(UD60x18) {

@@ -5,7 +5,9 @@ import "../../../../interfaces/logic/IInterest.sol";
 import "../../state/State.sol";
 import { powu } from "@prb/math/src/UD60x18.sol";
 
-contract InterestCurve is IInterest, State {
+contract InterestCurve is IInterest {
+
+    uint constant SECONDS_IN_YEAR = 365 days;
 
     // Deployer inputs needed in storage
     UD60x18 private immutable baseYearlyRate;

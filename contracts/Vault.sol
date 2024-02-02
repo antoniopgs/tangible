@@ -7,18 +7,20 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 // Other
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
 
 contract Vault is IVault, ERC20, Ownable(msg.sender) {
 
-    // Links
     IERC20 immutable UNDERLYING;
+    address immutable protocol;
 
-    // Debt
-    uint public totalPrincipal;
+    uint public debt;
+    uint public deposits;
 
-    // Eligibility
     mapping(address user => bool eligible) public userEligible; // Note: Can avoid SEC Regulations by banning Americans
+
+    using SafeERC20 for IERC20;
 
     constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {
 
@@ -28,6 +30,9 @@ contract Vault is IVault, ERC20, Ownable(msg.sender) {
 
         // Calulate caller shares
         uint shares = underlyingToShares(underlying);
+
+        // Update deposits
+        deposits += underlying;
         
         // Pull underlying from caller
         UNDERLYING.safeTransferFrom(msg.sender, address(this), underlying); // Note: must come after underlyingToShares()
@@ -45,6 +50,9 @@ contract Vault is IVault, ERC20, Ownable(msg.sender) {
         // Calulate caller shares
         uint shares = underlyingToShares(underlying);
 
+        // Update deposits
+        deposits += underlying;
+
         // Burn caller shares
         _burn(msg.sender, shares);
 
@@ -56,15 +64,11 @@ contract Vault is IVault, ERC20, Ownable(msg.sender) {
     }
 
     function utilization() public view returns(UD60x18) {
-
-        // Get underlyingBalance
-        uint underlyingBalance = UNDERLYING.balanceOf(address(this));
-
-        if (underlyingBalance == 0) {
-            assert(totalPrincipal == 0);
+        if (deposits == 0) {
+            assert(debt == 0);
             return convert(uint(0));
         }
-        return convert(totalPrincipal).div(convert(underlyingBalance));
+        return convert(debt).div(convert(deposits));
     }
 
     // Todo: implement ERC4626 vault to mitigate inflation attack?
@@ -95,14 +99,25 @@ contract Vault is IVault, ERC20, Ownable(msg.sender) {
     }
 
     function availableLiquidity() public view returns(uint) {
-        return UNDERLYING.balanceOf(address(this)) - totalPrincipal; // - protocolMoney?
+        return UNDERLYING.balanceOf(address(this)) - debt; // - protocolMoney?
+    }
+
+    function borrow(address receiver, uint principal) external {
+        require(msg.sender == protocol, "only protocol can borrow from vault");
+
+        // Update debt
+        debt += principal;
+        assert(debt <= deposits);
+
+        // Send principal to receiver
+        UNDERLYING.safeTransfer(receiver, principal);
     }
 
     function payDebt(uint repayment, uint interest) external { // Note: should I restrict access?
 
         // Update state
-        totalPrincipal -= repayment;
-        totalDeposits += interest;
+        debt -= repayment;
+        deposits += interest;
 
         // Pull underlying
         UNDERLYING.safeTransferFrom(msg.sender, address(this), repayment + interest);

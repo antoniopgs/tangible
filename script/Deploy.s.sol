@@ -9,7 +9,6 @@ import "../contracts/protocol/logic/Auctions.sol";
 import "../contracts/protocol/logic/Borrowing.sol";
 import "../contracts/protocol/logic/Info.sol";
 import "../contracts/protocol/logic/Initializer.sol";
-// import "../contracts/protocol/logic/Lending.sol";
 import "../contracts/protocol/logic/Residents.sol";
 import "../contracts/protocol/logic/Setter.sol";
 
@@ -17,7 +16,6 @@ import "../contracts/protocol/logic/Setter.sol";
 import "../contracts/protocol/logic/interest/InterestCurve.sol";
 
 // Tokens
-// import "../contracts/tokens/SharesToken.sol";
 import "../contracts/tokens/PropertyNft.sol";
 
 // Other
@@ -37,7 +35,6 @@ contract DeployScript is Script {
     Borrowing borrowing;
     Info info;
     Initializer initializer;
-    Lending lending;
     Residents residents;
     Setter setter;
 
@@ -45,9 +42,10 @@ contract DeployScript is Script {
     InterestCurve interest;
 
     // Tokens
-    IERC20 UNDERLYING; 
-    SharesToken SHARES;
+    IERC20 UNDERLYING;
     PropertyNft PROPERTY;
+
+    Vault vault;
 
     constructor() {
 
@@ -66,7 +64,7 @@ contract DeployScript is Script {
         interest = new InterestCurve(baseYearlyRate, optimalUtilization);
 
         // Deploy Tokens
-        deployTokens(proxy);
+        deployTokens();
 
         // Set Function Selectors
         setSelectors();
@@ -86,22 +84,14 @@ contract DeployScript is Script {
         borrowing = new Borrowing();
         info = new Info();
         initializer = new Initializer();
-        lending = new Lending();
         residents = new Residents();
         setter = new Setter();
     }
 
-    function deployTokens(address _proxy) private {
+    function deployTokens() private {
 
         // Deploy UNDERLYING
         UNDERLYING = IERC20(USDC_ETHEREUM_MAINNET);
-
-        // Deploy SHARES
-        SHARES = new SharesToken({
-            name_: "Tangible Interest-Bearing USDC",
-            symbol_: "tUSDC",
-            protocolProxy_: _proxy
-        });
 
         // Deploy PROPERTY
         PROPERTY = new PropertyNft({
@@ -120,13 +110,12 @@ contract DeployScript is Script {
         ITargetManager(proxy).setSelectorsTarget(auctionSelectors, address(auctions));
 
         // Set borrowingSelectors
-        bytes4[] memory borrowingSelectors = new bytes4[](8);
+        bytes4[] memory borrowingSelectors = new bytes4[](7);
         borrowingSelectors[0] = IBorrowing.payMortgage.selector;
         borrowingSelectors[2] = IBorrowing.debtTransfer.selector;
         // borrowingSelectors[] = IBorrowing.refinance.selector;
         borrowingSelectors[3] = IBorrowing.foreclose.selector;
         borrowingSelectors[6] = IBorrowing.borrowerApr.selector;
-        borrowingSelectors[7] = IBorrowing.utilization.selector;
         ITargetManager(proxy).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set infoSelectors
@@ -134,12 +123,9 @@ contract DeployScript is Script {
         infoSelectors[0] = IInfo.isResident.selector;
         infoSelectors[1] = IInfo.addressToResident.selector;
         infoSelectors[2] = IInfo.residentToAddress.selector;
-        infoSelectors[3] = IInfo.availableLiquidity.selector;
-        infoSelectors[4] = IInfo.sharesToUnderlying.selector;
         infoSelectors[5] = IInfo.bids.selector;
         infoSelectors[6] = IInfo.bidsLength.selector;
         infoSelectors[7] = IInfo.bidActionable.selector;
-        infoSelectors[8] = IInfo.userBids.selector;
         infoSelectors[9] = IInfo.minSalePrice.selector;
         infoSelectors[10] = IInfo.unpaidPrincipal.selector;
         infoSelectors[11] = IInfo.accruedInterest.selector;
@@ -153,13 +139,6 @@ contract DeployScript is Script {
         initializerSelectors[0] = Initializer.initialize.selector;
         ITargetManager(proxy).setSelectorsTarget(initializerSelectors, address(initializer));
 
-        // Set lendingSelectors
-        bytes4[] memory lendingSelectors = new bytes4[](3);
-        lendingSelectors[0] = ILending.deposit.selector;
-        lendingSelectors[1] = ILending.withdraw.selector;
-        lendingSelectors[2] = ILending.underlyingToShares.selector;
-        ITargetManager(proxy).setSelectorsTarget(lendingSelectors, address(lending));
-
         // Set residentSelectors
         bytes4[] memory residentSelectors = new bytes4[](1);
         residentSelectors[0] = IResidents.verifyResident.selector;
@@ -167,11 +146,9 @@ contract DeployScript is Script {
 
         // Set setterSelectors
         bytes4[] memory setterSelectors = new bytes4[](8);
-        setterSelectors[0] = ISetter.updateOptimalUtilization.selector;
         setterSelectors[1] = ISetter.updateMaxLtv.selector;
         setterSelectors[2] = ISetter.updateMaxLoanMonths.selector;
         setterSelectors[4] = ISetter.updateBaseSaleFeeSpread.selector;
-        setterSelectors[5] = ISetter.updateInterestFeeSpread.selector;
         setterSelectors[6] = ISetter.updateRedemptionFeeSpread.selector;
         setterSelectors[7] = ISetter.updateDefaultFeeSpread.selector;
         ITargetManager(proxy).setSelectorsTarget(setterSelectors, address(setter));

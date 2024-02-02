@@ -6,7 +6,6 @@ import "./Utils.t.sol";
 
 // Protocol Contracts
 import "../interfaces/logic/IBorrowing.sol";
-// import "../interfaces/logic/ILending.sol";
 import "../contracts/protocol/logic/interest/InterestConstant.sol";
 import "../interfaces/state/IState.sol";
 
@@ -166,17 +165,17 @@ contract GeneralFuzz is Utils, IState { // Todo: figure out how to remove IState
 
         // Get vars
         address withdrawer = _randomAddress(randomness);
-        uint availableLiquidity = IInfo(proxy).availableLiquidity();
+        uint availableLiquidity = vault.availableLiquidity();
         uint underlying = bound(randomness, 0, availableLiquidity);
         console.log("underlying:", underlying);
-        uint sharesBurn = ILending(proxy).underlyingToShares(underlying);
+        uint sharesBurn = vault.underlyingToShares(underlying);
 
-        // Deal sharesBurn to withdrawer
-        deal(address(SHARES), withdrawer, sharesBurn);
+        // Deal vault to withdrawer
+        deal(address(vault), withdrawer, sharesBurn);
 
         // Withdraw
         vm.prank(withdrawer);
-        ILending(proxy).withdraw(underlying);
+        vault.withdraw(underlying);
     }
 
     function _testSkip(uint randomness) private {

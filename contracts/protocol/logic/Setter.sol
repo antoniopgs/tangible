@@ -6,11 +6,6 @@ import "../state/State.sol";
 
 contract Setter is ISetter, State {
 
-    function updateOptimalUtilization(uint newOptimalUtilizationPct) external onlyOwner {
-        require(newOptimalUtilizationPct <= 100, "invalid pct");
-        _optimalUtilization = convert(newOptimalUtilizationPct).div(convert(100));
-    }
-
     function updateMaxLtv(uint newMaxLtvPct) external onlyOwner {
         require(newMaxLtvPct <= 100, "invalid pct");
         _maxLtv = convert(newMaxLtvPct).div(convert(100));

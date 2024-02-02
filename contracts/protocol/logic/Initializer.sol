@@ -7,30 +7,25 @@ contract Initializer is State {
 
     function initialize(
         IERC20 _UNDERLYING,
-        SharesToken _SHARES,
         PropertyNft _PROPERTY
     ) external {
 
         // Ensure this is 1st and only Initialization
         require(!initialized, "already initialized");
 
-        initializeContractLinks(_UNDERLYING, _SHARES, _PROPERTY);
+        initializeContractLinks(_UNDERLYING, _PROPERTY);
         initializeState();
 
         // Set to initialized
         initialized = true;
     }
 
-    function initializeContractLinks(IERC20 _UNDERLYING, SharesToken _SHARES, PropertyNft _PROPERTY) private {
+    function initializeContractLinks(IERC20 _UNDERLYING, PropertyNft _PROPERTY) private {
         UNDERLYING = _UNDERLYING;
-        SHARES = _SHARES;
         PROPERTY = _PROPERTY;
     }
 
     function initializeState() private {
-
-        // Pool Vars
-        _optimalUtilization = convert(90).div(convert(100)); // Note: 90%
 
         // Other Vars
         _maxLtv = convert(50).div(convert(100)); // Note: 50%

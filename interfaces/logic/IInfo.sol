@@ -6,19 +6,6 @@ import "../state/IState.sol"; // Todo: move types? or maybe move interfaces insi
 
 interface IInfo is IState { // Todo: fix later
 
-    struct BidInfo {
-        uint tokenId;
-        uint idx;
-        Bid bid;
-    }
-
-    // Pool
-    function totalPrincipal() external view returns(uint);
-    function totalDeposits() external view returns(uint);
-    function availableLiquidity() external view returns(uint);
-    function optimalUtilization() external view returns(UD60x18);
-    function sharesToUnderlying(uint shares) external view returns(uint underlying);
-
     // Residents
     function isResident(address addr) external view returns (bool);
     function addressToResident(address addr) external view returns(uint);
@@ -29,7 +16,6 @@ interface IInfo is IState { // Todo: fix later
     function bids(uint tokenId, uint idx) external view returns(Bid memory);
     function bidsLength(uint tokenId) external view returns(uint);
     function bidActionable(uint tokenId, uint idx) external view returns(bool);
-    function userBids(address user) external view returns(BidInfo[] memory _userBids);
     function minSalePrice(uint tokenId) external view returns(uint);
 
     // Loans
@@ -44,7 +30,6 @@ interface IInfo is IState { // Todo: fix later
 
     // Fees/Spreads
     function baseSaleFeeSpread() external view returns(UD60x18);
-    function interestFeeSpread() external view returns(UD60x18);
     function redemptionFeeSpread() external view returns(UD60x18);
     function defaultFeeSpread() external view returns(UD60x18);
 }

@@ -12,7 +12,7 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
     function _startNewMortgage(Loan storage loan, uint principal, uint maxDurationMonths) private {
 
         // Get ratePerSecond
-        UD60x18 ratePerSecond = IInterest(address(this)).calculateNewRatePerSecond(utilization());
+        UD60x18 ratePerSecond = IInterest(address(this)).calculateNewRatePerSecond(vault.utilization());
 
         // Calculate maxDurationSeconds
         uint maxDurationSeconds = maxDurationMonths * SECONDS_IN_MONTH;
@@ -36,8 +36,7 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         assert(currentPrincipalCap(loan) == loan.unpaidPrincipal);
 
         // Update pool
-        _totalPrincipal += principal;
-        assert(_totalPrincipal <= _totalDeposits);
+        // vault.borrow(finalReceiver, principal);
 
         // Emit Event
         emit StartLoan(ratePerSecond, paymentPerSecond, principal, maxDurationMonths, currentTime);
@@ -71,7 +70,7 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         loan.lastPaymentTime = block.timestamp;
 
         // Pay pool
-        pool.payDebt(repayment, interest);
+        vault.payDebt(repayment, interest);
 
         // Log
         emit PayLoan(msg.sender, tokenId, payment, interest, repayment, block.timestamp, loan.unpaidPrincipal == 0);
@@ -117,7 +116,7 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         uint saleFee = convert(convert(salePrice).mul(saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
 
         // Pay Pool
-        pool.payDebt(loan.unpaidPrincipal, interest);
+        vault.payDebt(loan.unpaidPrincipal, interest);
 
         // Protocol Charges Fees
         protocolMoney += saleFee;
@@ -169,6 +168,6 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
     }
 
     function borrowerApr() external view returns(UD60x18 apr) {
-        apr = IInterest(address(this)).calculateNewRatePerSecond(utilization()).mul(convert(SECONDS_IN_YEAR));
+        apr = IInterest(address(this)).calculateNewRatePerSecond(vault.utilization()).mul(convert(SECONDS_IN_YEAR));
     }
 }
