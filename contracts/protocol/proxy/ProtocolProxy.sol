@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
+import "../state/State.sol";
+import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/proxy/Proxy.sol";
-import "../state/state/TargetManager.sol";
 
-contract ProtocolProxy is TargetManager, Proxy {
+contract ProtocolProxy is State, ERC721Holder, Proxy {
 
     function _implementation() internal view override returns (address target) {
         target = logicTargets[msg.sig];
@@ -12,6 +13,6 @@ contract ProtocolProxy is TargetManager, Proxy {
     }
 
     receive() external payable {
-        // Todo: implement logic
+
     }
 }

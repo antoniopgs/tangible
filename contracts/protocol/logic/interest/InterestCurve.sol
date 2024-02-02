@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "../../../../interfaces/logic/IInterest.sol";
-import "../../state/state/State.sol";
+import "../../state/State.sol";
 import { powu } from "@prb/math/src/UD60x18.sol";
 
 contract InterestCurve is IInterest, State {

@@ -3,7 +3,7 @@ pragma solidity ^0.8.15;
 
 import { UD60x18 } from "@prb/math/src/UD60x18.sol";
 
-interface ILending {
+interface IVault {
     
     event Deposit(address depositor, uint amount, uint tUsdcMint);
     event Withdraw(address withdrawer, uint amount, uint tUsdcBurn);
@@ -13,5 +13,6 @@ interface ILending {
     function withdraw(uint usdc) external;
 
     // Views
-    function usdcToTUsdc(uint usdcAmount) external view returns(uint tUsdcAmount);
+    function utilization() external view returns(UD60x18);
+    function underlyingToShares(uint underlying) external view returns(uint shares);
 }

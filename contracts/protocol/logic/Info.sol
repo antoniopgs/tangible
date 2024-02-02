@@ -19,22 +19,17 @@ contract Info is IInfo, LoanStatus {
         return _residentToAddress[id];
     }
 
-    // Pool
-    function availableLiquidity() external view returns(uint) {
-        return _availableLiquidity();
-    }
-
-    function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount) {
+    function sharesToUnderlying(uint shares) external view returns(uint underlying) {
         
-        // Get tUsdcSupply
-        uint tUsdcSupply = tUSDC.totalSupply();
+        // Get sharesSupply
+        uint sharesSupply = SHARES.totalSupply();
 
-        // If tUsdcSupply or totalDeposits = 0, 1:1
-        if (tUsdcSupply == 0 || _totalDeposits == 0) {
-            usdcAmount = tUsdcAmount / 1e12; // Note: USDC has 12 less decimals than tUSDC
+        // If sharesSupply or totalDeposits = 0, 1:1
+        if (sharesSupply == 0 || _totalDeposits == 0) {
+            underlying = shares / 1e12; // Note: UNDERLYING has 12 less decimals than SHARES
 
         } else {
-            usdcAmount = tUsdcAmount * _totalDeposits / tUsdcSupply; // Note: dividing by tUsdcSupply removes need to remove 12 decimals
+            underlying = shares * _totalDeposits / sharesSupply; // Note: dividing by sharesSupply removes need to remove 12 decimals
         }
     }
 
@@ -57,7 +52,7 @@ contract Info is IInfo, LoanStatus {
         uint realLength;
         
         // Loop tokenIds
-        for (uint i = 0; i < tangibleNft.totalSupply(); i++) {
+        for (uint i = 0; i < PROPERTY.totalSupply(); i++) {
             
             // Get tokenIdBids
             Bid[] memory tokenIdBids = _bids[i];
@@ -132,10 +127,6 @@ contract Info is IInfo, LoanStatus {
         return _defaultFeeSpread;
     }
 
-    function interestFeeSpread() external view returns(UD60x18) {
-        return _interestFeeSpread;
-    }
-
     function maxLoanMonths() external view returns(uint) {
         return _maxLoanMonths;
     }
@@ -146,17 +137,5 @@ contract Info is IInfo, LoanStatus {
 
     function redemptionFeeSpread() external view returns(UD60x18) {
         return _redemptionFeeSpread;
-    }
-
-    function totalDeposits() external view returns(uint) {
-        return _totalDeposits;
-    }
-
-    function totalPrincipal() external view returns(uint) {
-        return _totalPrincipal;
-    }
-
-    function isNotAmerican(address addr) external view returns (bool) {
-        return _notAmerican[addr];
     }
 }

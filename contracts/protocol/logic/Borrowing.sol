@@ -60,8 +60,8 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
             payment = loan.unpaidPrincipal + interest;
         }
 
-        // Pull payment from msg.sender
-        USDC.safeTransferFrom(msg.sender, address(this), payment); // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
+        // Pull underlying from caller
+        UNDERLYING.safeTransferFrom(msg.sender, address(this), payment);
 
         // Calculate repayment
         uint repayment = payment >= interest ? payment - interest : 0;
@@ -70,19 +70,15 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         loan.unpaidPrincipal -= repayment;
         loan.lastPaymentTime = block.timestamp;
 
-        // Protocol charges interestFee
-        uint interestFee = convert(convert(interest).mul(_interestFeeSpread));
-        protocolMoney += interestFee;
+        // Pay pool
+        pool.payDebt(repayment, interest);
 
-        // Update pool
-        _totalPrincipal -= repayment;
-        _totalDeposits += interest - interestFee;
-
+        // Log
         emit PayLoan(msg.sender, tokenId, payment, interest, repayment, block.timestamp, loan.unpaidPrincipal == 0);
     }
 
     // Admin Functions
-    function foreclose(uint tokenId) external onlyRole(PAC) {
+    function foreclose(uint tokenId) external onlyOwner {
 
         require(_status(_loans[tokenId]) == Status.Default, "no default");
 
@@ -91,7 +87,7 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
 
         debtTransfer({
             tokenId: tokenId,
-            seller: tangibleNft.ownerOf(tokenId),
+            seller: PROPERTY.ownerOf(tokenId),
             _bid: _bids[tokenId][idx]
         }); // Note: might need to change debtTransfer() visibility
     }
@@ -116,29 +112,25 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         // Ensure bid is actionable
         require(_bidActionable(_bid, _minSalePrice(loan)), "bid not actionable");
 
-        // Calculate interest Fee
-        uint interestFee = convert(convert(interest).mul(_interestFeeSpread));
-
         // Calculate saleFee
         UD60x18 saleFeeSpread = _status(loan) == Status.Default ? _baseSaleFeeSpread.add(_defaultFeeSpread) : _baseSaleFeeSpread; // Question: maybe defaultFee should be a boost appplied to interest instead?
         uint saleFee = convert(convert(salePrice).mul(saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
 
-        // Update Pool (pay off lenders)
-        _totalPrincipal -= loan.unpaidPrincipal;
-        _totalDeposits += interest - interestFee;
+        // Pay Pool
+        pool.payDebt(loan.unpaidPrincipal, interest);
 
         // Protocol Charges Fees
-        protocolMoney += interestFee + saleFee;
+        protocolMoney += saleFee;
 
         // Send sellerEquity (salePrice - sellerDebt) to seller
         // sellerDebt = loan.unpaidPrincipal + interest + saleFee
-        USDC.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest - saleFee);
+        UNDERLYING.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest - saleFee);
 
         // Clear seller/caller debt
         loan.unpaidPrincipal = 0;
 
         // Send nft from seller to bidder
-        tangibleNft.safeTransferFrom(seller, _bid.bidder, tokenId);
+        PROPERTY.safeTransferFrom(seller, _bid.bidder, tokenId);
 
         // If bidder needs loan
         if (downPayment < salePrice) {
@@ -174,14 +166,6 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         
         // Calculate paymentPerSecond
         paymentPerSecond = convert(principal).mul(ratePerSecond).mul(x).div(x.sub(convert(uint(1))));
-    }
-
-    function utilization() public view returns(UD60x18) {
-        if (_totalDeposits == 0) {
-            assert(_totalPrincipal == 0);
-            return convert(uint(0));
-        }
-        return convert(_totalPrincipal).div(convert(_totalDeposits));
     }
 
     function borrowerApr() external view returns(UD60x18 apr) {

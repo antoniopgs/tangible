@@ -2,45 +2,36 @@
 pragma solidity ^0.8.15;
 
 import "../../../interfaces/logic/ISetter.sol";
-import "../state/state/State.sol";
+import "../state/State.sol";
 
 contract Setter is ISetter, State {
 
-    function updateOptimalUtilization(uint newOptimalUtilizationPct) external onlyRole(TANGIBLE) {
+    function updateOptimalUtilization(uint newOptimalUtilizationPct) external onlyOwner {
         require(newOptimalUtilizationPct <= 100, "invalid pct");
         _optimalUtilization = convert(newOptimalUtilizationPct).div(convert(100));
     }
 
-    function updateMaxLtv(uint newMaxLtvPct) external onlyRole(TANGIBLE) {
+    function updateMaxLtv(uint newMaxLtvPct) external onlyOwner {
         require(newMaxLtvPct <= 100, "invalid pct");
         _maxLtv = convert(newMaxLtvPct).div(convert(100));
     }
 
-    function updateMaxLoanMonths(uint newMaxLoanMonths) external onlyRole(TANGIBLE) {
+    function updateMaxLoanMonths(uint newMaxLoanMonths) external onlyOwner {
         _maxLoanMonths = newMaxLoanMonths;
     }
 
-    function updateBaseSaleFeeSpread(uint newBaseSaleFeeSpreadPct) external onlyRole(TANGIBLE) {
+    function updateBaseSaleFeeSpread(uint newBaseSaleFeeSpreadPct) external onlyOwner {
         require(newBaseSaleFeeSpreadPct <= 100, "invalid pct");
         _baseSaleFeeSpread = convert(newBaseSaleFeeSpreadPct).div(convert(100));
     }
 
-    function updateInterestFeeSpread(uint newInterestFeeSpreadPct) external onlyRole(TANGIBLE) {
-        require(newInterestFeeSpreadPct <= 100, "invalid pct");
-        _interestFeeSpread = convert(newInterestFeeSpreadPct).div(convert(100));
-    }
-
-    function updateRedemptionFeeSpread(uint newRedemptionFeeSpreadPct) external onlyRole(TANGIBLE) {
+    function updateRedemptionFeeSpread(uint newRedemptionFeeSpreadPct) external onlyOwner {
         require(newRedemptionFeeSpreadPct <= 100, "invalid pct");
         _redemptionFeeSpread = convert(newRedemptionFeeSpreadPct).div(convert(100));
     }
 
-    function updateDefaultFeeSpread(uint newDefaultFeeSpreadPct) external onlyRole(TANGIBLE) {
+    function updateDefaultFeeSpread(uint newDefaultFeeSpreadPct) external onlyOwner {
         require(newDefaultFeeSpreadPct <= 100, "invalid pct");
         _defaultFeeSpread = convert(newDefaultFeeSpreadPct).div(convert(100));
-    }
-
-    function updateNotAmerican(address user, bool notAmerican) external { // Todo: add admin access controls later
-        _notAmerican[user] = notAmerican;
     }
 }

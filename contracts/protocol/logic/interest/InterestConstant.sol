@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 import "../../../../interfaces/logic/IInterest.sol";
-import "../../state/state/State.sol";
+import "../../state/State.sol";
 
 contract InterestConstant is IInterest, State {
 

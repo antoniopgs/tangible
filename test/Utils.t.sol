@@ -4,12 +4,12 @@ pragma solidity ^0.8.15;
 import "../script/Deploy.s.sol";
 import { Test } from "lib/forge-std/src/Test.sol";
 
-contract TestUtils is DeployScript, Test {
+contract Utils is DeployScript, Test {
 
     uint residentCount;
 
     function _randomTokenId(uint randomness) internal returns(uint tokenId) {
-        uint totalSupply = nftContract.totalSupply();
+        uint totalSupply = PROPERTY.totalSupply();
         tokenId = bound(randomness, 0, totalSupply - 1);
     }
 
@@ -27,31 +27,31 @@ contract TestUtils is DeployScript, Test {
     }
 
     function _mintNfts(uint amount) internal {
-        console.log("\nmintNfts...");
-        vm.startPrank(_GSP); // Note: only GSP can mint nfts
+        vm.startPrank(PROPERTY.owner());
         for (uint i = 1; i <= amount; i++) {
             IResidents(proxy).verifyResident(vm.addr(i), i);
-            nftContract.mint(vm.addr(i), "");
+            PROPERTY.mint(vm.addr(i), "");
         }
         vm.stopPrank();
-        residentCount = amount;
+        residentCount = amount; // Todo: maybe change this later (doesn't need to be one nft per resident)
     }
 
     function _deposit(uint randomness) internal {
 
         // Get depositor
         address depositor = _randomAddress(randomness);
-        uint amount = bound(randomness, 10e6, 1_000_000_000e6); // Note: USDC has 6 decimals
+        uint amount = bound(randomness, 10e6, 1_000_000_000e6); // Note: UNDERLYING has 6 decimals
 
         // Deal
-        deal(address(USDC), depositor, amount);
+        deal(address(UNDERLYING), depositor, amount);
 
         // Approve
         vm.prank(depositor);
-        USDC.approve(proxy, amount);
+        UNDERLYING.approve(proxy, amount);
 
-        // Register Depositor as Non-American
-        ISetter(proxy).updateNotAmerican(depositor, true);
+        // Admin registers depositor as eligible
+        vm.prank(SHARES.owner());
+        SHARES.updateUserEligible(depositor, true);
 
         // Deposit
         vm.prank(depositor);
@@ -82,24 +82,25 @@ contract TestUtils is DeployScript, Test {
 
             // Give neededLiquidity to depositor
             uint neededLiquidity = downPayment - availableLiquidity;
-            deal(address(USDC), depositor, neededLiquidity);
+            deal(address(UNDERLYING), depositor, neededLiquidity);
 
-            // Register Depositor as Non-American
-            ISetter(proxy).updateNotAmerican(depositor, true);
+            // Admin registers depositor as eligible
+            vm.prank(SHARES.owner());
+            SHARES.updateUserEligible(depositor, true);
 
             // Depositor approves & deposits
             vm.startPrank(depositor);
-            USDC.approve(proxy, neededLiquidity);
+            UNDERLYING.approve(proxy, neededLiquidity);
             ILending(proxy).deposit(neededLiquidity);
             vm.stopPrank();
         }
 
         // Deal downPayment to bidder
-        deal(address(USDC), bidder, downPayment);
+        deal(address(UNDERLYING), bidder, downPayment);
 
         // Bidder approves & bids
         vm.startPrank(bidder);
-        USDC.approve(proxy, downPayment);
+        UNDERLYING.approve(proxy, downPayment);
         newBidIdx = IAuctions(proxy).bid(randomTokenId, propertyValue, downPayment, loanMonths);
         vm.stopPrank();
 
@@ -115,7 +116,7 @@ contract TestUtils is DeployScript, Test {
 
         // Pick actionable propertyValue/salePrice
         uint minPropertyValue = IInfo(proxy).unpaidPrincipal(tokenId) > 0 ? IInfo(proxy).minSalePrice(tokenId) : 1;
-        uint propertyValue = bound(randomness, minPropertyValue, minPropertyValue + 100_000_000e6); // Note: minPropertyValue to minPropertyValue + 100 millon // Note: USDC has 6 Decimals
+        uint propertyValue = bound(randomness, minPropertyValue, minPropertyValue + 100_000_000e6); // Note: minPropertyValue to minPropertyValue + 100 millon // Note: UNDERLYING has 6 Decimals
 
         // Pick actionable downPayment
         UD60x18 maxLtv = IInfo(proxy).maxLtv();
@@ -132,24 +133,25 @@ contract TestUtils is DeployScript, Test {
 
             // Give neededLiquidity to depositor
             uint neededLiquidity = downPayment - availableLiquidity;
-            deal(address(USDC), depositor, neededLiquidity);
+            deal(address(UNDERLYING), depositor, neededLiquidity);
 
-            // Admin verifies depositor is non-american
-            ISetter(proxy).updateNotAmerican(depositor, true);
+            // Admin registers depositor as eligible
+            vm.prank(SHARES.owner());
+            SHARES.updateUserEligible(depositor, true);
 
             // Depositor approves & deposits
             vm.startPrank(depositor);
-            USDC.approve(proxy, neededLiquidity);
+            UNDERLYING.approve(proxy, neededLiquidity);
             ILending(proxy).deposit(neededLiquidity);
             vm.stopPrank();
         }
 
         // Deal downPayment to bidder
-        deal(address(USDC), bidder, downPayment);
+        deal(address(UNDERLYING), bidder, downPayment);
 
         // Bidder approves & bids
         vm.startPrank(bidder);
-        USDC.approve(proxy, downPayment);
+        UNDERLYING.approve(proxy, downPayment);
         newBidIdx = IAuctions(proxy).bid(tokenId, propertyValue, downPayment, loanMonths);
         vm.stopPrank();
 

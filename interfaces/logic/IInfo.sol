@@ -17,14 +17,12 @@ interface IInfo is IState { // Todo: fix later
     function totalDeposits() external view returns(uint);
     function availableLiquidity() external view returns(uint);
     function optimalUtilization() external view returns(UD60x18);
-    function tUsdcToUsdc(uint tUsdcAmount) external view returns(uint usdcAmount);
+    function sharesToUnderlying(uint shares) external view returns(uint underlying);
 
     // Residents
     function isResident(address addr) external view returns (bool);
     function addressToResident(address addr) external view returns(uint);
     function residentToAddress(uint id) external view returns(address);
-
-    function isNotAmerican(address addr) external view returns (bool);
 
     // Auctions
     // function bids(uint tokenId) external view returns(Bid[] memory); // Todo: implement later

@@ -1,34 +1,30 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../state/state/State.sol";
+import "../state/State.sol";
 
 contract Initializer is State {
 
     function initialize(
-        address _USDC,
-        address _tUSDC,
-        address _tangibleNft,
-        address tangible, // Note: Multi-Sig
-        address gsp, // Note: Multi-Sig
-        address pac // Note: Multi-Sig
+        IERC20 _UNDERLYING,
+        SharesToken _SHARES,
+        PropertyNft _PROPERTY
     ) external {
 
         // Ensure this is 1st and only Initialization
         require(!initialized, "already initialized");
 
-        initializeContractLinks(_USDC, _tUSDC, _tangibleNft);
+        initializeContractLinks(_UNDERLYING, _SHARES, _PROPERTY);
         initializeState();
-        initializeRoles(tangible, gsp, pac);
 
         // Set to initialized
         initialized = true;
     }
 
-    function initializeContractLinks(address _USDC, address _tUSDC, address _tangibleNft) private {
-        USDC = IERC20(_USDC);
-        tUSDC = tUsdc(_tUSDC);
-        tangibleNft = TangibleNft(_tangibleNft);
+    function initializeContractLinks(IERC20 _UNDERLYING, SharesToken _SHARES, PropertyNft _PROPERTY) private {
+        UNDERLYING = _UNDERLYING;
+        SHARES = _SHARES;
+        PROPERTY = _PROPERTY;
     }
 
     function initializeState() private {
@@ -42,9 +38,7 @@ contract Initializer is State {
 
         // Fees/Spreads
         _baseSaleFeeSpread = convert(1).div(convert(100)); // Note: 1%
-        _interestFeeSpread = convert(2).div(convert(100)); // Note: 2%
-        _redemptionFeeSpread = convert(3).div(convert(100)); // Note: 3%
-        _defaultFeeSpread = convert(4).div(convert(100)); // Note: 4%
-
+        _redemptionFeeSpread = convert(2).div(convert(100)); // Note: 2%
+        _defaultFeeSpread = convert(3).div(convert(100)); // Note: 3%
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-import "../../state/state/State.sol";
+import "../../state/State.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { SD59x18, convert } from "@prb/math/src/SD59x18.sol";
 

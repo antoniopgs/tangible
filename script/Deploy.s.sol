@@ -9,7 +9,7 @@ import "../contracts/protocol/logic/Auctions.sol";
 import "../contracts/protocol/logic/Borrowing.sol";
 import "../contracts/protocol/logic/Info.sol";
 import "../contracts/protocol/logic/Initializer.sol";
-import "../contracts/protocol/logic/Lending.sol";
+// import "../contracts/protocol/logic/Lending.sol";
 import "../contracts/protocol/logic/Residents.sol";
 import "../contracts/protocol/logic/Setter.sol";
 
@@ -17,9 +17,8 @@ import "../contracts/protocol/logic/Setter.sol";
 import "../contracts/protocol/logic/interest/InterestCurve.sol";
 
 // Tokens
-import "../contracts/mock/MockUsdc.sol";
-import "../contracts/tokens/tUsdc.sol";
-import "../contracts/tokens/TangibleNft.sol";
+// import "../contracts/tokens/SharesToken.sol";
+import "../contracts/tokens/PropertyNft.sol";
 
 // Other
 import "forge-std/Script.sol";
@@ -27,8 +26,11 @@ import "../interfaces/state/ITargetManager.sol";
 
 contract DeployScript is Script {
 
+    // Addresses
+    address constant USDC_ETHEREUM_MAINNET = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+
     // Proxy
-    address payable proxy;
+    address proxy;
 
     // Logic
     Auctions auctions;
@@ -42,19 +44,14 @@ contract DeployScript is Script {
     // Chosen Interest Rate Module
     InterestCurve interest;
 
-    // Multi-Sigs
-    address _TANGIBLE = vm.addr(1); // Todo: fix later
-    address _GSP = vm.addr(2); // Todo: fix later
-    address _PAC = vm.addr(3); // Todo: fix later
-
     // Tokens
-    IERC20 USDC; /* = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet */
-    tUsdc tUSDC; // Todo: proxy later
-    TangibleNft nftContract; // Todo: proxy later
+    IERC20 UNDERLYING; 
+    SharesToken SHARES;
+    PropertyNft PROPERTY;
 
     constructor() {
 
-        // Fork (needed for tUSDC's ERC777 registration in the ERC1820 registry) // Note: no longer using ERC777 (replaced it with ERC20)
+        // Fork
         // vm.createSelectFork("https://mainnet.infura.io/v3/9a2aca5b5e794f5c929bca9e494fae24"); // Note: Commented for speed
 
         // Deploy protocolProxy
@@ -75,7 +72,11 @@ contract DeployScript is Script {
         setSelectors();
 
         // Initialize proxy
-        Initializer(proxy).initialize(address(USDC), address(tUSDC), address(nftContract), _TANGIBLE, _GSP, _PAC);
+        // Initializer(proxy).initialize({
+        //     _UNDERLYING: USDC_ETHEREUM_MAINNET,
+        //     _SHARES: ,
+        //     _PROPERTY:
+        // });
     }
 
     function deployImplementations() private {
@@ -92,14 +93,21 @@ contract DeployScript is Script {
 
     function deployTokens(address _proxy) private {
 
-        // Deploy mockUSDC
-        USDC = new MockUsdc();
+        // Deploy UNDERLYING
+        UNDERLYING = IERC20(USDC_ETHEREUM_MAINNET);
 
-        // Deploy tUSDC
-        tUSDC = new tUsdc(_proxy);
+        // Deploy SHARES
+        SHARES = new SharesToken({
+            name_: "Tangible Interest-Bearing USDC",
+            symbol_: "tUSDC",
+            protocolProxy_: _proxy
+        });
 
-        // Deploy nftContract
-        nftContract = new TangibleNft(proxy);
+        // Deploy PROPERTY
+        PROPERTY = new PropertyNft({
+            name_: "Tangible Prospera Real Estate Token",
+            symbol_: "tPROSPERA"
+        });
     }
 
     function setSelectors() private {
@@ -122,12 +130,12 @@ contract DeployScript is Script {
         ITargetManager(proxy).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set infoSelectors
-        bytes4[] memory infoSelectors = new bytes4[](17);
+        bytes4[] memory infoSelectors = new bytes4[](16);
         infoSelectors[0] = IInfo.isResident.selector;
         infoSelectors[1] = IInfo.addressToResident.selector;
         infoSelectors[2] = IInfo.residentToAddress.selector;
         infoSelectors[3] = IInfo.availableLiquidity.selector;
-        infoSelectors[4] = IInfo.tUsdcToUsdc.selector;
+        infoSelectors[4] = IInfo.sharesToUnderlying.selector;
         infoSelectors[5] = IInfo.bids.selector;
         infoSelectors[6] = IInfo.bidsLength.selector;
         infoSelectors[7] = IInfo.bidActionable.selector;
@@ -138,7 +146,6 @@ contract DeployScript is Script {
         infoSelectors[12] = IInfo.status.selector;
         infoSelectors[14] = IInfo.loanChart.selector;
         infoSelectors[15] = IInfo.maxLtv.selector;
-        infoSelectors[16] = IInfo.isNotAmerican.selector;
         ITargetManager(proxy).setSelectorsTarget(infoSelectors, address(info));
 
         // Set initializerSelectors
@@ -150,7 +157,7 @@ contract DeployScript is Script {
         bytes4[] memory lendingSelectors = new bytes4[](3);
         lendingSelectors[0] = ILending.deposit.selector;
         lendingSelectors[1] = ILending.withdraw.selector;
-        lendingSelectors[2] = ILending.usdcToTUsdc.selector;
+        lendingSelectors[2] = ILending.underlyingToShares.selector;
         ITargetManager(proxy).setSelectorsTarget(lendingSelectors, address(lending));
 
         // Set residentSelectors
@@ -159,7 +166,7 @@ contract DeployScript is Script {
         ITargetManager(proxy).setSelectorsTarget(residentSelectors, address(residents));
 
         // Set setterSelectors
-        bytes4[] memory setterSelectors = new bytes4[](9);
+        bytes4[] memory setterSelectors = new bytes4[](8);
         setterSelectors[0] = ISetter.updateOptimalUtilization.selector;
         setterSelectors[1] = ISetter.updateMaxLtv.selector;
         setterSelectors[2] = ISetter.updateMaxLoanMonths.selector;
@@ -167,7 +174,6 @@ contract DeployScript is Script {
         setterSelectors[5] = ISetter.updateInterestFeeSpread.selector;
         setterSelectors[6] = ISetter.updateRedemptionFeeSpread.selector;
         setterSelectors[7] = ISetter.updateDefaultFeeSpread.selector;
-        setterSelectors[8] = ISetter.updateNotAmerican.selector;
         ITargetManager(proxy).setSelectorsTarget(setterSelectors, address(setter));
 
         // Set interestSelectors

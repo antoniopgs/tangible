@@ -2,6 +2,5 @@
 pragma solidity ^0.8.15;
 
 interface IResidents {
-
     function verifyResident(address addr, uint resident) external;
 }

@@ -9,5 +9,4 @@ interface ISetter {
     function updateInterestFeeSpread(uint newInterestFeeSpreadPct) external;
     function updateRedemptionFeeSpread(uint newRedemptionFeeSpreadPct) external;
     function updateDefaultFeeSpread(uint newDefaultFeeSpreadPct) external;
-    function updateNotAmerican(address user, bool notAmerican) external;
 }

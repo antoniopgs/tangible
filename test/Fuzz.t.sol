@@ -2,18 +2,18 @@
 pragma solidity ^0.8.15;
 
 // Main
-import "./TestUtils.sol";
+import "./Utils.t.sol";
 
 // Protocol Contracts
 import "../interfaces/logic/IBorrowing.sol";
-import "../interfaces/logic/ILending.sol";
+// import "../interfaces/logic/ILending.sol";
 import "../contracts/protocol/logic/interest/InterestConstant.sol";
 import "../interfaces/state/IState.sol";
 
 // Other
 import { console } from "forge-std/console.sol";
 
-contract GeneralFuzz is TestUtils, IState { // Todo: figure out how to remove IState inheritance later
+contract GeneralFuzz is Utils, IState { // Todo: figure out how to remove IState inheritance later
 
     // Actions
     enum Action {
@@ -30,8 +30,7 @@ contract GeneralFuzz is TestUtils, IState { // Todo: figure out how to remove IS
     uint expectedTotalDeposits;
 
     // Main
-    function testMath(uint[100] calldata randomness) public {
-        console.log("testMath...");
+    function test(uint[100] calldata randomness) public {
 
         _mintNfts(100);
 
@@ -94,7 +93,7 @@ contract GeneralFuzz is TestUtils, IState { // Todo: figure out how to remove IS
         (, uint tokenId, uint idx) = _makeActionableBid(randomness); // Todo: ensure bid is actionable later
 
         // Get seller
-        address seller = nftContract.ownerOf(tokenId);
+        address seller = PROPERTY.ownerOf(tokenId);
 
         // Seller accepts bid
         vm.prank(seller);
@@ -111,7 +110,7 @@ contract GeneralFuzz is TestUtils, IState { // Todo: figure out how to remove IS
         (address bidder, uint idx) = _makeActionableLoanBid(tokenId, randomness);
 
         // Seller accepts bid
-        vm.prank(nftContract.ownerOf(tokenId));
+        vm.prank(PROPERTY.ownerOf(tokenId));
         IAuctions(proxy).acceptBid(tokenId, idx);
 
         // Get & Skip by timeJump
@@ -123,12 +122,12 @@ contract GeneralFuzz is TestUtils, IState { // Todo: figure out how to remove IS
         // Get payment
         uint payment = bound(randomness, 0, 1_000_000_000e6);
 
-        // Give bidder USDC for payment
-        deal(address(USDC), bidder, payment);
+        // Give bidder UNDERLYING for payment
+        deal(address(UNDERLYING), bidder, payment);
 
         // Bidder pays loan
         vm.startPrank(bidder);
-        USDC.approve(proxy, payment);
+        UNDERLYING.approve(proxy, payment);
         IBorrowing(proxy).payMortgage(tokenId, payment);
         vm.stopPrank();
     }
@@ -143,7 +142,7 @@ contract GeneralFuzz is TestUtils, IState { // Todo: figure out how to remove IS
         (, uint idx) = _makeActionableLoanBid(tokenId, randomness);
 
         // Seller accepts bid
-        vm.prank(nftContract.ownerOf(tokenId));
+        vm.prank(PROPERTY.ownerOf(tokenId));
         IAuctions(proxy).acceptBid(tokenId, idx);
 
         // Skip time (to default)
@@ -152,8 +151,8 @@ contract GeneralFuzz is TestUtils, IState { // Todo: figure out how to remove IS
         // Make Actionable Loan Bid
         _makeActionableLoanBid(tokenId, randomness);
 
-        // PAC forecloses
-        vm.prank(_PAC);
+        // Admin forecloses
+        vm.prank(Ownable(proxy).owner());
         IBorrowing(proxy).foreclose(tokenId);
     }
 
@@ -168,16 +167,16 @@ contract GeneralFuzz is TestUtils, IState { // Todo: figure out how to remove IS
         // Get vars
         address withdrawer = _randomAddress(randomness);
         uint availableLiquidity = IInfo(proxy).availableLiquidity();
-        uint usdc = bound(randomness, 0, availableLiquidity);
-        console.log("usdc:", usdc);
-        uint tUsdcBurn = ILending(proxy).usdcToTUsdc(usdc);
+        uint underlying = bound(randomness, 0, availableLiquidity);
+        console.log("underlying:", underlying);
+        uint sharesBurn = ILending(proxy).underlyingToShares(underlying);
 
-        // Deal tUsdcBurn to withdrawer
-        deal(address(tUSDC), withdrawer, tUsdcBurn);
+        // Deal sharesBurn to withdrawer
+        deal(address(SHARES), withdrawer, sharesBurn);
 
         // Withdraw
         vm.prank(withdrawer);
-        ILending(proxy).withdraw(usdc);
+        ILending(proxy).withdraw(underlying);
     }
 
     function _testSkip(uint randomness) private {
