@@ -9,7 +9,7 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
 
     using SafeERC20 for IERC20;
 
-    function startNewMortgage(Loan storage loan, uint principal, uint maxDurationMonths) private {
+    function _startNewMortgage(Loan storage loan, uint principal, uint maxDurationMonths) private {
 
         // Get ratePerSecond
         UD60x18 ratePerSecond = IInterest(address(this)).calculateNewRatePerSecond(utilization());
@@ -18,7 +18,7 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         uint maxDurationSeconds = maxDurationMonths * SECONDS_IN_MONTH;
 
         // Calculate paymentPerSecond
-        UD60x18 paymentPerSecond = calculatePaymentPerSecond(principal, ratePerSecond, maxDurationSeconds);
+        UD60x18 paymentPerSecond = _calculatePaymentPerSecond(principal, ratePerSecond, maxDurationSeconds);
         require(paymentPerSecond.gt(convert(uint(0))), "paymentPerSecond must be > 0"); // Note: Maybe move to calculatePaymentPerSecond()?
 
         // Get currentTime
@@ -47,7 +47,7 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
     function payMortgage(uint tokenId, uint payment) external {
 
         // Get Loan
-        Loan storage loan = _debts[tokenId].loan;
+        Loan storage loan = _loans[tokenId];
 
         // Ensure there's an active mortgage
         require(_status(loan) == Status.Mortgage, "nft has no active mortgage");
@@ -81,42 +81,10 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         emit PayLoan(msg.sender, tokenId, payment, interest, repayment, block.timestamp, loan.unpaidPrincipal == 0);
     }
 
-    // Todo: who gets nft?
-    function redeemMortgage(uint tokenId) external {
-
-        // Get Loan
-        Loan memory loan = _debts[tokenId].loan;
-
-        // Ensure default & redeemable
-        require(_status(loan) == Status.Default, "no default");
-        require(_redeemable(loan), "redemption window is over");
-
-        // Calculate interest
-        uint interest = _accruedInterest(loan);
-
-        // Calculate defaulterDebt & redemptionFee
-        uint defaulterDebt = loan.unpaidPrincipal + interest;
-        uint redemptionFee = convert(convert(defaulterDebt).mul(_redemptionFeeSpread));
-
-        // Redeem (pull defaulter's entire debt + redemptionFee)
-        USDC.safeTransferFrom(msg.sender, address(this), defaulterDebt + redemptionFee); // Note: anyone can redeem on behalf of defaulter // Question: actually, shouldn't the defaulter be the only one able to redeem? // Note: maybe better to separate this from other contracts which also pull USDC, to compartmentalize approvals
-
-        // Protocol charges interestFee
-        uint interestFee = convert(convert(interest).mul(_interestFeeSpread));
-        protocolMoney += interestFee;
-
-        // Update pool
-        _totalPrincipal -= loan.unpaidPrincipal;
-        _totalDeposits += interest - interestFee;
-
-        emit RedeemLoan(msg.sender, tokenId, interest, defaulterDebt, redemptionFee, block.timestamp);
-    }
-
     // Admin Functions
     function foreclose(uint tokenId) external onlyRole(PAC) {
 
-        require(_status(_debts[tokenId].loan) == Status.Default, "no default");
-        require(!_redeemable(_debts[tokenId].loan), "redemption window not over");
+        require(_status(_loans[tokenId]) == Status.Default, "no default");
 
         // Get idx
         uint idx = highestActionableBid(tokenId);
@@ -128,23 +96,13 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         }); // Note: might need to change debtTransfer() visibility
     }
 
-    function increaseOtherDebt(uint tokenId, uint amount, string calldata motive) external onlyRole(GSP) {
-        _debts[tokenId].otherDebt += amount;
-        emit DebtIncrease(tokenId, amount, motive, block.timestamp);
-    }
-
-    function decreaseOtherDebt(uint tokenId, uint amount, string calldata motive) external onlyRole(GSP) {
-        require(_debts[tokenId].otherDebt >= amount, "amount must be <= otherDebt");
-        _debts[tokenId].otherDebt -= amount;
-        emit DebtDecrease(tokenId, amount, motive, block.timestamp);
-    }
-
     // Note: pulling buyer's downPayment to address(this) is safer, because buyer doesn't need to approve seller (which could let him run off with money)
     // Question: if active mortgage is being paid off with a new loan, the pool is paying itself, so money flows should be simpler...
     // Todo: figure out where to send otherDebt
     // Note: bid() now pulls downPayment, so no need to pull it here
     // Todo: add/implement otherDebt later?
-    function debtTransfer(uint tokenId, address seller, Bid memory _bid) public /* onlySelf */ { // Todo: maybe move elsewhere (like ERC721) to not need onlySelf
+    // Todo: figure out access restriction
+    function debtTransfer(uint tokenId, address seller, Bid memory _bid) public { // Todo: maybe move elsewhere (like ERC721) to not need onlySelf
 
         // Get bid info
         // address seller /* = ownerOf(tokenId) */;
@@ -152,7 +110,7 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         uint downPayment = _bid.downPayment;
 
         // Get loan info
-        Loan storage loan = _debts[tokenId].loan;
+        Loan storage loan = _loans[tokenId];
         uint interest = _accruedInterest(loan);
 
         // Ensure bid is actionable
@@ -186,7 +144,7 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         if (downPayment < salePrice) {
 
             // Start new Loan
-            startNewMortgage({
+            _startNewMortgage({
                 loan: loan,
                 principal: salePrice - downPayment,
                 maxDurationMonths: _bid.loanMonths
@@ -194,7 +152,7 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         }
     }
 
-    function calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) internal pure returns(UD60x18 paymentPerSecond) {
+    function _calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) internal pure returns(UD60x18 paymentPerSecond) {
 
         // Calculate x
         // - (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
@@ -229,9 +187,4 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
     function borrowerApr() external view returns(UD60x18 apr) {
         apr = IInterest(address(this)).calculateNewRatePerSecond(utilization()).mul(convert(SECONDS_IN_YEAR));
     }
-
-    // modifier onlySelf {
-    //     require(msg.sender == address(this), "onlySelf: caller not address(this)");
-    //     _;
-    // }
 }

@@ -20,10 +20,6 @@ contract Setter is ISetter, State {
         _maxLoanMonths = newMaxLoanMonths;
     }
 
-    function updateRedemptionWindow(uint _days) external onlyRole(TANGIBLE) {
-        _redemptionWindow = _days * 1 days;
-    }
-
     function updateBaseSaleFeeSpread(uint newBaseSaleFeeSpreadPct) external onlyRole(TANGIBLE) {
         require(newBaseSaleFeeSpreadPct <= 100, "invalid pct");
         _baseSaleFeeSpread = convert(newBaseSaleFeeSpreadPct).div(convert(100));

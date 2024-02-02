@@ -18,7 +18,8 @@ contract GeneralFuzz is TestUtils, IState { // Todo: figure out how to remove IS
     // Actions
     enum Action {
         Bid, CancelBid, // Buyers
-        AcceptBid, PayMortgage, RedeemMortgage, // Sellers
+        AcceptBid, // Sellers
+        PayMortgage, // Borrower
         Foreclose, // PAC
         Deposit, Withdraw, // Lenders,
         SkipTime // Util
@@ -52,9 +53,6 @@ contract GeneralFuzz is TestUtils, IState { // Todo: figure out how to remove IS
 
             } else if (action == uint(Action.PayMortgage)) {
                 _testPayLoan(randomness[i]);
-
-            } else if (action == uint(Action.RedeemMortgage)) {
-                // _testRedeemLoan(randomness[i]);
                 
             } else if (action == uint(Action.Foreclose)) {
                 // _testForeclose(randomness[i]);
@@ -132,37 +130,6 @@ contract GeneralFuzz is TestUtils, IState { // Todo: figure out how to remove IS
         vm.startPrank(bidder);
         USDC.approve(proxy, payment);
         IBorrowing(proxy).payMortgage(tokenId, payment);
-        vm.stopPrank();
-    }
-
-    function _testRedeemLoan(uint randomness) private {
-        console.log("\ntestRedeemLoan...");
-
-        // Get tokenId
-        uint tokenId = _randomTokenId(randomness);
-
-        // Make Actionable Loan Bid
-        (address bidder, uint idx) = _makeActionableLoanBid(tokenId, randomness);
-
-        // Seller accepts bid
-        vm.prank(nftContract.ownerOf(tokenId));
-        IAuctions(proxy).acceptBid(tokenId, idx);
-
-        // Skip time (to make redeemable)
-        assert(IInfo(proxy).status(tokenId) == Status.Mortgage);
-        skip(30 days + 15 days);
-        assert(IInfo(proxy).status(tokenId) == Status.Default);
-
-        // Calculate debt
-        uint debt = IInfo(proxy).unpaidPrincipal(tokenId) + IInfo(proxy).accruedInterest(tokenId);
-
-        // Give bidder debt money
-        deal(address(USDC), bidder, 2 * debt); // Todo: calculate more accurately with redemptionFeeSpread later
-
-        // Bidder redeems
-        vm.startPrank(bidder);
-        USDC.approve(proxy, 2 * debt); // Todo: calculate more accurately with redemptionFeeSpread later
-        IBorrowing(proxy).redeemMortgage(tokenId);
         vm.stopPrank();
     }
 

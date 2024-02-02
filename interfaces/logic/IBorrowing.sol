@@ -19,12 +19,10 @@ interface IBorrowing is IState { // Todo: fix later
 
     // User Functions
     function payMortgage(uint tokenId, uint payment) external;
-    function redeemMortgage(uint tokenId) external;
-    function debtTransfer(uint tokenId, address seller, Bid memory _bid) external; // only callable indirectly
-
+    
     // Admin Functions
-    // function refinance(uint tokenId) external;
     function foreclose(uint tokenId) external;
-    function increaseOtherDebt(uint tokenId, uint amount, string calldata motive) external;
-    function decreaseOtherDebt(uint tokenId, uint amount, string calldata motive) external;
+
+    // Other
+    function debtTransfer(uint tokenId, address seller, Bid memory _bid) external; // only callable indirectly
 }

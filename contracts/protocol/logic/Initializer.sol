@@ -39,7 +39,6 @@ contract Initializer is State {
         // Other Vars
         _maxLtv = convert(50).div(convert(100)); // Note: 50%
         _maxLoanMonths = 120; // Note: 10 years
-        _redemptionWindow = 45 days;
 
         // Fees/Spreads
         _baseSaleFeeSpread = convert(1).div(convert(100)); // Note: 1%

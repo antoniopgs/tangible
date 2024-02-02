@@ -38,12 +38,11 @@ abstract contract State is IState, TargetManager {
     mapping(uint tokenId => Bid[]) internal _bids; // Todo: figure out multiple bids by same bidder on same nft late
 
     // Debts
-    mapping(uint => Debt) internal _debts;
+    mapping(uint tokenId => Loan) internal _loans;
 
     // Loan Terms
     UD60x18 internal _maxLtv;
     uint internal _maxLoanMonths;
-    uint internal _redemptionWindow;
 
     // Fees/Spreads
     UD60x18 internal _baseSaleFeeSpread;

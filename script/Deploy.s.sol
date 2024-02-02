@@ -114,12 +114,9 @@ contract DeployScript is Script {
         // Set borrowingSelectors
         bytes4[] memory borrowingSelectors = new bytes4[](8);
         borrowingSelectors[0] = IBorrowing.payMortgage.selector;
-        borrowingSelectors[1] = IBorrowing.redeemMortgage.selector;
         borrowingSelectors[2] = IBorrowing.debtTransfer.selector;
         // borrowingSelectors[] = IBorrowing.refinance.selector;
         borrowingSelectors[3] = IBorrowing.foreclose.selector;
-        borrowingSelectors[4] = IBorrowing.increaseOtherDebt.selector;
-        borrowingSelectors[5] = IBorrowing.decreaseOtherDebt.selector;
         borrowingSelectors[6] = IBorrowing.borrowerApr.selector;
         borrowingSelectors[7] = IBorrowing.utilization.selector;
         ITargetManager(proxy).setSelectorsTarget(borrowingSelectors, address(borrowing));
@@ -139,7 +136,6 @@ contract DeployScript is Script {
         infoSelectors[10] = IInfo.unpaidPrincipal.selector;
         infoSelectors[11] = IInfo.accruedInterest.selector;
         infoSelectors[12] = IInfo.status.selector;
-        infoSelectors[13] = IInfo.redeemable.selector;
         infoSelectors[14] = IInfo.loanChart.selector;
         infoSelectors[15] = IInfo.maxLtv.selector;
         infoSelectors[16] = IInfo.isNotAmerican.selector;
@@ -167,7 +163,6 @@ contract DeployScript is Script {
         setterSelectors[0] = ISetter.updateOptimalUtilization.selector;
         setterSelectors[1] = ISetter.updateMaxLtv.selector;
         setterSelectors[2] = ISetter.updateMaxLoanMonths.selector;
-        setterSelectors[3] = ISetter.updateRedemptionWindow.selector;
         setterSelectors[4] = ISetter.updateBaseSaleFeeSpread.selector;
         setterSelectors[5] = ISetter.updateInterestFeeSpread.selector;
         setterSelectors[6] = ISetter.updateRedemptionFeeSpread.selector;

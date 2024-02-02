@@ -16,11 +16,6 @@ interface IState {
         uint lastPaymentTime;
     }
 
-    struct Debt {
-        Loan loan;
-        uint otherDebt;
-    }
-
     struct Bid {
         address bidder;
         uint propertyValue;

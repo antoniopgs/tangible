@@ -48,7 +48,7 @@ contract Info is IInfo, LoanStatus {
     }
 
     function bidActionable(uint tokenId, uint idx) external view returns(bool) {
-        return _bidActionable(_bids[tokenId][idx], _minSalePrice(_debts[tokenId].loan));
+        return _bidActionable(_bids[tokenId][idx], _minSalePrice(_loans[tokenId]));
     }
 
     function userBids(address user) external view returns(BidInfo[] memory _userBids) {
@@ -84,28 +84,20 @@ contract Info is IInfo, LoanStatus {
     }
 
     function minSalePrice(uint tokenId) external view returns(uint) {
-        return _minSalePrice(_debts[tokenId].loan);
+        return _minSalePrice(_loans[tokenId]);
     }
 
     // Token Debts
     function unpaidPrincipal(uint tokenId) external view returns(uint) {
-        return _debts[tokenId].loan.unpaidPrincipal;
+        return _loans[tokenId].unpaidPrincipal;
     }
 
     function accruedInterest(uint tokenId) external view returns(uint) {
-        return _accruedInterest(_debts[tokenId].loan);
+        return _accruedInterest(_loans[tokenId]);
     }
 
     function status(uint tokenId) external view returns(Status) {
-        return _status(_debts[tokenId].loan);
-    }
-
-    function redeemable(uint tokenId) external view returns(bool) {
-        return _redeemable(_debts[tokenId].loan);
-    }
-
-    function defaultTime(Loan memory loan) external view returns (uint) {
-        return _defaultTime(loan);
+        return _status(_loans[tokenId]);
     }
 
     function _loanMaxMonths(Loan memory loan) internal pure returns (uint) {
@@ -115,7 +107,7 @@ contract Info is IInfo, LoanStatus {
     function loanChart(uint tokenId) external view returns(uint[] memory x, uint[] memory y) {
 
         // Get loan
-        Loan memory loan = _debts[tokenId].loan;
+        Loan memory loan = _loans[tokenId];
 
         // Loop loan months
         for (uint i = 1; i <= _loanMaxMonths(loan); i++) {
@@ -154,10 +146,6 @@ contract Info is IInfo, LoanStatus {
 
     function redemptionFeeSpread() external view returns(UD60x18) {
         return _redemptionFeeSpread;
-    }
-
-    function redemptionWindow() external view returns(uint) {
-        return _redemptionWindow;
     }
 
     function totalDeposits() external view returns(uint) {
