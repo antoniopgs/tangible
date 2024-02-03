@@ -102,34 +102,9 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         uint sellerRepayment,
         uint sellerInterest
     ) external {
-
-        // Update totalDeposits
-        totalDeposits += sellerInterest;
-
-        // Settle pool and seller
-        if (buyerPrincipal >= sellerRepayment) {
-
-            // Update pool
-            totalPrincipal += buyerPrincipal - sellerRepayment;
-
-        } else {
-
-            // Update pool
-            totalPrincipal -= sellerRepayment - buyerPrincipal;
-        }
-
-        // Calculate salePrice & sellerDebt
-        uint salePrice = buyerDownPayment + buyerPrincipal;
-        uint sellerDebt = sellerRepayment + sellerInterest;
-        // require(_bidActionable(_bid, sellerDebt), "bid not actionable");
-        require(salePrice >= sellerDebt, "salePrice must cover sellerDebt");
-        uint sellerEquity = salePrice - sellerDebt;
-
-        // Push sellerEquity to seller
-        UNDERLYING.safeTransfer(seller, sellerEquity);
-
-        // Transfer NFT from seller to buyer
-        PROPERTY.safeTransferFrom(seller, buyer, tokenId); // Question: start mortgage before this?
+        
+        // Call Vault
+        vault.fooBar(sellerInterest, buyerPrincipal, sellerRepayment);
 
         // If buyer needs loan
         if (buyerPrincipal > 0) {
@@ -146,6 +121,9 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
             // Clear nft debt
             loan.unpaidPrincipal = 0;
         }
+
+        // Transfer NFT from seller to buyer
+        PROPERTY.safeTransferFrom(seller, buyer, tokenId);
     }
 
     function _calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) internal pure returns(UD60x18 paymentPerSecond) {

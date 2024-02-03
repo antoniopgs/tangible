@@ -99,7 +99,7 @@ contract Vault is IVault, ERC20, Ownable(msg.sender) {
     }
 
     function availableLiquidity() public view returns(uint) {
-        return UNDERLYING.balanceOf(address(this)) - debt;
+        return deposits - debt;
     }
 
     function borrow(address receiver, uint principal) external {
@@ -123,5 +123,39 @@ contract Vault is IVault, ERC20, Ownable(msg.sender) {
 
         // Pull underlying
         UNDERLYING.safeTransferFrom(msg.sender, address(this), repayment + interest);
+    }
+
+    function fooBar(
+        address seller,
+        uint sellerInterest,
+        uint buyerPrincipal,
+        uint sellerRepayment,
+        uint buyerDownPayment
+    ) external {
+
+        // Update deposits
+        deposits += sellerInterest;
+
+        // Settle pool and seller
+        if (buyerPrincipal >= sellerRepayment) {
+
+            // Update debts
+            debt += buyerPrincipal - sellerRepayment;
+
+        } else {
+
+            // Update debts
+            debt -= sellerRepayment - buyerPrincipal;
+        }
+
+        // Calculate salePrice & sellerDebt
+        uint salePrice = buyerDownPayment + buyerPrincipal;
+        uint sellerDebt = sellerRepayment + sellerInterest;
+        // require(_bidActionable(_bid, sellerDebt), "bid not actionable");
+        require(salePrice >= sellerDebt, "salePrice must cover sellerDebt");
+        uint sellerEquity = salePrice - sellerDebt;
+
+        // Push sellerEquity to seller
+        UNDERLYING.safeTransfer(seller, sellerEquity);
     }
 }
