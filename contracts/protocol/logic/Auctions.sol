@@ -5,6 +5,8 @@ import "../../../interfaces/logic/IAuctions.sol";
 import "./loanStatus/LoanStatus.sol";
 import "../../../interfaces/logic/IBorrowing.sol";
 
+import { console } from "forge-std/console.sol";
+
 contract Auctions is IAuctions, LoanStatus {
 
     using SafeERC20 for IERC20;
@@ -28,7 +30,8 @@ contract Auctions is IAuctions, LoanStatus {
         require(propertyValue >= loan.unpaidPrincipal + _accruedInterest(loan), "propertyValue must cover sellerDebt");
 
         // Pull downPayment from bidder
-        UNDERLYING.safeTransferFrom(msg.sender, address(this), downPayment);
+        // UNDERLYING.safeTransferFrom(msg.sender, address(this), downPayment);
+        vault.deposit(downPayment);
 
         // Add bid to tokenId bids
         _bids[tokenId].push(
@@ -71,11 +74,15 @@ contract Auctions is IAuctions, LoanStatus {
         // Get bid
         Bid storage _bid = _bids[tokenId][idx];
 
+        console.log("ab1");
+
         // Debt Transfer NFT from seller to bidder
         IBorrowing(address(this)).debtTransfer({
             tokenId: tokenId,
             _bid: _bid
         });
+
+        console.log("ab1");
 
         // Delete accepted bid
         _deleteBid(_bids[tokenId], idx);

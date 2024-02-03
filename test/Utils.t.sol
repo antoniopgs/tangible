@@ -141,11 +141,15 @@ contract Utils is DeployScript, Test {
             vm.prank(vault.owner());
             vault.updateUserEligible(depositor, true);
 
+            console.log("malb6.4");
+
             // Depositor approves & deposits
             vm.startPrank(depositor);
-            UNDERLYING.approve(proxy, neededLiquidity);
+            UNDERLYING.approve(address(vault), neededLiquidity);
             vault.deposit(neededLiquidity);
             vm.stopPrank();
+
+            console.log("malb6.5");
         }
 
         // Deal downPayment to bidder

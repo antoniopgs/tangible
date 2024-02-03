@@ -10,6 +10,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
 
+import "forge-std/console.sol";
+
 contract Vault is IVault, ERC20, Ownable(msg.sender) {
 
     IERC20 immutable UNDERLYING;
@@ -155,7 +157,11 @@ contract Vault is IVault, ERC20, Ownable(msg.sender) {
         require(salePrice >= sellerDebt, "salePrice must cover sellerDebt");
         uint sellerEquity = salePrice - sellerDebt;
 
+        console.log("fb9");
+
         // Push sellerEquity to seller
         UNDERLYING.safeTransfer(seller, sellerEquity);
+
+        console.log("fb10");
     }
 }
