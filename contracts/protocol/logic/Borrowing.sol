@@ -122,10 +122,10 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         // vault.payDebt(loan.unpaidPrincipal, interest);
 
         // Calculate sellerEquity
-        uint sellerEquity = salePrice - sellerDebt;
+        // uint sellerEquity = salePrice - sellerDebt;
 
         // Send sellerEquity to seller
-        UNDERLYING.safeTransfer(seller, sellerEquity);
+        // UNDERLYING.safeTransfer(seller, sellerEquity);
 
         // Calculate principal
         // uint principal = salePrice - downPayment;
@@ -137,20 +137,20 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         // PROPERTY.safeTransferFrom(seller, _bid.bidder, tokenId);
 
         // If bidder needs loan
-        if (downPayment < salePrice) {
+        // if (downPayment < salePrice) {
 
-            // Start new Loan
-            _startNewMortgage({
-                loan: loan,
-                principal: principal,
-                maxDurationMonths: _bid.loanMonths
-            });
+        //     // Start new Loan
+        //     _startNewMortgage({
+        //         loan: loan,
+        //         principal: principal,
+        //         maxDurationMonths: _bid.loanMonths
+        //     });
 
-        } else {
+        // } else {
 
-            // Clear nft debt
-            loan.unpaidPrincipal = 0;
-        }
+        //     // Clear nft debt
+        //     loan.unpaidPrincipal = 0;
+        // }
     }
     
     function debtTransfer2(
@@ -184,12 +184,29 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         // Calculate salePrice & sellerDebt
         uint salePrice = buyerDownPayment + buyerPrincipal;
         uint sellerDebt = sellerRepayment + sellerInterest;
+        uint sellerEquity = salePrice - sellerDebt;
 
-        // Push sellerEquity (salePrice - sellerDebt) to seller
-        UNDERLYING.safeTransfer(seller, salePrice - sellerDebt);
+        // Push sellerEquity to seller
+        UNDERLYING.safeTransfer(seller, sellerEquity);
 
         // Transfer NFT from seller to buyer
         PROPERTY.safeTransferFrom(seller, buyer, tokenId);
+
+        // If buyer needs loan
+        if (buyerPrincipal > 0) {
+
+            // Start new Loan
+            _startNewMortgage({
+                loan: loan,
+                principal: principal,
+                maxDurationMonths: _bid.loanMonths
+            });
+
+        } else {
+
+            // Clear nft debt
+            loan.unpaidPrincipal = 0;
+        }
     }
 
     function _calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) internal pure returns(UD60x18 paymentPerSecond) {
