@@ -22,8 +22,8 @@ contract Vault is IVault, ERC20, Ownable(msg.sender) {
 
     using SafeERC20 for IERC20;
 
-    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {
-
+    constructor(string memory name_, string memory symbol_, IERC20 UNDERLYING_) ERC20(name_, symbol_) {
+        UNDERLYING = UNDERLYING_;
     }
 
     function deposit(uint underlying) external {

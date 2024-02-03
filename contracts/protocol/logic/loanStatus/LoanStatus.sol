@@ -23,7 +23,6 @@ abstract contract LoanStatus is Amortization {
         }
     }
 
-    // Todo: add otherDebt later?
     function _bidActionable(Bid memory _bid, uint minSalePrice) internal view returns(bool) { // Todo: move this to Auctions.sol?
 
         // Calculate bid principal

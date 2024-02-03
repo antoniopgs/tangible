@@ -42,7 +42,7 @@ contract DeployScript is Script {
     InterestCurve interest;
 
     // Tokens
-    IERC20 UNDERLYING;
+    IERC20Metadata UNDERLYING;
     PropertyNft PROPERTY;
 
     Vault vault;
@@ -50,7 +50,7 @@ contract DeployScript is Script {
     constructor() {
 
         // Fork
-        // vm.createSelectFork("https://mainnet.infura.io/v3/9a2aca5b5e794f5c929bca9e494fae24"); // Note: Commented for speed
+        vm.createSelectFork("https://mainnet.infura.io/v3/9a2aca5b5e794f5c929bca9e494fae24"); // Note: Commented for speed
 
         // Deploy protocolProxy
         proxy = payable(new ProtocolProxy());
@@ -66,15 +66,21 @@ contract DeployScript is Script {
         // Deploy Tokens
         deployTokens();
 
+        vault = new Vault({
+            name_: string.concat("Tangible ", UNDERLYING.name()),
+            symbol_: string.concat("t", UNDERLYING.symbol()),
+            UNDERLYING_: UNDERLYING
+        });
+
         // Set Function Selectors
         setSelectors();
 
         // Initialize proxy
-        // Initializer(proxy).initialize({
-        //     _UNDERLYING: USDC_ETHEREUM_MAINNET,
-        //     _SHARES: ,
-        //     _PROPERTY:
-        // });
+        Initializer(proxy).initialize({
+            _UNDERLYING: USDC_ETHEREUM_MAINNET,
+            _SHARES: ,
+            _PROPERTY:
+        });
     }
 
     function deployImplementations() private {
@@ -91,7 +97,7 @@ contract DeployScript is Script {
     function deployTokens() private {
 
         // Deploy UNDERLYING
-        UNDERLYING = IERC20(USDC_ETHEREUM_MAINNET);
+        UNDERLYING = IERC20Metadata(USDC_ETHEREUM_MAINNET);
 
         // Deploy PROPERTY
         PROPERTY = new PropertyNft({
