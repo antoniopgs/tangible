@@ -110,15 +110,20 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         Loan storage loan = _loans[tokenId];
         uint interest = _accruedInterest(loan);
 
+        // Calculate sellerDebt
+        uint sellerDebt = loan.unpaidPrincipal + interest;
+
         // Ensure bid is actionable
-        require(_bidActionable(_bid, _minSalePrice(loan)), "bid not actionable");
+        require(_bidActionable(_bid, sellerDebt), "bid not actionable");
 
         // Pay Pool
         vault.payDebt(loan.unpaidPrincipal, interest);
 
-        // Send sellerEquity (salePrice - sellerDebt) to seller
-        // sellerDebt = loan.unpaidPrincipal + interest
-        UNDERLYING.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest);
+        // Calculate sellerEquity
+        uint sellerEquity = salePrice - sellerDebt;
+
+        // Send sellerEquity to seller
+        UNDERLYING.safeTransfer(seller, sellerEquity);
 
         // Calculate principal
         uint principal = salePrice - downPayment;

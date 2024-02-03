@@ -23,7 +23,7 @@ abstract contract LoanStatus is Amortization {
         }
     }
 
-    function _bidActionable(Bid memory _bid, uint minSalePrice) internal view returns(bool) { // Todo: move this to Auctions.sol?
+    function _bidActionable(Bid memory _bid, uint sellerDebt) internal view returns(bool) { // Todo: move this to Auctions.sol?
 
         // Calculate bid principal
         uint principal = _bid.propertyValue - _bid.downPayment;
@@ -33,14 +33,10 @@ abstract contract LoanStatus is Amortization {
 
         // Return actionability
         return (
-            // principal <= _availableLiquidity() &&
+            principal <= vault.availableLiquidity() &&
             ltv.lte(_maxLtv) && // Note: LTV already validated in bid(), but re-validate it here (because admin may have updated it)
-            _bid.propertyValue >= minSalePrice
+            _bid.propertyValue >= sellerDebt
         );
-    }
-
-    function _minSalePrice(Loan memory loan) internal view returns(uint) {
-        return loan.unpaidPrincipal + _accruedInterest(loan);
     }
 
     function highestActionableBid(uint tokenId) internal view returns (uint highestActionableIdx) {
@@ -52,8 +48,11 @@ abstract contract LoanStatus is Amortization {
             revert("token has no bids");
         }
 
-        // Get minSalePrice
-        uint minSalePrice = _minSalePrice(_loans[tokenId]);
+        // Get loan
+        Loan memory loan = _loans[tokenId];
+
+        // Get sellerDebt
+        uint sellerDebt = loan.unpaidPrincipal + _accruedInterest(loan);
 
         // Declare found bool
         bool found;
@@ -66,7 +65,7 @@ abstract contract LoanStatus is Amortization {
 
             // If bid has higher propertyValue and is actionable
             // Note: If 1st index has actionable bid > wont't work (but >= will)
-            if (bid.propertyValue >= tokenBids[highestActionableIdx].propertyValue && _bidActionable(bid, minSalePrice)) {
+            if (bid.propertyValue >= tokenBids[highestActionableIdx].propertyValue && _bidActionable(bid, sellerDebt)) {
                 
                 // Update found if needed
                 if (!found) {

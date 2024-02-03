@@ -16,7 +16,6 @@ interface IInfo is IState { // Todo: fix later
     function bids(uint tokenId, uint idx) external view returns(Bid memory);
     function bidsLength(uint tokenId) external view returns(uint);
     function bidActionable(uint tokenId, uint idx) external view returns(bool);
-    function minSalePrice(uint tokenId) external view returns(uint);
 
     // Loans
     function unpaidPrincipal(uint tokenId) external view returns(uint);

@@ -117,7 +117,6 @@ contract DeployScript is Script {
         infoSelectors[5] = IInfo.bids.selector;
         infoSelectors[6] = IInfo.bidsLength.selector;
         infoSelectors[7] = IInfo.bidActionable.selector;
-        infoSelectors[9] = IInfo.minSalePrice.selector;
         infoSelectors[10] = IInfo.unpaidPrincipal.selector;
         infoSelectors[11] = IInfo.accruedInterest.selector;
         infoSelectors[12] = IInfo.status.selector;

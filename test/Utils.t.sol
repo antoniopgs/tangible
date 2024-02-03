@@ -66,7 +66,8 @@ contract Utils is DeployScript, Test {
         uint loanMonths = bound(randomness, 6, 120); // Note: 6 months to 10 years
 
         // Pick actionable propertyValue/salePrice
-        uint minPropertyValue = IInfo(proxy).unpaidPrincipal(randomTokenId) > 0 ? IInfo(proxy).minSalePrice(randomTokenId) : 1;
+        uint sellerDebt = IInfo(proxy).unpaidPrincipal(randomTokenId) +  IInfo(proxy).accruedInterest(randomTokenId);
+        uint minPropertyValue = sellerDebt > 0 ? sellerDebt : 1;
         uint propertyValue = bound(randomness, minPropertyValue, minPropertyValue + 1_000_000_000e6); // Note: minPropertyValue to minPropertyValue + 1 billion
 
         // Pick actionable downPayment
@@ -115,7 +116,8 @@ contract Utils is DeployScript, Test {
         uint loanMonths = bound(randomness, 6, 120); // Note: 6 months to 10 years
 
         // Pick actionable propertyValue/salePrice
-        uint minPropertyValue = IInfo(proxy).unpaidPrincipal(tokenId) > 0 ? IInfo(proxy).minSalePrice(tokenId) : 1;
+        uint sellerDebt = IInfo(proxy).unpaidPrincipal(tokenId) +  IInfo(proxy).accruedInterest(tokenId);
+        uint minPropertyValue = sellerDebt > 0 ? sellerDebt : 1;
         uint propertyValue = bound(randomness, minPropertyValue, minPropertyValue + 100_000_000e6); // Note: minPropertyValue to minPropertyValue + 100 millon // Note: UNDERLYING has 6 Decimals
 
         // Pick actionable downPayment

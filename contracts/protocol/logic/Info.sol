@@ -29,11 +29,8 @@ contract Info is IInfo, LoanStatus {
     }
 
     function bidActionable(uint tokenId, uint idx) external view returns(bool) {
-        return _bidActionable(_bids[tokenId][idx], _minSalePrice(_loans[tokenId]));
-    }
-
-    function minSalePrice(uint tokenId) external view returns(uint) {
-        return _minSalePrice(_loans[tokenId]);
+        Loan memory loan = _loans[tokenId];
+        return _bidActionable(_bids[tokenId][idx], loan.unpaidPrincipal + _accruedInterest(loan));
     }
 
     // Token Debts
