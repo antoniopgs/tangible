@@ -90,70 +90,10 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         // Delete bid
         _deleteBid(_bids[tokenId], idx);
     }
-
-    // Note: pulling buyer's downPayment to address(this) is safer, because buyer doesn't need to approve seller (which could let him run off with money)
-    // Question: if active mortgage is being paid off with a new loan, the pool is paying itself, so money flows should be simpler...
-    // Todo: figure out where to send otherDebt
-    // Note: bid() now pulls downPayment, so no need to pull it here
-    // Todo: add/implement otherDebt later?
-    // Todo: figure out access restriction
-    function debtTransfer(uint tokenId, Bid memory _bid) public { // Todo: maybe move elsewhere (like ERC721) to not need onlySelf
-
-        // Get seller
-        // address seller = PROPERTY.ownerOf(tokenId);
-
-        // Get bid info
-        // uint salePrice = _bid.propertyValue;
-        // uint downPayment = _bid.downPayment;
-
-        // Get loan
-        // Loan storage loan = _loans[tokenId];
-
-        // Get interest
-        // uint interest = _accruedInterest(loan);
-
-        // Calculate sellerDebt
-        // uint sellerDebt = loan.unpaidPrincipal + interest;
-
-        // Ensure bid is actionable
-        require(_bidActionable(_bid, sellerDebt), "bid not actionable");
-
-        // Pay Pool
-        // vault.payDebt(loan.unpaidPrincipal, interest);
-
-        // Calculate sellerEquity
-        // uint sellerEquity = salePrice - sellerDebt;
-
-        // Send sellerEquity to seller
-        // UNDERLYING.safeTransfer(seller, sellerEquity);
-
-        // Calculate principal
-        // uint principal = salePrice - downPayment;
-
-        // Borrow from pool
-        // vault.borrow(seller, principal);
-
-        // Send nft from seller to bidder
-        // PROPERTY.safeTransferFrom(seller, _bid.bidder, tokenId);
-
-        // If bidder needs loan
-        // if (downPayment < salePrice) {
-
-        //     // Start new Loan
-        //     _startNewMortgage({
-        //         loan: loan,
-        //         principal: principal,
-        //         maxDurationMonths: _bid.loanMonths
-        //     });
-
-        // } else {
-
-        //     // Clear nft debt
-        //     loan.unpaidPrincipal = 0;
-        // }
-    }
     
-    function debtTransfer2(
+    // Note: bid() already pulls downPayment (no need to pull it here)
+    // Todo: figure out access restriction
+    function debtTransfer(
         uint tokenId,
         address buyer,
         address seller,
@@ -178,19 +118,18 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
             totalPrincipal -= sellerRepayment - buyerPrincipal;
         }
 
-        // Pull buyerDownPayment from buyer
-        UNDERLYING.safeTransferFrom(buyer, address(this), buyerDownPayment);
-
         // Calculate salePrice & sellerDebt
         uint salePrice = buyerDownPayment + buyerPrincipal;
         uint sellerDebt = sellerRepayment + sellerInterest;
+        // require(_bidActionable(_bid, sellerDebt), "bid not actionable");
+        require(salePrice >= sellerDebt, "salePrice must cover sellerDebt");
         uint sellerEquity = salePrice - sellerDebt;
 
         // Push sellerEquity to seller
         UNDERLYING.safeTransfer(seller, sellerEquity);
 
         // Transfer NFT from seller to buyer
-        PROPERTY.safeTransferFrom(seller, buyer, tokenId);
+        PROPERTY.safeTransferFrom(seller, buyer, tokenId); // Question: start mortgage before this?
 
         // If buyer needs loan
         if (buyerPrincipal > 0) {
