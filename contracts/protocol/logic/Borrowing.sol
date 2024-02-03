@@ -80,12 +80,15 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
 
         // Get idx
         uint idx = highestActionableBid(tokenId);
-
+        
+        // Note: might need to change debtTransfer() visibility
         debtTransfer({
             tokenId: tokenId,
-            seller: PROPERTY.ownerOf(tokenId),
             _bid: _bids[tokenId][idx]
-        }); // Note: might need to change debtTransfer() visibility
+        });
+
+        // Delete bid
+        _deleteBid(_bids[tokenId], idx);
     }
 
     // Note: pulling buyer's downPayment to address(this) is safer, because buyer doesn't need to approve seller (which could let him run off with money)
@@ -94,10 +97,12 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
     // Note: bid() now pulls downPayment, so no need to pull it here
     // Todo: add/implement otherDebt later?
     // Todo: figure out access restriction
-    function debtTransfer(uint tokenId, address seller, Bid memory _bid) public { // Todo: maybe move elsewhere (like ERC721) to not need onlySelf
+    function debtTransfer(uint tokenId, Bid memory _bid) public { // Todo: maybe move elsewhere (like ERC721) to not need onlySelf
+
+        // Get seller
+        address seller = PROPERTY.ownerOf(tokenId);
 
         // Get bid info
-        // address seller /* = ownerOf(tokenId) */;
         uint salePrice = _bid.propertyValue;
         uint downPayment = _bid.downPayment;
 

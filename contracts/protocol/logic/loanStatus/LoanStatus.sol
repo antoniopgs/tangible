@@ -84,4 +84,16 @@ abstract contract LoanStatus is Amortization {
             revert("token has no actionable bids");
         }
     }
+
+    function _deleteBid(Bid[] storage tokenBids, uint idx) internal {
+
+        // Get tokenLastBid
+        Bid memory tokenLastBid = tokenBids[tokenBids.length - 1];
+
+        // Write tokenLastBid over idx to remove
+        tokenBids[idx] = tokenLastBid;
+
+        // Remove tokenLastBid
+        tokenBids.pop();
+    }
 }

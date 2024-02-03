@@ -23,5 +23,5 @@ interface IBorrowing is IState { // Todo: fix later
     function foreclose(uint tokenId) external;
 
     // Other
-    function debtTransfer(uint tokenId, address seller, Bid memory _bid) external; // only callable indirectly
+    function debtTransfer(uint tokenId, Bid memory _bid) external; // only callable indirectly
 }

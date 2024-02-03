@@ -58,7 +58,7 @@ contract Auctions is IAuctions, LoanStatus {
         UNDERLYING.safeTransfer(bidToRemove.bidder, bidToRemove.downPayment);
 
         // Delete bid
-        deleteBid(tokenBids, idx);
+        _deleteBid(tokenBids, idx);
     }
     
     // Todo: implement bid/neededLoan locks
@@ -71,23 +71,10 @@ contract Auctions is IAuctions, LoanStatus {
         // Debt Transfer NFT from seller to bidder
         IBorrowing(address(this)).debtTransfer({
             tokenId: tokenId,
-            seller: PROPERTY.ownerOf(tokenId),
             _bid: _bid
         });
 
         // Delete accepted bid
-        deleteBid(_bids[tokenId], idx);
-    }
-
-    function deleteBid(Bid[] storage tokenBids, uint idx) private {
-
-        // Get tokenLastBid
-        Bid memory tokenLastBid = tokenBids[tokenBids.length - 1];
-
-        // Write tokenLastBid over idx to remove
-        tokenBids[idx] = tokenLastBid;
-
-        // Remove tokenLastBid
-        tokenBids.pop();
+        _deleteBid(_bids[tokenId], idx);
     }
 }
