@@ -93,18 +93,21 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
     
     // Note: bid() already pulls downPayment (no need to pull it here)
     // Todo: figure out access restriction
-    function debtTransfer(
-        uint tokenId,
-        address buyer,
-        address seller,
-        uint buyerDownPayment,
-        uint buyerPrincipal,
-        uint sellerRepayment,
-        uint sellerInterest
-    ) external {
+    function debtTransfer(uint tokenId, Bid memory _bid) public {
+
+        address seller = PROPERTY.ownerOf(tokenId);
+        address buyer = _bid.bidder;
+        uint buyerPrincipal = _bid.propertyValue - _bid.downPayment;
+        Loan storage loan = _loans[tokenId];
         
         // Call Vault
-        vault.fooBar(sellerInterest, buyerPrincipal, sellerRepayment);
+        vault.fooBar({
+            seller: seller,
+            sellerRepayment: loan.unpaidPrincipal,
+            sellerInterest: _accruedInterest(loan),
+            buyerPrincipal: buyerPrincipal,
+            buyerDownPayment: _bid.downPayment
+        });
 
         // If buyer needs loan
         if (buyerPrincipal > 0) {
@@ -112,7 +115,7 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
             // Start new Loan
             _startNewMortgage({
                 loan: loan,
-                principal: principal,
+                principal: buyerPrincipal,
                 maxDurationMonths: _bid.loanMonths
             });
 

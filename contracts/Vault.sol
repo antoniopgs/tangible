@@ -127,9 +127,9 @@ contract Vault is IVault, ERC20, Ownable(msg.sender) {
 
     function fooBar(
         address seller,
+        uint sellerRepayment,
         uint sellerInterest,
         uint buyerPrincipal,
-        uint sellerRepayment,
         uint buyerDownPayment
     ) external {
 
