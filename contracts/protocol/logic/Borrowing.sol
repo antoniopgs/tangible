@@ -96,7 +96,6 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
     function debtTransfer(uint tokenId, Bid memory _bid) public {
 
         address seller = PROPERTY.ownerOf(tokenId);
-        address buyer = _bid.bidder;
         uint buyerPrincipal = _bid.propertyValue - _bid.downPayment;
         Loan storage loan = _loans[tokenId];
         
@@ -125,8 +124,8 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
             loan.unpaidPrincipal = 0;
         }
 
-        // Transfer NFT from seller to buyer
-        PROPERTY.safeTransferFrom(seller, buyer, tokenId);
+        // Transfer NFT from seller to buyer/bidder
+        PROPERTY.safeTransferFrom(seller, _bid.bidder, tokenId);
     }
 
     function _calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) internal pure returns(UD60x18 paymentPerSecond) {
