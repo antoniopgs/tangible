@@ -137,23 +137,22 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         // PROPERTY.safeTransferFrom(seller, _bid.bidder, tokenId);
 
         // If bidder needs loan
-        // if (downPayment < salePrice) {
+        if (downPayment < salePrice) {
 
-        //     // Start new Loan
-        //     _startNewMortgage({
-        //         loan: loan,
-        //         principal: principal,
-        //         maxDurationMonths: _bid.loanMonths
-        //     });
+            // Start new Loan
+            _startNewMortgage({
+                loan: loan,
+                principal: principal,
+                maxDurationMonths: _bid.loanMonths
+            });
 
-        // } else {
+        } else {
 
-        //     // Clear nft debt
-        //     loan.unpaidPrincipal = 0;
-        // }
+            // Clear nft debt
+            loan.unpaidPrincipal = 0;
+        }
     }
     
-    // Note: sellerEquity = salePrice - sellerDebt?
     function debtTransfer2(
         uint tokenId,
         address buyer,
@@ -167,48 +166,30 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         // Update totalDeposits
         totalDeposits += sellerInterest;
 
-        // Calculate sellerDebt
-        uint sellerDebt = sellerRepayment + sellerInterest;
-
         // Settle pool and seller
-        if (buyerPrincipal >= sellerDebt) {
+        if (buyerPrincipal >= sellerRepayment) {
 
             // Update pool
-            totalPrincipal += buyerPrincipal - sellerRepayment; // Note: no underflow (sellerRepayment <= sellerDebt <= buyerPrincipal)
-
-            // Push from pool to seller
-            UNDERLYING.safeTransfer(seller, buyerPrincipal - sellerDebt);
+            totalPrincipal += buyerPrincipal - sellerRepayment;
 
         } else {
 
             // Update pool
-            totalPrincipal -= sellerRepayment - buyerPrincipal; // Note: MIGHT UNDERFLOW (buyerPrincipal < sellerDebt AND sellerDebt >= sellerRepayment)
-
-            // Pull from seller to pool
-            UNDERLYING.safeTransferFrom(seller, address(this), sellerDebt - buyerPrincipal);
+            totalPrincipal -= sellerRepayment - buyerPrincipal;
         }
-        
-        // Send buyerDownPayment from buyer to seller
-        UNDERLYING.safeTransferFrom(buyer, seller, buyerDownPayment);
+
+        // Pull buyerDownPayment from buyer
+        UNDERLYING.safeTransferFrom(buyer, address(this), buyerDownPayment);
+
+        // Calculate salePrice & sellerDebt
+        uint salePrice = buyerDownPayment + buyerPrincipal;
+        uint sellerDebt = sellerRepayment + sellerInterest;
+
+        // Push sellerEquity (salePrice - sellerDebt) to seller
+        UNDERLYING.safeTransfer(seller, salePrice - sellerDebt);
 
         // Transfer NFT from seller to buyer
         PROPERTY.safeTransferFrom(seller, buyer, tokenId);
-        
-        // If buyer needs mortgage
-        if (buyerPrincipal > 0) {
-
-            // Start new Mortgage
-            _startNewMortgage({
-                loan: loan,
-                principal: principal,
-                maxDurationMonths: _bid.loanMonths
-            });
-        
-        } else {
-
-            // Clear nft debt
-            loan.unpaidPrincipal = 0;
-        }
     }
 
     function _calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) internal pure returns(UD60x18 paymentPerSecond) {
