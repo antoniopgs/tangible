@@ -100,26 +100,26 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
     function debtTransfer(uint tokenId, Bid memory _bid) public { // Todo: maybe move elsewhere (like ERC721) to not need onlySelf
 
         // Get seller
-        address seller = PROPERTY.ownerOf(tokenId);
+        // address seller = PROPERTY.ownerOf(tokenId);
 
         // Get bid info
-        uint salePrice = _bid.propertyValue;
-        uint downPayment = _bid.downPayment;
+        // uint salePrice = _bid.propertyValue;
+        // uint downPayment = _bid.downPayment;
 
         // Get loan
-        Loan storage loan = _loans[tokenId];
+        // Loan storage loan = _loans[tokenId];
 
         // Get interest
-        uint interest = _accruedInterest(loan);
+        // uint interest = _accruedInterest(loan);
 
         // Calculate sellerDebt
-        uint sellerDebt = loan.unpaidPrincipal + interest;
+        // uint sellerDebt = loan.unpaidPrincipal + interest;
 
         // Ensure bid is actionable
         require(_bidActionable(_bid, sellerDebt), "bid not actionable");
 
         // Pay Pool
-        vault.payDebt(loan.unpaidPrincipal, interest);
+        // vault.payDebt(loan.unpaidPrincipal, interest);
 
         // Calculate sellerEquity
         uint sellerEquity = salePrice - sellerDebt;
@@ -128,13 +128,13 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         UNDERLYING.safeTransfer(seller, sellerEquity);
 
         // Calculate principal
-        uint principal = salePrice - downPayment;
+        // uint principal = salePrice - downPayment;
 
         // Borrow from pool
-        vault.borrow(seller, principal);
+        // vault.borrow(seller, principal);
 
         // Send nft from seller to bidder
-        PROPERTY.safeTransferFrom(seller, _bid.bidder, tokenId);
+        // PROPERTY.safeTransferFrom(seller, _bid.bidder, tokenId);
 
         // If bidder needs loan
         if (downPayment < salePrice) {
@@ -152,7 +152,8 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
             loan.unpaidPrincipal = 0;
         }
     }
-
+    
+    // Note: sellerEquity = salePrice - sellerDebt?
     function debtTransfer2(
         uint tokenId,
         address buyer,
