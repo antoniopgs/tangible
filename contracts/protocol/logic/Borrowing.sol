@@ -117,7 +117,7 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         vault.payDebt(loan.unpaidPrincipal, interest);
 
         // Send sellerEquity (salePrice - sellerDebt) to seller
-        // sellerDebt = loan.unpaidPrincipal + interest + saleFee
+        // sellerDebt = loan.unpaidPrincipal + interest
         UNDERLYING.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest);
 
         // Calculate principal

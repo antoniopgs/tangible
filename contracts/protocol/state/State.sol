@@ -14,7 +14,7 @@ abstract contract State is IState, TargetManager {
     uint constant SECONDS_IN_YEAR = 365 days;
     uint constant MONTHS_IN_YEAR = 12;
     uint constant SECONDS_IN_MONTH = SECONDS_IN_YEAR / MONTHS_IN_YEAR; // Note: SECONDS_IN_YEAR % MONTHS_IN_YEAR = 0 (no precision loss)
-    
+
     bool public initialized;
 
     // Links
@@ -35,11 +35,6 @@ abstract contract State is IState, TargetManager {
     // Loan Terms
     UD60x18 internal _maxLtv;
     uint internal _maxLoanMonths;
-
-    // Fees/Spreads
-    // UD60x18 internal _baseSaleFeeSpread;
-    // UD60x18 internal _redemptionFeeSpread;
-    // UD60x18 internal _defaultFeeSpread;
 
     function _isResident(address addr) internal view returns (bool) {
         return _addressToResident[addr] != 0; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
