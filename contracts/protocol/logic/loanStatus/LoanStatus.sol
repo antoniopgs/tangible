@@ -34,7 +34,7 @@ abstract contract LoanStatus is Amortization {
         // Return actionability
         return (
             principal <= vault.availableLiquidity() &&
-            ltv.lte(_maxLtv) && // Note: LTV already validated in bid(), but re-validate it here (because admin may have updated it)
+            ltv.lte(_maxLtv) && // Note: LTV already validated in bid(), but re-validate (in case admin has updated it)
             _bid.propertyValue >= sellerDebt
         );
     }
