@@ -61,7 +61,8 @@ contract Auctions is IAuctions, LoanStatus {
         require(msg.sender == bidToRemove.bidder, "only bidder can remove his bid");
 
         // Return downPayment to bidder
-        UNDERLYING.safeTransfer(bidToRemove.bidder, bidToRemove.downPayment);
+        // UNDERLYING.safeTransfer(bidToRemove.bidder, bidToRemove.downPayment);
+        vault.withdraw(bidToRemove.downPayment);
 
         // Delete bid
         _deleteBid(tokenBids, idx);
