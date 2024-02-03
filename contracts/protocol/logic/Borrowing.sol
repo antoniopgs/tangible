@@ -106,8 +106,10 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         uint salePrice = _bid.propertyValue;
         uint downPayment = _bid.downPayment;
 
-        // Get loan info
+        // Get loan
         Loan storage loan = _loans[tokenId];
+
+        // Get interest
         uint interest = _accruedInterest(loan);
 
         // Calculate sellerDebt
@@ -131,9 +133,6 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         // Borrow from pool
         vault.borrow(seller, principal);
 
-        // Clear seller/caller debt
-        loan.unpaidPrincipal = 0; // Note: maybe only do this if there's no loan?
-
         // Send nft from seller to bidder
         PROPERTY.safeTransferFrom(seller, _bid.bidder, tokenId);
 
@@ -146,7 +145,53 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
                 principal: principal,
                 maxDurationMonths: _bid.loanMonths
             });
+
+        } else {
+
+            // Clear nft debt
+            loan.unpaidPrincipal = 0;
         }
+    }
+
+    function debtTransfer2(
+        uint tokenId,
+        address buyer,
+        address seller,
+        uint buyerDownPayment,
+        uint buyerPrincipal,
+        uint sellerRepayment,
+        uint sellerInterest
+    ) external {
+
+        // Update totalDeposits
+        totalDeposits += sellerInterest;
+
+        // Calculate sellerDebt
+        uint sellerDebt = sellerRepayment + sellerInterest;
+
+        // Settle pool and seller
+        if (buyerPrincipal >= sellerDebt) {
+
+            // Update pool
+            totalPrincipal += buyerPrincipal - sellerRepayment; // Note: no underflow (sellerRepayment <= sellerDebt <= buyerPrincipal)
+
+            // Push from pool to seller
+            UNDERLYING_TOKEN.safeTransfer(seller, buyerPrincipal - sellerDebt);
+
+        } else {
+
+            // Update pool
+            totalPrincipal -= sellerRepayment - buyerPrincipal; // Note: MIGHT UNDERFLOW (buyerPrincipal < sellerDebt AND sellerDebt >= sellerRepayment)
+
+            // Pull from seller to pool
+            UNDERLYING_TOKEN.safeTransferFrom(seller, address(this), sellerDebt - buyerPrincipal);
+        }
+        
+        // Send buyerDownPayment from buyer to seller
+        UNDERLYING_TOKEN.safeTransferFrom(buyer, seller, buyerDownPayment);
+
+        // Transfer NFT from seller to buyer
+        NFT.safeTransferFrom(seller, buyer, tokenId);
     }
 
     function _calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) internal pure returns(UD60x18 paymentPerSecond) {
