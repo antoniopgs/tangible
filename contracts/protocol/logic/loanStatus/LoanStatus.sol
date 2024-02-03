@@ -40,8 +40,7 @@ abstract contract LoanStatus is Amortization {
     }
 
     function _minSalePrice(Loan memory loan) internal view returns(uint) {
-        UD60x18 saleFeeSpread = _status(loan) == Status.Default ? _baseSaleFeeSpread.add(_defaultFeeSpread) : _baseSaleFeeSpread; // Question: maybe defaultFee should be a boost appplied to interest instead?
-        return convert(convert(loan.unpaidPrincipal + _accruedInterest(loan)).div(convert(uint(1)).sub(saleFeeSpread)));
+        return loan.unpaidPrincipal + _accruedInterest(loan);
     }
 
     function highestActionableBid(uint tokenId) internal view returns (uint highestActionableIdx) {

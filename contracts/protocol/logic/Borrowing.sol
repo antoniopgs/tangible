@@ -113,19 +113,12 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         // Ensure bid is actionable
         require(_bidActionable(_bid, _minSalePrice(loan)), "bid not actionable");
 
-        // Calculate saleFee
-        UD60x18 saleFeeSpread = _status(loan) == Status.Default ? _baseSaleFeeSpread.add(_defaultFeeSpread) : _baseSaleFeeSpread; // Question: maybe defaultFee should be a boost appplied to interest instead?
-        uint saleFee = convert(convert(salePrice).mul(saleFeeSpread)); // Question: should this be off propertyValue, or defaulterDebt?
-
         // Pay Pool
         vault.payDebt(loan.unpaidPrincipal, interest);
 
-        // Protocol Charges Fees
-        protocolMoney += saleFee;
-
         // Send sellerEquity (salePrice - sellerDebt) to seller
         // sellerDebt = loan.unpaidPrincipal + interest + saleFee
-        UNDERLYING.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest - saleFee);
+        UNDERLYING.safeTransfer(seller, salePrice - loan.unpaidPrincipal - interest);
 
         // Calculate principal
         uint principal = salePrice - downPayment;

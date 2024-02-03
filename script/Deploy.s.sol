@@ -135,12 +135,9 @@ contract DeployScript is Script {
         ITargetManager(proxy).setSelectorsTarget(residentSelectors, address(residents));
 
         // Set setterSelectors
-        bytes4[] memory setterSelectors = new bytes4[](8);
+        bytes4[] memory setterSelectors = new bytes4[](3);
         setterSelectors[1] = ISetter.updateMaxLtv.selector;
         setterSelectors[2] = ISetter.updateMaxLoanMonths.selector;
-        setterSelectors[4] = ISetter.updateBaseSaleFeeSpread.selector;
-        setterSelectors[6] = ISetter.updateRedemptionFeeSpread.selector;
-        setterSelectors[7] = ISetter.updateDefaultFeeSpread.selector;
         ITargetManager(proxy).setSelectorsTarget(setterSelectors, address(setter));
 
         // Set interestSelectors

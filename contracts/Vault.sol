@@ -99,7 +99,7 @@ contract Vault is IVault, ERC20, Ownable(msg.sender) {
     }
 
     function availableLiquidity() public view returns(uint) {
-        return UNDERLYING.balanceOf(address(this)) - debt; // - protocolMoney?
+        return UNDERLYING.balanceOf(address(this)) - debt;
     }
 
     function borrow(address receiver, uint principal) external {

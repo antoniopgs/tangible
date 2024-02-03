@@ -57,19 +57,7 @@ contract Info is IInfo, LoanStatus {
         return _maxLtv;
     }
 
-    function baseSaleFeeSpread() external view returns(UD60x18) {
-        return _baseSaleFeeSpread;
-    }
-
-    function defaultFeeSpread() external view returns(UD60x18) {
-        return _defaultFeeSpread;
-    }
-
     function maxLoanMonths() external view returns(uint) {
         return _maxLoanMonths;
-    }
-
-    function redemptionFeeSpread() external view returns(UD60x18) {
-        return _redemptionFeeSpread;
     }
 }

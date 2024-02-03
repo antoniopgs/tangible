@@ -26,9 +26,4 @@ interface IInfo is IState { // Todo: fix later
     // Loan Terms
     function maxLtv() external view returns(UD60x18);
     function maxLoanMonths() external view returns(uint);
-
-    // Fees/Spreads
-    function baseSaleFeeSpread() external view returns(UD60x18);
-    function redemptionFeeSpread() external view returns(UD60x18);
-    function defaultFeeSpread() external view returns(UD60x18);
 }

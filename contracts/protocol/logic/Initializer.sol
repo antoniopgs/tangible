@@ -28,14 +28,8 @@ contract Initializer is State {
     }
 
     function initializeState() private {
-
-        // Other Vars
+        
         _maxLtv = convert(50).div(convert(100)); // Note: 50%
         _maxLoanMonths = 120; // Note: 10 years
-
-        // Fees/Spreads
-        _baseSaleFeeSpread = convert(1).div(convert(100)); // Note: 1%
-        _redemptionFeeSpread = convert(2).div(convert(100)); // Note: 2%
-        _defaultFeeSpread = convert(3).div(convert(100)); // Note: 3%
     }
 }

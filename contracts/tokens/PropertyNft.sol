@@ -22,8 +22,7 @@ contract PropertyNft is ERC721URIStorage, ERC721Enumerable, Ownable(msg.sender) 
         _safeMint(to, newTokenId);
         _setTokenURI(newTokenId, _tokenURI);
     }
-
-    // Question: require payment of transfer fees & sale fees before transfer? Or just build up debt for later?
+    
     // Todo: now even tokens without debt can't be transferred. must always go through admin. implement transferRequest mapping?
     function _update(address to, uint256 tokenId, address auth) internal override(ERC721, ERC721Enumerable) returns (address) {
         // require(IInfo(protocolProxy).isResident(to), "receiver not resident");
