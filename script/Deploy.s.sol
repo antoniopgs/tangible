@@ -21,6 +21,7 @@ import "../contracts/tokens/PropertyNft.sol";
 // Other
 import "forge-std/Script.sol";
 import "../interfaces/state/ITargetManager.sol";
+import "../test/mock/MockERC20.sol";
 
 contract DeployScript is Script {
 
@@ -50,7 +51,7 @@ contract DeployScript is Script {
     constructor() {
 
         // Fork
-        vm.createSelectFork("https://mainnet.infura.io/v3/9a2aca5b5e794f5c929bca9e494fae24"); // Note: Commented for speed
+        // vm.createSelectFork("https://mainnet.infura.io/v3/9a2aca5b5e794f5c929bca9e494fae24"); // Note: Commented for speed
 
         // Deploy protocolProxy
         proxy = payable(new ProtocolProxy());
@@ -69,10 +70,12 @@ contract DeployScript is Script {
         interest = new InterestCurve(baseYearlyRate, optimalUtilization);
 
         // Deploy Tokens
-        UNDERLYING = IERC20Metadata(USDC_ETHEREUM_MAINNET);
+        // UNDERLYING = IERC20Metadata(USDC_ETHEREUM_MAINNET);
+        UNDERLYING = new MockERC20("Circle USDC Token", "USDC");
         PROPERTY = new PropertyNft({
             name_: "Tangible Prospera Real Estate Token",
-            symbol_: "tPROSPERA"
+            symbol_: "tPROSPERA",
+            protocolProxy_: proxy
         });
 
         vault = new Vault({
@@ -87,7 +90,8 @@ contract DeployScript is Script {
         // Initialize proxy
         Initializer(proxy).initialize({
             _UNDERLYING: UNDERLYING,
-            _PROPERTY: PROPERTY
+            _PROPERTY: PROPERTY,
+            _VAULT: vault
         });
     }
 

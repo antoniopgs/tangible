@@ -115,14 +115,14 @@ contract Vault is IVault, ERC20, Ownable(msg.sender) {
 
     // Note: should I restrict access?
     // Note: this probably introduces vulnerabilities
-    function payDebt(uint repayment, uint interest) external {
+    function payDebt(address user, uint repayment, uint interest) external {
 
         // Update state
         debt -= repayment;
         deposits += interest;
 
         // Pull underlying
-        UNDERLYING.safeTransferFrom(msg.sender, address(this), repayment + interest);
+        UNDERLYING.safeTransferFrom(user, address(this), repayment + interest);
     }
 
     function fooBar(

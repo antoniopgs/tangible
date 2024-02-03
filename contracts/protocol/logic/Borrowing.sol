@@ -56,18 +56,15 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
             payment = loan.unpaidPrincipal + interest;
         }
 
-        // Pull underlying from caller
-        UNDERLYING.safeTransferFrom(msg.sender, address(this), payment);
-
         // Calculate repayment
         uint repayment = payment >= interest ? payment - interest : 0;
+
+        // Pay pool
+        vault.payDebt(msg.sender, repayment, interest);
 
         // Update loan
         loan.unpaidPrincipal -= repayment;
         loan.lastPaymentTime = block.timestamp;
-
-        // Pay pool
-        vault.payDebt(repayment, interest);
 
         // Log
         emit PayLoan(msg.sender, tokenId, payment, interest, repayment, block.timestamp, loan.unpaidPrincipal == 0);

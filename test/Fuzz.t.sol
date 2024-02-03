@@ -126,7 +126,7 @@ contract GeneralFuzz is Utils, IState { // Todo: figure out how to remove IState
 
         // Bidder pays loan
         vm.startPrank(bidder);
-        UNDERLYING.approve(proxy, payment);
+        UNDERLYING.approve(address(vault), payment);
         IBorrowing(proxy).payMortgage(tokenId, payment);
         vm.stopPrank();
     }

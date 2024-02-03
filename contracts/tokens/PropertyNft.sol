@@ -7,14 +7,16 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 // Other
-// import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 // import "@openzeppelin/contracts/access/IAccessControl.sol";
 // import "../../interfaces/logic/IInfo.sol";
 
 contract PropertyNft is ERC721URIStorage, ERC721Enumerable, Ownable(msg.sender) {
 
-    constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {
+    address immutable protocolProxy;
 
+    constructor(string memory name_, string memory symbol_, address protocolProxy_) ERC721(name_, symbol_) {
+        protocolProxy = protocolProxy_;
     }
 
     function mint(address to, string memory _tokenURI) external onlyOwner returns(uint newTokenId) {
@@ -30,11 +32,11 @@ contract PropertyNft is ERC721URIStorage, ERC721Enumerable, Ownable(msg.sender) 
         return super._update(to, tokenId, auth);
     }
 
-    // function isApprovedForAll(address owner, address operator) public view override(ERC721, IERC721) returns (bool) {
-    //     return super.isApprovedForAll(owner, operator)
-    //     || operator == protocolProxy // Note: protocolProxy should always be able to transfer, regardless of approvals // Note: this introduces security implications, revisit later
-    //     /* || IAccessControl(protocolProxy).hasRole(PAC, operator)*/; // Note: PAC should always be able to transfer, regardless of approvals
-    // }
+    function isApprovedForAll(address owner, address operator) public view override(ERC721, IERC721) returns (bool) {
+        return super.isApprovedForAll(owner, operator)
+        || operator == protocolProxy // Note: protocolProxy should always be able to transfer, regardless of approvals // Note: this introduces security implications, revisit later
+        /* || IAccessControl(protocolProxy).hasRole(PAC, operator)*/; // Note: PAC should always be able to transfer, regardless of approvals
+    }
 
     // Inheritance Overrides
     function supportsInterface(bytes4 interfaceId) public view override(ERC721Enumerable, ERC721URIStorage) returns (bool) {

@@ -47,7 +47,7 @@ contract Utils is DeployScript, Test {
 
         // Approve
         vm.prank(depositor);
-        UNDERLYING.approve(proxy, amount);
+        UNDERLYING.approve(address(vault), amount);
 
         // Admin registers depositor as eligible
         vm.prank(vault.owner());
@@ -91,7 +91,7 @@ contract Utils is DeployScript, Test {
 
             // Depositor approves & deposits
             vm.startPrank(depositor);
-            UNDERLYING.approve(proxy, neededLiquidity);
+            UNDERLYING.approve(address(vault), neededLiquidity);
             vault.deposit(neededLiquidity);
             vm.stopPrank();
         }
