@@ -176,7 +176,7 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
             totalPrincipal += buyerPrincipal - sellerRepayment; // Note: no underflow (sellerRepayment <= sellerDebt <= buyerPrincipal)
 
             // Push from pool to seller
-            UNDERLYING_TOKEN.safeTransfer(seller, buyerPrincipal - sellerDebt);
+            UNDERLYING.safeTransfer(seller, buyerPrincipal - sellerDebt);
 
         } else {
 
@@ -184,14 +184,14 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
             totalPrincipal -= sellerRepayment - buyerPrincipal; // Note: MIGHT UNDERFLOW (buyerPrincipal < sellerDebt AND sellerDebt >= sellerRepayment)
 
             // Pull from seller to pool
-            UNDERLYING_TOKEN.safeTransferFrom(seller, address(this), sellerDebt - buyerPrincipal);
+            UNDERLYING.safeTransferFrom(seller, address(this), sellerDebt - buyerPrincipal);
         }
         
         // Send buyerDownPayment from buyer to seller
-        UNDERLYING_TOKEN.safeTransferFrom(buyer, seller, buyerDownPayment);
+        UNDERLYING.safeTransferFrom(buyer, seller, buyerDownPayment);
 
         // Transfer NFT from seller to buyer
-        NFT.safeTransferFrom(seller, buyer, tokenId);
+        PROPERTY.safeTransferFrom(seller, buyer, tokenId);
     }
 
     function _calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) internal pure returns(UD60x18 paymentPerSecond) {
