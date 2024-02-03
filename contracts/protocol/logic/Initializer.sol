@@ -9,6 +9,8 @@ contract Initializer is State {
         IERC20 _UNDERLYING,
         PropertyNft _PROPERTY
     ) external {
+        require(address(_UNDERLYING) != address(0), "underlying can't be address(0)");
+        require(address(_PROPERTY) != address(0), "property can't be address(0)");
 
         // Ensure this is 1st and only Initialization
         require(!initialized, "already initialized");

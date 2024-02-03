@@ -55,8 +55,13 @@ contract DeployScript is Script {
         // Deploy protocolProxy
         proxy = payable(new ProtocolProxy());
 
-        // Deploy Non-Abstract Implementations
-        deployImplementations();
+        // Deploy logic
+        auctions = new Auctions();
+        borrowing = new Borrowing();
+        info = new Info();
+        initializer = new Initializer();
+        residents = new Residents();
+        setter = new Setter();
 
         // Deploy chosen interest module
         UD60x18 baseYearlyRate = convert(uint(4)).div(convert(uint(100)));
@@ -64,7 +69,11 @@ contract DeployScript is Script {
         interest = new InterestCurve(baseYearlyRate, optimalUtilization);
 
         // Deploy Tokens
-        deployTokens();
+        UNDERLYING = IERC20Metadata(USDC_ETHEREUM_MAINNET);
+        PROPERTY = new PropertyNft({
+            name_: "Tangible Prospera Real Estate Token",
+            symbol_: "tPROSPERA"
+        });
 
         vault = new Vault({
             name_: string.concat("Tangible ", UNDERLYING.name()),
@@ -77,32 +86,8 @@ contract DeployScript is Script {
 
         // Initialize proxy
         Initializer(proxy).initialize({
-            _UNDERLYING: USDC_ETHEREUM_MAINNET,
-            _SHARES: ,
-            _PROPERTY:
-        });
-    }
-
-    function deployImplementations() private {
-
-        // Deploy non-abstract implementations
-        auctions = new Auctions();
-        borrowing = new Borrowing();
-        info = new Info();
-        initializer = new Initializer();
-        residents = new Residents();
-        setter = new Setter();
-    }
-
-    function deployTokens() private {
-
-        // Deploy UNDERLYING
-        UNDERLYING = IERC20Metadata(USDC_ETHEREUM_MAINNET);
-
-        // Deploy PROPERTY
-        PROPERTY = new PropertyNft({
-            name_: "Tangible Prospera Real Estate Token",
-            symbol_: "tPROSPERA"
+            _UNDERLYING: UNDERLYING,
+            _PROPERTY: PROPERTY
         });
     }
 
