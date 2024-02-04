@@ -1,12 +1,14 @@
 # Tangible
 
-### Description
-Tangible is a Real-World-Asset (RWA) DeFi Protocol for Real-Estate Auctions and Mortgage Lending.
+### Introduction
+Tangible is a Real-World-Asset (RWA) DeFi Protocol for Real-Estate Auctions and Mortgage Lending.  
 I developed it as a member of the [City Builders Network](https://www.prospera.co/join) of [Prospera](https://www.prospera.co/) (the world premier private city).
 
 What Tangible accomplishes:
 - Allows lenders worldwide to earn yields, by supplying and lending their mortgage capital to the residents of a city/jurisdiction.
 - Brings mortgage access to residents of a city/juridiction (such as Prospera) who are blocked from TradFi alternatives, through the power of Blockchain and Web3.
+
+<img width="1680" alt="tangible" src="https://github.com/antoniopgs/tangible/assets/44982443/3db4ac83-d858-4ee1-9388-94294f173b91">
 
 ### Links
 - [MVP](https://tangible-frontend.vercel.app/)
