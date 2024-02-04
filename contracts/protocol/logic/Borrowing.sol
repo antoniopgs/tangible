@@ -5,8 +5,6 @@ import "../../../interfaces/logic/IBorrowing.sol";
 import "./loanStatus/LoanStatus.sol";
 import "./interest/InterestConstant.sol";
 
-import "forge-std/console.sol";
-
 contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
 
     using SafeERC20 for IERC20;
@@ -97,8 +95,6 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         address seller = PROPERTY.ownerOf(tokenId);
         uint buyerPrincipal = _bid.propertyValue - _bid.downPayment;
         Loan storage loan = _loans[tokenId];
-
-        console.log("dt2");
         
         // Call Vault
         vault.fooBar({
@@ -109,12 +105,8 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
             buyerDownPayment: _bid.downPayment
         });
 
-        console.log("dt3");
-
         // If buyer needs loan
         if (buyerPrincipal > 0) {
-
-            console.log("dt3.1");
 
             // Start new Loan
             _startNewMortgage({
@@ -123,20 +115,14 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
                 maxDurationMonths: _bid.loanMonths
             });
 
-            console.log("dt3.2");
-
         } else {
 
             // Clear nft debt
             loan.unpaidPrincipal = 0;
         }
 
-        console.log("dt4");
-
         // Transfer NFT from seller to buyer/bidder
         PROPERTY.safeTransferFrom(seller, _bid.bidder, tokenId);
-
-        console.log("dt4");
     }
 
     function _calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) internal pure returns(UD60x18 paymentPerSecond) {

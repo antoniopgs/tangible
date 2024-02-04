@@ -94,13 +94,9 @@ contract GeneralFuzz is Utils, IState { // Todo: figure out how to remove IState
         // Get seller
         address seller = PROPERTY.ownerOf(tokenId);
 
-        console.log("tab2");
-
         // Seller accepts bid
         vm.prank(seller);
         IAuctions(proxy).acceptBid(tokenId, idx);
-
-        console.log("tab3");
     }
 
     function _testPayLoan(uint randomness) private {
@@ -109,18 +105,12 @@ contract GeneralFuzz is Utils, IState { // Todo: figure out how to remove IState
         // Get tokenId
         uint tokenId = _randomTokenId(randomness);
 
-        console.log("pl0");
-
         // Make Actionable Loan Bid
         (address bidder, uint idx) = _makeActionableLoanBid(tokenId, randomness);
-
-        console.log("pl1");
 
         // Seller accepts bid
         vm.prank(PROPERTY.ownerOf(tokenId));
         IAuctions(proxy).acceptBid(tokenId, idx);
-
-        console.log("pl2");
 
         // Get & Skip by timeJump
         uint timeJump = bound(randomness, 0, 15 days);
@@ -128,17 +118,11 @@ contract GeneralFuzz is Utils, IState { // Todo: figure out how to remove IState
         skip(timeJump);
         assert(IInfo(proxy).status(tokenId) == Status.Mortgage);
 
-        console.log("pl3");
-
         // Get payment
         uint payment = bound(randomness, 0, 1_000_000_000e6);
 
-        console.log("pl4");
-
         // Give bidder UNDERLYING for payment
         deal(address(UNDERLYING), bidder, payment);
-
-        console.log("pl5");
 
         // Bidder pays loan
         vm.startPrank(bidder);
@@ -185,21 +169,12 @@ contract GeneralFuzz is Utils, IState { // Todo: figure out how to remove IState
         uint underlying = bound(randomness, 0, availableLiquidity);
         uint sharesBurn = vault.underlyingToShares(underlying);
 
-        console.log("sharesBurn:", sharesBurn);
-        console.log("pre vault.balanceOf(withdrawer):", vault.balanceOf(withdrawer));
-
         // Deal vault to withdrawer
         deal(address(vault), withdrawer, sharesBurn);
-
-        console.log("post vault.balanceOf(withdrawer):", vault.balanceOf(withdrawer));
-
-        console.log("tw2");
 
         // Withdraw
         vm.prank(withdrawer);
         vault.withdraw(underlying);
-
-        console.log("tw3");
     }
 
     function _testSkip(uint randomness) private {

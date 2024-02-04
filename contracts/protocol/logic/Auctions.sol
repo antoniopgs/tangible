@@ -5,8 +5,6 @@ import "../../../interfaces/logic/IAuctions.sol";
 import "./loanStatus/LoanStatus.sol";
 import "../../../interfaces/logic/IBorrowing.sol";
 
-import { console } from "forge-std/console.sol";
-
 contract Auctions is IAuctions, LoanStatus {
 
     using SafeERC20 for IERC20;
@@ -29,13 +27,9 @@ contract Auctions is IAuctions, LoanStatus {
         // Validate minSalePrice
         require(propertyValue >= loan.unpaidPrincipal + _accruedInterest(loan), "propertyValue must cover sellerDebt"); // Question: do I need this?
 
-        console.log("b5");
-
         // Pull downPayment from bidder
         UNDERLYING.safeTransferFrom(msg.sender, address(vault), downPayment);
         // vault.deposit(downPayment);
-
-        console.log("b6");
 
         // Add bid to tokenId bids
         _bids[tokenId].push(
@@ -64,13 +58,9 @@ contract Auctions is IAuctions, LoanStatus {
         // Ensure caller is bidder
         require(msg.sender == bidToRemove.bidder, "only bidder can remove his bid");
 
-        console.log("cb5");
-
         // Return downPayment to bidder
         UNDERLYING.safeTransferFrom(address(vault), bidToRemove.bidder, bidToRemove.downPayment);
         // vault.withdraw(bidToRemove.downPayment);
-
-        console.log("cb6");
 
         // Delete bid
         _deleteBid(tokenBids, idx);
@@ -83,15 +73,11 @@ contract Auctions is IAuctions, LoanStatus {
         // Get bid
         Bid storage _bid = _bids[tokenId][idx];
 
-        console.log("ab1");
-
         // Debt Transfer NFT from seller to bidder
         IBorrowing(address(this)).debtTransfer({
             tokenId: tokenId,
             _bid: _bid
         });
-
-        console.log("ab1");
 
         // Delete accepted bid
         _deleteBid(_bids[tokenId], idx);
