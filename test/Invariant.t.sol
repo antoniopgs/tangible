@@ -14,13 +14,33 @@ contract Invariant is StdInvariant, Test {
 
     function setUp() external {
 
+        // Deploy handler
         handler = new Handler();
+
+        // Build handlerSelectors
+        bytes4[] memory handlerSelectors = new bytes4[](8);
+        handlerSelectors[0] = Handler.bid.selector;
+        handlerSelectors[1] = Handler.cancelBid.selector;
+        handlerSelectors[2] = Handler.acceptBid.selector;
+        handlerSelectors[3] = Handler.payMortgage.selector;
+        handlerSelectors[4] = Handler.foreclose.selector;
+        handlerSelectors[5] = Handler.deposit.selector;
+        handlerSelectors[6] = Handler.withdraw.selector;
+        handlerSelectors[7] = Handler.skipTime.selector;
+
+        // Target selectors
+        targetSelector(
+            FuzzSelector({
+                addr: address(handler),
+                selectors: handlerSelectors
+            })
+        );
 
         // Target handler contract
         targetContract(address(handler));
     }
 
-    function invariant_foo() external {
-        assertEq(handler.x(), 0);
+    function invariant_vaultDeposits() external {
+        assertEq(handler.expectedVaultDeposits(), handler.actualVaultDeposits());
     }
 }

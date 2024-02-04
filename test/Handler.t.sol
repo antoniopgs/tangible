@@ -9,9 +9,6 @@ import { IState } from "../interfaces/state/IState.sol";
 
 contract Handler is Utils {
 
-    // Expectation Vars
-    uint public x;
-
     function bid(uint randomness) external {
         _makeActionableBid(randomness);
     }
@@ -39,7 +36,7 @@ contract Handler is Utils {
         IAuctions(proxy).acceptBid(tokenId, idx);
     }
 
-    function payMortgage(uint randomness) private {
+    function payMortgage(uint randomness) external {
 
         // Get tokenId
         uint tokenId = _randomTokenId(randomness);
@@ -70,7 +67,7 @@ contract Handler is Utils {
         vm.stopPrank();
     }
 
-    function foreclose(uint randomness) private {
+    function foreclose(uint randomness) external {
 
         // Get tokenId
         uint tokenId = _randomTokenId(randomness);
@@ -93,16 +90,21 @@ contract Handler is Utils {
         IBorrowing(proxy).foreclose(tokenId);
     }
 
-    function deposit(uint randomness) private {
+    function deposit(uint randomness) external {
         _deposit(randomness);
     }
 
-    function withdraw(uint randomness) private {
+    function withdraw(uint randomness) external {
 
         // Get vars
         address withdrawer = _randomAddress(randomness);
         uint availableLiquidity = vault.availableLiquidity();
         uint underlying = bound(randomness, 0, availableLiquidity);
+
+        // Update expectations
+        expectedVaultDeposits -= underlying;
+
+        // Calculate sharesBurn
         uint sharesBurn = vault.underlyingToShares(underlying);
 
         // Deal vault to withdrawer
@@ -111,6 +113,9 @@ contract Handler is Utils {
         // Withdraw
         vm.prank(withdrawer);
         vault.withdraw(underlying);
+
+        // Update actualVaultDeposits
+        actualVaultDeposits = vault.deposits();
     }
 
     function skipTime(uint randomness) external {

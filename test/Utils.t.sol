@@ -8,6 +8,12 @@ contract Utils is DeployScript, Test {
 
     uint residentCount;
 
+    // Expectation vars
+    uint public expectedVaultDeposits;
+
+    // Actual vars
+    uint public actualVaultDeposits;
+
     function _randomTokenId(uint randomness) internal view returns(uint tokenId) {
         uint totalSupply = PROPERTY.totalSupply();
         tokenId = bound(randomness, 0, totalSupply - 1);
@@ -41,6 +47,8 @@ contract Utils is DeployScript, Test {
         // Get depositor
         address depositor = _randomAddress(randomness);
         uint amount = bound(randomness, 10e6, 1_000_000_000e6); // Note: UNDERLYING has 6 decimals
+    
+        expectedVaultDeposits += amount;
 
         // Deal
         deal(address(UNDERLYING), depositor, amount);
@@ -56,6 +64,8 @@ contract Utils is DeployScript, Test {
         // Deposit
         vm.prank(depositor);
         vault.deposit(amount);
+
+        actualVaultDeposits = vault.deposits();
     }
 
     function _makeActionableBid(uint randomness) internal returns(address bidder, uint randomTokenId, uint newBidIdx) {
