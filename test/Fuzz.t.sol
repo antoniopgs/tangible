@@ -7,7 +7,6 @@ import { Test } from "lib/chainlink/contracts/foundry-lib/forge-std/src/Test.sol
 // Other
 import { Handler } from "./Handler.t.sol";
 import { console } from "forge-std/console.sol";
-import { PRBMath_MulDiv18_Overflow } from "lib/prb-math/src/Common.sol";
 
 contract Fuzz is Test {
 
@@ -37,67 +36,35 @@ contract Fuzz is Test {
 
             if (functionToCall == uint(HandlerFunctions.Bid)) {
                 console.log("\nBid");
-                try handler.bid(randomness[i]) {
-                    // suceeded (continue)
-                } catch PRBMath_MulDiv18_Overflow(uint x, uint y) {
-                    console.log("PRBMath_MulDiv18_Overflow");
-                }
+                handler.bid(randomness[i]);
 
             } else if (functionToCall == uint(HandlerFunctions.CancelBid)) {
                 console.log("\nCancelBid");
-                try handler.cancelBid(randomness[i]) {
-                    // suceeded (continue)
-                } catch PRBMath_MulDiv18_Overflow(uint x, uint y) {
-                    console.log("PRBMath_MulDiv18_Overflow");
-                }
+                handler.cancelBid(randomness[i]);
 
             } else if (functionToCall == uint(HandlerFunctions.AcceptBid)) {
                 console.log("\nAcceptBid");
-                try handler.acceptBid(randomness[i]) {
-                    // suceeded (continue)
-                } catch PRBMath_MulDiv18_Overflow(uint x, uint y) {
-                    console.log("PRBMath_MulDiv18_Overflow");
-                }
+                handler.acceptBid(randomness[i]);
 
             } else if (functionToCall == uint(HandlerFunctions.PayMortgage)) {
                 console.log("\nPayMortgage");
-                try handler.payMortgage(randomness[i]) {
-                    // suceeded (continue)
-                } catch PRBMath_MulDiv18_Overflow(uint x, uint y) {
-                    console.log("PRBMath_MulDiv18_Overflow");
-                }
+                handler.payMortgage(randomness[i]);
 
             } else if (functionToCall == uint(HandlerFunctions.Foreclose)) {
                 console.log("\nForeclose");
-                try handler.foreclose(randomness[i]) {
-                    // suceeded (continue)
-                } catch PRBMath_MulDiv18_Overflow(uint x, uint y) {
-                    console.log("PRBMath_MulDiv18_Overflow");
-                }
+                // handler.foreclose(randomness[i]);
 
             } else if (functionToCall == uint(HandlerFunctions.Deposit)) {
                 console.log("\nDeposit");
-                try handler.deposit(randomness[i]) {
-                    // suceeded (continue)
-                } catch PRBMath_MulDiv18_Overflow(uint x, uint y) {
-                    console.log("PRBMath_MulDiv18_Overflow");
-                }
+                handler.deposit(randomness[i]);
 
             }else if (functionToCall == uint(HandlerFunctions.Withdraw)) {
                 console.log("\nWithdraw");
-                try handler.withdraw(randomness[i]) {
-                    // suceeded (continue)
-                } catch PRBMath_MulDiv18_Overflow(uint x, uint y) {
-                    console.log("PRBMath_MulDiv18_Overflow");
-                }
+                handler.withdraw(randomness[i]);
 
             } else if (functionToCall == uint(HandlerFunctions.SkipTime)) {
                 console.log("\nSkipTime");
-                try handler.skipTime(randomness[i]) {
-                    // suceeded (continue)
-                } catch PRBMath_MulDiv18_Overflow(uint x, uint y) {
-                    console.log("PRBMath_MulDiv18_Overflow");
-                }
+                handler.skipTime(randomness[i]);
             }
         }
     }
