@@ -2,26 +2,26 @@
 pragma solidity ^0.8.15;
 
 import "../script/Deploy.s.sol";
-import { Test } from "lib/forge-std/src/Test.sol";
+import { Test } from "lib/chainlink/contracts/foundry-lib/forge-std/src/Test.sol"; // Todo: fix foundry imports later
 
 contract Utils is DeployScript, Test {
 
     uint residentCount;
 
-    function _randomTokenId(uint randomness) internal returns(uint tokenId) {
+    function _randomTokenId(uint randomness) internal view returns(uint tokenId) {
         uint totalSupply = PROPERTY.totalSupply();
         tokenId = bound(randomness, 0, totalSupply - 1);
     }
 
-    function _randomIdx(uint randomness, uint length) private returns(uint randomIdx) {
+    function _randomIdx(uint randomness, uint length) private view returns(uint randomIdx) {
         randomIdx = bound(randomness, 0, length - 1);
     }
 
-    function _randomAddress(uint randomness) internal returns(address) {
+    function _randomAddress(uint randomness) internal view returns(address) {
         return vm.addr(bound(randomness, 1, 999_999_999));
     }
 
-    function _randomResident(uint randomness) private returns(address) {
+    function _randomResident(uint randomness) private view returns(address) {
         uint randomResidentId = bound(randomness, 1, residentCount);
         return IInfo(proxy).residentToAddress(randomResidentId);
     }
