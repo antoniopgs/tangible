@@ -19,9 +19,10 @@ import "../contracts/protocol/logic/interest/InterestCurve.sol";
 import "../contracts/tokens/PropertyNft.sol";
 
 // Other
-import "lib/chainlink/contracts/foundry-lib/forge-std/src/Script.sol"; // Todo: fix forge imports later
+import { Script } from "lib/chainlink/contracts/foundry-lib/forge-std/src/Script.sol"; // Todo: fix forge imports later
 import "../interfaces/state/ITargetManager.sol";
 import "../test/mock/MockERC20.sol";
+import { console } from "forge-std/console.sol";
 
 contract DeployScript is Script {
 

@@ -5,6 +5,8 @@ import "../../../interfaces/logic/IBorrowing.sol";
 import "./loanStatus/LoanStatus.sol";
 import "./interest/InterestConstant.sol";
 
+import { console } from "forge-std/console.sol";
+
 contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
 
     using SafeERC20 for IERC20;
@@ -17,9 +19,13 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         // Calculate maxDurationSeconds
         uint maxDurationSeconds = maxDurationMonths * SECONDS_IN_MONTH;
 
+        console.log("sm3");
+
         // Calculate paymentPerSecond
         UD60x18 paymentPerSecond = _calculatePaymentPerSecond(principal, ratePerSecond, maxDurationSeconds);
         require(paymentPerSecond.gt(convert(uint(0))), "paymentPerSecond must be > 0"); // Note: Maybe move to calculatePaymentPerSecond()?
+
+        console.log("sm4");
 
         // Get currentTime
         uint currentTime = block.timestamp;
@@ -105,8 +111,12 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
             buyerDownPayment: _bid.downPayment
         });
 
+        console.log("dt3");
+
         // If buyer needs loan
         if (buyerPrincipal > 0) {
+
+            console.log("dt3.11");
 
             // Start new Loan
             _startNewMortgage({
@@ -115,17 +125,25 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
                 maxDurationMonths: _bid.loanMonths
             });
 
+            console.log("dt3.12");
+
         } else {
+
+            console.log("dt3.2");
 
             // Clear nft debt
             loan.unpaidPrincipal = 0;
         }
 
+        console.log("dt4");
+
         // Transfer NFT from seller to buyer/bidder
         PROPERTY.safeTransferFrom(seller, _bid.bidder, tokenId);
     }
 
-    function _calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) internal pure returns(UD60x18 paymentPerSecond) {
+    function _calculatePaymentPerSecond(uint principal, UD60x18 ratePerSecond, uint maxDurationSeconds) internal view returns(UD60x18 paymentPerSecond) {
+
+        console.log("cp1");
 
         // Calculate x
         // - (1 + ratePerSecond) ** maxDurationSeconds <= MAX_UD60x18
@@ -144,9 +162,13 @@ contract Borrowing is IBorrowing, LoanStatus, InterestConstant {
         // maxDurationMonths * SECONDS_IN_MONTH <= log(MAX_UD60x18 / (principal * ratePerSecond)) / log(1 + ratePerSecond)
         // maxDurationMonths <= (log(MAX_UD60x18 / (principal * ratePerSecond)) / log(1 + ratePerSecond)) / SECONDS_IN_MONTH
         // maxDurationMonths <= log(MAX_UD60x18 / (principal * ratePerSecond)) / (SECONDS_IN_MONTH * log(1 + ratePerSecond))
+
+        console.log("cp2");
         
         // Calculate paymentPerSecond
         paymentPerSecond = convert(principal).mul(ratePerSecond).mul(x).div(x.sub(convert(uint(1))));
+
+        console.log("cp3");
     }
 
     function borrowerApr() external view returns(UD60x18 apr) {

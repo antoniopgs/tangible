@@ -44,9 +44,13 @@ contract Handler is Utils {
         // Make Actionable Loan Bid
         (address bidder, uint idx) = _makeActionableLoanBid(tokenId, randomness);
 
+        console.log("pm2");
+
         // Seller accepts bid
         vm.prank(PROPERTY.ownerOf(tokenId));
         IAuctions(proxy).acceptBid(tokenId, idx);
+
+        console.log("pm3");
 
         // Get & Skip by timeJump
         uint timeJump = bound(randomness, 0, 15 days);
