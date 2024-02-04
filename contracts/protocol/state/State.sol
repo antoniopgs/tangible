@@ -6,7 +6,7 @@ import "./TargetManager.sol";
 import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../tokens/PropertyNft.sol";
-import "../../Pool.sol";
+import "../pool/Pool.sol";
 
 abstract contract State is IState, TargetManager {
 

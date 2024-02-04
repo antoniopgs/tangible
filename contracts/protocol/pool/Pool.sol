@@ -2,7 +2,7 @@
 pragma solidity ^0.8.15;
 
 // Inheritance
-import "../interfaces/IPool.sol";
+import "../../../interfaces/pool/IPool.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 

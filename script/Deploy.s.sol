@@ -10,7 +10,6 @@ import "../contracts/protocol/logic/Borrowing.sol";
 import "../contracts/protocol/logic/Info.sol";
 import "../contracts/protocol/logic/Initializer.sol";
 import "../contracts/protocol/logic/Residents.sol";
-import "../contracts/protocol/logic/Setter.sol";
 
 // Interest
 import "../contracts/protocol/logic/interest/InterestCurve.sol";
@@ -21,7 +20,7 @@ import "../contracts/tokens/PropertyNft.sol";
 // Other
 import { Script } from "lib/chainlink/contracts/foundry-lib/forge-std/src/Script.sol"; // Todo: fix forge imports later
 import "../interfaces/state/ITargetManager.sol";
-import "../test/mock/MockERC20.sol";
+import "../mock/MockERC20.sol";
 
 contract DeployScript is Script {
 
@@ -37,7 +36,6 @@ contract DeployScript is Script {
     Info info;
     Initializer initializer;
     Residents residents;
-    Setter setter;
 
     // Chosen Interest Rate Module
     InterestCurve interest;
@@ -62,7 +60,6 @@ contract DeployScript is Script {
         info = new Info();
         initializer = new Initializer();
         residents = new Residents();
-        setter = new Setter();
 
         // Deploy chosen interest module
         UD60x18 baseYearlyRate = convert(uint(4)).div(convert(uint(100)));
@@ -137,12 +134,6 @@ contract DeployScript is Script {
         bytes4[] memory residentSelectors = new bytes4[](1);
         residentSelectors[0] = IResidents.verifyResident.selector;
         ITargetManager(proxy).setSelectorsTarget(residentSelectors, address(residents));
-
-        // Set setterSelectors
-        bytes4[] memory setterSelectors = new bytes4[](3);
-        setterSelectors[1] = ISetter.updateMaxLtv.selector;
-        setterSelectors[2] = ISetter.updateMaxLoanMonths.selector;
-        ITargetManager(proxy).setSelectorsTarget(setterSelectors, address(setter));
 
         // Set interestSelectors
         bytes4[] memory interestSelectors = new bytes4[](1);
