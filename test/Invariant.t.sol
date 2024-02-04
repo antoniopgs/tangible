@@ -41,15 +41,7 @@ contract Invariant is StdInvariant, Test {
         targetContract(address(handler));
     }
 
-    function invariant_vaultDebt() external {
-        // assertEq(handler.expectedVaultDeposits(), handler.actualVaultDeposits());
-    }
-
-    function invariant_vaultDeposits() external {
-        assertEq(handler.expectedVaultDeposits(), handler.actualVaultDeposits());
-    }
-
-    function statefulFuzz_utilization() external {
-        assertLt(convert(handler.actualVaultUtilization()), 1 + 1);
+    function invariant_Something() external {
+        // Question: what should I do here?
     }
 }

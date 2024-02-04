@@ -8,24 +8,9 @@ contract Utils is DeployScript, Test {
 
     uint residentCount;
 
-    // Expectation vars
-    uint public expectedVaultDebt;
-    uint public expectedVaultDeposits;
-    mapping(uint tokenId => uint bidsLength) expectedBidsLength;
-
-    // Actual vars
-    uint public actualVaultDebt;
-    uint public actualVaultDeposits;
-    UD60x18 public actualVaultUtilization;
-    mapping(uint tokenId => uint bidsLength) actualBidsLength;
-
     function _randomTokenId(uint randomness) internal view returns(uint tokenId) {
         uint totalSupply = PROPERTY.totalSupply();
         tokenId = bound(randomness, 0, totalSupply - 1);
-    }
-
-    function _randomIdx(uint randomness, uint length) private view returns(uint randomIdx) {
-        randomIdx = bound(randomness, 0, length - 1);
     }
 
     function _randomAddress(uint randomness) internal view returns(address) {
@@ -37,7 +22,7 @@ contract Utils is DeployScript, Test {
         return IInfo(proxy).residentToAddress(randomResidentId);
     }
 
-    function _mintNfts(uint amount) internal {
+    function mintNfts(uint amount) public {
         vm.startPrank(PROPERTY.owner());
         for (uint i = 1; i <= amount; i++) {
             IResidents(proxy).verifyResident(vm.addr(i), i);
@@ -52,8 +37,6 @@ contract Utils is DeployScript, Test {
         // Get depositor
         address depositor = _randomAddress(randomness);
         uint amount = bound(randomness, 10e6, 1_000_000_000e6); // Note: UNDERLYING has 6 decimals
-    
-        expectedVaultDeposits += amount;
 
         // Deal
         deal(address(UNDERLYING), depositor, amount);
@@ -69,8 +52,6 @@ contract Utils is DeployScript, Test {
         // Deposit
         vm.prank(depositor);
         vault.deposit(amount);
-
-        actualVaultDeposits = vault.deposits();
     }
 
     function _makeActionableBid(uint randomness) internal returns(address bidder, uint randomTokenId, uint newBidIdx) {

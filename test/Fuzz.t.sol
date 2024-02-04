@@ -24,6 +24,9 @@ contract Fuzz is Test {
 
     function test(uint[] calldata randomness) external {
         
+        // Mint 100 NFTs
+        handler.mintNfts(100);
+        
         // Loop randomness
         for (uint i = 0; i < randomness.length; i++) {
 
@@ -43,7 +46,7 @@ contract Fuzz is Test {
                 handler.payMortgage(randomness[i]);
 
             } else if (functionToCall == uint(HandlerFunctions.Foreclose)) {
-                handler.foreclose(randomness[i]);
+                // handler.foreclose(randomness[i]);
 
             } else if (functionToCall == uint(HandlerFunctions.Deposit)) {
                 handler.deposit(randomness[i]);

@@ -101,9 +101,6 @@ contract Handler is Utils {
         uint availableLiquidity = vault.availableLiquidity();
         uint underlying = bound(randomness, 0, availableLiquidity);
 
-        // Update expectations
-        expectedVaultDeposits -= underlying;
-
         // Calculate sharesBurn
         uint sharesBurn = vault.underlyingToShares(underlying);
 
@@ -113,22 +110,10 @@ contract Handler is Utils {
         // Withdraw
         vm.prank(withdrawer);
         vault.withdraw(underlying);
-
-        // Update actualVaultDeposits
-        actualVaultDeposits = vault.deposits();
     }
 
     function skipTime(uint randomness) external {
         uint timeJump = bound(randomness, 0, 100 * 365 days); // Note: 0 to 100 years
         skip(timeJump);
-    }
-
-    modifier validate {
-
-        // Run
-        _;
-
-        // Get actuals
-        actualVaultUtilization = vault.utilization();
     }
 }
