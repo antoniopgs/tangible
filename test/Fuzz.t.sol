@@ -185,8 +185,13 @@ contract GeneralFuzz is Utils, IState { // Todo: figure out how to remove IState
         uint underlying = bound(randomness, 0, availableLiquidity);
         uint sharesBurn = vault.underlyingToShares(underlying);
 
+        console.log("sharesBurn:", sharesBurn);
+        console.log("pre vault.balanceOf(withdrawer):", vault.balanceOf(withdrawer));
+
         // Deal vault to withdrawer
         deal(address(vault), withdrawer, sharesBurn);
+
+        console.log("post vault.balanceOf(withdrawer):", vault.balanceOf(withdrawer));
 
         console.log("tw2");
 

@@ -55,13 +55,19 @@ contract Vault is IVault, ERC20, Ownable(msg.sender) {
         uint shares = underlyingToShares(underlying);
 
         // Update deposits
-        deposits += underlying;
+        deposits -= underlying;
+
+        console.log("w3");
 
         // Burn caller shares
         _burn(msg.sender, shares);
 
+        console.log("w4");
+
         // Send underlying to caller
         UNDERLYING.safeTransfer(msg.sender, underlying); // Note: must come after underlyingToShares
+
+        console.log("w5");
         
         // Log
         emit Withdraw(msg.sender, underlying, shares);
