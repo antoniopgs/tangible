@@ -1,102 +1,143 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.15;
 
-// Main Imports
-import "forge-std/Script.sol";
-import { console } from "forge-std/console.sol";
+// Proxy
+import "../contracts/protocol/proxy/ProtocolProxy.sol";
 
-// Contract Imports
-import "../contracts/protocol/borrowing/borrowing/Borrowing.sol";
-import "../contracts/protocol/interest/Interest.sol";
-import "../contracts/protocol/lending/Lending.sol";
-import "../contracts/protocol/info/Info.sol";
-import "../contracts/protocol/protocolProxy/ProtocolProxy.sol";
+// Logic
+import "../contracts/protocol/logic/Auctions.sol";
+import "../contracts/protocol/logic/Borrowing.sol";
+import "../contracts/protocol/logic/Info.sol";
+import "../contracts/protocol/logic/Initializer.sol";
+import "../contracts/protocol/logic/Residents.sol";
 
-// Token Imports
-import "../contracts/mock/MockUsdc.sol";
-import "../contracts/tokens/tUsdc.sol";
+// Interest
+import "../contracts/protocol/logic/interest/InterestCurve.sol";
 
+// Tokens
+import "../contracts/tokens/PropertyNft.sol";
+
+// Other
+import { Script } from "lib/chainlink/contracts/foundry-lib/forge-std/src/Script.sol"; // Todo: fix forge imports later
+import "../interfaces/state/ITargetManager.sol";
+import "../mock/MockERC20.sol";
 
 contract DeployScript is Script {
 
-    // Tokens
-    IERC20 USDC; /* = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48); // Note: ethereum mainnet */
-    tUsdc tUSDC;
-    TangibleNft nftContract;
+    // Addresses
+    address constant USDC_ETHEREUM_MAINNET = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
 
     // Proxy
-    address payable proxy;
+    address proxy;
 
-    // Logic Contracts
-    Lending lending;
+    // Logic
+    Auctions auctions;
     Borrowing borrowing;
     Info info;
+    Initializer initializer;
+    Residents residents;
 
-    // Multi-Sig
-    address PAC;
+    // Chosen Interest Rate Module
+    InterestCurve interest;
+
+    // Tokens
+    IERC20Metadata UNDERLYING;
+    PropertyNft PROPERTY;
+
+    Pool public pool;
 
     constructor() {
 
-        // Fork (needed for tUSDC's ERC777 registration in the ERC1820 registry)
-        vm.createSelectFork("https://mainnet.infura.io/v3/f36750d69d314e3695b7fe230bb781af");
+        // Fork
+        // vm.createSelectFork("https://mainnet.infura.io/v3/9a2aca5b5e794f5c929bca9e494fae24"); // Note: Commented for speed
 
-        // Deploy proxy
+        // Deploy protocolProxy
         proxy = payable(new ProtocolProxy());
 
-        // Build tUsdcDefaultOperators;
-        address[] memory tUsdcDefaultOperators = new address[](1);
-        tUsdcDefaultOperators[0] = address(proxy);
-
-        // Deploy mockUSDC
-        USDC = new MockUsdc();
-
-        // Deploy tUSDC
-        tUSDC = new tUsdc(tUsdcDefaultOperators);
-
-        // Deploy PAC Multi-Sig
-        PAC = address(0); // Todo: fix later
-
-        // Deploy nftContract
-        nftContract = new TangibleNft(proxy, PAC);
-
-        // Initialize proxy
-        ProtocolProxy(proxy).initialize(USDC, tUSDC, nftContract);
-
-        // Deploy logic contracts
-        lending = new Lending();
+        // Deploy logic
+        auctions = new Auctions();
         borrowing = new Borrowing();
         info = new Info();
+        initializer = new Initializer();
+        residents = new Residents();
 
-        // Set lendingSelectors
-        bytes4[] memory lendingSelectors = new bytes4[](2);
-        lendingSelectors[0] = ILending.deposit.selector;
-        lendingSelectors[1] = ILending.withdraw.selector;
-        ProtocolProxy(proxy).setSelectorsTarget(lendingSelectors, address(lending));
+        // Deploy chosen interest module
+        UD60x18 baseYearlyRate = convert(uint(4)).div(convert(uint(100)));
+        UD60x18 optimalUtilization = convert(uint(90)).div(convert(uint(100)));
+        interest = new InterestCurve(baseYearlyRate, optimalUtilization);
+
+        // Deploy Tokens
+        // UNDERLYING = IERC20Metadata(USDC_ETHEREUM_MAINNET);
+        UNDERLYING = new MockERC20("Circle USDC Token", "USDC");
+        PROPERTY = new PropertyNft({
+            name_: "Tangible Prospera Real Estate Token",
+            symbol_: "tPROSPERA",
+            protocolProxy_: proxy
+        });
+
+        pool = new Pool({
+            name_: string.concat("Tangible ", UNDERLYING.name()),
+            symbol_: string.concat("t", UNDERLYING.symbol()),
+            UNDERLYING_: UNDERLYING,
+            protocol_: proxy
+        });
+
+        // Set Function Selectors
+        setSelectors();
+
+        // Initialize proxy
+        Initializer(proxy).initialize({
+            _UNDERLYING: UNDERLYING,
+            _PROPERTY: PROPERTY,
+            _POOL: pool
+        });
+    }
+
+    function setSelectors() private {
+
+        /// Set auctionSelectors
+        bytes4[] memory auctionSelectors = new bytes4[](3);
+        auctionSelectors[0] = IAuctions.bid.selector;
+        auctionSelectors[1] = IAuctions.cancelBid.selector;
+        auctionSelectors[2] = IAuctions.acceptBid.selector;
+        ITargetManager(proxy).setSelectorsTarget(auctionSelectors, address(auctions));
 
         // Set borrowingSelectors
-        bytes4[] memory borrowingSelectors = new bytes4[](3);
-        borrowingSelectors[0] = IBorrowing.startNewLoan.selector;
-        borrowingSelectors[1] = IBorrowing.payLoan.selector;
-        borrowingSelectors[2] = IBorrowing.redeemLoan.selector;
-        ProtocolProxy(proxy).setSelectorsTarget(borrowingSelectors, address(borrowing));
+        bytes4[] memory borrowingSelectors = new bytes4[](7);
+        borrowingSelectors[0] = IBorrowing.payMortgage.selector;
+        borrowingSelectors[2] = IBorrowing.debtTransfer.selector;
+        // borrowingSelectors[] = IBorrowing.refinance.selector;
+        borrowingSelectors[3] = IBorrowing.foreclose.selector;
+        borrowingSelectors[6] = IBorrowing.borrowerApr.selector;
+        ITargetManager(proxy).setSelectorsTarget(borrowingSelectors, address(borrowing));
 
         // Set infoSelectors
-        bytes4[] memory infoSelectors = new bytes4[](15);
-        infoSelectors[0] = IInfo.loans.selector;
-        infoSelectors[1] = IInfo.availableLiquidity.selector;
-        infoSelectors[2] = IInfo.userLoans.selector;
-        infoSelectors[3] = IInfo.loansTokenIdsLength.selector;
-        infoSelectors[4] = IInfo.loansTokenIdsAt.selector;
-        infoSelectors[5] = IInfo.redemptionFeeSpread.selector;
-        infoSelectors[6] = IInfo.defaultFeeSpread.selector;
-        infoSelectors[7] = IInfo.unpaidPrincipal.selector;
-        infoSelectors[8] = IInfo.accruedInterest.selector;
-        infoSelectors[9] = IInfo.lenderApy.selector;
-        infoSelectors[10] = IInfo.usdcToTUsdc.selector;
-        infoSelectors[11] = IInfo.tUsdcToUsdc.selector;
+        bytes4[] memory infoSelectors = new bytes4[](16);
+        infoSelectors[0] = IInfo.isResident.selector;
+        infoSelectors[1] = IInfo.addressToResident.selector;
+        infoSelectors[2] = IInfo.residentToAddress.selector;
+        infoSelectors[5] = IInfo.bids.selector;
+        infoSelectors[6] = IInfo.bidsLength.selector;
+        infoSelectors[7] = IInfo.bidActionable.selector;
+        infoSelectors[10] = IInfo.unpaidPrincipal.selector;
+        infoSelectors[11] = IInfo.accruedInterest.selector;
         infoSelectors[12] = IInfo.status.selector;
-        infoSelectors[13] = IInfo.utilization.selector;
-        infoSelectors[14] = IInfo.borrowerApr.selector;
-        ProtocolProxy(proxy).setSelectorsTarget(infoSelectors, address(info));
+        infoSelectors[15] = IInfo.maxLtv.selector;
+        ITargetManager(proxy).setSelectorsTarget(infoSelectors, address(info));
+
+        // Set initializerSelectors
+        bytes4[] memory initializerSelectors = new bytes4[](1);
+        initializerSelectors[0] = Initializer.initialize.selector;
+        ITargetManager(proxy).setSelectorsTarget(initializerSelectors, address(initializer));
+
+        // Set residentSelectors
+        bytes4[] memory residentSelectors = new bytes4[](1);
+        residentSelectors[0] = IResidents.verifyResident.selector;
+        ITargetManager(proxy).setSelectorsTarget(residentSelectors, address(residents));
+
+        // Set interestSelectors
+        bytes4[] memory interestSelectors = new bytes4[](1);
+        interestSelectors[0] = IInterest.calculateNewRatePerSecond.selector;
+        ITargetManager(proxy).setSelectorsTarget(interestSelectors, address(interest));
     }
 }

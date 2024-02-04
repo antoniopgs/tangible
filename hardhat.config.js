@@ -23,6 +23,7 @@ module.exports = {
     },
     sepolia: {
       url: "https://eth-sepolia.g.alchemy.com/v2/y7BrjLoYar43xDMfT298ttTLMcW4jTmu",
+      // url: "https://sepolia.infura.io/v3/4fe4075685794edc8349a620aad0121e",
       accounts: {
         mnemonic: process.env.MNEMONIC,
         path: "m/44'/60'/0'/0",
@@ -30,6 +31,7 @@ module.exports = {
         count: 20,
         passphrase: "",
       }
+      // gasPrice: 50000
     }
   },
   contractSizer: {
