@@ -7,7 +7,6 @@ import { Test } from "lib/chainlink/contracts/foundry-lib/forge-std/src/Test.sol
 
 // Other
 import { Handler } from "./Handler.t.sol";
-import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
 
 contract Invariant is StdInvariant, Test {
 
@@ -41,7 +40,7 @@ contract Invariant is StdInvariant, Test {
         targetContract(address(handler));
     }
 
-    function invariant_Something() external {
-        // Question: what should I do here?
+    function invariant_blank() external {
+
     }
 }

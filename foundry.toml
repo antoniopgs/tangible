@@ -5,4 +5,7 @@ libs = ['lib']
 auto_detect_remappings = false
 solc_version = '0.8.21'
 
+[fuzz]
+seed = '0x2'
+
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

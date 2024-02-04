@@ -44,13 +44,9 @@ contract Handler is Utils {
         // Make Actionable Loan Bid
         (address bidder, uint idx) = _makeActionableLoanBid(tokenId, randomness);
 
-        console.log("pm2");
-
         // Seller accepts bid
         vm.prank(PROPERTY.ownerOf(tokenId));
         IAuctions(proxy).acceptBid(tokenId, idx);
-
-        console.log("pm3");
 
         // Get & Skip by timeJump
         uint timeJump = bound(randomness, 0, 15 days);
@@ -66,7 +62,7 @@ contract Handler is Utils {
 
         // Bidder pays loan
         vm.startPrank(bidder);
-        UNDERLYING.approve(address(vault), payment);
+        UNDERLYING.approve(address(pool), payment);
         IBorrowing(proxy).payMortgage(tokenId, payment);
         vm.stopPrank();
     }
@@ -102,18 +98,18 @@ contract Handler is Utils {
 
         // Get vars
         address withdrawer = _randomAddress(randomness);
-        uint availableLiquidity = vault.availableLiquidity();
+        uint availableLiquidity = pool.availableLiquidity();
         uint underlying = bound(randomness, 0, availableLiquidity);
 
         // Calculate sharesBurn
-        uint sharesBurn = vault.underlyingToShares(underlying);
+        uint sharesBurn = pool.underlyingToShares(underlying);
 
-        // Deal vault to withdrawer
-        deal(address(vault), withdrawer, sharesBurn);
+        // Deal pool to withdrawer
+        deal(address(pool), withdrawer, sharesBurn);
 
         // Withdraw
         vm.prank(withdrawer);
-        vault.withdraw(underlying);
+        pool.withdraw(underlying);
     }
 
     function skipTime(uint randomness) external {

@@ -22,7 +22,6 @@ import "../contracts/tokens/PropertyNft.sol";
 import { Script } from "lib/chainlink/contracts/foundry-lib/forge-std/src/Script.sol"; // Todo: fix forge imports later
 import "../interfaces/state/ITargetManager.sol";
 import "../test/mock/MockERC20.sol";
-import { console } from "forge-std/console.sol";
 
 contract DeployScript is Script {
 
@@ -47,7 +46,7 @@ contract DeployScript is Script {
     IERC20Metadata UNDERLYING;
     PropertyNft PROPERTY;
 
-    Vault public vault;
+    Pool public pool;
 
     constructor() {
 
@@ -79,7 +78,7 @@ contract DeployScript is Script {
             protocolProxy_: proxy
         });
 
-        vault = new Vault({
+        pool = new Pool({
             name_: string.concat("Tangible ", UNDERLYING.name()),
             symbol_: string.concat("t", UNDERLYING.symbol()),
             UNDERLYING_: UNDERLYING,
@@ -93,7 +92,7 @@ contract DeployScript is Script {
         Initializer(proxy).initialize({
             _UNDERLYING: UNDERLYING,
             _PROPERTY: PROPERTY,
-            _VAULT: vault
+            _POOL: pool
         });
     }
 

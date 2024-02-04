@@ -43,15 +43,15 @@ contract Utils is DeployScript, Test {
 
         // Approve
         vm.prank(depositor);
-        UNDERLYING.approve(address(vault), amount);
+        UNDERLYING.approve(address(pool), amount);
 
         // Admin registers depositor as eligible
-        vm.prank(vault.owner());
-        vault.updateUserEligible(depositor, true);
+        vm.prank(pool.owner());
+        pool.updateUserEligible(depositor, true);
 
         // Deposit
         vm.prank(depositor);
-        vault.deposit(amount);
+        pool.deposit(amount);
     }
 
     function _makeActionableBid(uint randomness) internal returns(address bidder, uint randomTokenId, uint newBidIdx) {
@@ -71,7 +71,7 @@ contract Utils is DeployScript, Test {
         uint downPayment = bound(randomness, convert(maxLtv.mul(convert(propertyValue))) + 1, propertyValue); // Note: add 1 to minDownPayment for precision loss
 
         // Ensure there's enough availableLiquidity
-        uint availableLiquidity = vault.availableLiquidity();
+        uint availableLiquidity = pool.availableLiquidity();
         if (availableLiquidity < downPayment) {
 
             // Get depositor
@@ -82,13 +82,13 @@ contract Utils is DeployScript, Test {
             deal(address(UNDERLYING), depositor, neededLiquidity);
 
             // Admin registers depositor as eligible
-            vm.prank(vault.owner());
-            vault.updateUserEligible(depositor, true);
+            vm.prank(pool.owner());
+            pool.updateUserEligible(depositor, true);
 
             // Depositor approves & deposits
             vm.startPrank(depositor);
-            UNDERLYING.approve(address(vault), neededLiquidity);
-            vault.deposit(neededLiquidity);
+            UNDERLYING.approve(address(pool), neededLiquidity);
+            pool.deposit(neededLiquidity);
             vm.stopPrank();
         }
 
@@ -123,7 +123,7 @@ contract Utils is DeployScript, Test {
         assert(propertyValue - downPayment > 0);
 
         // Ensure there's enough availableLiquidity
-        uint availableLiquidity = vault.availableLiquidity();
+        uint availableLiquidity = pool.availableLiquidity();
         if (availableLiquidity < downPayment) {
 
             // Get depositor
@@ -134,13 +134,13 @@ contract Utils is DeployScript, Test {
             deal(address(UNDERLYING), depositor, neededLiquidity);
 
             // Admin registers depositor as eligible
-            vm.prank(vault.owner());
-            vault.updateUserEligible(depositor, true);
+            vm.prank(pool.owner());
+            pool.updateUserEligible(depositor, true);
 
             // Depositor approves & deposits
             vm.startPrank(depositor);
-            UNDERLYING.approve(address(vault), neededLiquidity);
-            vault.deposit(neededLiquidity);
+            UNDERLYING.approve(address(pool), neededLiquidity);
+            pool.deposit(neededLiquidity);
             vm.stopPrank();
         }
 

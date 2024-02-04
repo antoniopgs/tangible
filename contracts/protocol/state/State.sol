@@ -6,7 +6,7 @@ import "./TargetManager.sol";
 import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../tokens/PropertyNft.sol";
-import "../../Vault.sol";
+import "../../Pool.sol";
 
 abstract contract State is IState, TargetManager {
 
@@ -20,7 +20,7 @@ abstract contract State is IState, TargetManager {
     // Links
     IERC20 public UNDERLYING;
     PropertyNft public PROPERTY;
-    Vault vault;
+    Pool pool;
 
     // Residents
     mapping(address => uint) internal _addressToResident; // Note: eResident number of 0 will considered "falsy", assuming nobody has it
