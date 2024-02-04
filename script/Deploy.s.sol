@@ -46,7 +46,7 @@ contract DeployScript is Script {
     IERC20Metadata UNDERLYING;
     PropertyNft PROPERTY;
 
-    Vault vault;
+    Vault public vault;
 
     constructor() {
 

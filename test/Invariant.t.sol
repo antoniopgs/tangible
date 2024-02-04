@@ -7,6 +7,7 @@ import { Test } from "lib/chainlink/contracts/foundry-lib/forge-std/src/Test.sol
 
 // Other
 import { Handler } from "./Handler.t.sol";
+import { UD60x18, convert } from "@prb/math/src/UD60x18.sol";
 
 contract Invariant is StdInvariant, Test {
 
@@ -40,7 +41,15 @@ contract Invariant is StdInvariant, Test {
         targetContract(address(handler));
     }
 
+    function invariant_vaultDebt() external {
+        // assertEq(handler.expectedVaultDeposits(), handler.actualVaultDeposits());
+    }
+
     function invariant_vaultDeposits() external {
         assertEq(handler.expectedVaultDeposits(), handler.actualVaultDeposits());
+    }
+
+    function statefulFuzz_utilization() external {
+        assertLt(convert(handler.actualVaultUtilization()), 1 + 1);
     }
 }

@@ -104,17 +104,6 @@ contract Vault is IVault, ERC20, Ownable(msg.sender) {
         return deposits - debt;
     }
 
-    function borrow(address receiver, uint principal) external {
-        require(msg.sender == protocol, "only protocol can borrow from vault");
-
-        // Update debt
-        debt += principal;
-        assert(debt <= deposits);
-
-        // Send principal to receiver
-        UNDERLYING.safeTransfer(receiver, principal);
-    }
-
     // Note: should I restrict access?
     // Note: this probably introduces vulnerabilities
     function payDebt(address user, uint repayment, uint interest) external {

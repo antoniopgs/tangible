@@ -122,4 +122,13 @@ contract Handler is Utils {
         uint timeJump = bound(randomness, 0, 100 * 365 days); // Note: 0 to 100 years
         skip(timeJump);
     }
+
+    modifier validate {
+
+        // Run
+        _;
+
+        // Get actuals
+        actualVaultUtilization = vault.utilization();
+    }
 }

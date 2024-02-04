@@ -9,10 +9,13 @@ contract Utils is DeployScript, Test {
     uint residentCount;
 
     // Expectation vars
+    uint public expectedVaultDebt;
     uint public expectedVaultDeposits;
 
     // Actual vars
+    uint public actualVaultDebt;
     uint public actualVaultDeposits;
+    UD60x18 public actualVaultUtilization;
 
     function _randomTokenId(uint randomness) internal view returns(uint tokenId) {
         uint totalSupply = PROPERTY.totalSupply();
