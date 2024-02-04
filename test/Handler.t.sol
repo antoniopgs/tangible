@@ -10,8 +10,7 @@ import { IState } from "../interfaces/state/IState.sol";
 contract Handler is Utils {
 
     // Expectation Vars
-    // uint expectedTotalPrincipal;
-    // uint expectedTotalDeposits;
+    uint public x;
 
     function bid(uint randomness) external {
         _makeActionableBid(randomness);

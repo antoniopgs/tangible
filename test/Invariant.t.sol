@@ -21,10 +21,6 @@ contract Invariant is StdInvariant, Test {
     }
 
     function invariant_foo() external {
-
-    }
-
-    function invariant_bar() external {
-
+        assertEq(handler.x(), 0);
     }
 }
