@@ -2,7 +2,7 @@
 
 ### Introduction
 Tangible is a Real-World-Asset (RWA) DeFi Protocol for Real-Estate Auctions and Mortgage Lending.  
-I developed it as a member of the [City Builders Network](https://www.prospera.co/join) of [Prospera](https://www.prospera.co/) (the world premier private city).
+I developed it as a member of the [City Builders Network](https://www.prospera.co/join) of [Prospera](https://www.prospera.co/) (the world's premier private city).
 
 What Tangible accomplishes:
 - Allows lenders worldwide to earn yields, by supplying and lending their mortgage capital to the residents of a city/jurisdiction.
