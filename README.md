@@ -1,9 +1,19 @@
 # Tangible
 
 ### Description
-I joined the [City Builders Network](https://www.prospera.co/join) of [Prospera](https://www.prospera.co/), and built an RWA DeFi Mortgages Protocol from the ground up, to:
-- Allow lenders worldwide to supply mortgage capital to the city and earn yields
-- Bring mortgage access to Prospera Residents (who are blocked from TradFi alternatives)
+Tangible is a Real-World-Asset (RWA) DeFi Protocol for Real-Estate Auctions and Mortgage Lending.
+I developed it as a member of the [City Builders Network](https://www.prospera.co/join) of [Prospera](https://www.prospera.co/) (the world premier private city).
+
+What Tangible accomplishes:
+- Allows lenders worldwide to earn yields, by supplying and lending their mortgage capital to the residents of a city/jurisdiction.
+- Brings mortgage access to residents of a city/juridiction (such as Prospera) who are blocked from TradFi alternatives, through the power of Blockchain and Web3.
+
+### Links
+- [MVP](https://tangible-frontend.vercel.app/)
+- [MVP Demo](https://drive.google.com/file/d/1wTIdks_wdpMdmPu6DnEVThOgOw6iFtRA/view?usp=sharing)
+- On-Chain Gas-Efficient Amortization Schedule Mathematics:
+    - Explanation: 
+    - [Desmos Implementation](https://www.desmos.com/calculator/cd10wksudo)
 
 ### Features
 - NFTs: Legally Compliant NFTs, capable of representing RWA (property disputes can also be solved on-chain via arbitrator multisig)
@@ -38,13 +48,6 @@ I joined the [City Builders Network](https://www.prospera.co/join) of [Prospera]
 - **tokens**
     - TangibleNft.sol
     - tUSDC.sol
-
-### Links
-- [MVP](https://tangible-frontend.vercel.app/)
-- [MVP Demo](https://drive.google.com/file/d/1wTIdks_wdpMdmPu6DnEVThOgOw6iFtRA/view?usp=sharing)
-- On-Chain Gas-Efficient Amortization Schedule Mathematics:
-    - Explanation: 
-    - [Desmos Implementation](https://www.desmos.com/calculator/cd10wksudo)
 
 ### TODOs/Fixes
 - Main
