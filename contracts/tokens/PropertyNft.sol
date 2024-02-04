@@ -8,8 +8,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 // Other
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-// import "@openzeppelin/contracts/access/IAccessControl.sol";
-// import "../../interfaces/logic/IInfo.sol";
 
 contract PropertyNft is ERC721URIStorage, ERC721Enumerable, Ownable(msg.sender) {
 
