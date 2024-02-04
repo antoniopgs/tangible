@@ -27,11 +27,15 @@ contract Auctions is IAuctions, LoanStatus {
         Loan memory loan = _loans[tokenId];
 
         // Validate minSalePrice
-        require(propertyValue >= loan.unpaidPrincipal + _accruedInterest(loan), "propertyValue must cover sellerDebt");
+        require(propertyValue >= loan.unpaidPrincipal + _accruedInterest(loan), "propertyValue must cover sellerDebt"); // Question: do I need this?
+
+        console.log("b5");
 
         // Pull downPayment from bidder
-        // UNDERLYING.safeTransferFrom(msg.sender, address(this), downPayment);
-        vault.deposit(downPayment);
+        UNDERLYING.safeTransferFrom(msg.sender, address(vault), downPayment);
+        // vault.deposit(downPayment);
+
+        console.log("b6");
 
         // Add bid to tokenId bids
         _bids[tokenId].push(
@@ -60,9 +64,13 @@ contract Auctions is IAuctions, LoanStatus {
         // Ensure caller is bidder
         require(msg.sender == bidToRemove.bidder, "only bidder can remove his bid");
 
+        console.log("cb5");
+
         // Return downPayment to bidder
-        // UNDERLYING.safeTransfer(bidToRemove.bidder, bidToRemove.downPayment);
-        vault.withdraw(bidToRemove.downPayment);
+        UNDERLYING.safeTransferFrom(address(vault), bidToRemove.bidder, bidToRemove.downPayment);
+        // vault.withdraw(bidToRemove.downPayment);
+
+        console.log("cb6");
 
         // Delete bid
         _deleteBid(tokenBids, idx);

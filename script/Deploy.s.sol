@@ -81,7 +81,8 @@ contract DeployScript is Script {
         vault = new Vault({
             name_: string.concat("Tangible ", UNDERLYING.name()),
             symbol_: string.concat("t", UNDERLYING.symbol()),
-            UNDERLYING_: UNDERLYING
+            UNDERLYING_: UNDERLYING,
+            protocol_: proxy
         });
 
         // Set Function Selectors
