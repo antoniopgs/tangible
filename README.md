@@ -14,7 +14,9 @@ What Tangible accomplishes:
 - [MVP](https://tangible-frontend.vercel.app/)
 - [MVP Demo](https://drive.google.com/file/d/1wTIdks_wdpMdmPu6DnEVThOgOw6iFtRA/view?usp=sharing)
 - On-Chain Gas-Efficient Amortization Schedule Mathematics:
-    - Explanation: 
+- <img width="1680" alt="tangibleMath" src="https://github.com/antoniopgs/tangible/assets/44982443/cea75f6e-3e6b-4b2a-b234-f14edea459bb">
+
+    - [Explanation]() (in progress)
     - [Desmos Implementation](https://www.desmos.com/calculator/cd10wksudo)
 
 ### Features
